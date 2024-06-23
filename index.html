@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copa America 2024 - Tabla de Posiciones</title>
+    <title>Copa America 2024 - Tabla de Posiciones y Partidos</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -22,7 +22,7 @@
             margin-bottom: 5px;
         }
         .logo {
-            width: 50%; /* 25% of original size */
+            width: 50%;
             height: auto;
         }
         h2 {
@@ -68,13 +68,89 @@
             height: 20px;
             margin-right: 10px;
         }
+        
+        /* Updated styles for match display */
+        .match-container {
+            width: 90%;
+            max-width: 600px;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .match-container h2 {
+            color: #003366;
+            margin-bottom: 10px;
+        }
+        .match-tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .match-tab {
+            padding: 5px 10px;
+            background-color: #003366;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .match-tab.active {
+            background-color: #f0c36e;
+            color: #333;
+        }
+        .match-card {
+            background-color: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #333;
+        }
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .match-group {
+            font-weight: bold;
+        }
+        .match-date {
+            font-size: 0.8em;
+        }
+        .match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .team {
+            flex: 1;
+            text-align: center;
+        }
+        .score {
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .scorers {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            margin-top: 5px;
+        }
+        .team-scorers {
+            flex: 1;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
     <div class="logo-container">
         <img src="/logo.png" alt="Copa America 2024 Logo" class="logo">
     </div>
-    <a>Tabla de posiciones - Etapa 1</a>
+    <h2>Tabla de posiciones - Etapa 1</h2>
     <table id="standings">
         <thead>
             <tr>
@@ -88,21 +164,32 @@
         </tbody>
     </table>
 
+    <!-- Updated match display section -->
+    <div class="match-container">
+        <h2>Partidos</h2>
+        <div class="match-tabs">
+            <button class="match-tab active" data-tab="played">Jugados</button>
+            <button class="match-tab" data-tab="upcoming">Próximos</button>
+        </div>
+        <div id="matchesContent"></div>
+    </div>
+
     <div class="footer">
         <img src="/icon.png" alt="Carpincho Games Icon">
         <span>Powered by Carpincho Games</span>
     </div>
 
     <script>
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxLQxfg5nNg7J_QYLw-FCqo4lDWCV-VpFMDe9Tp7d1UMzcLjfVfGPk5kAWnq1mBvUN-/exec';
+        const STANDINGS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQxfg5nNg7J_QYLw-FCqo4lDWCV-VpFMDe9Tp7d1UMzcLjfVfGPk5kAWnq1mBvUN-/exec';
+        const COPA_API_URL = 'https://raw.githubusercontent.com/openfootball/copa-america.json/master/2024/copa.json';
 
         async function fetchStandings() {
             try {
-                const response = await fetch(API_URL);
+                const response = await fetch(STANDINGS_API_URL);
                 const data = await response.json();
                 return data;
             } catch (error) {
-                console.error('Error fetching data:', error);
+                console.error('Error fetching standings data:', error);
                 return [];
             }
         }
@@ -118,15 +205,123 @@
             });
         }
 
+        async function fetchCopaMatches() {
+            try {
+                const response = await fetch(COPA_API_URL);
+                const data = await response.json();
+                return data.rounds.flatMap(round => round.matches);
+            } catch (error) {
+                console.error('Error fetching Copa America data:', error);
+                return [];
+            }
+        }
+
+        function adjustToUTC3(dateString, timeString) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            const [hour, minute] = timeString.split(':').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
+            date.setHours(date.getHours() + 4); // Adjust to UTC-3
+            return date;
+        }
+
+        function formatDate(date) {
+            const options = { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'America/Buenos_Aires' };
+            return date.toLocaleDateString('es-ES', options);
+        }
+
+        function createMatchCard(match) {
+            const matchDate = adjustToUTC3(match.date, match.time);
+            const formattedDate = formatDate(matchDate);
+            
+            let scorersHtml = '';
+            if (match.goals && match.goals.length > 0) {
+                const team1Scorers = match.goals.filter(goal => goal.team === '1').map(goal => `${goal.name} ${goal.minute}'`).join('<br>');
+                const team2Scorers = match.goals.filter(goal => goal.team === '2').map(goal => `${goal.name} ${goal.minute}'`).join('<br>');
+                scorersHtml = `
+                    <div class="scorers">
+                        <div class="team-scorers">${team1Scorers}</div>
+                        <div class="team-scorers">${team2Scorers}</div>
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="match-card">
+                    <div class="match-header">
+                        <span class="match-group">Grupo ${match.group.charAt(match.group.length - 1)}</span>
+                        <span class="match-date">${formattedDate}</span>
+                    </div>
+                    <div class="match-info">
+                        <span class="team">${match.team1.name}</span>
+                        <span class="score">${match.score ? `${match.score.ft[0]} - ${match.score.ft[1]}` : 'vs'}</span>
+                        <span class="team">${match.team2.name}</span>
+                    </div>
+                    ${scorersHtml}
+                </div>
+            `;
+        }
+
+        function displayMatches(matches, type) {
+            const matchesContent = document.getElementById('matchesContent');
+            matchesContent.innerHTML = '';
+
+            const now = new Date();
+            let filteredMatches;
+
+            if (type === 'played') {
+                filteredMatches = matches
+                    .filter(m => m.score && m.score.ft)
+                    .sort((a, b) => adjustToUTC3(b.date, b.time) - adjustToUTC3(a.date, a.time));
+            } else {
+                filteredMatches = matches
+                    .filter(m => !m.score || !m.score.ft)
+                    .filter(m => adjustToUTC3(m.date, m.time) >= now)
+                    .sort((a, b) => adjustToUTC3(a.date, a.time) - adjustToUTC3(b.date, b.time));
+
+                // Get matches for the next day with games
+                if (filteredMatches.length > 0) {
+                    const nextMatchDate = adjustToUTC3(filteredMatches[0].date, filteredMatches[0].time);
+                    filteredMatches = filteredMatches.filter(m => {
+                        const matchDate = adjustToUTC3(m.date, m.time);
+                        return matchDate.toDateString() === nextMatchDate.toDateString();
+                    });
+                }
+            }
+
+            filteredMatches.forEach(match => {
+                matchesContent.innerHTML += createMatchCard(match);
+            });
+        }
+
+        async function initializeMatchDisplay() {
+            const matches = await fetchCopaMatches();
+            if (matches.length === 0) return;
+
+            const tabs = document.querySelectorAll('.match-tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    displayMatches(matches, tab.dataset.tab);
+                });
+            });
+
+            // Initial display
+            displayMatches(matches, 'played');
+        }
+
         async function updateStandings() {
             const standings = await fetchStandings();
             populateTable(standings);
         }
 
-        // Update standings when the page loads
-        window.onload = updateStandings;
+        // Update standings and initialize match display when the page loads
+        window.onload = async () => {
+            await updateStandings();
+            await initializeMatchDisplay();
+        };
 
-        // Optionally, update standings every 5 minutes
+        // Optionally, update standings every hour
         setInterval(updateStandings, 3600000);
     </script>
 </body>
