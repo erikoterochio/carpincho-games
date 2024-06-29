@@ -28,6 +28,8 @@
         h2 {
             color: #fff;
             text-align: center;
+            margin: 0px;
+            font-size: 1.2em;
         }
         table {
             width: 90%;
@@ -69,7 +71,7 @@
             margin-right: 10px;
         }
         
-        /* Updated styles for match display */
+        /* Match display styles */
         .match-container {
             width: 90%;
             max-width: 600px;
@@ -100,6 +102,12 @@
             background-color: #f0c36e;
             color: #333;
         }
+        .match-table {
+            display: none;
+        }
+        .match-table.active {
+            display: block;
+        }
         .match-card {
             background-color: #f9f9f9;
             border: 1px solid #ddd;
@@ -109,40 +117,64 @@
             font-size: 0.9em;
             color: #333;
         }
-        .match-header {
+        .match-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 5px;
-        }
-        .match-group {
-            font-weight: bold;
+            gap: 8px;  /* Add some space between elements */
         }
         .match-date {
             font-size: 0.8em;
+            flex: 1;
         }
         .match-info {
             display: flex;
-            justify-content: space-between;
+            justify-content: center;
             align-items: center;
+            flex: 1 1 auto;  /* Allow growing and shrinking */
+            min-width: 0;  /* Allow shrinking below content size if needed */
         }
         .team {
-            flex: 1;
             text-align: center;
+            flex: 1;
         }
         .score {
             font-weight: bold;
             margin: 0 5px;
         }
-        .scorers {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8em;
-            margin-top: 5px;
-        }
-        .team-scorers {
-            flex: 1;
+        .mvp-button {
+            background-color: #f0c36e;
+            border: none;
+            color: #333;
+            padding: 3px 6px;  /* Reduced padding */
             text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 10px;  /* Smaller font size */
+            cursor: pointer;
+            border-radius: 3px;  /* Slightly reduced border-radius */
+            flex: 0 0 auto;  /* Don't grow or shrink, size to content */
+            width: 40px;  /* Set a fixed width */
+            line-height: 1.2;  /* Adjust line height */
+            white-space: nowrap;  /* Prevent text wrapping */
+        }
+        .mvp-info {
+            text-align: center;
+            background-color: #eaeaea;
+            padding: 4px;
+            display: none;
+            color: #003366;
+            font-size: 1.2em;
+            border-radius: 5px;
+            margin-top: 8px; 
+        }
+        .mvp-info img {
+            display: block;
+            width: calc(100% - 20px);
+            max-width: 100%;
+            height: auto;
+            margin: 10px auto;
+            border-radius: 5px;
         }
     </style>
 </head>
@@ -164,14 +196,18 @@
         </tbody>
     </table>
 
-    <!-- Updated match display section -->
     <div class="match-container">
         <h2>Partidos</h2>
         <div class="match-tabs">
             <button class="match-tab active" data-tab="played">Jugados</button>
             <button class="match-tab" data-tab="upcoming">Próximos</button>
         </div>
-        <div id="matchesContent"></div>
+        <div id="playedMatches" class="match-table active">
+            <!-- Played matches will be populated by JavaScript -->
+        </div>
+        <div id="upcomingMatches" class="match-table">
+            <!-- Upcoming matches will be populated by JavaScript -->
+        </div>
     </div>
 
     <div class="footer">
@@ -181,7 +217,7 @@
 
     <script>
         const STANDINGS_API_URL = 'https://script.google.com/macros/s/AKfycbxLQxfg5nNg7J_QYLw-FCqo4lDWCV-VpFMDe9Tp7d1UMzcLjfVfGPk5kAWnq1mBvUN-/exec';
-        const COPA_API_URL = 'https://raw.githubusercontent.com/openfootball/copa-america.json/master/2024/copa.json';
+        const COPA_API_URL = 'https://backend.copaamerica.com/api/opta/match-list';
 
         async function fetchStandings() {
             try {
@@ -209,18 +245,16 @@
             try {
                 const response = await fetch(COPA_API_URL);
                 const data = await response.json();
-                return data.rounds.flatMap(round => round.matches);
+                return data.matches;  // Adapt to new structure
             } catch (error) {
                 console.error('Error fetching Copa America data:', error);
                 return [];
             }
         }
 
-        function adjustToUTC3(dateString, timeString) {
-            const [year, month, day] = dateString.split('-').map(Number);
-            const [hour, minute] = timeString.split(':').map(Number);
-            const date = new Date(Date.UTC(year, month - 1, day, hour, minute));
-            date.setHours(date.getHours() + 4); // Adjust to UTC-3
+        function adjustToUTC3(dateString, timeString = '') {
+            const date = new Date(dateString);
+            date.setHours(date.getHours() - 4);  // Adjust to UTC-3
             return date;
         }
 
@@ -230,66 +264,85 @@
         }
 
         function createMatchCard(match) {
-            const matchDate = adjustToUTC3(match.date, match.time);
+            const matchDate = adjustToUTC3(match.date);
             const formattedDate = formatDate(matchDate);
             
-            let scorersHtml = '';
-            if (match.goals && match.goals.length > 0) {
-                const team1Scorers = match.goals.filter(goal => goal.team === '1').map(goal => `${goal.name} ${goal.minute}'`).join('<br>');
-                const team2Scorers = match.goals.filter(goal => goal.team === '2').map(goal => `${goal.name} ${goal.minute}'`).join('<br>');
-                scorersHtml = `
-                    <div class="scorers">
-                        <div class="team-scorers">${team1Scorers}</div>
-                        <div class="team-scorers">${team2Scorers}</div>
+            const homeTeam = match.teamData.home;
+            const awayTeam = match.teamData.away;
+            const homeScore = homeTeam.Score !== undefined ? homeTeam.Score : 0;
+            const awayScore = awayTeam.Score !== undefined ? awayTeam.Score : 0;
+            const score = (homeScore != undefined && awayScore != undefined) ? `${homeScore} - ${awayScore}` : 'vs';
+            
+            let mvpButton = '';
+            let mvpInfo = '';
+            if (match.spotm && match.spotm.spotmWinnerName) {
+                mvpButton = `<button class="mvp-button">MVP</button>`;
+                mvpInfo = `
+                    <div class="mvp-info">
+                        <p style="color: #333; font-size: 0.8em"><b>Superior Player of the Match Michelob ULTRA</b></p>
+                        <p>${match.spotm.spotmWinnerName}</p>
+                        <img src="${match.spotm.spotmWinnerPhoto}" alt="MVP">
                     </div>
                 `;
             }
-
+            
             return `
                 <div class="match-card">
-                    <div class="match-header">
-                        <span class="match-group">Grupo ${match.group.charAt(match.group.length - 1)}</span>
+                    <div class="match-content">
                         <span class="match-date">${formattedDate}</span>
+                        <div class="match-info">
+                            <span class="team">${homeTeam.team}</span>
+                            <span class="score">${score}</span>
+                            <span class="team">${awayTeam.team}</span>
+                        </div>
+                        ${mvpButton}
                     </div>
-                    <div class="match-info">
-                        <span class="team">${match.team1.name}</span>
-                        <span class="score">${match.score ? `${match.score.ft[0]} - ${match.score.ft[1]}` : 'vs'}</span>
-                        <span class="team">${match.team2.name}</span>
-                    </div>
-                    ${scorersHtml}
+                    ${mvpInfo}
                 </div>
             `;
         }
 
-        function displayMatches(matches, type) {
-            const matchesContent = document.getElementById('matchesContent');
-            matchesContent.innerHTML = '';
-
+        function displayMatches(matches) {
             const now = new Date();
-            let filteredMatches;
+            const tomorrow = new Date(now);
+            tomorrow.setDate(now.getDate() + 1);
 
-            if (type === 'played') {
-                filteredMatches = matches
-                    .filter(m => m.score && m.score.ft)
-                    .sort((a, b) => adjustToUTC3(b.date, b.time) - adjustToUTC3(a.date, a.time));
-            } else {
-                filteredMatches = matches
-                    .filter(m => !m.score || !m.score.ft)
-                    .filter(m => adjustToUTC3(m.date, m.time) >= now)
-                    .sort((a, b) => adjustToUTC3(a.date, a.time) - adjustToUTC3(b.date, b.time));
+            const playedMatches = matches
+                .filter(m => m.spotm && m.spotm.spotmWinnerName)
+                .sort((a, b) => adjustToUTC3(b.date) - adjustToUTC3(a.date));
+                
+            const upcomingMatches = matches
+                .filter(m => !m.spotm || !m.spotm.spotmWinnerName)
+                .filter(m => adjustToUTC3(m.date) <= tomorrow)
+                .sort((a, b) => adjustToUTC3(a.date) - adjustToUTC3(b.date));
 
-                // Get matches for the next day with games
-                if (filteredMatches.length > 0) {
-                    const nextMatchDate = adjustToUTC3(filteredMatches[0].date, filteredMatches[0].time);
-                    filteredMatches = filteredMatches.filter(m => {
-                        const matchDate = adjustToUTC3(m.date, m.time);
-                        return matchDate.toDateString() === nextMatchDate.toDateString();
-                    });
-                }
-            }
+            const playedMatchesContainer = document.getElementById('playedMatches');
+            const upcomingMatchesContainer = document.getElementById('upcomingMatches');
 
-            filteredMatches.forEach(match => {
-                matchesContent.innerHTML += createMatchCard(match);
+            playedMatchesContainer.innerHTML = '';
+            upcomingMatchesContainer.innerHTML = '';
+
+            playedMatches.forEach(match => {
+                playedMatchesContainer.innerHTML += createMatchCard(match);
+            });
+
+            upcomingMatches.forEach(match => {
+                upcomingMatchesContainer.innerHTML += createMatchCard(match);
+            });
+
+            addMVPButtonListeners();
+        }
+
+        function addMVPButtonListeners() {
+            document.querySelectorAll('.mvp-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const mvpInfo = this.closest('.match-card').querySelector('.mvp-info');
+                    if (mvpInfo.style.display === 'none') {
+                        mvpInfo.style.display = 'block';
+                    } else {
+                        mvpInfo.style.display = 'none';
+                    }
+                });
             });
         }
 
@@ -302,12 +355,20 @@
                 tab.addEventListener('click', () => {
                     tabs.forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    displayMatches(matches, tab.dataset.tab);
+
+                    document.querySelectorAll('.match-table').forEach(table => {
+                        table.classList.remove('active');
+                    });
+
+                    const selectedTable = document.querySelector(`#${tab.dataset.tab}Matches`);
+                    if (selectedTable) {
+                        selectedTable.classList.add('active');
+                    }
                 });
             });
 
             // Initial display
-            displayMatches(matches, 'played');
+            displayMatches(matches);
         }
 
         async function updateStandings() {
