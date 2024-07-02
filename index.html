@@ -105,6 +105,7 @@
             border: none;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 0 5px;  /* Add this line for horizontal separation */
         }
         .match-tab.active {
             background-color: #f0c36e;
@@ -184,6 +185,30 @@
             margin: 10px auto;
             border-radius: 5px;
         }
+
+        #groupStandings table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+            font-size: 0.8em;
+        }
+
+        #groupStandings caption {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #003366;
+        }
+
+        #groupStandings th, #groupStandings td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        #groupStandings th {
+            background-color: #003366;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -212,12 +237,16 @@
         <div class="match-tabs">
             <button class="match-tab active" data-tab="played">Jugados</button>
             <button class="match-tab" data-tab="upcoming">Próximos</button>
+            <button class="match-tab" data-tab="groups">Grupos</button>
         </div>
         <div id="playedMatches" class="match-table active">
             <!-- Played matches will be populated by JavaScript -->
         </div>
         <div id="upcomingMatches" class="match-table">
             <!-- Upcoming matches will be populated by JavaScript -->
+        </div>
+        <div id="groupStandings" class="match-table">
+            <!-- Group standings will be populated by JavaScript -->
         </div>
     </div>
 
@@ -361,6 +390,8 @@
             const matches = await fetchCopaMatches();
             if (matches.length === 0) return;
 
+            const groupStandings = await fetchGroupStandings();
+            
             const tabs = document.querySelectorAll('.match-tab');
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
@@ -371,7 +402,7 @@
                         table.classList.remove('active');
                     });
 
-                    const selectedTable = document.querySelector(`#${tab.dataset.tab}Matches`);
+                    const selectedTable = document.querySelector(`#${tab.dataset.tab === 'groups' ? 'groupStandings' : tab.dataset.tab + 'Matches'}`);
                     if (selectedTable) {
                         selectedTable.classList.add('active');
                     }
@@ -380,11 +411,76 @@
 
             // Initial display
             displayMatches(matches);
+            if (groupStandings.length > 0) {
+                displayGroupStandings(groupStandings);
+            } else {
+                document.getElementById('groupStandings').innerHTML = '<p>Group standings are not available at this time.</p>';
+            }
         }
 
         async function updateStandings() {
             const standings = await fetchStandings();
             populateTable(standings);
+        }
+
+        async function fetchGroupStandings() {
+            try {
+                const response = await fetch(COPA_API_URL);
+                const data = await response.json();
+                console.log('Fetched Group Standings Data:', data); // Debugging
+                return data.standings || [];  // Return an empty array if standings are not available
+            } catch (error) {
+                console.error('Error fetching group standings:', error);
+                return [];
+            }
+        }
+
+        function displayGroupStandings(standings) {
+            const container = document.getElementById('groupStandings');
+            container.innerHTML = '';
+
+            if (standings.length === 0) {
+                container.innerHTML = '<p>Group standings are not available at this time.</p>';
+                return;
+            }
+
+            standings.forEach(group => {
+                const groupTable = document.createElement('table');
+                groupTable.innerHTML = `
+                    <caption>Grupo ${group.group}</caption>
+                    <thead>
+                        <tr>
+                            <th>Pos</th>
+                            <th>Equipo</th>
+                            <th>PJ</th>
+                            <th>PG</th>
+                            <th>PE</th>
+                            <th>PP</th>
+                            <th>GF</th>
+                            <th>GC</th>
+                            <th>DG</th>
+                            <th>Pts</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${group.positions.map(team => `
+                            <tr>
+                                <td>${team.Position || '-'}</td>
+                                <td>${team.teamName || '-'}</td>
+                                <td>${team.Played || '-'}</td>
+                                <td>${team.Won || '-'}</td>
+                                <td>${team.Drawn || '-'}</td>
+                                <td>${team.Lost || '-'}</td>
+                                <td>${team.For || '-'}</td>
+                                <td>${team.Against || '-'}</td>
+                                <td>${(team.For && team.Against) ? team.For - team.Against : '-'}</td>
+                                <td>${team.Points || '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                container.appendChild(groupTable);
+            });
         }
 
         // Update standings and initialize match display when the page loads
