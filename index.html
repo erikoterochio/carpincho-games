@@ -6,12 +6,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-      --bg: #050816;
-      --card: #111827;
-      --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.15);
-      --text: #f9fafb;
-      --muted: #9ca3af;
+      --bg: #E9E9E9;     /* Alabaster Grey */
+      --pink: #FF6B6B;   /* Grapefruit Pink */
+      --blue: #335C81;   /* Baltic Blue */
+      --indigo: #1B2845; /* Space Indigo */
+      --sky: #5899E2;    /* Cloudy Sky */
+
+      --card: #ffffff;
+      --text-main: #1B2845;
+      --muted: #6b7280;
     }
 
     * {
@@ -24,8 +27,8 @@
 
     body {
       min-height: 100vh;
-      background: radial-gradient(circle at top, #111827 0, #020617 60%);
-      color: var(--text);
+      background: var(--bg);
+      color: var(--text-main);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -34,206 +37,189 @@
 
     .app {
       width: 100%;
-      max-width: 1100px;
-      background: rgba(15, 23, 42, 0.92);
-      border-radius: 20px;
-      border: 1px solid rgba(148, 163, 184, 0.25);
+      max-width: 720px;
+      background: var(--card);
+      border-radius: 18px;
       box-shadow:
-        0 20px 40px rgba(15, 23, 42, 0.7),
-        0 0 0 1px rgba(15, 23, 42, 0.9);
-      padding: 24px clamp(24px, 4vw, 32px);
-      backdrop-filter: blur(18px);
+        0 10px 25px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 20px 18px 16px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
     }
 
     header {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
       align-items: center;
-      gap: 16px;
-      margin-bottom: 24px;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
     }
 
     .logo {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .logo-icon {
-      width: 44px;
-      height: 44px;
+      width: 40px;
+      height: 40px;
       border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #facc15, #22c55e);
+      background: var(--pink);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 26px;
-      box-shadow:
-        0 0 0 2px rgba(15, 23, 42, 0.9),
-        0 0 24px rgba(34, 197, 94, 0.7);
+      font-size: 22px;
+      color: #ffffff;
     }
 
     .logo-text h1 {
-      font-size: clamp(1.6rem, 2.1vw, 2rem);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      font-size: 1.3rem;
     }
 
     .logo-text span {
       font-size: 0.8rem;
-      text-transform: uppercase;
       color: var(--muted);
-      letter-spacing: 0.15em;
     }
 
     .tagline {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       color: var(--muted);
-      max-width: 340px;
-      line-height: 1.4;
+      text-align: right;
     }
 
-    .games-grid {
-      margin-top: 8px;
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 8px;
     }
 
-    .game-card {
+    .card {
       position: relative;
-      border-radius: 18px;
-      padding: 18px 18px 16px;
-      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.04), transparent),
-        var(--card);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      overflow: hidden;
-      cursor: pointer;
-      transition:
-        transform 0.16s ease-out,
-        box-shadow 0.16s ease-out,
-        border-color 0.16s ease-out,
-        background 0.16s ease-out;
+      border-radius: 14px;
+      padding: 14px 12px 12px;
+      background: #f7f7f7;
+      border: 1px solid rgba(51, 92, 129, 0.25);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
-    .game-card::before {
-      content: "";
-      position: absolute;
-      inset: -40%;
-      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.25), transparent 60%);
-      opacity: 0;
-      transition: opacity 0.2s ease-out;
-      pointer-events: none;
-    }
-
-    .game-card:hover {
-      transform: translateY(-4px) translateZ(0);
-      box-shadow:
-        0 18px 30px rgba(15, 23, 42, 0.9),
-        0 0 0 1px rgba(34, 197, 94, 0.3);
-      border-color: rgba(34, 197, 94, 0.7);
-      background: radial-gradient(circle at 0 0, rgba(34, 197, 94, 0.09), transparent),
-        var(--card);
-    }
-
-    .game-card:hover::before {
-      opacity: 1;
-    }
-
-    .pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: rgba(15, 23, 42, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.5);
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-
-    .pill-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
-    }
-
-    .game-title {
+    .card-header {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
+      align-items: center;
       gap: 8px;
-      margin-bottom: 6px;
     }
 
-    .game-title h2 {
-      font-size: 1rem;
+    .card-title {
+      font-size: 0.95rem;
+      font-weight: 600;
     }
 
     .badge {
       font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      background: rgba(34, 197, 94, 0.12);
-      border-radius: 999px;
+      letter-spacing: 0.08em;
       padding: 3px 8px;
+      border-radius: 999px;
     }
 
-    .desc {
-      font-size: 0.8rem;
+    .badge-live {
+      background: var(--sky);
+      color: #ffffff;
+    }
+
+    .badge-soon {
+      background: #f1f5f9;
       color: var(--muted);
-      line-height: 1.4;
-      margin-bottom: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.6);
     }
 
-    .meta {
+    .card-note {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .card-footer {
+      margin-top: 6px;
       display: flex;
       justify-content: space-between;
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .meta strong {
-      color: var(--text);
-    }
-
-    .link {
-      color: inherit;
-      text-decoration: none;
-      display: block;
-      height: 100%;
-    }
-
-    footer {
-      margin-top: 20px;
+      align-items: center;
       font-size: 0.75rem;
       color: var(--muted);
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-      flex-wrap: wrap;
     }
 
-    footer span:nth-child(2) {
+    .pill {
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+    }
+
+    /* Colores por juego */
+    .card-truco {
+      border-color: rgba(88, 153, 226, 0.6);
+      background: #f9fbff;
+    }
+
+    .card-truco .card-title {
+      color: var(--indigo);
+    }
+
+    .stripe {
+      position: absolute;
+      inset-inline-start: 0;
+      top: 0;
+      bottom: 0;
+      width: 5px;
+      border-radius: 14px 0 0 14px;
+    }
+
+    .stripe-truco {
+      background: var(--sky);
+    }
+    .stripe-impostor {
+      background: var(--pink);
+    }
+    .stripe-mimica {
+      background: var(--blue);
+    }
+    .stripe-prode {
+      background: var(--indigo);
+    }
+
+    a.card-link {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card.disabled {
       opacity: 0.8;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 600px) {
+      body {
+        padding: 16px;
+      }
+
       .app {
-        padding: 18px 16px;
+        padding: 16px 14px 12px;
       }
 
       header {
+        flex-direction: column;
         align-items: flex-start;
       }
 
       .tagline {
-        font-size: 0.8rem;
+        text-align: left;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -245,105 +231,82 @@
         <div class="logo-icon">🦫</div>
         <div class="logo-text">
           <h1>Carpincho Games</h1>
-          <span>party · amigos · risas</span>
+          <span>Juegos rápidos para compartir.</span>
         </div>
       </div>
       <p class="tagline">
-        Elegí un juego, compartí el código con tus amigos y usen el celu para
-        jugar todos juntos. Ideal para previas, asados y tardes de truco.
+        Elegí un juego y usen el celu en la mesa.<br />
+        Ideal para previas, asados y juntadas.
       </p>
     </header>
 
-    <section class="games-grid">
-      <a class="link" href="#impostor">
-        <article class="game-card">
-          <div class="pill">
-            <span class="pill-dot"></span>
-            Social · Roles ocultos
+    <section class="grid">
+      <!-- Truco (activo) -->
+      <a class="card-link" href="truco.html">
+        <article class="card card-truco">
+          <div class="stripe stripe-truco"></div>
+          <div class="card-header">
+            <h2 class="card-title">Anotador de Truco</h2>
+            <span class="badge badge-live">Disponible</span>
           </div>
-          <div class="game-title">
-            <h2>El Impostor</h2>
-            <span class="badge">Próximamente</span>
-          </div>
-          <p class="desc">
-            Cada ronda hay un impostor que nadie conoce. Responden preguntas, se
-            acusan entre todos y votan quién creen que miente.
+          <p class="card-note">
+            Sumá palitos hasta 30 tantos. Nosotros vs Ellos, simple y sin discutir el tanteador.
           </p>
-          <div class="meta">
-            <span><strong>Jugadores:</strong> 4–12</span>
-            <span><strong>Modo:</strong> Celu compartido</span>
+          <div class="card-footer">
+            <span class="pill">Pensado para el celu</span>
+            <span>2–6 jugadores</span>
           </div>
         </article>
       </a>
 
-      <a class="link" href="#mimica">
-        <article class="game-card">
-          <div class="pill">
-            <span class="pill-dot"></span>
-            Party · Sin hablar
-          </div>
-          <div class="game-title">
-            <h2>Dígalo con mímica</h2>
-            <span class="badge">Próximamente</span>
-          </div>
-          <p class="desc">
-            La pantalla te da la palabra, vos solo podés usar el cuerpo. El resto
-            del equipo tiene que adivinar antes que se acabe el tiempo.
-          </p>
-          <div class="meta">
-            <span><strong>Jugadores:</strong> 3+</span>
-            <span><strong>Modo:</strong> Equipos</span>
-          </div>
-        </article>
-      </a>
+      <!-- El Impostor -->
+      <article class="card disabled">
+        <div class="stripe stripe-impostor"></div>
+        <div class="card-header">
+          <h2 class="card-title">El Impostor</h2>
+          <span class="badge badge-soon">Próximamente</span>
+        </div>
+        <p class="card-note">
+          Juego social de roles ocultos. Alguien miente, todos sospechan.
+        </p>
+        <div class="card-footer">
+          <span class="pill">4–12 jugadores</span>
+          <span>Modo party</span>
+        </div>
+      </article>
 
-      <a class="link" href="truco.html">
-        <article class="game-card">
-          <div class="pill">
-            <span class="pill-dot"></span>
-            Clásico · Puntaje
-          </div>
-          <div class="game-title">
-            <h2>Anotador de Truco</h2>
-            <span class="badge">Disponible</span>
-          </div>
-          <p class="desc">
-            Llevá el score del truco sin discutir. Sumá 1, 2 o 3 puntos por mano,
-            marcá buenas/malas y reiniciá la partida cuando alguien canta truco.
-          </p>
-          <div class="meta">
-            <span><strong>Jugadores:</strong> 2–6</span>
-            <span><strong>Hasta:</strong> 30 puntos</span>
-          </div>
-        </article>
-      </a>
+      <!-- Dígalo con mímica -->
+      <article class="card disabled">
+        <div class="stripe stripe-mimica"></div>
+        <div class="card-header">
+          <h2 class="card-title">Dígalo con mímica</h2>
+          <span class="badge badge-soon">Próximamente</span>
+        </div>
+        <p class="card-note">
+          La pantalla da la palabra, vos solo podés usar el cuerpo.
+        </p>
+        <div class="card-footer">
+          <span class="pill">Equipos</span>
+          <span>Party game</span>
+        </div>
+      </article>
 
-      <a class="link" href="#prode">
-        <article class="game-card">
-          <div class="pill">
-            <span class="pill-dot"></span>
-            Mundial 2026
-          </div>
-          <div class="game-title">
-            <h2>Prode Mundial 2026</h2>
-            <span class="badge">Próximamente</span>
-          </div>
-          <p class="desc">
-            Armá tu predicción de partidos, sumá puntos por aciertos y competí
-            con tus amigos para ver quién la tiene más clara.
-          </p>
-          <div class="meta">
-            <span><strong>Jugadores:</strong> 2–∞</span>
-            <span><strong>Modo:</strong> Tabla online</span>
-          </div>
-        </article>
-      </a>
+      <!-- Prode Mundial 2026 -->
+      <article class="card disabled">
+        <div class="stripe stripe-prode"></div>
+        <div class="card-header">
+          <h2 class="card-title">Prode Mundial 2026</h2>
+          <span class="badge badge-soon">Próximamente</span>
+        </div>
+        <p class="card-note">
+          Armá tu pronóstico, sumá puntos por aciertos y compará con tus amigos.
+        </p>
+        <div class="card-footer">
+          <span class="pill">Mundial 2026</span>
+          <span>Tabla compartida</span>
+        </div>
+      </article>
     </section>
-
-    <footer>
-      <span>Hecho con mate, truco y amigos.</span>
-      <span>Carpincho Games · v0.1</span>
-    </footer>
   </main>
 </body>
 </html>
