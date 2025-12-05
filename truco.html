@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <title>Anotador de Truco · Carpincho Games</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+  />
   <style>
     :root {
-      /* Paleta general */
       --bg: #E9E9E9;     /* Alabaster Grey */
       --pink: #FF6B6B;   /* Grapefruit Pink */
       --blue: #335C81;   /* Baltic Blue */
@@ -38,13 +40,13 @@
 
     .app {
       width: 100%;
-      max-width: 640px;
+      max-width: 520px;
       background: var(--card);
       border-radius: 18px;
       box-shadow:
         0 10px 25px rgba(0, 0, 0, 0.08),
         0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 18px 18px 16px;
+      padding: 18px 16px 14px;
       border: 1px solid rgba(27, 40, 69, 0.1);
     }
 
@@ -53,7 +55,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
     .title-group h1 {
@@ -85,31 +87,25 @@
       border-color: var(--blue);
     }
 
-    .subtitle {
-      font-size: 0.8rem;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
-
-    /* Panel principal */
     .scoreboard {
       border-radius: 14px;
       border: 1px solid rgba(51, 92, 129, 0.25);
       background: #f7f7f7;
-      padding: 14px 10px 10px;
+      padding: 12px 10px 10px;
+      margin-top: 6px;
     }
 
     .teams {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
     }
 
     .team-row {
       display: grid;
       grid-template-columns: auto 1fr auto;
       align-items: center;
-      column-gap: 8px;
+      column-gap: 10px;
     }
 
     .team-info {
@@ -122,7 +118,7 @@
       display: flex;
       justify-content: space-between;
       align-items: baseline;
-      gap: 6px;
+      gap: 8px;
     }
 
     .team-name {
@@ -134,7 +130,7 @@
     }
 
     .team-score {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       color: var(--muted);
     }
 
@@ -150,35 +146,44 @@
     .sticks {
       background: #fdfdfd;
       border-radius: 10px;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border: 1px solid rgba(88, 153, 226, 0.4);
     }
 
-    .sticks-rows {
+    .sticks-column {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-
-    .sticks-row {
-      display: grid;
-      grid-template-columns: repeat(15, minmax(0, 1fr));
-      gap: 2px;
-    }
-
-    .sticks-row:first-child {
-      padding-bottom: 4px;
-      border-bottom: 2px solid rgba(51, 92, 129, 0.3); /* línea a los 15 */
+      gap: 3px;
     }
 
     .stick {
-      height: 14px;
+      height: 6px;
       border-radius: 999px;
-      background: rgba(51, 92, 129, 0.14); /* vacío */
+      background: rgba(51, 92, 129, 0.12); /* vacío */
     }
 
-    .stick.active {
-      background: linear-gradient(180deg, var(--pink), #e25555); /* fósforo lleno */
+    .stick.red {
+      background: linear-gradient(180deg, var(--pink), #e25555);
+    }
+
+    .stick.green {
+      background: linear-gradient(180deg, #4ade80, #22c55e);
+    }
+
+    .stick.middle {
+      margin-bottom: 7px;
+      position: relative;
+    }
+
+    .stick.middle::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -4px;
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(51, 92, 129, 0.45); /* línea divisoria 15/30 */
     }
 
     .score-btn {
@@ -199,6 +204,7 @@
         box-shadow 0.1s ease-out,
         background 0.1s ease-out,
         border-color 0.1s ease-out;
+      touch-action: manipulation; /* evita zoom por doble tap */
     }
 
     .score-btn.plus {
@@ -224,8 +230,7 @@
     .controls {
       margin-top: 10px;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      justify-content: flex-end;
       gap: 8px;
       flex-wrap: wrap;
       font-size: 0.8rem;
@@ -240,16 +245,11 @@
       font-size: 0.75rem;
       cursor: pointer;
       color: var(--indigo);
+      touch-action: manipulation;
     }
 
     .controls button:hover {
       background: #f1f5f9;
-    }
-
-    .info {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 6px;
     }
 
     footer {
@@ -282,16 +282,12 @@
     <header>
       <div class="title-group">
         <h1>Anotador de Truco</h1>
-        <span>Sumá palitos hasta 30 tantos.</span>
+        <span>Nosotros vs Ellos · 30 tantos</span>
       </div>
       <a href="index.html" class="back-link">
         ← Inicio
       </a>
     </header>
-
-    <p class="subtitle">
-      Cada fósforo vale 1 tanto. A los 15 hay cambio de línea y la partida termina en 30.
-    </p>
 
     <section class="scoreboard">
       <div class="teams">
@@ -307,8 +303,8 @@
               </span>
             </div>
             <div class="sticks">
-              <div class="sticks-rows" id="sticksA">
-                <!-- se completan por JS -->
+              <div class="sticks-column" id="sticksA">
+                <!-- se completa por JS -->
               </div>
             </div>
           </div>
@@ -328,8 +324,8 @@
               </span>
             </div>
             <div class="sticks">
-              <div class="sticks-rows" id="sticksB">
-                <!-- se completan por JS -->
+              <div class="sticks-column" id="sticksB">
+                <!-- se completa por JS -->
               </div>
             </div>
           </div>
@@ -339,20 +335,13 @@
       </div>
 
       <div class="controls">
-        <span>Partida fija a 30 tantos.</span>
-        <div>
-          <button onclick="resetScores()">Reiniciar</button>
-        </div>
+        <button onclick="resetScores()">Reiniciar</button>
       </div>
-
-      <p class="info">
-        Tip: si te pasaste al anotar, usá el botón de menos para sacar palitos.
-      </p>
     </section>
 
     <footer>
       <span>Carpincho Games · Truco</span>
-      <span>Hecho para usarse desde el celu.</span>
+      <span>30 tantos</span>
     </footer>
   </main>
 
@@ -363,24 +352,29 @@
 
     function createSticks(containerId) {
       const container = document.getElementById(containerId);
-      // Dos filas de 15
-      for (let row = 0; row < 2; row++) {
-        const rowDiv = document.createElement("div");
-        rowDiv.className = "sticks-row";
-        for (let i = 0; i < 15; i++) {
-          const stick = document.createElement("div");
-          stick.className = "stick";
-          rowDiv.appendChild(stick);
+      for (let i = 0; i < 30; i++) {
+        const stick = document.createElement("div");
+        stick.className = "stick";
+        if (i === 14) {
+          stick.classList.add("middle"); // marca separación 15/30
         }
-        container.appendChild(rowDiv);
+        container.appendChild(stick);
       }
     }
 
     function updateSticks(team, value) {
       const containerId = team === "A" ? "sticksA" : "sticksB";
       const sticks = document.querySelectorAll(`#${containerId} .stick`);
+
       sticks.forEach((stick, index) => {
-        stick.classList.toggle("active", index < value);
+        stick.classList.remove("red", "green");
+        if (index < value) {
+          if (index < 15) {
+            stick.classList.add("red");   // 1–15
+          } else {
+            stick.classList.add("green"); // 16–30
+          }
+        }
       });
     }
 
