@@ -6,13 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-      --bg: #020617;
-      --card: #0f172a;
-      --accent: #22c55e;
-      --accent-soft: rgba(34, 197, 94, 0.15);
-      --danger: #f97373;
-      --text: #f9fafb;
-      --muted: #9ca3af;
+      /* Paleta general */
+      --bg: #E9E9E9;     /* Alabaster Grey */
+      --pink: #FF6B6B;   /* Grapefruit Pink */
+      --blue: #335C81;   /* Baltic Blue */
+      --indigo: #1B2845; /* Space Indigo */
+      --sky: #5899E2;    /* Cloudy Sky */
+
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
     }
 
     * {
@@ -25,25 +28,24 @@
 
     body {
       min-height: 100vh;
-      background: radial-gradient(circle at top, #111827 0, #020617 65%);
+      background: var(--bg);
       color: var(--text);
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 24px;
     }
 
     .app {
       width: 100%;
-      max-width: 520px;
-      background: rgba(15, 23, 42, 0.96);
-      border-radius: 20px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
+      max-width: 640px;
+      background: var(--card);
+      border-radius: 18px;
       box-shadow:
-        0 20px 40px rgba(15, 23, 42, 0.8),
-        0 0 0 1px rgba(15, 23, 42, 0.9);
-      padding: 20px 18px;
-      backdrop-filter: blur(18px);
+        0 10px 25px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 18px 18px 16px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
     }
 
     header {
@@ -51,7 +53,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .title-group h1 {
@@ -66,46 +68,54 @@
     .back-link {
       font-size: 0.78rem;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--muted);
+      letter-spacing: 0.12em;
+      color: var(--indigo);
       text-decoration: none;
       border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.6);
+      border: 1px solid rgba(51, 92, 129, 0.4);
       padding: 5px 10px;
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      background: #f4f4f4;
     }
 
     .back-link:hover {
-      border-color: var(--accent);
-      color: var(--accent);
+      background: #e5e5e5;
+      border-color: var(--blue);
     }
 
+    .subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Panel principal */
     .scoreboard {
-      margin-top: 6px;
-      background: linear-gradient(145deg, #020617, #020617 40%, #0b1120);
-      border-radius: 16px;
-      padding: 14px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 14px;
+      border: 1px solid rgba(51, 92, 129, 0.25);
+      background: #f7f7f7;
+      padding: 14px 10px 10px;
     }
 
     .teams {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 14px;
-    }
-
-    .team {
-      background: radial-gradient(circle at top, rgba(34, 197, 94, 0.08), transparent),
-        rgba(15, 23, 42, 0.9);
-      border-radius: 12px;
-      padding: 10px 10px 9px;
-      border: 1px solid rgba(148, 163, 184, 0.45);
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 10px;
+    }
+
+    .team-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      column-gap: 8px;
+    }
+
+    .team-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .team-header {
@@ -116,177 +126,135 @@
     }
 
     .team-name {
-      font-size: 0.85rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      color: var(--indigo);
+    }
+
+    .team-score {
+      font-size: 0.95rem;
       color: var(--muted);
     }
 
-    .score {
-      font-size: 1.7rem;
+    .team-score strong {
+      color: var(--text);
       font-variant-numeric: tabular-nums;
     }
 
-    .score.max {
-      color: var(--accent);
-      text-shadow: 0 0 18px rgba(34, 197, 94, 0.7);
-    }
-
-    .points-target {
-      font-size: 0.7rem;
-      color: var(--muted);
-    }
-
-    .buttons {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      margin-top: 6px;
-    }
-
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.78rem;
-      cursor: pointer;
-      background: rgba(15, 23, 42, 0.9);
-      color: var(--text);
-      border: 1px solid rgba(148, 163, 184, 0.7);
-      transition:
-        transform 0.1s ease-out,
-        box-shadow 0.1s ease-out,
-        border-color 0.1s ease-out,
-        background 0.1s ease-out;
-    }
-
-    button span {
+    .team-score span {
       font-size: 0.8rem;
-      opacity: 0.85;
     }
 
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.7);
-      border-color: var(--accent);
-      background: rgba(22, 163, 74, 0.18);
+    .sticks {
+      background: #fdfdfd;
+      border-radius: 10px;
+      padding: 6px 8px;
+      border: 1px solid rgba(88, 153, 226, 0.4);
     }
 
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-
-    .btn-main {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      border-color: transparent;
-      color: #022c22;
-      font-weight: 600;
-    }
-
-    .btn-main:hover:not(:disabled) {
-      background: linear-gradient(135deg, #4ade80, #22c55e);
-      box-shadow:
-        0 10px 20px rgba(21, 128, 61, 0.7),
-        0 0 0 1px rgba(22, 163, 74, 0.5);
-    }
-
-    .btn-danger {
-      border-color: rgba(248, 113, 113, 0.7);
-      color: #fecaca;
-    }
-
-    .btn-danger:hover:not(:disabled) {
-      background: rgba(248, 113, 113, 0.12);
-      box-shadow: 0 8px 15px rgba(127, 29, 29, 0.7);
-    }
-
-    .controls {
-      margin-top: 12px;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .target-select {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    select {
-      background: rgba(15, 23, 42, 0.9);
-      border-radius: 999px;
-      border: 1px solid rgba(148, 163, 184, 0.8);
-      color: var(--text);
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      cursor: pointer;
-    }
-
-    .history {
-      margin-top: 14px;
-      border-radius: 12px;
-      background: rgba(15, 23, 42, 0.8);
-      border: 1px dashed rgba(148, 163, 184, 0.6);
-      padding: 10px;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-
-    .history-title {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .history-list {
-      list-style: none;
-      font-size: 0.75rem;
+    .sticks-rows {
       display: flex;
       flex-direction: column;
+      gap: 4px;
+    }
+
+    .sticks-row {
+      display: grid;
+      grid-template-columns: repeat(15, minmax(0, 1fr));
       gap: 2px;
     }
 
-    .history-list li span {
+    .sticks-row:first-child {
+      padding-bottom: 4px;
+      border-bottom: 2px solid rgba(51, 92, 129, 0.3); /* línea a los 15 */
+    }
+
+    .stick {
+      height: 14px;
+      border-radius: 999px;
+      background: rgba(51, 92, 129, 0.14); /* vacío */
+    }
+
+    .stick.active {
+      background: linear-gradient(180deg, var(--pink), #e25555); /* fósforo lleno */
+    }
+
+    .score-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      color: var(--indigo);
+      border: 1px solid rgba(51, 92, 129, 0.45);
+      transition:
+        transform 0.1s ease-out,
+        box-shadow 0.1s ease-out,
+        background 0.1s ease-out,
+        border-color 0.1s ease-out;
+    }
+
+    .score-btn.plus {
+      background: linear-gradient(135deg, var(--sky), #7fb4f0);
+      color: #ffffff;
+      border-color: transparent;
+    }
+
+    .score-btn.minus {
+      background: #ffffff;
+    }
+
+    .score-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    }
+
+    .score-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.8rem;
       color: var(--muted);
     }
 
-    .winner-banner {
-      margin-top: 8px;
-      font-size: 0.8rem;
-      padding: 6px 10px;
-      border-radius: 10px;
-      background: rgba(34, 197, 94, 0.18);
-      border: 1px solid rgba(34, 197, 94, 0.7);
-      color: var(--accent);
-      display: none;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .winner-banner.show {
-      display: inline-flex;
-    }
-
-    .winner-dot {
-      width: 8px;
-      height: 8px;
+    .controls button {
       border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
+      border: 1px solid rgba(51, 92, 129, 0.4);
+      background: #ffffff;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--indigo);
+    }
+
+    .controls button:hover {
+      background: #f1f5f9;
+    }
+
+    .info {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
     }
 
     footer {
-      margin-top: 12px;
-      font-size: 0.7rem;
+      margin-top: 10px;
+      font-size: 0.72rem;
       color: var(--muted);
       display: flex;
       justify-content: space-between;
@@ -294,17 +262,17 @@
       flex-wrap: wrap;
     }
 
-    @media (max-width: 480px) {
+    @media (max-width: 560px) {
+      body {
+        padding: 16px;
+      }
+
       .app {
-        padding: 18px 14px;
+        padding: 16px 14px 12px;
       }
 
-      .teams {
-        grid-template-columns: 1fr;
-      }
-
-      .scoreboard {
-        padding: 12px;
+      .team-row {
+        grid-template-columns: auto 1fr auto;
       }
     }
   </style>
@@ -314,146 +282,121 @@
     <header>
       <div class="title-group">
         <h1>Anotador de Truco</h1>
-        <span>Sumá puntos sin discutir el tanteador.</span>
+        <span>Sumá palitos hasta 30 tantos.</span>
       </div>
       <a href="index.html" class="back-link">
-        ← Volver
+        ← Inicio
       </a>
     </header>
 
+    <p class="subtitle">
+      Cada fósforo vale 1 tanto. A los 15 hay cambio de línea y la partida termina en 30.
+    </p>
+
     <section class="scoreboard">
       <div class="teams">
-        <div class="team" data-team="A">
-          <div class="team-header">
-            <span class="team-name">Nosotros</span>
-            <span class="score" id="scoreA">0</span>
+        <!-- NOSOTROS -->
+        <div class="team-row" data-team="A">
+          <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
+
+          <div class="team-info">
+            <div class="team-header">
+              <span class="team-name">Nosotros</span>
+              <span class="team-score">
+                <strong id="scoreA">0</strong><span>/30</span>
+              </span>
+            </div>
+            <div class="sticks">
+              <div class="sticks-rows" id="sticksA">
+                <!-- se completan por JS -->
+              </div>
+            </div>
           </div>
-          <span class="points-target" id="targetLabelA">A&nbsp;30&nbsp;tantos</span>
-          <div class="buttons">
-            <button class="btn-main" onclick="addPoints('A', 1)">+1</button>
-            <button onclick="addPoints('A', 2)">+2</button>
-            <button onclick="addPoints('A', 3)">+3</button>
-            <button onclick="addPoints('A', -1)"><span>-1 (corregir)</span></button>
-          </div>
+
+          <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
         </div>
 
-        <div class="team" data-team="B">
-          <div class="team-header">
-            <span class="team-name">Ellos</span>
-            <span class="score" id="scoreB">0</span>
+        <!-- ELLOS -->
+        <div class="team-row" data-team="B">
+          <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
+
+          <div class="team-info">
+            <div class="team-header">
+              <span class="team-name">Ellos</span>
+              <span class="team-score">
+                <strong id="scoreB">0</strong><span>/30</span>
+              </span>
+            </div>
+            <div class="sticks">
+              <div class="sticks-rows" id="sticksB">
+                <!-- se completan por JS -->
+              </div>
+            </div>
           </div>
-          <span class="points-target" id="targetLabelB">A&nbsp;30&nbsp;tantos</span>
-          <div class="buttons">
-            <button class="btn-main" onclick="addPoints('B', 1)">+1</button>
-            <button onclick="addPoints('B', 2)">+2</button>
-            <button onclick="addPoints('B', 3)">+3</button>
-            <button onclick="addPoints('B', -1)"><span>-1 (corregir)</span></button>
-          </div>
+
+          <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
         </div>
       </div>
 
       <div class="controls">
-        <div class="target-select">
-          <span>Partida a:</span>
-          <select id="targetSelect" onchange="changeTarget()">
-            <option value="15">15 tantos</option>
-            <option value="30" selected>30 tantos</option>
-            <option value="40">40 tantos</option>
-          </select>
-        </div>
-        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-          <button class="btn-danger" onclick="undoLast()">Deshacer última</button>
-          <button class="btn-danger" onclick="resetScores()">Reiniciar</button>
+        <span>Partida fija a 30 tantos.</span>
+        <div>
+          <button onclick="resetScores()">Reiniciar</button>
         </div>
       </div>
 
-      <div class="winner-banner" id="winnerBanner">
-        <span class="winner-dot"></span>
-        <span id="winnerText"></span>
-      </div>
-
-      <div class="history">
-        <div class="history-title">
-          <span>Historial de manos</span>
-          <button style="font-size: 0.7rem; padding: 2px 8px;" onclick="clearHistory()">Limpiar</button>
-        </div>
-        <ul class="history-list" id="historyList"></ul>
-      </div>
+      <p class="info">
+        Tip: si te pasaste al anotar, usá el botón de menos para sacar palitos.
+      </p>
     </section>
 
     <footer>
       <span>Carpincho Games · Truco</span>
-      <span>Tip: usalo desde el celu en la mesa.</span>
+      <span>Hecho para usarse desde el celu.</span>
     </footer>
   </main>
 
   <script>
+    const MAX_POINTS = 30;
     let scoreA = 0;
     let scoreB = 0;
-    let target = 30;
-    const history = [];
 
-    function updateUI() {
-      const scoreAEl = document.getElementById("scoreA");
-      const scoreBEl = document.getElementById("scoreB");
-      const winnerBanner = document.getElementById("winnerBanner");
-      const winnerText = document.getElementById("winnerText");
-      const historyList = document.getElementById("historyList");
-      const targetLabelA = document.getElementById("targetLabelA");
-      const targetLabelB = document.getElementById("targetLabelB");
-
-      scoreAEl.textContent = scoreA;
-      scoreBEl.textContent = scoreB;
-
-      scoreAEl.classList.toggle("max", scoreA >= target);
-      scoreBEl.classList.toggle("max", scoreB >= target);
-
-      targetLabelA.textContent = `A ${target} tantos`;
-      targetLabelB.textContent = `A ${target} tantos`;
-
-      // ganador
-      const winner =
-        scoreA >= target
-          ? "Nosotros"
-          : scoreB >= target
-          ? "Ellos"
-          : null;
-
-      if (winner) {
-        winnerBanner.classList.add("show");
-        winnerText.textContent = `${winner} llegaron al score 🎉`;
-      } else {
-        winnerBanner.classList.remove("show");
-        winnerText.textContent = "";
+    function createSticks(containerId) {
+      const container = document.getElementById(containerId);
+      // Dos filas de 15
+      for (let row = 0; row < 2; row++) {
+        const rowDiv = document.createElement("div");
+        rowDiv.className = "sticks-row";
+        for (let i = 0; i < 15; i++) {
+          const stick = document.createElement("div");
+          stick.className = "stick";
+          rowDiv.appendChild(stick);
+        }
+        container.appendChild(rowDiv);
       }
-
-      // historial
-      historyList.innerHTML = "";
-      history
-        .slice()
-        .reverse()
-        .forEach((entry, index) => {
-          const li = document.createElement("li");
-          li.textContent = `${entry.team === "A" ? "Nosotros" : "Ellos"}: ${
-            entry.delta > 0 ? "+" : ""
-          }${entry.delta} (→ ${entry.newScore})`;
-          historyList.appendChild(li);
-        });
     }
 
-    function addPoints(team, delta) {
-      if (delta === 0) return;
+    function updateSticks(team, value) {
+      const containerId = team === "A" ? "sticksA" : "sticksB";
+      const sticks = document.querySelectorAll(`#${containerId} .stick`);
+      sticks.forEach((stick, index) => {
+        stick.classList.toggle("active", index < value);
+      });
+    }
 
+    function updateUI() {
+      document.getElementById("scoreA").textContent = scoreA;
+      document.getElementById("scoreB").textContent = scoreB;
+      updateSticks("A", scoreA);
+      updateSticks("B", scoreB);
+    }
+
+    function changeScore(team, delta) {
       if (team === "A") {
-        const newScore = Math.max(0, scoreA + delta);
-        history.push({ team: "A", delta, newScore });
-        scoreA = newScore;
+        scoreA = Math.max(0, Math.min(MAX_POINTS, scoreA + delta));
       } else {
-        const newScore = Math.max(0, scoreB + delta);
-        history.push({ team: "B", delta, newScore });
-        scoreB = newScore;
+        scoreB = Math.max(0, Math.min(MAX_POINTS, scoreB + delta));
       }
-
       updateUI();
     }
 
@@ -463,31 +406,9 @@
       updateUI();
     }
 
-    function undoLast() {
-      const last = history.pop();
-      if (!last) return;
-
-      if (last.team === "A") {
-        scoreA = history.filter((h) => h.team === "A").pop()?.newScore ?? 0;
-      } else {
-        scoreB = history.filter((h) => h.team === "B").pop()?.newScore ?? 0;
-      }
-
-      updateUI();
-    }
-
-    function clearHistory() {
-      history.length = 0;
-      updateUI();
-    }
-
-    function changeTarget() {
-      const select = document.getElementById("targetSelect");
-      target = parseInt(select.value, 10) || 30;
-      updateUI();
-    }
-
-    // init
+    // Inicialización
+    createSticks("sticksA");
+    createSticks("sticksB");
     updateUI();
   </script>
 </body>
