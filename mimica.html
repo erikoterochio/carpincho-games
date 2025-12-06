@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dígalo con Mímica · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --pink: #FF6B6B;
+      --blue: #335C81;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .back-link {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--indigo);
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 92, 129, 0.3);
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      white-space: nowrap;
+    }
+
+    .back-link:hover {
+      background: #f9f9f9;
+      border-color: var(--blue);
+    }
+
+    .content {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .intro-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .btn-primary {
+      background: var(--pink);
+      color: #ffffff;
+      border: 2px solid var(--pink);
+    }
+
+    .btn-primary:hover {
+      background: #ff5252;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--indigo);
+      border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: #f9f9f9;
+      border-color: var(--blue);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--pink);
+    }
+
+    .inline-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .movie-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 40px 24px;
+      text-align: center;
+      border: 4px solid var(--pink);
+      margin: 20px 0;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);
+    }
+
+    .movie-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--indigo);
+      line-height: 1.3;
+      margin: 16px 0;
+    }
+
+    .timer {
+      font-size: 4rem;
+      font-weight: 700;
+      text-align: center;
+      color: var(--pink);
+      margin: 24px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer.warning {
+      color: #f59e0b;
+      animation: pulse 1s infinite;
+    }
+
+    .timer.critical {
+      color: #ef4444;
+      animation: pulse 0.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .scoreboard {
+      margin: 20px 0;
+    }
+
+    .team-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px;
+      background: #ffffff;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .team-score.active {
+      border-color: var(--pink);
+      background: #fff1f2;
+    }
+
+    .team-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .team-points {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--pink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-controls {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .score-btn {
+      flex: 1;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      font-size: 1.2rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .score-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .score-btn.plus {
+      background: var(--pink);
+      color: #ffffff;
+      border-color: var(--pink);
+    }
+
+    .info-text {
+      font-size: 1.15rem;
+      line-height: 1.6;
+      text-align: center;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .info-text.large {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .winner-box {
+      background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+      border-radius: 16px;
+      padding: 32px 24px;
+      text-align: center;
+      border: 4px solid var(--pink);
+      margin: 20px 0;
+    }
+
+    .winner-box h2 {
+      font-size: 1.8rem;
+      color: var(--pink);
+      margin-bottom: 16px;
+    }
+
+    .winner-box .team-name {
+      font-size: 2.2rem;
+      color: var(--indigo);
+    }
+
+    footer {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        padding: 12px 10px 10px;
+      }
+
+      .movie-title {
+        font-size: 1.6rem;
+      }
+
+      .timer {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <!-- PANTALLA 1: INICIO -->
+    <div class="screen active" id="screen-home">
+      <header>
+        <div class="title-group">
+          <h1>Dígalo con Mímica</h1>
+        </div>
+        <a href="index.html" class="back-link">← Inicio</a>
+      </header>
+
+      <div class="content">
+        <p class="intro-text">
+          Actuá películas y series sin hablar.<br>
+          ¡Que tu equipo adivine antes de que se acabe el tiempo!
+        </p>
+        
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showScreen('screen-setup')">Jugar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 2: CONFIGURACIÓN -->
+    <div class="screen" id="screen-setup">
+      <header>
+        <div class="title-group">
+          <h1>Configurar Juego</h1>
+        </div>
+        <button class="back-link" onclick="showScreen('screen-home')" style="border:none;background:transparent;cursor:pointer;">← Volver</button>
+      </header>
+
+      <div class="content">
+        <form id="setup-form" onsubmit="startGame(event)">
+          <div class="inline-group">
+            <div class="form-group">
+              <label>Equipos</label>
+              <select id="team-count">
+                <option value="2" selected>2 equipos</option>
+                <option value="3">3 equipos</option>
+                <option value="4">4 equipos</option>
+                <option value="5">5 equipos</option>
+                <option value="6">6 equipos</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Tiempo por turno</label>
+              <select id="time-limit">
+                <option value="30">30 seg</option>
+                <option value="45">45 seg</option>
+                <option value="60" selected>1 min</option>
+                <option value="90">1:30 min</option>
+                <option value="120">2 min</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Modo de juego</label>
+            <select id="game-mode" onchange="toggleGameMode()">
+              <option value="rounds" selected>Por rondas</option>
+              <option value="points">Hasta X puntos</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="rounds-group">
+            <label>Número de rondas</label>
+            <input type="number" id="rounds-count" min="1" max="20" value="5" />
+          </div>
+
+          <div class="form-group" id="points-group" style="display:none;">
+            <label>Puntos para ganar</label>
+            <input type="number" id="points-goal" min="1" max="50" value="15" />
+          </div>
+
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Empezar Juego</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- PANTALLA 3: PREPARAR TURNO -->
+    <div class="screen" id="screen-prepare">
+      <header>
+        <div class="title-group">
+          <h1>Turno del <span id="current-team-name">Equipo 1</span></h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="info-text">
+          <span id="prepare-info">Ronda 1 de 5</span>
+        </p>
+        <p class="info-text large">¿Listos?</p>
+        <p class="intro-text">
+          Solo la persona que va a actuar debe tocar "Mostrar película".<br>
+          Luego actuá sin hablar mientras tu equipo intenta adivinar.
+        </p>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showMovie()">Mostrar película</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 4: MOSTRAR PELÍCULA -->
+    <div class="screen" id="screen-movie">
+      <header>
+        <div class="title-group">
+          <h1>Tu película es...</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="movie-card">
+          <div class="movie-title" id="movie-title">Título de Película</div>
+        </div>
+
+        <p class="intro-text">Memorizá el título y empezá a actuar cuando toques "Iniciar"</p>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="startTimer()">Iniciar Cronómetro</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 5: JUGANDO (CON CRONÓMETRO) -->
+    <div class="screen" id="screen-playing">
+      <header>
+        <div class="title-group">
+          <h1 id="playing-team-name">Equipo 1</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="timer" id="timer">01:00</div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="stopTimer(true)">¡Adivinaron!</button>
+          <button class="btn btn-secondary" onclick="stopTimer(false)">No adivinaron</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 6: MARCADOR -->
+    <div class="screen" id="screen-scoreboard">
+      <header>
+        <div class="title-group">
+          <h1>Marcador</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="info-text" id="score-info">Ronda 1 de 5</p>
+
+        <div class="scoreboard" id="scoreboard-list">
+          <!-- Los equipos se agregan dinámicamente -->
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="nextTurn()">Siguiente Turno</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 7: GANADOR -->
+    <div class="screen" id="screen-winner">
+      <header>
+        <div class="title-group">
+          <h1>¡Fin del Juego!</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="winner-box">
+          <h2>🏆 Ganador</h2>
+          <div class="team-name" id="winner-name">Equipo 1</div>
+          <p style="margin-top:16px;font-size:1.2rem;color:var(--muted);">
+            <span id="winner-points">10</span> puntos
+          </p>
+        </div>
+
+        <div class="scoreboard" id="final-scoreboard">
+          <!-- Marcador final -->
+        </div>
+
+        <div class="btn-group" style="margin-top:20px;">
+          <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+          <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al inicio</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span>Carpincho Games · Dígalo con Mímica</span>
+    </footer>
+  </main>
+
+  <script>
+    // Estado del juego
+    const gameState = {
+      teamCount: 2,
+      teams: [],
+      timeLimit: 60,
+      gameMode: 'rounds',
+      roundsCount: 5,
+      pointsGoal: 15,
+      currentRound: 1,
+      currentTeam: 0,
+      currentMovie: '',
+      usedMovies: []
+    };
+
+    // Base de datos de películas y series
+    const movies = [
+      // Películas argentinas
+      'El secreto de sus ojos', 'Relatos salvajes', 'Nueve Reinas', 'El hijo de la novia', 'La historia oficial',
+      'Camila', 'La Patagonia rebelde', 'Tiempo de valientes', 'Un cuento chino', 'Esperando la carroza',
+      'El clan', 'La noche de los lápices', 'La tregua', 'Plata dulce', 'Pizza, birra, faso', 'Metegol', 'Manuelita'
+      
+      // Series argentinas
+      'Casados con hijos', 'Los Simuladores', 'Okupas', 'El Marginal', 'Clave de sol', 'El sodero de mi vida', 'El puntero', 'Envidiosa', 'Un papá genial',
+      'El hijo de la novia', 'Los mios, los tuyos y los nuestros', 'Cebollitas', 
+      
+      // Películas clásicas internacionales (1970-1989)
+      'Star Wars', 'El Padrino', 'Rocky', 'Tiburón', 'Alien', 'Terminator', 'E.T.', 
+      'Volver al futuro', 'Los Cazafantasmas', 'Indiana Jones', 'Top Gun', 'Rambo', 'Cuidado bebé suelto',
+      'La guerra de las galaxias', 'Superman', 'Batman', 'Scarface', 'Amadeus', 'El exorcista', 'La historia sin fin',
+      
+      // Películas 1990s
+      'Titanic', 'Matrix', 'Forrest Gump', 'El rey león', 'Toy Story', 'Jurassic Park', 'Cementerio de animales', 
+      'Tiempos violentos', 'El silencio de los inocentes', 'Jumanji', 'La máscara', 'El quinto elemento',
+      'Duro de matar', 'Máxima velocidad', 'Misión imposible', 'Día de la independencia', 'Godzilla',
+      'Gladiador', 'El sexto sentido', 'Belleza americana', 'Belleza americana', 'Un ratoncito duro de cazar',
+      
+      // Películas 2000s
+      'El señor de los anillos', 'Harry Potter', 'Piratas del Caribe', 'Spider-Man', 'Hombres de negro', 
+      'Shrek', 'Buscando a Nemo', 'Los increíbles', 'Batman inicia', 'El caballero oscuro', 'El señor de los anillos: las dos torres',
+      'El increíble Hulk', 'Arriba en el cielo', 'La casa de los gritos', 
+      'Los vengadores', 'El origen', 'Interestelar', 'Django sin cadenas', 'El amanecer de los muertos', 
+      
+      // Películas 2010s-2020s
+      'Frozen', 'Intensa-mente', 'Coco', 'Toy Story 4', 'Joker', 'Parásitos', 'Godzilla', 'King kong', 'Náufrago', 
+      '1917', 'Mad Max Furia en el camino', 'La purga', 'Realmente amor', 'Cuestion de tiempo', 'La terminal',
+      'El gran pez', 'Pantera negra', 'La guerra de los mundos', 'Coco', 'Encanto', 'La isla', 'Atrápame si puedes', 
+      
+      // Más películas variadas
+      'La vida es bella', 'El pianista', 'Gran Torino', 'El club de la pelea', 'Invicto', 'Cisne negro',
+      'El discurso del rey', 'La teoría del todo', 'El código enigma', 'Sueños de libertad', 
+      'Steve Jobs', 'La red social', 'El lobo de Wall Street', 'Los chicos malos', 'Rápidos y furiosos', 
+      'Día de la independencia', 'Contacto', 'Gravity', 'Marte',
+      'Duna', 'La llegada', 'Búsqueda implacable', 'Contactos cercanos del tercer tipo', 'Desapareció una noche',
+      'La sirenita', 'El gran truco', 'El ilusionista', 'El alquimista', 'El joven manos de tijera', 'Calabozos y dragones', 
+    ];
+
+    let timerInterval = null;
+    let timeLeft = 0;
+
+    // Alternar modo de juego
+    function toggleGameMode() {
+      const mode = document.getElementById('game-mode').value;
+      document.getElementById('rounds-group').style.display = mode === 'rounds' ? 'block' : 'none';
+      document.getElementById('points-group').style.display = mode === 'points' ? 'block' : 'none';
+    }
+
+    // Navegación entre pantallas
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // Iniciar juego
+    function startGame(event) {
+      event.preventDefault();
+      
+      gameState.teamCount = parseInt(document.getElementById('team-count').value);
+      gameState.timeLimit = parseInt(document.getElementById('time-limit').value);
+      gameState.gameMode = document.getElementById('game-mode').value;
+      gameState.roundsCount = parseInt(document.getElementById('rounds-count').value);
+      gameState.pointsGoal = parseInt(document.getElementById('points-goal').value);
+      
+      // Inicializar equipos
+      gameState.teams = [];
+      for (let i = 0; i < gameState.teamCount; i++) {
+        gameState.teams.push({
+          name: `Equipo ${i + 1}`,
+          points: 0
+        });
+      }
+      
+      gameState.currentRound = 1;
+      gameState.currentTeam = 0;
+      gameState.usedMovies = [];
+      
+      showPrepareTurn();
+    }
+
+    // Mostrar pantalla de preparación
+    function showPrepareTurn() {
+      document.getElementById('current-team-name').textContent = gameState.teams[gameState.currentTeam].name;
+      
+      if (gameState.gameMode === 'rounds') {
+        const totalTurns = gameState.roundsCount * gameState.teamCount;
+        const currentTurn = (gameState.currentRound - 1) * gameState.teamCount + gameState.currentTeam + 1;
+        document.getElementById('prepare-info').textContent = `Turno ${currentTurn} de ${totalTurns}`;
+      } else {
+        document.getElementById('prepare-info').textContent = `Jugando hasta ${gameState.pointsGoal} puntos`;
+      }
+      
+      showScreen('screen-prepare');
+    }
+
+    // Elegir película aleatoria
+    function getRandomMovie() {
+      const availableMovies = movies.filter(m => !gameState.usedMovies.includes(m));
+      
+      if (availableMovies.length === 0) {
+        gameState.usedMovies = [];
+        return movies[Math.floor(Math.random() * movies.length)];
+      }
+      
+      const movie = availableMovies[Math.floor(Math.random() * availableMovies.length)];
+      gameState.usedMovies.push(movie);
+      return movie;
+    }
+
+    // Mostrar película
+    function showMovie() {
+      gameState.currentMovie = getRandomMovie();
+      document.getElementById('movie-title').textContent = gameState.currentMovie;
+      showScreen('screen-movie');
+    }
+
+    // Iniciar cronómetro
+    function startTimer() {
+      timeLeft = gameState.timeLimit;
+      updateTimerDisplay();
+      document.getElementById('playing-team-name').textContent = gameState.teams[gameState.currentTeam].name;
+      showScreen('screen-playing');
+      
+      if (timerInterval) clearInterval(timerInterval);
+      
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        
+        if (timeLeft <= 0) {
+          clearInterval(timerInterval);
+          stopTimer(false);
+        }
+      }, 1000);
+    }
+
+    // Actualizar visualización del cronómetro
+    function updateTimerDisplay() {
+      const timerEl = document.getElementById('timer');
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      
+      // Cambiar color según tiempo restante
+      timerEl.className = 'timer';
+      if (timeLeft <= 10 && timeLeft > 5) {
+        timerEl.classList.add('warning');
+      } else if (timeLeft <= 5) {
+        timerEl.classList.add('critical');
+      }
+    }
+
+    // Detener cronómetro
+    function stopTimer(correct) {
+      if (timerInterval) clearInterval(timerInterval);
+      
+      if (correct) {
+        gameState.teams[gameState.currentTeam].points++;
+      }
+      
+      showScoreboard();
+    }
+
+    // Mostrar marcador
+    function showScoreboard() {
+      if (gameState.gameMode === 'rounds') {
+        const totalTurns = gameState.roundsCount * gameState.teamCount;
+        const currentTurn = (gameState.currentRound - 1) * gameState.teamCount + gameState.currentTeam + 1;
+        document.getElementById('score-info').textContent = `Turno ${currentTurn} de ${totalTurns}`;
+      } else {
+        document.getElementById('score-info').textContent = `Jugando hasta ${gameState.pointsGoal} puntos`;
+      }
+      
+      const scoreboard = document.getElementById('scoreboard-list');
+      scoreboard.innerHTML = '';
+      
+      gameState.teams.forEach((team, index) => {
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-score';
+        if (index === gameState.currentTeam) {
+          teamDiv.classList.add('active');
+        }
+        teamDiv.innerHTML = `
+          <span class="team-name">${team.name}</span>
+          <span class="team-points">${team.points}</span>
+        `;
+        scoreboard.appendChild(teamDiv);
+      });
+      
+      showScreen('screen-scoreboard');
+    }
+
+    // Siguiente turno
+    function nextTurn() {
+      // Verificar si alguien ganó (modo puntos)
+      if (gameState.gameMode === 'points') {
+        const winner = gameState.teams.find(t => t.points >= gameState.pointsGoal);
+        if (winner) {
+          showWinner();
+          return;
+        }
+      }
+      
+      gameState.currentTeam++;
+      
+      if (gameState.currentTeam >= gameState.teamCount) {
+        gameState.currentTeam = 0;
+        gameState.currentRound++;
+        
+        // Verificar si terminaron las rondas (modo rondas)
+        if (gameState.gameMode === 'rounds' && gameState.currentRound > gameState.roundsCount) {
+          showWinner();
+          return;
+        }
+      }
+      
+      showPrepareTurn();
+    }
+
+    // Mostrar ganador
+    function showWinner() {
+      // Encontrar equipo con más puntos
+      let winnerTeam = gameState.teams[0];
+      gameState.teams.forEach(team => {
+        if (team.points > winnerTeam.points) {
+          winnerTeam = team;
+        }
+      });
+      
+      document.getElementById('winner-name').textContent = winnerTeam.name;
+      document.getElementById('winner-points').textContent = winnerTeam.points;
+      
+      // Mostrar marcador final ordenado
+      const finalScoreboard = document.getElementById('final-scoreboard');
+      finalScoreboard.innerHTML = '';
+      
+      const sortedTeams = [...gameState.teams].sort((a, b) => b.points - a.points);
+      sortedTeams.forEach(team => {
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-score';
+        teamDiv.innerHTML = `
+          <span class="team-name">${team.name}</span>
+          <span class="team-points">${team.points}</span>
+        `;
+        finalScoreboard.appendChild(teamDiv);
+      });
+      
+      showScreen('screen-winner');
+    }
+
+    // Jugar de nuevo
+    function playAgain() {
+      showScreen('screen-setup');
+    }
+
+    // Inicialización
+    document.addEventListener('DOMContentLoaded', () => {
+      toggleGameMode();
+    });
+  </script>
+</body>
+</html>
