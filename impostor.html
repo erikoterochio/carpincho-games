@@ -403,6 +403,13 @@
       color: var(--pink);
     }
 
+    .round-indicator {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+
     footer {
       margin-top: 12px;
       font-size: 0.75rem;
@@ -461,7 +468,7 @@
           <ul class="step-list">
             <li>
               <span class="step-number">1.</span>
-              <span>Configuran jugadores, impostores y categoría de palabra.</span>
+              <span>Configuran jugadores, impostores, categoría y número de rondas.</span>
             </li>
             <li>
               <span class="step-number">2.</span>
@@ -469,7 +476,7 @@
             </li>
             <li>
               <span class="step-number">3.</span>
-              <span>Todos dan pistas en orden (pueden ser varias vueltas).</span>
+              <span>Todos dan una pista en voz alta, en orden.</span>
             </li>
             <li>
               <span class="step-number">4.</span>
@@ -481,7 +488,7 @@
             </li>
             <li>
               <span class="step-number">6.</span>
-              <span>Si quedan impostores y vueltas, se repite. Si no, termina la ronda.</span>
+              <span>El juego termina cuando eliminan a todos los impostores o se acaban las rondas configuradas.</span>
             </li>
           </ul>
         </div>
@@ -551,11 +558,13 @@
 
           <div class="inline-group">
             <div class="form-group">
-              <label>Vueltas de pistas</label>
-              <select id="clue-rounds">
-                <option value="1" selected>1 vuelta</option>
-                <option value="2">2 vueltas</option>
-                <option value="3">3 vueltas</option>
+              <label>Rondas máximas</label>
+              <select id="max-rounds">
+                <option value="1">1 ronda</option>
+                <option value="2">2 rondas</option>
+                <option value="3" selected>3 rondas</option>
+                <option value="4">4 rondas</option>
+                <option value="5">5 rondas</option>
               </select>
             </div>
 
@@ -586,6 +595,7 @@
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-pass"></p>
         <p class="info-text large" id="pass-phone-text">Pasá el celular a [Jugador]</p>
 
         <div class="btn-group">
@@ -622,6 +632,7 @@
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-clues"></p>
         <p class="info-text">Todos recibieron su palabra (o descubrieron que son impostores).</p>
         <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> dando una pista en voz alta.</p>
         <p class="info-text" style="font-size:0.95rem;color:var(--muted);">El resto continúa en orden hacia la derecha.</p>
@@ -636,11 +647,12 @@
     <div class="screen" id="screen-clues">
       <header>
         <div class="title-group">
-          <h1>Pistas - Vuelta <span id="current-clue-round">1</span>/<span id="total-clue-rounds">1</span></h1>
+          <h1>Dar Pistas</h1>
         </div>
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-tracking"></p>
         <p class="info-text">Turno de: <strong id="current-clue-player" style="color:var(--sky);">Jugador</strong></p>
         
         <div class="player-list" id="clue-player-list"></div>
@@ -660,6 +672,7 @@
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-discussion"></p>
         <p class="info-text">Discutan quién creen que es el impostor</p>
 
         <div class="timer" id="vote-timer">01:00</div>
@@ -679,6 +692,7 @@
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-vote"></p>
         <p class="info-text">¿Quién fue el elegido por el grupo?</p>
 
         <div class="vote-grid" id="vote-buttons"></div>
@@ -694,6 +708,7 @@
       </header>
 
       <div class="content">
+        <p class="round-indicator" id="round-indicator-result"></p>
         <div class="result-box" id="result-box">
           <h3>Eliminado:</h3>
           <div class="big-text" id="eliminated-player-name">Jugador</div>
@@ -761,11 +776,11 @@
       roles: [],
       impostorIndexes: [],
       currentPlayerIndex: 0,
-      clueRounds: 1,
-      currentClueRound: 1,
-      currentClueIndex: 0,
+      maxRounds: 3,
+      currentRound: 0,
       voteTime: 60,
-      firstPlayerIndex: 0
+      firstPlayerIndex: 0,
+      initialFirstPlayer: 0
     };
 
     // Diccionario de palabras
@@ -787,13 +802,24 @@
       document.getElementById(screenId).classList.add('active');
     }
 
+    // Actualizar indicadores de ronda
+    function updateRoundIndicators() {
+      const text = `Ronda ${gameState.currentRound} de ${gameState.maxRounds}`;
+      document.getElementById('round-indicator-pass').textContent = text;
+      document.getElementById('round-indicator-clues').textContent = text;
+      document.getElementById('round-indicator-tracking').textContent = text;
+      document.getElementById('round-indicator-discussion').textContent = text;
+      document.getElementById('round-indicator-vote').textContent = text;
+      document.getElementById('round-indicator-result').textContent = text;
+    }
+
     // Guardar configuración
     function saveConfig() {
       const config = {
         playerCount: document.getElementById('player-count').value,
         impostorCount: document.getElementById('impostor-count').value,
         wordCategory: document.getElementById('word-category').value,
-        clueRounds: document.getElementById('clue-rounds').value,
+        maxRounds: document.getElementById('max-rounds').value,
         voteTime: document.getElementById('vote-time').value,
         timestamp: Date.now()
       };
@@ -815,7 +841,7 @@
         document.getElementById('player-count').value = config.playerCount;
         document.getElementById('impostor-count').value = config.impostorCount;
         document.getElementById('word-category').value = config.wordCategory;
-        document.getElementById('clue-rounds').value = config.clueRounds;
+        document.getElementById('max-rounds').value = config.maxRounds;
         document.getElementById('vote-time').value = config.voteTime;
         updatePlayerInputs();
       } catch (e) {
@@ -823,10 +849,18 @@
       }
     }
 
-    // Actualizar inputs de jugadores
+    // Actualizar inputs de jugadores conservando valores existentes
     function updatePlayerInputs() {
       const count = parseInt(document.getElementById('player-count').value);
       const container = document.getElementById('player-names-container');
+      
+      // Guardar valores existentes
+      const existingValues = [];
+      const existingInputs = container.querySelectorAll('input');
+      existingInputs.forEach(input => {
+        existingValues.push(input.value);
+      });
+      
       container.innerHTML = '';
       
       for (let i = 0; i < count; i++) {
@@ -834,6 +868,10 @@
         input.type = 'text';
         input.placeholder = `Jugador ${i + 1}`;
         input.id = `player-${i}`;
+        // Restaurar valor si existía
+        if (i < existingValues.length) {
+          input.value = existingValues[i];
+        }
         container.appendChild(input);
       }
     }
@@ -852,12 +890,23 @@
       
       gameState.impostorCount = parseInt(document.getElementById('impostor-count').value);
       gameState.wordCategory = document.getElementById('word-category').value;
-      gameState.clueRounds = parseInt(document.getElementById('clue-rounds').value);
+      gameState.maxRounds = parseInt(document.getElementById('max-rounds').value);
       gameState.voteTime = parseInt(document.getElementById('vote-time').value);
       gameState.eliminated = [];
-      gameState.firstPlayerIndex = 0;
+      gameState.currentRound = 0;
+      
+      // Elegir primer jugador aleatorio
+      gameState.initialFirstPlayer = Math.floor(Math.random() * gameState.players.length);
+      gameState.firstPlayerIndex = gameState.initialFirstPlayer;
       
       saveConfig();
+      startNewRound();
+    }
+
+    // Iniciar nueva ronda
+    function startNewRound() {
+      gameState.currentRound++;
+      updateRoundIndicators();
       assignRoles();
       gameState.currentPlayerIndex = 0;
       showPassPhoneScreen();
@@ -933,21 +982,26 @@
 
     // Mostrar pantalla de inicio de pistas
     function showStartCluesScreen() {
-      const activePlayers = gameState.players.filter((p, i) => !gameState.eliminated.includes(i));
-      let firstIndex = gameState.firstPlayerIndex;
-      
-      while (gameState.eliminated.includes(firstIndex)) {
-        firstIndex = (firstIndex + 1) % gameState.players.length;
+      // Determinar quién empieza
+      if (!gameState.eliminated.includes(gameState.initialFirstPlayer)) {
+        // Si el primer jugador original sigue vivo, arranca él
+        gameState.firstPlayerIndex = gameState.initialFirstPlayer;
+      } else {
+        // Si fue eliminado, buscar el siguiente vivo
+        let nextIndex = (gameState.initialFirstPlayer + 1) % gameState.players.length;
+        while (gameState.eliminated.includes(nextIndex)) {
+          nextIndex = (nextIndex + 1) % gameState.players.length;
+        }
+        gameState.firstPlayerIndex = nextIndex;
+        gameState.initialFirstPlayer = nextIndex; // Actualizar para próximas rondas
       }
-      gameState.firstPlayerIndex = firstIndex;
       
-      document.getElementById('first-player-name').textContent = gameState.players[firstIndex];
+      document.getElementById('first-player-name').textContent = gameState.players[gameState.firstPlayerIndex];
       showScreen('screen-start-clues');
     }
 
     // Iniciar seguimiento de pistas
     function startClueTracking() {
-      gameState.currentClueRound = 1;
       gameState.currentClueIndex = gameState.firstPlayerIndex;
       updateClueScreen();
       showScreen('screen-clues');
@@ -955,8 +1009,6 @@
 
     // Actualizar pantalla de pistas
     function updateClueScreen() {
-      document.getElementById('current-clue-round').textContent = gameState.currentClueRound;
-      document.getElementById('total-clue-rounds').textContent = gameState.clueRounds;
       document.getElementById('current-clue-player').textContent = gameState.players[gameState.currentClueIndex];
       
       const list = document.getElementById('clue-player-list');
@@ -980,19 +1032,14 @@
 
     // Siguiente pista
     function nextClue() {
+      const startIndex = gameState.currentClueIndex;
+      
       do {
         gameState.currentClueIndex = (gameState.currentClueIndex + 1) % gameState.players.length;
       } while (gameState.eliminated.includes(gameState.currentClueIndex));
       
-      const activePlayers = gameState.players.filter((p, i) => !gameState.eliminated.includes(i));
-      const activeStartIndex = gameState.players.indexOf(gameState.players.find((p, i) => !gameState.eliminated.includes(i) && i >= gameState.firstPlayerIndex)) >= 0
-        ? gameState.players.indexOf(gameState.players.find((p, i) => !gameState.eliminated.includes(i) && i >= gameState.firstPlayerIndex))
-        : gameState.players.findIndex((p, i) => !gameState.eliminated.includes(i));
-      
-      if (gameState.currentClueIndex === gameState.firstPlayerIndex && gameState.currentClueRound < gameState.clueRounds) {
-        gameState.currentClueRound++;
-        updateClueScreen();
-      } else if (gameState.currentClueIndex === gameState.firstPlayerIndex && gameState.currentClueRound >= gameState.clueRounds) {
+      // Si volvimos al jugador que empezó, termina la vuelta
+      if (gameState.currentClueIndex === gameState.firstPlayerIndex) {
         startVoteTimer();
       } else {
         updateClueScreen();
@@ -1081,61 +1128,57 @@
       const buttons = document.getElementById('result-buttons');
       buttons.innerHTML = '';
       
+      // Condición 1: Todos los impostores fueron eliminados
       if (activeImpostors.length === 0) {
         statusText.textContent = '¡Todos los impostores fueron eliminados!';
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Ver resultado final';
-        btn.onclick = endRound;
+        btn.onclick = () => endRound('citizens');
         buttons.appendChild(btn);
-      } else if (activePlayers.length <= activeImpostors.length) {
-        statusText.textContent = '¡Los impostores son mayoría!';
+      }
+      // Condición 2: Se alcanzó el número máximo de rondas
+      else if (gameState.currentRound >= gameState.maxRounds) {
+        statusText.textContent = `Se alcanzó el máximo de rondas (${gameState.maxRounds})`;
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Ver resultado final';
-        btn.onclick = endRound;
+        btn.onclick = () => endRound('impostors');
         buttons.appendChild(btn);
-      } else {
-        statusText.textContent = `Quedan ${activeImpostors.length} impostor(es) activos`;
-        
-        const activeIndex = gameState.players.findIndex((p, i) => 
-          !gameState.eliminated.includes(i) && i > gameState.firstPlayerIndex
-        );
-        
-        if (activeIndex === -1) {
-          gameState.firstPlayerIndex = gameState.players.findIndex((p, i) => !gameState.eliminated.includes(i));
-        } else {
-          gameState.firstPlayerIndex = activeIndex;
-        }
-        
+      }
+      // Condición 3: Los impostores son mayoría o igual
+      else if (activePlayers.length <= activeImpostors.length * 2) {
+        statusText.textContent = '¡Los impostores tienen ventaja!';
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
-        btn.textContent = 'Continuar jugando';
-        btn.onclick = continueRound;
+        btn.textContent = 'Ver resultado final';
+        btn.onclick = () => endRound('impostors');
+        buttons.appendChild(btn);
+      }
+      // Continuar jugando
+      else {
+        statusText.textContent = `Quedan ${activeImpostors.length} impostor(es) activos. Ronda ${gameState.currentRound + 1} de ${gameState.maxRounds}`;
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Siguiente ronda';
+        btn.onclick = startNewRound;
         buttons.appendChild(btn);
       }
       
       showScreen('screen-vote-result');
     }
 
-    // Continuar ronda
-    function continueRound() {
-      gameState.currentPlayerIndex = 0;
-      showStartCluesScreen();
-    }
-
     // Terminar ronda
-    function endRound() {
-      const activeImpostors = gameState.impostorIndexes.filter(i => !gameState.eliminated.includes(i));
+    function endRound(winner) {
       const winnerText = document.getElementById('round-winner-text');
       const summaryText = document.getElementById('round-summary');
       
-      if (activeImpostors.length === 0) {
+      if (winner === 'citizens') {
         winnerText.textContent = '¡Ganaron los Ciudadanos!';
         summaryText.textContent = 'Todos los impostores fueron eliminados.';
       } else {
         winnerText.textContent = '¡Ganaron los Impostores!';
-        summaryText.textContent = 'Los impostores lograron sobrevivir o alcanzar la mayoría.';
+        summaryText.textContent = 'Los impostores lograron sobrevivir.';
       }
       
       showScreen('screen-end-round');
@@ -1149,10 +1192,10 @@
     // Repetir todo igual
     function repeatAll() {
       gameState.eliminated = [];
-      gameState.firstPlayerIndex = 0;
-      assignRoles();
-      gameState.currentPlayerIndex = 0;
-      showPassPhoneScreen();
+      gameState.currentRound = 0;
+      gameState.initialFirstPlayer = Math.floor(Math.random() * gameState.players.length);
+      gameState.firstPlayerIndex = gameState.initialFirstPlayer;
+      startNewRound();
     }
 
     // Cambiar solo categoría
