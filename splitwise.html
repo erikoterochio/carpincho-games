@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dividir Gastos · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --green: #10b981;
+      --green-dark: #059669;
+      --blue: #335C81;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+      --red: #ef4444;
+      --pink: #D85757;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 12px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .title-group h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .back-link {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--indigo);
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(51, 92, 129, 0.3);
+      padding: 5px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #ffffff;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .back-link:hover {
+      background: #f9f9f9;
+      border-color: var(--blue);
+    }
+
+    .content {
+      background: #f8f9fa;
+      border-radius: 14px;
+      padding: 16px 14px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .intro-text {
+      font-size: 0.875rem;
+      line-height: 1.5;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .btn-primary {
+      background: var(--green);
+      color: #ffffff;
+      border: 2px solid var(--green);
+    }
+
+    .btn-primary:hover {
+      background: var(--green-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--indigo);
+      border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: #f9f9f9;
+      border-color: var(--blue);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      background: #ffffff;
+      color: var(--text);
+    }
+
+    .form-group select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231B2845' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+      appearance: none;
+    }
+
+    .form-group select:focus,
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Estilo compacto para agregar gasto */
+    .add-expense-form {
+      display: grid;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .participant-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .participant-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .participant-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--indigo);
+    }
+
+    .btn-remove {
+      padding: 6px 8px;
+      background: transparent;
+      color: var(--red);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      min-height: 32px;
+    }
+
+    .btn-remove:hover {
+      background: var(--pink);
+      border-color: var(--red);
+      transform: scale(1.05);
+    }
+
+    .btn-remove:active {
+      transform: scale(0.95);
+    }
+
+    .expense-item {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      background: #ffffff;
+      border-radius: 8px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      margin-bottom: 8px;
+    }
+
+    .expense-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .expense-amount {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .expense-payer {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .expense-description {
+      font-size: 0.85rem;
+      color: var(--text);
+      font-style: italic;
+      margin-top: 2px;
+    }
+
+    .summary-card {
+      background: #ffffff;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .summary-label {
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .summary-value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--green);
+    }
+
+    .transfer-card {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 2px solid var(--green);
+    }
+
+    .transfer-text {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .transfer-amount {
+      font-weight: 700;
+      color: var(--green);
+      font-size: 1.1rem;
+    }
+
+    .info-box {
+      background: #fffbeb;
+      border: 2px solid #fbbf24;
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 12px;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    footer {
+      margin-top: 10px;
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      .app {
+        padding: 10px;
+      }
+
+      .title-group h1 {
+        font-size: 1.15rem;
+      }
+
+      .btn {
+        padding: 11px 16px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <!-- PANTALLA 1: BIENVENIDA -->
+    <div class="screen active" id="screen-home">
+      <header>
+        <div class="title-group">
+          <h1>Dividir Gastos</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="intro-text">
+          Dividí los gastos de tu juntada de forma simple.
+          Agregá los nombres, cargá los gastos y calculá quién le debe a quién.
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showScreen('screen-participants')">Empezar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 2: AGREGAR PARTICIPANTES -->
+    <div class="screen" id="screen-participants">
+      <header>
+        <div class="title-group">
+          <h1>Participantes</h1>
+        </div>
+        <button class="back-link" onclick="showScreen('screen-home')">← Volver</button>
+      </header>
+
+      <div class="content">
+        <div class="form-group">
+          <label for="participant-name">Nombre</label>
+          <input 
+            type="text" 
+            id="participant-name" 
+            placeholder="Ej: Juan"
+            onkeypress="if(event.key==='Enter') addParticipant()"
+          />
+        </div>
+
+        <button class="btn btn-primary" onclick="addParticipant()" style="margin-bottom:16px;">
+          + Agregar
+        </button>
+
+        <div class="participant-list" id="participant-list"></div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="goToExpenses()">Continuar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 3: CARGAR GASTOS -->
+    <div class="screen" id="screen-expenses">
+      <header>
+        <div class="title-group">
+          <h1>Gastos</h1>
+        </div>
+        <button class="back-link" onclick="showScreen('screen-participants')">← Volver</button>
+      </header>
+
+      <div class="content">
+        <div class="add-expense-form">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="expense-payer">¿Quién pagó?</label>
+              <select id="expense-payer">
+                <option value="">Seleccioná...</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="expense-amount">Monto</label>
+              <input 
+                type="number" 
+                id="expense-amount" 
+                placeholder="0.00"
+                step="0.01"
+              />
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:0;">
+            <label for="expense-description">Descripción (opcional)</label>
+            <input 
+              type="text" 
+              id="expense-description" 
+              placeholder="Ej: Hielo"
+            />
+          </div>
+
+          <button class="btn btn-primary" onclick="addExpense()">+ Agregar Gasto</button>
+        </div>
+
+        <div style="margin-top:20px;" id="expenses-list"></div>
+
+        <div class="btn-group" style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="calculateSettlement()">Calcular Cuentas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 4: RESUMEN Y TRANSFERENCIAS -->
+    <div class="screen" id="screen-settlement">
+      <header>
+        <div class="title-group">
+          <h1>Ajuste de Cuentas</h1>
+        </div>
+        <button class="back-link" onclick="showScreen('screen-expenses')">← Volver</button>
+      </header>
+
+      <div class="content">
+        <div class="summary-card">
+          <div class="summary-row">
+            <span class="summary-label">Total gastado:</span>
+            <span class="summary-value" id="total-spent">$0</span>
+          </div>
+          <div class="summary-row">
+            <span class="summary-label">Por persona:</span>
+            <span class="summary-value" id="per-person">$0</span>
+          </div>
+        </div>
+
+        <h3 style="margin-bottom:10px;color:var(--indigo);font-size:1rem;">Lo que pagó cada uno:</h3>
+        <div id="individual-totals"></div>
+
+        <h3 style="margin:16px 0 10px;color:var(--indigo);font-size:1rem;">Transferencias necesarias:</h3>
+        <div class="info-box">
+          💡 Estas son las transferencias mínimas para saldar todas las cuentas
+        </div>
+        <div id="transfers-list"></div>
+
+        <div class="btn-group" style="margin-top:16px;">
+          <button class="btn btn-primary" onclick="resetApp()">Nueva Juntada</button>
+          <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al Inicio</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span>Carpincho Games · Dividir Gastos</span>
+    </footer>
+  </main>
+
+  <script>
+    // Estado de la app
+    const appState = {
+      participants: [],
+      expenses: []
+    };
+
+    // Navegación entre pantallas
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // Agregar participante
+    function addParticipant() {
+      const input = document.getElementById('participant-name');
+      const name = input.value.trim();
+      
+      if (!name) {
+        alert('Por favor ingresá un nombre');
+        return;
+      }
+
+      if (appState.participants.includes(name)) {
+        alert('Esta persona ya está en la lista');
+        return;
+      }
+
+      appState.participants.push(name);
+      input.value = '';
+      renderParticipants();
+    }
+
+    // Renderizar lista de participantes
+    function renderParticipants() {
+      const list = document.getElementById('participant-list');
+      list.innerHTML = '';
+
+      appState.participants.forEach((name, index) => {
+        const item = document.createElement('div');
+        item.className = 'participant-item';
+        item.innerHTML = `
+          <span class="participant-name">${name}</span>
+          <button class="btn-remove" onclick="removeParticipant(${index})" title="Eliminar">🗑️</button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // Eliminar participante
+    function removeParticipant(index) {
+      appState.participants.splice(index, 1);
+      renderParticipants();
+    }
+
+    // Ir a pantalla de gastos
+    function goToExpenses() {
+      if (appState.participants.length < 2) {
+        alert('Necesitás al menos 2 personas para dividir gastos');
+        return;
+      }
+
+      // Llenar select de pagadores
+      const select = document.getElementById('expense-payer');
+      select.innerHTML = '<option value="">Seleccioná...</option>';
+      appState.participants.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        option.textContent = name;
+        select.appendChild(option);
+      });
+
+      renderExpenses();
+      showScreen('screen-expenses');
+    }
+
+    // Agregar gasto
+    function addExpense() {
+      const payer = document.getElementById('expense-payer').value;
+      const amount = parseFloat(document.getElementById('expense-amount').value);
+      const description = document.getElementById('expense-description').value.trim();
+
+      if (!payer) {
+        alert('Seleccioná quién pagó');
+        return;
+      }
+
+      if (!amount || amount <= 0) {
+        alert('Ingresá un monto válido');
+        return;
+      }
+
+      appState.expenses.push({
+        payer,
+        amount,
+        description: description || 'Sin descripción'
+      });
+
+      // Limpiar campos
+      document.getElementById('expense-amount').value = '';
+      document.getElementById('expense-description').value = '';
+
+      renderExpenses();
+    }
+
+    // Renderizar lista de gastos
+    function renderExpenses() {
+      const list = document.getElementById('expenses-list');
+      
+      if (appState.expenses.length === 0) {
+        list.innerHTML = '<p style="color:var(--muted);text-align:center;font-size:0.9rem;">No hay gastos registrados</p>';
+        return;
+      }
+
+      list.innerHTML = '';
+      appState.expenses.forEach((expense, index) => {
+        const item = document.createElement('div');
+        item.className = 'expense-item';
+        item.innerHTML = `
+          <div class="expense-header">
+            <span class="expense-amount">$${expense.amount.toFixed(2)}</span>
+            <button class="btn-remove" onclick="removeExpense(${index})" title="Eliminar">🗑️</button>
+          </div>
+          <div class="expense-payer">Pagó: ${expense.payer}</div>
+          ${expense.description !== 'Sin descripción' ? `<div class="expense-description">${expense.description}</div>` : ''}
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    // Eliminar gasto
+    function removeExpense(index) {
+      appState.expenses.splice(index, 1);
+      renderExpenses();
+    }
+
+    // Calcular ajuste de cuentas
+    function calculateSettlement() {
+      if (appState.expenses.length === 0) {
+        alert('No hay gastos registrados');
+        return;
+      }
+
+      // Calcular total
+      const total = appState.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const perPerson = total / appState.participants.length;
+
+      // Calcular cuánto pagó cada uno
+      const paid = {};
+      appState.participants.forEach(p => paid[p] = 0);
+      appState.expenses.forEach(exp => {
+        paid[exp.payer] += exp.amount;
+      });
+
+      // Calcular balance (positivo = debe recibir, negativo = debe dar)
+      const balance = {};
+      appState.participants.forEach(p => {
+        balance[p] = paid[p] - perPerson;
+      });
+
+      // Mostrar resumen
+      document.getElementById('total-spent').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('per-person').textContent = `$${perPerson.toFixed(2)}`;
+
+      // Mostrar cuánto pagó cada uno
+      const individualsDiv = document.getElementById('individual-totals');
+      individualsDiv.innerHTML = '';
+      appState.participants.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        card.innerHTML = `
+          <div class="summary-row">
+            <span class="summary-label">${p}</span>
+            <span class="summary-value">$${paid[p].toFixed(2)}</span>
+          </div>
+        `;
+        individualsDiv.appendChild(card);
+      });
+
+      // Calcular transferencias mínimas
+      const transfers = calculateMinimalTransfers(balance);
+
+      // Mostrar transferencias
+      const transfersDiv = document.getElementById('transfers-list');
+      transfersDiv.innerHTML = '';
+
+      if (transfers.length === 0) {
+        transfersDiv.innerHTML = '<p style="color:var(--muted);text-align:center;font-size:0.9rem;">¡Las cuentas están saldadas! 🎉</p>';
+      } else {
+        transfers.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'transfer-card';
+          card.innerHTML = `
+            <div class="transfer-text">
+              <strong>${t.from}</strong> le paga <span class="transfer-amount">$${t.amount.toFixed(2)}</span> a <strong>${t.to}</strong>
+            </div>
+          `;
+          transfersDiv.appendChild(card);
+        });
+      }
+
+      showScreen('screen-settlement');
+    }
+
+    // Algoritmo para calcular transferencias mínimas
+    function calculateMinimalTransfers(balance) {
+      const transfers = [];
+      
+      // Separar deudores y acreedores
+      const debtors = [];
+      const creditors = [];
+      
+      for (const person in balance) {
+        const amount = balance[person];
+        if (amount < -0.01) { // Debe dar (con margen de error)
+          debtors.push({ person, amount: -amount });
+        } else if (amount > 0.01) { // Debe recibir
+          creditors.push({ person, amount });
+        }
+      }
+
+      // Ordenar de mayor a menor
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+
+      // Realizar transferencias
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const debtor = debtors[i];
+        const creditor = creditors[j];
+        
+        const transferAmount = Math.min(debtor.amount, creditor.amount);
+        
+        transfers.push({
+          from: debtor.person,
+          to: creditor.person,
+          amount: transferAmount
+        });
+
+        debtor.amount -= transferAmount;
+        creditor.amount -= transferAmount;
+
+        if (debtor.amount < 0.01) i++;
+        if (creditor.amount < 0.01) j++;
+      }
+
+      return transfers;
+    }
+
+    // Resetear app
+    function resetApp() {
+      appState.participants = [];
+      appState.expenses = [];
+      renderParticipants();
+      renderExpenses();
+      showScreen('screen-participants');
+    }
+  </script>
+</body>
+</html>
