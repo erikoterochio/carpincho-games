@@ -164,7 +164,7 @@
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .form-group label {
@@ -190,23 +190,53 @@
     }
 
     .round-header {
-      background: linear-gradient(135deg, var(--sky) 0%, var(--blue) 100%);
+      position: sticky;
+      top: 0;
+      background: var(--sky);
       color: white;
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
       margin-bottom: 20px;
-      text-align: center;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .round-header-left {
+      flex: 1;
     }
 
     .round-name {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       font-weight: 700;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
     }
 
     .starting-player {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       opacity: 0.9;
+    }
+
+    .prediction-counter-inline {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px 16px;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 80px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .prediction-counter-inline .prediction-counter-label {
+      font-size: 0.7rem;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+
+    .prediction-counter-inline .prediction-counter-value {
+      font-size: 1.8rem;
+      font-weight: 700;
     }
 
     .player-selection {
@@ -315,28 +345,28 @@
       font-weight: 600;
       cursor: pointer;
       transition: all 0.15s ease;
+      background: #e9ecef;
+      color: var(--text);
     }
 
     .score-btn:active {
       transform: scale(0.95);
     }
 
-    .score-btn-yes {
+    .score-btn-yes.selected {
       background: var(--green);
       color: white;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
     }
 
-    .score-btn-no {
-      background: #616161;
+    .score-btn-no.selected {
+      background: var(--pink);
       color: white;
-    }
-
-    .score-btn.selected {
-      box-shadow: 0 0 0 3px var(--gold);
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.3);
     }
 
     .score-btn.unselected {
-      opacity: 0.3;
+      opacity: 0.4;
     }
 
     .score-item {
@@ -381,13 +411,14 @@
     }
 
     .dealer-badge {
-      background: var(--gold);
+      background: #e9ecef;
       color: var(--indigo);
       padding: 3px 8px;
       border-radius: 999px;
       font-size: 0.75rem;
       font-weight: 700;
       margin-left: 8px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
     }
 
     .loser-announcement {
@@ -441,31 +472,6 @@
 
     .btn-edit.active {
       background: #ff9800;
-    }
-
-    .roulette-wheel {
-      width: 240px;
-      height: 240px;
-      margin: 30px auto;
-      border: 6px solid var(--sky);
-      border-radius: 50%;
-      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .roulette-names {
-      font-size: 1.8rem;
-      font-weight: 700;
-      color: var(--indigo);
-      animation: spin 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
-    }
-
-    @keyframes spin {
-      0%, 100% { transform: translateY(0); opacity: 1; }
-      10%, 30%, 50%, 70%, 90% { transform: translateY(-30px); opacity: 0.7; }
-      20%, 40%, 60%, 80% { transform: translateY(0); opacity: 1; }
     }
 
     .player-selection-btn {
@@ -540,38 +546,6 @@
       color: var(--sky);
     }
 
-    .prediction-counter {
-      position: fixed;
-      top: 20px;
-      left: 20px;
-      background: linear-gradient(135deg, var(--sky) 0%, var(--blue) 100%);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-      z-index: 999;
-      font-weight: 600;
-      text-align: center;
-      min-width: 100px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      display: none;
-    }
-
-    .prediction-counter.active {
-      display: block;
-    }
-
-    .prediction-counter-label {
-      font-size: 0.75rem;
-      opacity: 0.9;
-      margin-bottom: 4px;
-    }
-
-    .prediction-counter-value {
-      font-size: 2rem;
-      font-weight: 700;
-    }
-
     footer {
       margin-top: 12px;
       font-size: 0.75rem;
@@ -594,10 +568,17 @@
         padding: 5px 12px;
       }
 
-      .prediction-counter {
-        top: 10px;
-        left: 10px;
-        padding: 10px 16px;
+      .round-header {
+        padding: 12px;
+      }
+
+      .round-name {
+        font-size: 1.1rem;
+      }
+
+      .prediction-counter-inline {
+        min-width: 70px;
+        padding: 6px 12px;
       }
     }
   </style>
@@ -637,7 +618,7 @@
         <div id="playerCountInput">
           <div class="form-group">
             <label>¿Cuántos jugadores?</label>
-            <input type="number" id="playerCount" min="2" max="10" placeholder="Cantidad de jugadores">
+            <input type="number" inputmode="numeric" pattern="[0-9]*" id="playerCount" min="2" max="10" placeholder="Cantidad de jugadores">
           </div>
           <button class="btn btn-primary" onclick="setPlayerCount()">Continuar</button>
         </div>
@@ -654,35 +635,20 @@
     <div id="dealerScreen" class="screen">
       <header>
         <div class="title-group">
-          <h1>Seleccionar repartidos</h1>
+          <h1>Seleccionar repartidor</h1>
         </div>
       </header>
 
       <div class="content">
         <p class="intro-text">¿Quién va a repartir?</p>
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="showRandomDealerSelection()">🎲 Al azar</button>
+          <button class="btn btn-primary" onclick="selectRandomDealer()">🎲 Al azar</button>
           <button class="btn btn-secondary" onclick="showManualDealerSelection()">👆 Elegir manualmente</button>
         </div>
       </div>
     </div>
 
-    <!-- PANTALLA 4: DEALER ALEATORIO -->
-    <div id="randomDealerScreen" class="screen">
-      <header>
-        <div class="title-group">
-          <h1>Seleccionando...</h1>
-        </div>
-      </header>
-
-      <div class="content" style="text-align:center;">
-        <div class="roulette-wheel">
-          <div class="roulette-names" id="rouletteNames"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 5: DEALER MANUAL -->
+    <!-- PANTALLA 4: DEALER MANUAL -->
     <div id="manualDealerScreen" class="screen">
       <header>
         <div class="title-group">
@@ -696,7 +662,7 @@
       </div>
     </div>
 
-    <!-- PANTALLA 6: CONFIRMACIÓN DEALER REPETIDO -->
+    <!-- PANTALLA 5: CONFIRMACIÓN DEALER REPETIDO -->
     <div id="dealerRepeatScreen" class="screen">
       <header>
         <div class="title-group">
@@ -715,13 +681,8 @@
       </div>
     </div>
 
-    <!-- PANTALLA 7: SELECCIÓN DE RONDA -->
+    <!-- PANTALLA 6: SELECCIÓN DE RONDA -->
     <div id="roundScreen" class="screen">
-      <div id="predictionCounter" class="prediction-counter">
-        <div class="prediction-counter-label">Total</div>
-        <div class="prediction-counter-value" id="predictionCounterValue">0</div>
-      </div>
-
       <header>
         <div class="title-group">
           <h1>Selección</h1>
@@ -730,8 +691,14 @@
 
       <div class="content">
         <div class="round-header">
-          <div class="round-name" id="roundName">RONDA</div>
-          <div class="starting-player" id="startingPlayer">Info</div>
+          <div class="round-header-left">
+            <div class="round-name" id="roundName">RONDA</div>
+            <div class="starting-player" id="startingPlayer">Info</div>
+          </div>
+          <div class="prediction-counter-inline">
+            <div class="prediction-counter-label">Total</div>
+            <div class="prediction-counter-value" id="predictionCounterValue">0</div>
+          </div>
         </div>
 
         <div id="playerSelections"></div>
@@ -740,7 +707,7 @@
       </div>
     </div>
 
-    <!-- PANTALLA 8: MOSTRAR SUMA -->
+    <!-- PANTALLA 7: MOSTRAR SUMA -->
     <div id="sumScreen" class="screen">
       <header>
         <div class="title-group">
@@ -759,7 +726,7 @@
       </div>
     </div>
 
-    <!-- PANTALLA 9: CARGAR PUNTAJES -->
+    <!-- PANTALLA 8: CARGAR PUNTAJES -->
     <div id="scoreScreen" class="screen">
       <header>
         <div class="title-group">
@@ -773,7 +740,7 @@
       </div>
     </div>
 
-    <!-- PANTALLA 10: TABLA DE POSICIONES -->
+    <!-- PANTALLA 9: TABLA DE POSICIONES -->
     <div id="scoreboardScreen" class="screen">
       <header>
         <div class="title-group">
@@ -788,14 +755,19 @@
         
         <div id="loserSection"></div>
 
-        <div class="btn-group" style="margin-top:16px;">
-          <button id="showHistoryBtn" class="btn btn-secondary" onclick="toggleHistory()">Ver Historial</button>
+        <div style="margin-top:16px;">
+          <div class="btn-group">
+            <button id="showHistoryBtn" class="btn btn-secondary" onclick="toggleHistory()">Ver historial</button>
+            <button id="nextRoundBtn" class="btn btn-primary" onclick="nextRound()">Próxima Ronda</button>
+          </div>
+          <button class="btn btn-secondary" onclick="backToMainMenu()" style="margin-top:10px;">Menú</button>
+          
           <div id="historyContainer" style="display:none;">
             <div class="history-table-wrapper">
               <table class="history-table">
                 <thead>
                   <tr>
-                    <th>Rnd</th>
+                    <th>#</th>
                     <th>Tipo</th>
                     <th>Repartió</th>
                     <th>Jugador</th>
@@ -808,8 +780,6 @@
               </table>
             </div>
           </div>
-          <button id="nextRoundBtn" class="btn btn-primary" onclick="nextRound()">Próxima Ronda</button>
-          <button class="btn btn-secondary" onclick="backToMainMenu()">Menú</button>
         </div>
       </div>
     </div>
@@ -909,8 +879,7 @@
         const div = document.createElement('div');
         div.className = 'form-group';
         div.innerHTML = `
-          <label>Jugador ${i + 1}</label>
-          <input type="text" id="playerName${i}" placeholder="Nombre">
+          <input type="text" id="playerName${i}" placeholder="Jugador ${i + 1}">
         `;
         container.appendChild(div);
       }
@@ -1037,10 +1006,9 @@
     }
 
     function updatePredictionCounter() {
-      const counter = document.getElementById('predictionCounter');
       const counterValue = document.getElementById('predictionCounterValue');
       
-      if (!counter || !counterValue) return;
+      if (!counterValue) return;
       
       const sum = gameState.currentSelections.reduce((total, val) => {
         return total + (val !== null ? val : 0);
@@ -1254,7 +1222,7 @@
           div.innerHTML = `
             <span class="player-name-score" style="flex:1;">
               ${player.name}
-              ${player.eliminated ? '<span class="eliminated-badge">ELIMINADO</span>' : ''}
+              ${player.eliminated ? '<span class="eliminated-badge">SALIÓ</span>' : ''}
             </span>
             <div class="edit-controls">
               <button class="adjust-btn" onclick="adjustScore(${playerIndex}, -1)">-1</button>
@@ -1266,7 +1234,7 @@
           div.innerHTML = `
             <span class="player-name-score">
               ${player.name}
-              ${player.eliminated ? '<span class="eliminated-badge">ELIMINADO</span>' : ''}
+              ${player.eliminated ? '<span class="eliminated-badge">SALIÓ</span>' : ''}
             </span>
             <span class="player-score">${player.score}</span>
           `;
@@ -1308,16 +1276,6 @@
         screen.classList.remove('active');
       });
       document.getElementById(screenId).classList.add('active');
-      
-      const predictionCounter = document.getElementById('predictionCounter');
-      if (predictionCounter) {
-        if (screenId === 'roundScreen') {
-          predictionCounter.classList.add('active');
-          updatePredictionCounter();
-        } else {
-          predictionCounter.classList.remove('active');
-        }
-      }
     }
 
     function toggleEditMode() {
@@ -1343,30 +1301,11 @@
       saveGame();
     }
 
-    function showRandomDealerSelection() {
-      showScreen('randomDealerScreen');
-      
+    function selectRandomDealer() {
       const randomIndex = Math.floor(Math.random() * gameState.players.length);
-      const rouletteNames = document.getElementById('rouletteNames');
-      let currentIndex = 0;
-      let count = 0;
-      
-      const interval = setInterval(() => {
-        rouletteNames.textContent = gameState.players[currentIndex].name;
-        currentIndex = (currentIndex + 1) % gameState.players.length;
-        count++;
-        
-        if (count >= 20) {
-          clearInterval(interval);
-          rouletteNames.textContent = gameState.players[randomIndex].name;
-          gameState.dealerIndex = randomIndex;
-          gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
-          
-          setTimeout(() => {
-            startRound();
-          }, 1500);
-        }
-      }, 150);
+      gameState.dealerIndex = randomIndex;
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      startRound();
     }
 
     function showManualDealerSelection() {
