@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>La Bere · Carpincho Games</title>
+  <title>🍆 BerenjenApp · Carpincho Games</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <style>
     :root {
@@ -159,7 +159,7 @@
 
     .btn-group {
       display: flex;
-      flex-direction: column;
+      flex-direction: row;
       gap: 10px;
     }
 
@@ -610,18 +610,17 @@
     <div id="splashScreen" class="screen active">
       <header>
         <div class="title-group">
-          <h1>La Bere</h1>
+          <h1>Berenjenapp</h1>
         </div>
       </header>
 
       <div class="content">
         <p class="intro-text">
-          Juego de cartas donde predecís cuántas manos vas a ganar.<br>
-          ¡El último en pie pierde!
+          Un juego donde predecís cuántas manos vas a ganar y la Garza siempre pierde.
         </p>
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="startNewGame()">🎮 Nuevo Juego</button>
-          <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">▶️ Continuar Juego</button>
+          <button class="btn btn-primary" onclick="startNewGame()">Nuevo juego</button>
+          <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">Reanudar juego</button>
         </div>
       </div>
     </div>
@@ -655,7 +654,7 @@
     <div id="dealerScreen" class="screen">
       <header>
         <div class="title-group">
-          <h1>Seleccionar Dealer</h1>
+          <h1>Seleccionar repartidos</h1>
         </div>
       </header>
 
@@ -687,12 +686,12 @@
     <div id="manualDealerScreen" class="screen">
       <header>
         <div class="title-group">
-          <h1>Elegir Dealer</h1>
+          <h1>Elegir repartidor</h1>
         </div>
       </header>
 
       <div class="content">
-        <p class="intro-text">Tocá un jugador para hacerlo dealer</p>
+        <p class="intro-text">Elegí quién va a repartir</p>
         <div id="manualDealerList"></div>
       </div>
     </div>
@@ -701,7 +700,7 @@
     <div id="dealerRepeatScreen" class="screen">
       <header>
         <div class="title-group">
-          <h1>Dealer Repetido</h1>
+          <h1>Repartidor repetido</h1>
         </div>
       </header>
 
@@ -783,14 +782,14 @@
       </header>
 
       <div class="content">
-        <button id="editModeBtn" class="btn btn-edit" onclick="toggleEditMode()">✏️ Editar</button>
+        <button id="editModeBtn" class="btn btn-edit" onclick="toggleEditMode()">Editar</button>
         
         <div id="scoreboard" style="margin-top:16px;"></div>
         
         <div id="loserSection"></div>
 
         <div class="btn-group" style="margin-top:16px;">
-          <button id="showHistoryBtn" class="btn btn-secondary" onclick="toggleHistory()">📜 Ver Historial</button>
+          <button id="showHistoryBtn" class="btn btn-secondary" onclick="toggleHistory()">Ver Historial</button>
           <div id="historyContainer" style="display:none;">
             <div class="history-table-wrapper">
               <table class="history-table">
@@ -798,7 +797,7 @@
                   <tr>
                     <th>Rnd</th>
                     <th>Tipo</th>
-                    <th>Dealer</th>
+                    <th>Repartió</th>
                     <th>Jugador</th>
                     <th>Pidió</th>
                     <th>Ok</th>
@@ -809,14 +808,14 @@
               </table>
             </div>
           </div>
-          <button id="nextRoundBtn" class="btn btn-primary" onclick="nextRound()">Siguiente Ronda</button>
-          <button class="btn btn-secondary" onclick="backToMainMenu()">Menú Principal</button>
+          <button id="nextRoundBtn" class="btn btn-primary" onclick="nextRound()">Próxima Ronda</button>
+          <button class="btn btn-secondary" onclick="backToMainMenu()">Menú</button>
         </div>
       </div>
     </div>
 
     <footer>
-      <span>Carpincho Games · La Bere</span>
+      <span>Carpincho Games · 🍆 BerenjenApp</span>
     </footer>
   </main>
 
@@ -970,7 +969,7 @@
       const dealer = gameState.players[gameState.dealerIndex];
       
       document.getElementById('roundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
-      document.getElementById('startingPlayer').textContent = `Dealer: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+      document.getElementById('startingPlayer').textContent = `Reparte: ${dealer.name} | Empieza: ${startingPlayer.name}`;
       
       const container = document.getElementById('playerSelections');
       container.innerHTML = '';
@@ -994,7 +993,7 @@
       activePlayers.forEach((player, orderIndex) => {
         const div = document.createElement('div');
         div.className = 'player-selection';
-        const dealerBadge = player.originalIndex === gameState.dealerIndex ? '<span class="dealer-badge">🎴</span>' : '';
+        const dealerBadge = player.originalIndex === gameState.dealerIndex ? '<span class="dealer-badge">🫴🃏</span>' : '';
         div.innerHTML = `
           <div class="player-name">${player.name}${dealerBadge}</div>
           <div class="choice-buttons" id="choices${player.originalIndex}"></div>
@@ -1073,10 +1072,10 @@
       
       const messageDiv = document.getElementById('fiummmMessage');
       if (sum < maxValue) {
-        messageDiv.textContent = '🔥 HAY FIUMMM!!';
+        messageDiv.textContent = '🏎️ Habemus fium 🏎️';
         messageDiv.className = 'fiummm-message fiummm-yes';
       } else {
-        messageDiv.textContent = 'No hay fium';
+        messageDiv.textContent = '🛑 No habemus fium 🛑';
         messageDiv.className = 'fiummm-message fiummm-no';
       }
       
@@ -1114,8 +1113,8 @@
         div.innerHTML = `
           <div class="player-name">${player.name} - Pidió: ${gameState.currentSelections[idx]}</div>
           <div class="score-buttons">
-            <button class="score-btn score-btn-yes" id="scoreYes${idx}" onclick="setScore(${idx}, true)">✓ Sí</button>
-            <button class="score-btn score-btn-no" id="scoreNo${idx}" onclick="setScore(${idx}, false)">✗ No</button>
+            <button class="score-btn score-btn-yes" id="scoreYes${idx}" onclick="setScore(${idx}, true)">✅</button>
+            <button class="score-btn score-btn-no" id="scoreNo${idx}" onclick="setScore(${idx}, false)">🅾️</button>
           </div>
         `;
         container.appendChild(div);
@@ -1227,10 +1226,10 @@
       showScreen('scoreboardScreen');
       const editBtn = document.getElementById('editModeBtn');
       if (gameState.editMode) {
-        editBtn.textContent = '✓ Listo';
+        editBtn.textContent = 'Listo';
         editBtn.classList.add('active');
       } else {
-        editBtn.textContent = '✏️ Editar';
+        editBtn.textContent = 'Editar';
         editBtn.classList.remove('active');
       }
       updateScoreboard();
@@ -1281,7 +1280,7 @@
       if (activePlayers.length === 1) {
         loserSection.innerHTML = `
           <div class="loser-announcement">
-            <h2>💀 PERDEDOR 💀</h2>
+            <h2>💀⚰️ PERDEDOR ⚰️💀</h2>
             <div class="loser-name">${activePlayers[0].name}</div>
             <p style="margin-top:12px;color:white;font-size:0.9rem;">¡Todos los demás llegaron a 50+ puntos!</p>
           </div>
@@ -1415,11 +1414,11 @@
       
       if (container.style.display === 'none') {
         container.style.display = 'block';
-        btn.textContent = '📜 Ocultar Historial';
+        btn.textContent = 'Ocultar historial';
         updateHistoryTable();
       } else {
         container.style.display = 'none';
-        btn.textContent = '📜 Ver Historial';
+        btn.textContent = 'Ver historial';
       }
     }
 
