@@ -1,699 +1,3 @@
-
-1764982530772_image.png
-
-<!DOCTYPE html> <html lang="es"> <head> <meta charset="UTF-8" /> <title>Anotador de Truco · Carpincho Games</title> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /> <style> :root { --bg: #E9E9E9;
-
-pasted
-
-Tengo este código pero necesito que se parezca a la imagen, no está siendo como quiero.
-
-Lo otro que quiero es que el anotador sea estilo truco donde cada 5 puntos se forma un cuadrado con 4 lados y una diagonal en el medio, es decir que cada punto extra va sumando lado, lado, lado, lado, diagonal y ahi pasa al otro.
-
-Te sumo como quiero que se vea aprox
-
-Voy a modificar el código para que se parezca más a la imagen y tenga el sistema de anotación tradicional del truco con palitos y diagonales.
-
-Untitled
-Artefacto interactivo 
-Untitled
-Artefacto interactivo ∙ Versión 8 
-Ahora voy a actualizar el HTML para que tenga la estructura de dos columnas:
-
-Untitled
-Artefacto interactivo ∙ Versión 9 
-Ahora voy a actualizar el JavaScript para que funcione con el sistema tradicional de palitos del truco (cada 5 puntos completa un cuadrado con diagonal):
-
-Untitled
-Artefacto interactivo ∙ Versión 10 
-Perfecto! He actualizado el anotador de truco con los siguientes cambios:
-
-Diseño visual:
-
-Layout de dos columnas (Nosotros vs Ellos)
-Botones + y - debajo de cada área de palitos
-Diseño más limpio y espacioso similar a la imagen
-Sistema de palitos tradicional del truco:
-
-Cada cuadrado representa 5 puntos
-Los puntos se van agregando formando: lado izquierdo → lado superior → lado derecho → lado inferior → diagonal
-Los primeros 15 puntos se marcan en rojo
-Los siguientes 15 puntos (16-30) se marcan en verde
-Total: 6 cuadrados completos = 30 puntos
-Ahora cuando hagas click en + irás viendo cómo se va formando cada cuadrado línea por línea, exactamente como en el truco tradicional argentino! 🧉
-
-Necesito el código entero
-
-Anotador de Truco
-Artefacto interactivo ∙ Versión 11 
-¡Listo! Ahí tenés el código completo del anotador de truco.
-
-Características principales:
-
-✅ Layout de dos columnas (Nosotros vs Ellos)
-✅ Sistema tradicional de palitos del truco (cada 5 puntos forma un cuadrado con diagonal)
-✅ Primeros 15 puntos en rojo, siguientes 15 en verde
-✅ Botones + y - para cada equipo
-✅ Botón de reiniciar
-✅ Diseño responsive y adaptado a mobile
-Podés copiar todo el código y usarlo directamente. Cada vez que sumes puntos, vas a ver cómo se van formando los palitos tradicionales del truco argentino! 🃏🧉
-
-3 cosas a corregir:
-1. No hace falta que diga "Nosotros vs Ellos · 30 tantos"
-2. Veo que no funciona lo de los cuadrados, directamente reemplazemoslo por dos contadores numéricos que tengan el número en grande para cada equipo y listo, lo permite hacer más compacto encima
-
-Untitled
-Artefacto interactivo ∙ Versión 12 
-Untitled
-Artefacto interactivo ∙ Versión 15 
-¡Listo! He corregido las 3 cosas:
-
-✅ Eliminé el texto "Nosotros vs Ellos · 30 tantos"
-✅ Reemplacé los cuadrados de palitos por contadores numéricos grandes y simples
-✅ El diseño ahora es mucho más compacto y limpio
-Ahora tenés un anotador minimalista con números grandes bien visibles para llevar el puntaje del truco de forma simple y clara! 🎯
-
-
-Contexto general Quiero que desarrolles una web para jugar “El Impostor” entre amigos usando un solo celular. Todos los jugadores están físicamente juntos. Se usa un único teléfono, que se va pasando de mano en mano. La web solo se usa para: Configurar la partida. Mostrar los roles/palabras de
-
-pasted
-
-Perfecto, ahora mis códigos de la homey del anotador de truco son los que paso.
-Quiero avanzar con el juego de Impostor.
-
-Perfecto, entiendo que querés desarrollar el juego "El Impostor" para jugar entre amigos con un solo celular. Voy a crear la estructura completa del juego siguiendo las reglas que especificaste.
-
-Voy a empezar con la pantalla de inicio y luego iremos construyendo el resto del flujo:
-
-El Impostor - Juego
-Artefacto interactivo 
-
-Contexto general Quiero que desarrolles una web para jugar “El Impostor” entre amigos usando un solo celular. Todos los jugadores están físicamente juntos. Se usa un único teléfono, que se va pasando de mano en mano. La web solo se usa para: Configurar la partida. Mostrar los roles/palabras de
-
-pasted
-
-
-index.html
-280 líneas
-
-html
-
-
-truco.html
-328 líneas
-
-html
-
-Perfecto, entiendo que querés desarrollar el juego "El Impostor" para jugar entre amigos con un solo celular. Voy a crear la estructura completa del juego siguiendo las reglas que especificaste.
-Voy a empezar con la pantalla de inicio y luego iremos construyendo el resto del flujo:
-
-¡Perfecto! Voy a crear el juego completo de "El Impostor" siguiendo tu documento de especificaciones y manteniendo el estilo visual de Carpincho Games.
-
-El Impostor - Juego
-Artefacto interactivo ∙ Versión 2 
-erikoterochio/carpincho-games
-main
-
-GITHUB
-
-Quiero modificar el archivo del impostor
-
-Esa parte de la página lo que hace es permitir a los jugadores jugar al juego "El impostor" con un solo celular.
-
-Los principales cambios para hacer:
-1. El color del fondo tiene que ser el mismo que en la página de inicio
-2. La primera pantalla del impostor tiene que ser la tarjeta conteniendo:
-   1. Titulo
-   2. Boton de <- Inicio
-   3. Sacar texto "Un solo celu, todos sospechan." (En todos lados donde aparezca)
-   4. Sacar subtitulo "¿Qué hacemos?"
-   5. Dejar "Usen un solo celular. La app se ocupa de la palabra, los roles, el orden y la votación." Pero ponerle un salto de línea
-   6. Dejar botones de Cómo se juega y Jugar
-3. En la sección ¿Cómo se juega? los textos ponerlos hacia la izquierda (queda mucho espacio en entre el número y el texto)
-4. En la configuración de partida
-   1. Hacer los botones para elegir un poco más grandes (así es más facil de usar en el celu)
-   2. Permitir hasta 15 jugadores máximo
-   3. Eliminar la opción de "Palabra personalizada", siempre tiene que ser de una de las categorías y palabras dadas por la página
-   4. No deberían existir "Rondas", debería permitir "Jugar otra" al terminar una, dejando la última configuración que se uso en ese celu (se borra la info en un lapso de 2 horas, por si quieren jugar varias las mismas personas, pero debería permitirle configurar siempre al empezar cada ronda por si alguien se va o suma)
-   5. Las vueltas de pistas deberían permitirse hasta un máximo de 3
-   6. El modo de votación es siempre "Abierta" asi que no pongamos ese desplegable (y borremos las lógicas para cuando el método de votación era en el celu)
-   7. Sumar una opción para decir cuánto tiempo va a durar la votación
-5. Para las rondas:
-   1. Los textos de Pasá el celu a ... tienen que ser un poco más grande
-   2. Elimina el texto "Solo esa persona debe mirar la pantalla. Cuando esté listo, toquen “Mostrar”."
-   3. El boton de "Mostrar" ponelo a "Mostrar palabra"
-   4. No debería ponerse lo de el rol de cada uno, saquemoslo
-   5. Sólo mostrar la palabra de cada persona y si no tiene palabra porque es impostor poner con el mismo formato pero con la letra en rojo "IMPOSTOR"
-   6. Sacar los clicks y pasos de "ya dijo la palabra", una vez que se le dio la palabra a cada persona que hay aun boton de iniciar que diga quién tiene que empezar la ronda diciendo una palabra (el resto va en orden hacia la derecha)
-   7. Cuando todos terminaron de decir su palabra debería haber un boton de "Empezar votación"
-   8. Luego de eso, debería empezar el timer según el tiempo configurado de votación para esa partida
-   9. Cuando termina el timer debería aparecer una opción para elegir de toda la lista de jugadores quién fue el elegido y ahí decir cuál era su rol si Ciudadano o Impostor
-   10. Si no se eliminaron a todos los impostores debería seguir la próxima vuelta (si es que se definió jugar más de una), vuelve a empezar a hablar el anterior (si se elimino el de su derecha)
-   11. La ronda termina cuando se eliminaron todos los impostores (o impostor) o si se terminaron las vueltas
-6. Finalmente debería decir jugar otra ronda y que permita tres opciones:
-   1. Repetir todo (configuración, jugadores y tema)
-   2. Repetir todo pero solo cambiar tema
-   3. Hacer cambios a la configuración (misma pantalla del inicio sería)
-
-Mostrar más
-<function_calls> <invoke name="artifacts"> <parameter name="command">update</parameter> <parameter name="id">impostor-game</parameter> <parameter name="new_str"> document.getElementById('word-category').addEventListener('change', (e) => { const customGroup = document.getElementById('custom-word-group'); customGroup.style.display = e.target.value === 'custom' ? 'block' : 'none'; }); });
-
-// Iniciar juego
-function startGame() {
-  const playerCount = parseInt(document.getElementById('player-count').value);
-  gameState.players = [];
-  
-  for (let i = 0; i < playerCount; i++) {
-    const name = document.getElementById(`player-${i}`).value.trim() || `Jugador ${i + 1}`;
-    gameState.players.push(name);
-    gameState.scores[name] = 0;
-  }
-  
-  gameState.impostorCount = parseInt(document.getElementById('impostor-count').value);
-  gameState.totalRounds = parseInt(document.getElementById('round-count').value);
-  gameState.wordCategory = document.getElementById('word-category').value;
-  gameState.customWord = document.getElementById('custom-word').value;
-  gameState.voteMode = document.getElementById('vote-mode').value;
-  gameState.currentRound = 1;
-  
-  showScreen('screen-role-intro');
-}
-
-// Iniciar asignación de roles
-function startRoleAssignment() {
-  assignRoles();
-  gameState.currentPlayerIndex = 0;
-  showPassPhoneScreen();
-}
-
-// Asignar roles y palabra
-function assignRoles() {
-  // Elegir palabra
-  if (gameState.wordCategory === 'custom') {
-    gameState.word = gameState.customWord;
-  } else {
-    const words = wordBank[gameState.wordCategory];
-    gameState.word = words[Math.floor(Math.random() * words.length)];
-  }
-  
-  // Asignar roles aleatoriamente
-  gameState.roles = new Array(gameState.players.length).fill('citizen');
-  const impostorIndices = [];
-  
-  while (impostorIndices.length < gameState.impostorCount) {
-    const idx = Math.floor(Math.random() * gameState.players.length);
-    if (!impostorIndices.includes(idx)) {
-      impostorIndices.push(idx);
-      gameState.roles[idx] = 'impostor';
-    }
-  }
-}
-
-// Mostrar pantalla de pasar celular
-function showPassPhoneScreen() {
-  const playerName = gameState.players[gameState.currentPlayerIndex];
-  document.getElementById('current-player-name').textContent = playerName;
-  document.getElementById('pass-phone-text').textContent = `Ahora mira ${playerName}`;
-  showScreen('screen-pass-phone');
-}
-
-// Mostrar rol del jugador
-function showRole() {
-  const role = gameState.roles[gameState.currentPlayerIndex];
-  const roleCard = document.getElementById('role-card');
-  const roleTitle = document.getElementById('role-title');
-  const roleContent = document.getElementById('role-content');
-  const roleHint = document.getElementById('role-hint');
-  
-  if (role === 'citizen') {
-    roleCard.className = 'role-card citizen';
-    roleTitle.textContent = 'CIUDADANO';
-    roleContent.innerHTML = `<div class="secret-word">${gameState.word}</div>`;
-    roleHint.textContent = 'Recordá la palabra y da pistas para encontrar al impostor.';
-  } else {
-    roleCard.className = 'role-card impostor';
-    roleTitle.textContent = 'IMPOSTOR';
-    roleContent.innerHTML = '<p style="font-size:1.1rem;margin:16px 0;">No conocés la palabra.</p>';
-    roleHint.textContent = 'Tratá de disimular. Escuchá las pistas de los demás para deducir la palabra.';
-  }
-  
-  showScreen('screen-show-role');
-}
-
-// Ocultar rol
-function hideRole() {
-  showScreen('screen-role-hidden');
-}
-
-// Siguiente jugador
-function nextPlayer() {
-  gameState.currentPlayerIndex++;
-  
-  if (gameState.currentPlayerIndex < gameState.players.length) {
-    showPassPhoneScreen();
-  } else {
-    startCluePhase();
-  }
-}
-
-// Iniciar fase de pistas
-function startCluePhase() {
-  gameState.currentClueIndex = 0;
-  updateClueScreen();
-  showScreen('screen-clues');
-}
-
-// Actualizar pantalla de pistas
-function updateClueScreen() {
-  document.getElementById('current-round-display').textContent = gameState.currentRound;
-  document.getElementById('total-rounds-display').textContent = gameState.totalRounds;
-  document.getElementById('current-clue-player').textContent = gameState.players[gameState.currentClueIndex];
-  
-  const list = document.getElementById('clue-player-list');
-  list.innerHTML = '';
-  
-  gameState.players.forEach((player, idx) => {
-    const item = document.createElement('div');
-    item.className = 'player-item';
-    if (idx === gameState.currentClueIndex) {
-      item.classList.add('active');
-    }
-    item.innerHTML = `
-      <span class="player-name">${player}</span>
-      <span class="player-number">${idx === gameState.currentClueIndex ? '← Turno actual' : ''}</span>
-    `;
-    list.appendChild(item);
-  });
-}
-
-// Siguiente pista
-function nextClue() {
-  gameState.currentClueIndex++;
-  
-  if (gameState.currentClueIndex < gameState.players.length) {
-    updateClueScreen();
-  } else {
-    startDiscussion();
-  }
-}
-
-// Iniciar discusión
-function startDiscussion() {
-  showScreen('screen-discussion');
-  startDiscussionTimer();
-}
-
-// Timer de discusión
-function startDiscussionTimer() {
-  let timeLeft = gameState.discussionTime;
-  const timerEl = document.getElementById('discussion-timer');
-  
-  if (discussionTimer) clearInterval(discussionTimer);
-  
-  discussionTimer = setInterval(() => {
-    timeLeft--;
-    const mins = Math.floor(timeLeft / 60);
-    const secs = timeLeft % 60;
-    timerEl.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    
-    if (timeLeft <= 0) {
-      clearInterval(discussionTimer);
-      startVoting();
-    }
-  }, 1000);
-}
-
-// Iniciar votación
-function startVoting() {
-  if (discussionTimer) clearInterval(discussionTimer);
-  gameState.votes = [];
-  gameState.currentPlayerIndex = 0;
-  
-  if (gameState.voteMode === 'secret') {
-    showVotePassScreen();
-  } else {
-    showOpenVote();
-  }
-}
-
-// Mostrar pantalla de pasar celular para votar
-function showVotePassScreen() {
-  document.getElementById('vote-player-name').textContent = gameState.players[gameState.currentPlayerIndex];
-  showScreen('screen-vote-pass');
-}
-
-// Mostrar votación
-function showVote() {
-  const container = document.getElementById('vote-buttons');
-  container.innerHTML = '';
-  
-  gameState.players.forEach((player, idx) => {
-    if (idx !== gameState.currentPlayerIndex) { // No puede votarse a sí mismo
-      const btn = document.createElement('button');
-      btn.className = 'vote-btn';
-      btn.textContent = player;
-      btn.onclick = () => castVote(idx);
-      container.appendChild(btn);
-    }
-  });
-  
-  showScreen('screen-vote-secret');
-}
-
-// Emitir voto
-function castVote(votedIndex) {
-  gameState.votes.push(votedIndex);
-  showScreen('screen-vote-saved');
-}
-
-// Siguiente votante
-function nextVoter() {
-  gameState.currentPlayerIndex++;
-  
-  if (gameState.currentPlayerIndex < gameState.players.length) {
-    showVotePassScreen();
-  } else {
-    calculateResults();
-  }
-}
-
-// Votación abierta
-function showOpenVote() {
-  const container = document.getElementById('vote-buttons-open');
-  container.innerHTML = '';
-  
-  gameState.players.forEach((player, idx) => {
-    const btn = document.createElement('button');
-    btn.className = 'vote-btn';
-    btn.textContent = player;
-    btn.onclick = () => {
-      gameState.votes = [idx]; // Solo un voto en modo abierto
-      calculateResults();
-    };
-    container.appendChild(btn);
-  });
-  
-  showScreen('screen-vote-open');
-}
-
-// Calcular resultados
-function calculateResults() {
-  // Contar votos
-  const voteCounts = {};
-  gameState.votes.forEach(voteIdx => {
-    voteCounts[voteIdx] = (voteCounts[voteIdx] || 0) + 1;
-  });
-  
-  // Encontrar más votado
-  let maxVotes = 0;
-  let mostVotedIdx = 0;
-  
-  for (const [idx, count] of Object.entries(voteCounts)) {
-    if (count > maxVotes) {
-      maxVotes = count;
-      mostVotedIdx = parseInt(idx);
-    }
-  }
-  
-  // Actualizar puntos
-  const votedPlayerRole = gameState.roles[mostVotedIdx];
-  
-  if (votedPlayerRole === 'impostor') {
-    // Atraparon al impostor - ganan ciudadanos
-    gameState.players.forEach((player, idx) => {
-      if (gameState.roles[idx] === 'citizen') {
-        if (gameState.voteMode === 'secret' && gameState.votes[idx] === mostVotedIdx) {
-          gameState.scores[player] += 1; // Punto por votar correctamente
-        } else if (gameState.voteMode === 'open') {
-          gameState.scores[player] += 1;
-        }
-      }
-    });
-  } else {
-    // NO atraparon al impostor - ganan impostores
-    gameState.players.forEach((player, idx) => {
-      if (gameState.roles[idx] === 'impostor') {
-        gameState.scores[player] += 2;
-      }
-    });
-  }
-  
-  showResults(mostVotedIdx);
-}
-
-// Mostrar resultados
-function showResults(votedIdx) {
-  document.getElementById('result-round-display').textContent = gameState.currentRound;
-  document.getElementById('result-total-rounds').textContent = gameState.totalRounds;
-  document.getElementById('voted-player-name').textContent = gameState.players[votedIdx];
-  
-  const role = gameState.roles[votedIdx];
-  const roleText = role === 'impostor' ? 'IMPOSTOR' : 'CIUDADANO';
-  const roleColor = role === 'impostor' ? 'var(--pink)' : 'var(--sky)';
-  document.getElementById('voted-player-role').innerHTML = `Rol: <span style="color:${roleColor};">${roleText}</span>`;
-  
-  // Mostrar marcador
-  const scoreboard = document.getElementById('round-scoreboard');
-  scoreboard.innerHTML = '<h3 style="text-align:center;margin-bottom:12px;color:var(--indigo);">Puntos Acumulados</h3>';
-  
-  const sortedPlayers = [...gameState.players].sort((a, b) => gameState.scores[b] - gameState.scores[a]);
-  
-  sortedPlayers.forEach(player => {
-    const item = document.createElement('div');
-    item.className = 'score-item';
-    item.innerHTML = `
-      <span class="score-name">${player}</span>
-      <span class="score-points">${gameState.scores[player]}</span>
-    `;
-    scoreboard.appendChild(item);
-  });
-  
-  showScreen('screen-results');
-}
-
-// Mostrar todos los roles
-function showAllRoles() {
-  const list = document.getElementById('all-roles-list');
-  list.innerHTML = '';
-  
-  gameState.players.forEach((player, idx) => {
-    const role = gameState.roles[idx];
-    const roleText = role === 'impostor' ? '🎭 IMPOSTOR' : '👤 CIUDADANO';
-    const roleColor = role === 'impostor' ? 'var(--pink)' : 'var(--sky)';
-    
-    const item = document.createElement('div');
-    item.className = 'player-item';
-    item.innerHTML = `
-      <span class="player-name">${player}</span>
-      <span style="color:${roleColor};font-weight:600;">${roleText}</span>
-    `;
-    list.appendChild(item);
-  });
-  
-  showScreen('screen-all-roles');
-}
-
-// Siguiente ronda
-function nextRound() {
-  gameState.currentRound++;
-  
-  if (gameState.currentRound > gameState.totalRounds) {
-    showFinalResults();
-  } else {
-    startRoleAssignment();
-  }
-}
-
-// Mostrar resultados finales
-function showFinalResults() {
-  const scoreboard = document.getElementById('final-scoreboard');
-  scoreboard.innerHTML = '';
-  
-  const sortedPlayers = [...gameState.players].sort((a, b) => gameState.scores[b] - gameState.scores[a]);
-  
-  sortedPlayers.forEach((player, idx) => {
-    const item = document.createElement('div');
-    item.className = 'score-item';
-    if (idx === 0) item.classList.add('highlight');
-    
-    item.innerHTML = `
-      <div>
-        <span class="score-name">${idx === 0 ? '🏆 ' : ''}${player}</span>
-      </div>
-      <span class="score-points">${gameState.scores[player]}</span>
-    `;
-    scoreboard.appendChild(item);
-  });
-  
-  showScreen('screen-final');
-}
-
-// Jugar de nuevo
-function playAgain() {
-  // Resetear puntos
-  Object.keys(gameState.scores).forEach(key => {
-    gameState.scores[key] = 0;
-  });
-  gameState.currentRound = 1;
-  startRoleAssignment();
-}
-</script> </body> </html></parameter> <parameter name="old_str"> document.getElementById('word-category').addEventListener('change', (e) => { const customGroup = document.getElementById('custom-word-group'); customGroup.style.display = e.target.value === 'custom' ? 'block'</parameter>
-Dame el código entero
-
-
-Orchestrated comprehensive code restructuring with multiple feature enhancements.
-
-
-El Impostor - Juego Completo
-Artefacto interactivo ∙ Versión 3 
-¡Listo! Te he entregado el código completo del juego "El Impostor" con todos los cambios que pediste:
-
-Cambios implementados:
-
-✅ Fondo oscuro igual que la página de inicio
-✅ Primera pantalla mejorada (sin subtítulos innecesarios)
-✅ Instrucciones con mejor alineación
-✅ Configuración optimizada:
-Botones más grandes para usar en celular
-Hasta 15 jugadores
-Sin opción de palabra personalizada
-Sin sistema de rondas (solo "jugar otra")
-Hasta 3 vueltas de pistas
-Solo votación abierta
-Tiempo de votación configurable (30s a 2min)
-✅ Flujo de juego mejorado:
-Textos más grandes para "Pasá el celular"
-Solo muestra palabra o "IMPOSTOR" en rojo
-Botón de iniciar pistas después de dar palabras
-Timer de discusión antes de votar
-Sistema de eliminación con continuación
-Ronda termina cuando se eliminan todos los impostores o se acaban las vueltas
-✅ Opciones al finalizar:
-Repetir todo igual
-Cambiar solo categoría
-Modificar configuración completa
-El código está listo para copiar y usar. Guarda la configuración en localStorage por 2 horas para facilitar jugar varias rondas seguidas con los mismos jugadores! 🎮
-
-Perfecto, algunas cosas a corregir:
-1. Si se había empezado a poner los nombres de jugadores y luego se cambia el numero que no se borre lo ya escrito (ej: inicialmente estaba para 3, cuando puse al jugador a, b y c decido cambiar a 4 jugadores, bueno que queden a, b y c, pero que aparezca el espacio para el 4to)
-2. Siempre el número de "Vueltas de pistas" es 1; lo que puede cambiar es cuántas rondas (o votaciones, o eliminaciones) se van a ejecutar
-3. El juego termina cuando se eliminan a todos los impostores o se terminan las rondas (lo que suceda primero)
-4. Quien empieza diciendo la primera palabra debe ser elegido de forma aleatoria (luego continua en orden)
-5. Si la persona que arrancó la primera ronda no fue eliminada, vuelve a empezar, sino el que iba después de él arranca la próxima ronda
-
-Pasarme el código completo por favor
-
-Mostrar más
-
-Restructuró mecánicas de juego y lógica de turnos.
-
-
-El Impostor - Juego Completo
-Artefacto interactivo ∙ Versión 4 
-¡Perfecto! Te he entregado el código completo con todas las correcciones:
-
-Cambios implementados:
-
-✅ Nombres conservados: Al cambiar el número de jugadores, los nombres ya escritos se mantienen
-✅ Rondas máximas: Cambié "Vueltas de pistas" por "Rondas máximas" - siempre es 1 vuelta de pistas, pero múltiples rondas de eliminación
-✅ Condiciones de fin: El juego termina cuando se eliminan todos los impostores O se alcanzan las rondas máximas configuradas
-✅ Primer jugador aleatorio: Al iniciar el juego, se elige aleatoriamente quién empieza
-✅ Continuidad del primer jugador: Si el jugador que arrancó sigue vivo, vuelve a empezar la siguiente ronda; si fue eliminado, arranca el siguiente jugador vivo
-El juego ahora funciona correctamente con el sistema de rondas de eliminación y mantiene la configuración guardada en localStorage por 2 horas. ¡Listo para jugar! 🎮
-
-
-<!DOCTYPE html> <html lang="es"> <head> <meta charset="UTF-8" /> <title>El Impostor · Carpincho Games</title> <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" /> <style> :root { --bg: #0A092C; --pink: #FF6B6B; --
-
-pasted
-
-Hice este código pero quiero hacer dos cambios:
-1. Ajustar todo el código para considerar que la constante wordbank fue modificada para agregar más cosas
-2. Haya una opción para que la categoría sea aleatoria si así se desea (te tiene que decir qué categoría es la palabra el iniciar para guiar un poco al impostor)
-
-
-5 pasos
-
-Reformuló la función para integrar categorías expandidas.
-
-
-Preparó reescritura completa del código actualizado.
-
-El Impostor - Juego Completo
-Artefacto interactivo ∙ Versión 11 
-¡Perfecto! He actualizado el código completo con los dos cambios:
-
-Cambios implementados:
-
-✅ WordBank actualizado: Ahora incluye todas las nuevas categorías con sus palabras:
-Deportes
-Películas y Series
-Objetos
-Lugares
-Personalidades
-Cocina
-Animales
-Música
-Tecnología
-✅ Categoría Aleatoria:
-Nueva opción "Aleatoria" (es la opción por defecto)
-Cuando se elige, la app selecciona una categoría al azar al iniciar cada ronda
-Se muestra la categoría elegida en la pantalla "Iniciar Pistas" con el texto "Categoría: [nombre]"
-Esto ayuda al impostor a tener una guía sobre qué tipo de palabras esperar
-Los nombres se muestran de forma amigable (ej: "Películas y Series" en lugar de "peliculasSeries")
-El código está completo y listo para usar. La categoría aleatoria hace el juego más dinámico y el indicador de categoría ayuda a que el impostor tenga una mejor experiencia! 🎮
-
-Ahora quiero que armemos la página del dígalo con mímica.
-Cosas a tener en cuenta:
-1. Mantner la estética de index e impostor
-2. Primera página tiene que permitir configurar el juego
-   1. Cuántos equipos, por default 2
-   2. Tiempo para hacer la mímica
-   3. Cuántas rondas se van a jugar (campo de escritura libre, sólo números) o a cuántos puntos
-3. Después tiene que estar la parte donde se le da la pelicula a la persona y luego comienza a contabilizar el tiempo
-4. El anotador de puntos por equipo
-5. Incluí al menos 100 peliculas o series para empezar a tener una buena base, intentá que las películas no sean más viejas que 1970 y que haya cosas de referencia a Argentina
-
-Mostrar más
-
-Diseñó estructura completa con configuración, juego y base de películas.
-
-
-
-
-Dígalo con Mímica - Juego
-Artefacto interactivo 
-¡Perfecto! He creado el juego completo de "Dígalo con Mímica" con todas las características que pediste:
-
-Características implementadas:
-
-✅ Estética coherente: Mantiene el diseño de index e impostor (fondo oscuro, tarjetas blancas, tipografía consistente)
-✅ Configuración completa:
-Número de equipos (2-6, default 2)
-Tiempo por turno (30s a 2min, default 1min)
-Dos modos: Por rondas O hasta X puntos
-✅ Flujo de juego:
-Pantalla de preparación para cada turno
-Mostrar película solo a quien actúa
-Cronómetro con cambios de color (naranja en 10s, rojo en 5s, con animación)
-Botones de "¡Adivinaron!" y "No adivinaron"
-✅ Sistema de puntos:
-Marcador actualizado después de cada turno
-Resalta el equipo que está jugando
-Pantalla de ganador con ranking final
-✅ Base de datos: Más de 120 películas y series incluyendo:
-Películas argentinas (El secreto de sus ojos, Relatos salvajes, etc.)
-Series argentinas (Casados con hijos, Los Simuladores, etc.)
-Clásicos internacionales desde 1970
-Blockbusters modernos
-Series populares internacionales
-El sistema no repite películas hasta agotar todo el banco. Color principal: rosa/pink para diferenciarlo del impostor. ¡Listo para jugar! 🎬🎭
-
-
-
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -818,6 +122,16 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
       background: #ff5252;
       transform: translateY(-1px);
       box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-primary.btn-blue {
+      background: var(--sky);
+      border: 2px solid var(--sky);
+    }
+
+    .btn-primary.btn-blue:hover {
+      background: #4a8dd4;
+      box-shadow: 0 4px 12px rgba(88, 153, 226, 0.3);
     }
 
     .btn-secondary {
@@ -1056,7 +370,7 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
         </p>
         
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="showScreen('screen-setup')">Jugar</button>
+          <button class="btn btn-primary btn-blue" onclick="showScreen('screen-setup')">Jugar</button>
         </div>
       </div>
     </div>
@@ -1115,7 +429,7 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
           </div>
 
           <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Empezar Juego</button>
+            <button type="submit" class="btn btn-primary btn-blue">Empezar Juego</button>
           </div>
         </form>
       </div>
@@ -1140,7 +454,7 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
         </p>
 
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="showMovie()">Mostrar película</button>
+          <button class="btn btn-primary btn-blue" onclick="showMovie()">Mostrar película</button>
         </div>
       </div>
     </div>
@@ -1200,7 +514,7 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
         </div>
 
         <div class="btn-group">
-          <button class="btn btn-primary" onclick="nextTurn()">Siguiente Turno</button>
+          <button class="btn btn-primary btn-blue" onclick="nextTurn()">Siguiente Turno</button>
         </div>
       </div>
     </div>
@@ -1227,7 +541,7 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
         </div>
 
         <div class="btn-group" style="margin-top:20px;">
-          <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+          <button class="btn btn-primary btn-blue" onclick="playAgain()">Jugar de nuevo</button>
           <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al inicio</button>
         </div>
       </div>
@@ -1258,42 +572,52 @@ El sistema no repite películas hasta agotar todo el banco. Color principal: ros
       // Películas argentinas
       'El secreto de sus ojos', 'Relatos salvajes', 'Nueve Reinas', 'El hijo de la novia', 'La historia oficial',
       'Camila', 'La Patagonia rebelde', 'Tiempo de valientes', 'Un cuento chino', 'Esperando la carroza',
-      'El clan', 'La noche de los lápices', 'La tregua', 'Plata dulce', 'Pizza, birra, faso', 'Metegol', 'Manuelita'
+      'El clan', 'La noche de los lápices', 'La tregua', 'Plata dulce', 'Pizza, birra, faso',
       
       // Series argentinas
-      'Casados con hijos', 'Los Simuladores', 'Okupas', 'El Marginal', 'Clave de sol', 'El sodero de mi vida', 'El puntero', 'Envidiosa', 'Un papá genial',
-      'El hijo de la novia', 'Los mios, los tuyos y los nuestros', 'Cebollitas', 
+      'Casados con hijos', 'Los Simuladores', 'Okupas', 'El Marginal', 'Clave de sol',
       
       // Películas clásicas internacionales (1970-1989)
       'Star Wars', 'El Padrino', 'Rocky', 'Tiburón', 'Alien', 'Terminator', 'E.T.', 
-      'Volver al futuro', 'Los Cazafantasmas', 'Indiana Jones', 'Top Gun', 'Rambo', 'Cuidado bebé suelto',
-      'La guerra de las galaxias', 'Superman', 'Batman', 'Scarface', 'Amadeus', 'El exorcista', 'La historia sin fin',
+      'Volver al futuro', 'Los Cazafantasmas', 'Indiana Jones', 'Top Gun', 'Rambo',
+      'La guerra de las galaxias', 'Superman', 'Batman', 'Scarface', 'Amadeus',
       
       // Películas 1990s
-      'Titanic', 'Matrix', 'Forrest Gump', 'El rey león', 'Toy Story', 'Jurassic Park', 'Cementerio de animales', 
-      'Tiempos violentos', 'El silencio de los inocentes', 'Jumanji', 'La máscara', 'El quinto elemento',
-      'Duro de matar', 'Máxima velocidad', 'Misión imposible', 'Día de la independencia', 'Godzilla',
-      'Gladiador', 'El sexto sentido', 'Belleza americana', 'Belleza americana', 'Un ratoncito duro de cazar',
+      'Titanic', 'Matrix', 'Forrest Gump', 'El rey león', 'Toy Story', 'Jurassic Park',
+      'Pulp Fiction', 'El silencio de los inocentes', 'Jumanji', 'La máscara',
+      'Duro de matar', 'Speed', 'Misión imposible', 'Independence Day', 'Armageddon',
+      'Gladiador', 'El sexto sentido', 'American Beauty', 'Belleza americana',
       
       // Películas 2000s
-      'El señor de los anillos', 'Harry Potter', 'Piratas del Caribe', 'Spider-Man', 'Hombres de negro', 
-      'Shrek', 'Buscando a Nemo', 'Los increíbles', 'Batman inicia', 'El caballero oscuro', 'El señor de los anillos: las dos torres',
-      'El increíble Hulk', 'Arriba en el cielo', 'La casa de los gritos', 
-      'Los vengadores', 'El origen', 'Interestelar', 'Django sin cadenas', 'El amanecer de los muertos', 
+      'El señor de los anillos', 'Harry Potter', 'Piratas del Caribe', 'Spider-Man',
+      'Shrek', 'Buscando a Nemo', 'Los increíbles', 'Batman inicia', 'El caballero oscuro',
+      'Iron Man', 'Transformers', 'Avatar', 'Inception', 'Up', 'Wall-E', 'Ratatouille',
+      'Los vengadores', 'El origen', 'Interestelar', 'Django sin cadenas',
       
       // Películas 2010s-2020s
-      'Frozen', 'Intensa-mente', 'Coco', 'Toy Story 4', 'Joker', 'Parásitos', 'Godzilla', 'King kong', 'Náufrago', 
-      '1917', 'Mad Max Furia en el camino', 'La purga', 'Realmente amor', 'Cuestion de tiempo', 'La terminal',
-      'El gran pez', 'Pantera negra', 'La guerra de los mundos', 'Coco', 'Encanto', 'La isla', 'Atrápame si puedes', 
+      'Frozen', 'Intensa-mente', 'Coco', 'Toy Story 4', 'Joker', 'Parasite', 'Parásitos',
+      '1917', 'Dunkerque', 'Mad Max Furia en el camino', 'La La Land', 'Whiplash',
+      'Bohemian Rhapsody', 'Rocketman', 'Deadpool', 'Logan', 'Black Panther',
+      'Coco', 'Encanto', 'Moana', 'Zootopia', 'Big Hero 6', 'Ralph el demoledor',
+      
+      // Series internacionales populares
+      'Game of Thrones', 'Breaking Bad', 'Friends', 'The Office', 'Stranger Things',
+      'La casa de papel', 'Narcos', 'The Crown', 'Peaky Blinders', 'Sherlock',
+      'The Walking Dead', 'Lost', 'Prison Break', 'How I Met Your Mother',
+      'The Big Bang Theory', 'Modern Family', 'Grey\'s Anatomy', 'Suits',
+      'The Mandalorian', 'Loki', 'WandaVision', 'The Witcher', 'Vikings',
+      'Chernobyl', 'True Detective', 'Westworld', 'The Boys', 'Succession',
       
       // Más películas variadas
-      'La vida es bella', 'El pianista', 'Gran Torino', 'El club de la pelea', 'Invicto', 'Cisne negro',
-      'El discurso del rey', 'La teoría del todo', 'El código enigma', 'Sueños de libertad', 
-      'Steve Jobs', 'La red social', 'El lobo de Wall Street', 'Los chicos malos', 'Rápidos y furiosos', 
-      'Día de la independencia', 'Contacto', 'Gravity', 'Marte',
-      'Duna', 'La llegada', 'Búsqueda implacable', 'Contactos cercanos del tercer tipo', 'Desapareció una noche',
-      'La sirenita', 'El gran truco', 'El ilusionista', 'El alquimista', 'El joven manos de tijera', 'Calabozos y dragones', 
-   ];
+      'La vida es bella', 'El pianista', 'Amélie', 'Slumdog Millionaire',
+      'Gran Torino', 'Million Dollar Baby', 'Invictus', 'Cisne negro',
+      'El discurso del rey', 'La teoría del todo', 'El código enigma',
+      'Steve Jobs', 'La red social', 'Wolf of Wall Street', 'El lobo de Wall Street',
+      'Día de la independencia', 'Contacto', 'Gravity', 'Marte', 'Interstellar',
+      'Blade Runner', 'Blade Runner 2049', 'Dune', 'Arrival', 'Her',
+      'Fast and Furious', 'Rápido y furioso', 'John Wick', 'Taken', 'Búsqueda implacable',
+      'Casino Royale', 'Skyfall', 'Spectre', 'Kingsman', 'Atómica', 'Baby Driver'
+    ];
 
     let timerInterval = null;
     let timeLeft = 0;
