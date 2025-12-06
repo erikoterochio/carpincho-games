@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-      --bg: #E9E9E9;     /* Alabaster Grey */
+      --bg: #0A092C;     /* Alabaster Grey */
       --pink: #FF6B6B;   /* Grapefruit Pink */
       --blue: #335C81;   /* Baltic Blue */
       --indigo: #1B2845; /* Space Indigo */
@@ -88,12 +88,12 @@
       text-align: right;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-top: 8px;
-    }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr; /* una sola columna */
+    gap: 12px;
+    margin-top: 8px;
+  }
 
     .card {
       position: relative;
@@ -231,13 +231,9 @@
         <div class="logo-icon">🦫</div>
         <div class="logo-text">
           <h1>Carpincho Games</h1>
-          <span>Juegos rápidos para compartir.</span>
+          <span>La app oficial de ranchada.</span>
         </div>
       </div>
-      <p class="tagline">
-        Elegí un juego y usen el celu en la mesa.<br />
-        Ideal para previas, asados y juntadas.
-      </p>
     </header>
 
     <section class="grid">
@@ -249,13 +245,6 @@
             <h2 class="card-title">Anotador de Truco</h2>
             <span class="badge badge-live">Disponible</span>
           </div>
-          <p class="card-note">
-            Sumá palitos hasta 30 tantos. Nosotros vs Ellos, simple y sin discutir el tanteador.
-          </p>
-          <div class="card-footer">
-            <span class="pill">Pensado para el celu</span>
-            <span>2–6 jugadores</span>
-          </div>
         </article>
       </a>
 
@@ -266,13 +255,6 @@
           <h2 class="card-title">El Impostor</h2>
           <span class="badge badge-soon">Próximamente</span>
         </div>
-        <p class="card-note">
-          Juego social de roles ocultos. Alguien miente, todos sospechan.
-        </p>
-        <div class="card-footer">
-          <span class="pill">4–12 jugadores</span>
-          <span>Modo party</span>
-        </div>
       </article>
 
       <!-- Dígalo con mímica -->
@@ -282,13 +264,6 @@
           <h2 class="card-title">Dígalo con mímica</h2>
           <span class="badge badge-soon">Próximamente</span>
         </div>
-        <p class="card-note">
-          La pantalla da la palabra, vos solo podés usar el cuerpo.
-        </p>
-        <div class="card-footer">
-          <span class="pill">Equipos</span>
-          <span>Party game</span>
-        </div>
       </article>
 
       <!-- Prode Mundial 2026 -->
@@ -297,14 +272,6 @@
         <div class="card-header">
           <h2 class="card-title">Prode Mundial 2026</h2>
           <span class="badge badge-soon">Próximamente</span>
-        </div>
-        <p class="card-note">
-          Armá tu pronóstico, sumá puntos por aciertos y compará con tus amigos.
-        </p>
-        <div class="card-footer">
-          <span class="pill">Mundial 2026</span>
-          <span>Tabla compartida</span>
-        </div>
       </article>
     </section>
   </main>
