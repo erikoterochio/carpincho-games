@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Carpincho Games</title>
+  <title>Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
@@ -28,102 +28,110 @@
     body {
       min-height: 100vh;
       background: var(--bg);
-      color: var(--text-main);
+      color: #ffffff;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
+      padding: 0;
+    }
+
+    .top-header {
+      width: 100%;
+      padding: 32px 24px 24px;
+      text-align: left;
+    }
+
+    .top-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #ffffff;
+    }
+
+    .top-header .tagline {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.7);
     }
 
     .app {
       width: 100%;
-      max-width: 720px;
+      max-width: 520px;
       background: var(--card);
-      border-radius: 18px;
+      border-radius: 24px 24px 0 0;
       box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.08),
+        0 -10px 25px rgba(0, 0, 0, 0.15),
         0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 20px 18px 16px;
-      border: 1px solid rgba(27, 40, 69, 0.1);
+      padding: 28px 20px;
+      margin-top: 20px;
+      flex: 1;
     }
 
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-bottom: 16px;
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
     }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .logo-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 999px;
-      background: var(--pink);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      color: #ffffff;
-    }
-
-    .logo-text h1 {
-      font-size: 1.3rem;
-    }
-
-    .logo-text span {
-      font-size: 0.8rem;
-      color: var(--muted);
-    }
-
-    .tagline {
-      font-size: 0.8rem;
-      color: var(--muted);
-      text-align: right;
-    }
-
-  .grid {
-    display: grid;
-    grid-template-columns: 1fr; /* una sola columna */
-    gap: 12px;
-    margin-top: 8px;
-  }
 
     .card {
       position: relative;
-      border-radius: 14px;
-      padding: 14px 12px 12px;
-      background: #f7f7f7;
-      border: 1px solid rgba(51, 92, 129, 0.25);
+      border-radius: 16px;
+      padding: 16px;
+      background: #ffffff;
+      border: 2px solid rgba(148, 163, 184, 0.3);
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.2s ease;
     }
 
-    .card-header {
+    .card:hover {
+      border-color: var(--sky);
+      box-shadow: 0 4px 12px rgba(88, 153, 226, 0.15);
+    }
+
+    .card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+      border: 2px solid rgba(148, 163, 184, 0.2);
+      overflow: hidden;
+    }
+
+    .card-icon img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+    }
+
+    .card-content {
+      flex: 1;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
     .card-title {
-      font-size: 0.95rem;
+      font-size: 1.05rem;
       font-weight: 600;
+      color: var(--indigo);
     }
 
     .badge {
       font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
-      padding: 3px 8px;
+      padding: 5px 12px;
       border-radius: 999px;
+      white-space: nowrap;
+      font-weight: 600;
     }
 
     .badge-live {
@@ -137,60 +145,20 @@
       border: 1px solid rgba(148, 163, 184, 0.6);
     }
 
-    .card-note {
-      font-size: 0.78rem;
-      color: var(--muted);
-    }
-
-    .card-footer {
-      margin-top: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.75rem;
-      color: var(--muted);
-    }
-
-    .pill {
-      font-size: 0.72rem;
-      padding: 3px 8px;
-      border-radius: 999px;
-      background: #ffffff;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-
-    /* Colores por juego */
-    .enabled {
-      border-color: rgba(88, 153, 226, 0.6);
-      background: #f9fbff;
-    }
-
-    .enabled .card-title {
-      color: var(--indigo);
-    }
-
     .stripe {
       position: absolute;
       inset-inline-start: 0;
       top: 0;
       bottom: 0;
       width: 5px;
-      border-radius: 14px 0 0 14px;
+      border-radius: 16px 0 0 16px;
     }
 
-    .stripe-truco {
+    .stripe-blue {
       background: var(--sky);
     }
-    .stripe-impostor {
-      background: var(--sky);
-    }
-    .stripe-mimica {
-      background: var(--sky);
-    }
-    .stripe-splitwise {
-      background: var(--sky);
-    }
-    .stripe-prode {
+    
+    .stripe-pink {
       background: var(--pink);
     }
 
@@ -200,84 +168,112 @@
     }
 
     .card.disabled {
-      opacity: 0.8;
+      opacity: 0.7;
+      cursor: default;
+    }
+
+    .card.disabled:hover {
+      border-color: rgba(148, 163, 184, 0.3);
+      box-shadow: none;
+    }
+
+    footer {
+      width: 100%;
+      max-width: 520px;
+      padding: 20px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
     }
 
     @media (max-width: 600px) {
-      body {
-        padding: 16px;
+      .top-header {
+        padding: 24px 20px 20px;
+      }
+
+      .top-header h1 {
+        font-size: 2rem;
       }
 
       .app {
-        padding: 16px 14px 12px;
+        padding: 24px 16px;
+        margin-top: 16px;
       }
 
-      header {
-        flex-direction: column;
-        align-items: flex-start;
+      .card {
+        padding: 14px;
       }
 
-      .tagline {
-        text-align: left;
+      .card-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 20px;
       }
 
-      .grid {
-        grid-template-columns: 1fr;
+      .card-title {
+        font-size: 0.95rem;
       }
     }
   </style>
 </head>
 <body>
-  <main class="app">
-    <header>
-      <div class="logo">
-        <div class="logo-icon">🦫</div>
-        <div class="logo-text">
-          <h1>Carpincho Games</h1>
-          <span>La app oficial de ranchada.</span>
-        </div>
-      </div>
-    </header>
+  <header class="top-header">
+    <h1>Ranchadapp</h1>
+    <p class="tagline">La app oficial de ranchada.</p>
+  </header>
 
+  <main class="app">
     <section class="grid">
-      <!-- Truco (activo) -->
+      <!-- Anotador de Truco -->
       <a class="card-link" href="truco.html">
-        <article class="card enabled">
-          <div class="stripe stripe-truco"></div>
-          <div class="card-header">
+        <article class="card">
+          <div class="stripe stripe-blue"></div>
+          <div class="card-icon">
+            <img src="truco-icon.jpg" alt="Truco" />
+          </div>
+          <div class="card-content">
             <h2 class="card-title">Anotador de Truco</h2>
             <span class="badge badge-live">Disponible</span>
           </div>
         </article>
       </a>
 
-      <!-- El Impostor (activo) -->
+      <!-- El Impostor -->
       <a class="card-link" href="impostor.html">
-        <article class="card enabled">
-          <div class="stripe stripe-impostor"></div>
-          <div class="card-header">
+        <article class="card">
+          <div class="stripe stripe-blue"></div>
+          <div class="card-icon">
+            <img src="impostor-icon.jpg" alt="El Impostor" />
+          </div>
+          <div class="card-content">
             <h2 class="card-title">El Impostor</h2>
             <span class="badge badge-live">Disponible</span>
           </div>
         </article>
       </a>
 
-      <!-- Dígalo con mímica (activo) -->
+      <!-- Dígalo con mímica -->
       <a class="card-link" href="mimica.html">
-        <article class="card enabled">
-          <div class="stripe stripe-mimica"></div>
-          <div class="card-header">
+        <article class="card">
+          <div class="stripe stripe-blue"></div>
+          <div class="card-icon">
+            <img src="mimica-icon.jpg" alt="Mímica" />
+          </div>
+          <div class="card-content">
             <h2 class="card-title">Dígalo con mímica</h2>
             <span class="badge badge-live">Disponible</span>
           </div>
         </article>
       </a>
 
-      <!-- Dígalo con mímica (activo) -->
+      <!-- Splitwise -->
       <a class="card-link" href="splitwise.html">
-        <article class="card enabled">
-          <div class="stripe stripe-splitwise"></div>
-          <div class="card-header">
+        <article class="card">
+          <div class="stripe stripe-blue"></div>
+          <div class="card-icon">
+            <img src="split-icon.png" alt="Splitwise" />
+          </div>
+          <div class="card-content">
             <h2 class="card-title">Splitwise</h2>
             <span class="badge badge-live">Disponible</span>
           </div>
@@ -286,12 +282,20 @@
 
       <!-- Prode Mundial 2026 -->
       <article class="card disabled">
-        <div class="stripe stripe-prode"></div>
-        <div class="card-header">
+        <div class="stripe stripe-pink"></div>
+        <div class="card-icon">
+          <img src="prode-icon.jpg" alt="Prode Mundial" />
+        </div>
+        <div class="card-content">
           <h2 class="card-title">Prode Mundial 2026</h2>
           <span class="badge badge-soon">Próximamente</span>
+        </div>
       </article>
     </section>
   </main>
+
+  <footer>
+    By Carpincho Games®
+  </footer>
 </body>
 </html>
