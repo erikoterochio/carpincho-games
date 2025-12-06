@@ -160,12 +160,12 @@
     }
 
     /* Colores por juego */
-    .card-truco {
+    .enabled {
       border-color: rgba(88, 153, 226, 0.6);
       background: #f9fbff;
     }
 
-    .card-truco .card-title {
+    .enabled .card-title {
       color: var(--indigo);
     }
 
@@ -182,13 +182,13 @@
       background: var(--sky);
     }
     .stripe-impostor {
-      background: var(--pink);
+      background: var(--sky);
     }
     .stripe-mimica {
-      background: var(--blue);
+      background: var(--pink);
     }
     .stripe-prode {
-      background: var(--indigo);
+      background: var(--pink);
     }
 
     a.card-link {
@@ -239,7 +239,7 @@
     <section class="grid">
       <!-- Truco (activo) -->
       <a class="card-link" href="truco.html">
-        <article class="card card-truco">
+        <article class="card enabled">
           <div class="stripe stripe-truco"></div>
           <div class="card-header">
             <h2 class="card-title">Anotador de Truco</h2>
@@ -248,14 +248,16 @@
         </article>
       </a>
 
-      <!-- El Impostor -->
-      <article class="card disabled">
-        <div class="stripe stripe-impostor"></div>
-        <div class="card-header">
-          <h2 class="card-title">El Impostor</h2>
-          <span class="badge badge-soon">Próximamente</span>
-        </div>
-      </article>
+      <!-- El Impostor (activo) -->
+      <a class="card-link" href="impostor.html">
+        <article class="card enabled">
+          <div class="stripe stripe-impostor"></div>
+          <div class="card-header">
+            <h2 class="card-title">El Impostor</h2>
+            <span class="badge badge-live">Disponible</span>
+          </div>
+        </article>
+      </a>
 
       <!-- Dígalo con mímica -->
       <article class="card disabled">
