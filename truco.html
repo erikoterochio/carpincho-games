@@ -9,12 +9,11 @@
   />
   <style>
     :root {
-      --bg: #E9E9E9;     /* Alabaster Grey */
-      --pink: #FF6B6B;   /* Grapefruit Pink */
-      --blue: #335C81;   /* Baltic Blue */
-      --indigo: #1B2845; /* Space Indigo */
-      --sky: #5899E2;    /* Cloudy Sky */
-
+      --bg: #E9E9E9;
+      --pink: #FF6B6B;
+      --blue: #335C81;
+      --indigo: #1B2845;
+      --sky: #5899E2;
       --card: #ffffff;
       --text: #1B2845;
       --muted: #6b7280;
@@ -24,8 +23,7 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
@@ -43,9 +41,7 @@
       max-width: 480px;
       background: var(--card);
       border-radius: 18px;
-      box-shadow:
-        0 10px 25px rgba(0, 0, 0, 0.08),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
       padding: 14px 14px 10px;
       border: 1px solid rgba(27, 40, 69, 0.1);
     }
@@ -53,247 +49,180 @@
     header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
-      margin-bottom: 6px;
+      margin-bottom: 12px;
+    }
+
+    .title-group {
+      flex: 1;
     }
 
     .title-group h1 {
-      font-size: 1.05rem;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 2px;
     }
 
     .title-group span {
-      font-size: 0.78rem;
+      font-size: 0.85rem;
       color: var(--muted);
     }
 
     .back-link {
-      font-size: 0.75rem;
+      font-size: 0.8rem;
       text-transform: uppercase;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       color: var(--indigo);
       text-decoration: none;
       border-radius: 999px;
-      border: 1px solid rgba(51, 92, 129, 0.4);
-      padding: 4px 9px;
+      border: 1px solid rgba(51, 92, 129, 0.3);
+      padding: 6px 14px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      background: #f4f4f4;
+      background: #ffffff;
+      white-space: nowrap;
     }
 
     .back-link:hover {
-      background: #e5e5e5;
+      background: #f9f9f9;
       border-color: var(--blue);
     }
 
     .scoreboard {
-      border-radius: 14px;
-      border: 1px solid rgba(51, 92, 129, 0.25);
-      background: #f7f7f7;
-      padding: 10px 10px 8px;
-      margin-top: 4px;
+      border-radius: 16px;
+      border: 1px solid rgba(51, 92, 129, 0.2);
+      background: #ffffff;
+      padding: 20px 16px 16px;
+      margin-top: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
     }
 
     .teams {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .team-row {
       display: grid;
-      grid-template-columns: auto 1fr auto;
-      align-items: center;
-      column-gap: 10px;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
     }
 
-    .team-info {
+    .team-column {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 12px;
     }
 
     .team-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 8px;
+      text-align: center;
     }
 
     .team-name {
-      font-size: 0.9rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
       text-transform: uppercase;
       color: var(--indigo);
+      display: block;
+      margin-bottom: 8px;
     }
 
-    .team-score {
-      font-size: 0.88rem;
-      color: var(--muted);
+    .score-display {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 24px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      text-align: center;
     }
 
-    .team-score strong {
-      color: var(--text);
+    .score-number {
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--indigo);
+      line-height: 1;
       font-variant-numeric: tabular-nums;
     }
 
-    .team-score span {
-      font-size: 0.78rem;
-    }
-
-    .sticks {
-      background: #fdfdfd;
-      border-radius: 10px;
-      padding: 8px 8px 6px;
-      border: 1px solid rgba(88, 153, 226, 0.4);
-    }
-
-    .tallies-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      justify-items: center;
-    }
-
-    .tally-block {
-      width: 32px;
-      height: 32px;
-      position: relative;
-      border-radius: 8px;
-      background: #fefefe;
-      border: 1px solid rgba(148, 163, 184, 0.6);
-      overflow: hidden;
-    }
-
-    /* Bloque después de los 15 puntos: marcamos un pequeño gap */
-    .tally-block.divider {
-      margin-top: 6px;
-    }
-
-    .tally-block.divider::before {
-      content: "";
-      position: absolute;
-      left: 2px;
-      right: 2px;
-      top: -4px;
-      height: 2px;
-      border-radius: 999px;
-      background: rgba(51, 92, 129, 0.45);
-    }
-
-    .tally-line {
-      position: absolute;
-      width: 2px;
-      height: 22px;
-      top: 5px;
-      border-radius: 999px;
-      background: transparent; /* se pinta cuando está activa */
-    }
-
-    .tally-line:nth-child(1) { left: 6px; }
-    .tally-line:nth-child(2) { left: 11px; }
-    .tally-line:nth-child(3) { left: 16px; }
-    .tally-line:nth-child(4) { left: 21px; }
-
-    /* Diagonal */
-    .tally-line:nth-child(5) {
-      left: 6px;
-      width: 2px;
-      height: 26px;
-      transform: rotate(-50deg);
-      transform-origin: center;
-    }
-
-    .tally-line.active-red {
-      background: linear-gradient(180deg, var(--pink), #e25555);
-    }
-
-    .tally-line.active-green {
-      background: linear-gradient(180deg, #4ade80, #22c55e);
+    .score-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
     }
 
     .score-buttons {
       display: flex;
-      flex-direction: column;
-      gap: 6px;
+      gap: 8px;
+      justify-content: center;
     }
 
     .score-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
       border: none;
       cursor: pointer;
-      font-size: 1.05rem;
+      font-size: 1.3rem;
+      font-weight: 600;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       background: #ffffff;
       color: var(--indigo);
-      border: 1px solid rgba(51, 92, 129, 0.45);
-      transition:
-        transform 0.1s ease-out,
-        box-shadow 0.1s ease-out,
-        background 0.1s ease-out,
-        border-color 0.1s ease-out;
-      touch-action: manipulation; /* evita zoom/doble tap raro */
+      border: 2px solid rgba(51, 92, 129, 0.3);
+      transition: all 0.15s ease;
+      touch-action: manipulation;
     }
 
     .score-btn.plus {
-      background: linear-gradient(135deg, var(--sky), #7fb4f0);
+      background: var(--sky);
       color: #ffffff;
-      border-color: transparent;
+      border-color: var(--sky);
     }
 
     .score-btn.minus {
       background: #ffffff;
+      color: var(--indigo);
     }
 
     .score-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .score-btn:active {
-      transform: translateY(0);
-      box-shadow: none;
+      transform: scale(0.95);
     }
 
     .controls {
-      margin-top: 8px;
+      margin-top: 16px;
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
       gap: 8px;
-      flex-wrap: wrap;
-      font-size: 0.8rem;
-      color: var(--muted);
     }
 
     .controls button {
       border-radius: 999px;
-      border: 1px solid rgba(51, 92, 129, 0.4);
+      border: 1px solid rgba(51, 92, 129, 0.3);
       background: #ffffff;
-      padding: 4px 10px;
-      font-size: 0.75rem;
+      padding: 8px 20px;
+      font-size: 0.85rem;
       cursor: pointer;
       color: var(--indigo);
       touch-action: manipulation;
+      font-weight: 500;
     }
 
     .controls button:hover {
-      background: #f1f5f9;
+      background: #f8f9fa;
+      border-color: var(--blue);
     }
 
     footer {
-      margin-top: 8px;
-      font-size: 0.7rem;
+      margin-top: 12px;
+      font-size: 0.75rem;
       color: var(--muted);
       display: flex;
       justify-content: space-between;
       gap: 8px;
-      flex-wrap: wrap;
     }
 
     @media (max-width: 480px) {
@@ -312,7 +241,6 @@
     <header>
       <div class="title-group">
         <h1>Anotador de Truco</h1>
-        <span>Nosotros vs Ellos · 30 tantos</span>
       </div>
       <a href="index.html" class="back-link">
         ← Inicio
@@ -322,52 +250,37 @@
     <section class="scoreboard">
       <div class="teams">
         <!-- NOSOTROS -->
-        <div class="team-row" data-team="A">
+        <div class="team-column" data-team="A">
+          <div class="team-header">
+            <span class="team-name">Nosotros</span>
+          </div>
+
+          <div class="score-display">
+            <div class="score-number" id="scoreA">0</div>
+            <div class="score-label">puntos</div>
+          </div>
+
           <div class="score-buttons">
             <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
             <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
           </div>
-
-          <div class="team-info">
-            <div class="team-header">
-              <span class="team-name">Nosotros</span>
-              <span class="team-score">
-                <strong id="scoreA">0</strong><span>/30</span>
-              </span>
-            </div>
-            <div class="sticks">
-              <div class="tallies-grid" id="talliesA">
-                <!-- se completa por JS -->
-              </div>
-            </div>
-          </div>
-
-          <!-- lado derecho vacío para mantener simetría -->
-          <div style="width:32px;"></div>
         </div>
 
         <!-- ELLOS -->
-        <div class="team-row" data-team="B">
+        <div class="team-column" data-team="B">
+          <div class="team-header">
+            <span class="team-name">Ellos</span>
+          </div>
+
+          <div class="score-display">
+            <div class="score-number" id="scoreB">0</div>
+            <div class="score-label">puntos</div>
+          </div>
+
           <div class="score-buttons">
             <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
             <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
           </div>
-
-          <div class="team-info">
-            <div class="team-header">
-              <span class="team-name">Ellos</span>
-              <span class="team-score">
-                <strong id="scoreB">0</strong><span>/30</span>
-              </span>
-            </div>
-            <div class="sticks">
-              <div class="tallies-grid" id="talliesB">
-                <!-- se completa por JS -->
-              </div>
-            </div>
-          </div>
-
-          <div style="width:32px;"></div>
         </div>
       </div>
 
@@ -387,49 +300,9 @@
     let scoreA = 0;
     let scoreB = 0;
 
-    function createTallies(containerId) {
-      const container = document.getElementById(containerId);
-
-      // 6 bloques de 5 líneas (6 x 5 = 30 puntos)
-      for (let group = 0; group < 6; group++) {
-        const block = document.createElement("div");
-        block.className = "tally-block";
-        if (group === 3) {
-          block.classList.add("divider"); // marca corte de los 15
-        }
-
-        for (let line = 0; line < 5; line++) {
-          const lineDiv = document.createElement("div");
-          lineDiv.className = "tally-line";
-          block.appendChild(lineDiv);
-        }
-
-        container.appendChild(block);
-      }
-    }
-
-    function updateTallies(team, value) {
-      const containerId = team === "A" ? "talliesA" : "talliesB";
-      const lines = document.querySelectorAll(`#${containerId} .tally-line`);
-
-      lines.forEach((line, index) => {
-        line.classList.remove("active-red", "active-green");
-
-        if (index < value) {
-          if (index < 15) {
-            line.classList.add("active-red");   // primeros 15
-          } else {
-            line.classList.add("active-green"); // últimos 15
-          }
-        }
-      });
-    }
-
     function updateUI() {
       document.getElementById("scoreA").textContent = scoreA;
       document.getElementById("scoreB").textContent = scoreB;
-      updateTallies("A", scoreA);
-      updateTallies("B", scoreB);
     }
 
     function changeScore(team, delta) {
@@ -448,8 +321,6 @@
     }
 
     // Inicialización
-    createTallies("talliesA");
-    createTallies("talliesB");
     updateUI();
   </script>
 </body>
