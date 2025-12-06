@@ -35,18 +35,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px;
+      padding: 16px;
     }
 
     .app {
       width: 100%;
-      max-width: 520px;
+      max-width: 480px;
       background: var(--card);
       border-radius: 18px;
       box-shadow:
         0 10px 25px rgba(0, 0, 0, 0.08),
         0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 18px 16px 14px;
+      padding: 14px 14px 10px;
       border: 1px solid rgba(27, 40, 69, 0.1);
     }
 
@@ -54,31 +54,31 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 8px;
+      gap: 10px;
+      margin-bottom: 6px;
     }
 
     .title-group h1 {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
     }
 
     .title-group span {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--muted);
     }
 
     .back-link {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
       color: var(--indigo);
       text-decoration: none;
       border-radius: 999px;
       border: 1px solid rgba(51, 92, 129, 0.4);
-      padding: 5px 10px;
+      padding: 4px 9px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       background: #f4f4f4;
     }
 
@@ -91,14 +91,14 @@
       border-radius: 14px;
       border: 1px solid rgba(51, 92, 129, 0.25);
       background: #f7f7f7;
-      padding: 12px 10px 10px;
-      margin-top: 6px;
+      padding: 10px 10px 8px;
+      margin-top: 4px;
     }
 
     .teams {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
 
     .team-row {
@@ -130,7 +130,7 @@
     }
 
     .team-score {
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       color: var(--muted);
     }
 
@@ -140,59 +140,93 @@
     }
 
     .team-score span {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
     }
 
     .sticks {
       background: #fdfdfd;
       border-radius: 10px;
-      padding: 8px 10px;
+      padding: 8px 8px 6px;
       border: 1px solid rgba(88, 153, 226, 0.4);
     }
 
-    .sticks-column {
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
+    .tallies-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      justify-items: center;
     }
 
-    .stick {
-      height: 6px;
+    .tally-block {
+      width: 32px;
+      height: 32px;
+      position: relative;
+      border-radius: 8px;
+      background: #fefefe;
+      border: 1px solid rgba(148, 163, 184, 0.6);
+      overflow: hidden;
+    }
+
+    /* Bloque después de los 15 puntos: marcamos un pequeño gap */
+    .tally-block.divider {
+      margin-top: 6px;
+    }
+
+    .tally-block.divider::before {
+      content: "";
+      position: absolute;
+      left: 2px;
+      right: 2px;
+      top: -4px;
+      height: 2px;
       border-radius: 999px;
-      background: rgba(51, 92, 129, 0.12); /* vacío */
+      background: rgba(51, 92, 129, 0.45);
     }
 
-    .stick.red {
+    .tally-line {
+      position: absolute;
+      width: 2px;
+      height: 22px;
+      top: 5px;
+      border-radius: 999px;
+      background: transparent; /* se pinta cuando está activa */
+    }
+
+    .tally-line:nth-child(1) { left: 6px; }
+    .tally-line:nth-child(2) { left: 11px; }
+    .tally-line:nth-child(3) { left: 16px; }
+    .tally-line:nth-child(4) { left: 21px; }
+
+    /* Diagonal */
+    .tally-line:nth-child(5) {
+      left: 6px;
+      width: 2px;
+      height: 26px;
+      transform: rotate(-50deg);
+      transform-origin: center;
+    }
+
+    .tally-line.active-red {
       background: linear-gradient(180deg, var(--pink), #e25555);
     }
 
-    .stick.green {
+    .tally-line.active-green {
       background: linear-gradient(180deg, #4ade80, #22c55e);
     }
 
-    .stick.middle {
-      margin-bottom: 7px;
-      position: relative;
-    }
-
-    .stick.middle::after {
-      content: "";
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: -4px;
-      height: 2px;
-      border-radius: 999px;
-      background: rgba(51, 92, 129, 0.45); /* línea divisoria 15/30 */
+    .score-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
 
     .score-btn {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: 999px;
       border: none;
       cursor: pointer;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -204,7 +238,7 @@
         box-shadow 0.1s ease-out,
         background 0.1s ease-out,
         border-color 0.1s ease-out;
-      touch-action: manipulation; /* evita zoom por doble tap */
+      touch-action: manipulation; /* evita zoom/doble tap raro */
     }
 
     .score-btn.plus {
@@ -228,7 +262,7 @@
     }
 
     .controls {
-      margin-top: 10px;
+      margin-top: 8px;
       display: flex;
       justify-content: flex-end;
       gap: 8px;
@@ -253,8 +287,8 @@
     }
 
     footer {
-      margin-top: 10px;
-      font-size: 0.72rem;
+      margin-top: 8px;
+      font-size: 0.7rem;
       color: var(--muted);
       display: flex;
       justify-content: space-between;
@@ -262,17 +296,13 @@
       flex-wrap: wrap;
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 480px) {
       body {
-        padding: 16px;
+        padding: 10px;
       }
 
       .app {
-        padding: 16px 14px 12px;
-      }
-
-      .team-row {
-        grid-template-columns: auto 1fr auto;
+        padding: 12px 10px 8px;
       }
     }
   </style>
@@ -293,7 +323,10 @@
       <div class="teams">
         <!-- NOSOTROS -->
         <div class="team-row" data-team="A">
-          <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
+          <div class="score-buttons">
+            <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
+            <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
+          </div>
 
           <div class="team-info">
             <div class="team-header">
@@ -303,18 +336,22 @@
               </span>
             </div>
             <div class="sticks">
-              <div class="sticks-column" id="sticksA">
+              <div class="tallies-grid" id="talliesA">
                 <!-- se completa por JS -->
               </div>
             </div>
           </div>
 
-          <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
+          <!-- lado derecho vacío para mantener simetría -->
+          <div style="width:32px;"></div>
         </div>
 
         <!-- ELLOS -->
         <div class="team-row" data-team="B">
-          <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
+          <div class="score-buttons">
+            <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
+            <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
+          </div>
 
           <div class="team-info">
             <div class="team-header">
@@ -324,13 +361,13 @@
               </span>
             </div>
             <div class="sticks">
-              <div class="sticks-column" id="sticksB">
+              <div class="tallies-grid" id="talliesB">
                 <!-- se completa por JS -->
               </div>
             </div>
           </div>
 
-          <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
+          <div style="width:32px;"></div>
         </div>
       </div>
 
@@ -350,29 +387,39 @@
     let scoreA = 0;
     let scoreB = 0;
 
-    function createSticks(containerId) {
+    function createTallies(containerId) {
       const container = document.getElementById(containerId);
-      for (let i = 0; i < 30; i++) {
-        const stick = document.createElement("div");
-        stick.className = "stick";
-        if (i === 14) {
-          stick.classList.add("middle"); // marca separación 15/30
+
+      // 6 bloques de 5 líneas (6 x 5 = 30 puntos)
+      for (let group = 0; group < 6; group++) {
+        const block = document.createElement("div");
+        block.className = "tally-block";
+        if (group === 3) {
+          block.classList.add("divider"); // marca corte de los 15
         }
-        container.appendChild(stick);
+
+        for (let line = 0; line < 5; line++) {
+          const lineDiv = document.createElement("div");
+          lineDiv.className = "tally-line";
+          block.appendChild(lineDiv);
+        }
+
+        container.appendChild(block);
       }
     }
 
-    function updateSticks(team, value) {
-      const containerId = team === "A" ? "sticksA" : "sticksB";
-      const sticks = document.querySelectorAll(`#${containerId} .stick`);
+    function updateTallies(team, value) {
+      const containerId = team === "A" ? "talliesA" : "talliesB";
+      const lines = document.querySelectorAll(`#${containerId} .tally-line`);
 
-      sticks.forEach((stick, index) => {
-        stick.classList.remove("red", "green");
+      lines.forEach((line, index) => {
+        line.classList.remove("active-red", "active-green");
+
         if (index < value) {
           if (index < 15) {
-            stick.classList.add("red");   // 1–15
+            line.classList.add("active-red");   // primeros 15
           } else {
-            stick.classList.add("green"); // 16–30
+            line.classList.add("active-green"); // últimos 15
           }
         }
       });
@@ -381,8 +428,8 @@
     function updateUI() {
       document.getElementById("scoreA").textContent = scoreA;
       document.getElementById("scoreB").textContent = scoreB;
-      updateSticks("A", scoreA);
-      updateSticks("B", scoreB);
+      updateTallies("A", scoreA);
+      updateTallies("B", scoreB);
     }
 
     function changeScore(team, delta) {
@@ -401,8 +448,8 @@
     }
 
     // Inicialización
-    createSticks("sticksA");
-    createSticks("sticksB");
+    createTallies("talliesA");
+    createTallies("talliesB");
     updateUI();
   </script>
 </body>
