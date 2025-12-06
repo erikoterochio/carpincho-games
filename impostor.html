@@ -548,11 +548,16 @@
           <div class="form-group">
             <label>Categoría de palabra</label>
             <select id="word-category">
-              <option value="mixto" selected>Mixto</option>
-              <option value="comida">Comida</option>
-              <option value="peliculas">Películas</option>
-              <option value="lugares">Lugares</option>
+              <option value="aleatoria" selected>Aleatoria</option>
+              <option value="deportes">Deportes</option>
+              <option value="peliculasSeries">Películas y Series</option>
               <option value="objetos">Objetos</option>
+              <option value="lugares">Lugares</option>
+              <option value="personalidades">Personalidades</option>
+              <option value="cocina">Cocina</option>
+              <option value="animales">Animales</option>
+              <option value="musica">Música</option>
+              <option value="tecnologia">Tecnología</option>
             </select>
           </div>
 
@@ -634,6 +639,7 @@
       <div class="content">
         <p class="round-indicator" id="round-indicator-clues"></p>
         <p class="info-text">Todos recibieron su palabra (o descubrieron que son impostores).</p>
+        <p class="info-text" style="font-size:1rem;color:var(--sky);font-weight:600;">Categoría: <span id="category-display"></span></p>
         <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> dando una pista en voz alta.</p>
         <p class="info-text" style="font-size:0.95rem;color:var(--muted);">El resto continúa en orden hacia la derecha.</p>
 
@@ -771,7 +777,8 @@
       players: [],
       eliminated: [],
       impostorCount: 1,
-      wordCategory: 'mixto',
+      wordCategory: 'aleatoria',
+      currentCategory: '',
       word: '',
       roles: [],
       impostorIndexes: [],
@@ -784,17 +791,21 @@
     };
 
     // Diccionario de palabras
-    const wordBank = {
-      comida: ['Pizza', 'Asado', 'Empanada', 'Milanesa', 'Pasta', 'Sushi', 'Hamburguesa', 'Helado', 'Choripán', 'Facturas', 'Mate', 'Dulce de leche', 'Alfajor', 'Locro', 'Ravioles'],
-      peliculas: ['Titanic', 'Avatar', 'Gladiador', 'Matrix', 'Inception', 'Interestelar', 'Rocky', 'Terminator', 'Batman', 'Superman', 'Joker', 'Frozen', 'Coco', 'Up', 'Toy Story'],
-      lugares: ['París', 'Roma', 'Londres', 'Tokio', 'Nueva York', 'Buenos Aires', 'Barcelona', 'Venecia', 'Ámsterdam', 'Berlín', 'Madrid', 'Playa', 'Montaña', 'Bosque', 'Desierto'],
-      objetos: ['Celular', 'Computadora', 'Reloj', 'Libro', 'Lapicera', 'Llave', 'Espejo', 'Lámpara', 'Almohada', 'Mochila', 'Guitarra', 'Pelota', 'Bicicleta', 'Cámara', 'Auriculares'],
-      mixto: ['Pizza', 'París', 'Titanic', 'Celular', 'Guitarra', 'Fútbol', 'Playa', 'Montaña', 'Perro', 'Café', 'Música', 'Verano', 'Lluvia', 'Sol', 'Luna']
+    const wordBank = { 
+      deportes: ['River Plate','Yoga','Crossfit','Gimnasio','Pilates','Jabalina','Boca Juniors','Selección Argentina','La Scaloneta','Lionel Messi','Diego Maradona','Ángel Di María','Juan Román Riquelme','Marcelo Gallardo','Carlos Tevez','Racing Club','Independiente','San Lorenzo','Newells','Rosario Central','Banfield','Lanus','Barracas Central','Riestra','Peñarol','Nacional','Gustavo Alfaro','Carlos Bianchi','Sir Alex Ferguson','Rafael Nadal','Gato Gaudio','Agustín Pichot','Los Pumas','Manu Ginóbili','Michael Jordan','Roger Federer','Copa Libertadores','Champions League','Chiqui Tapia','Caruso Lombardi','Cristiano Ronaldo','Neymar','Ronaldinho','Ronaldo Nazário','Carlos Bilardo','Pupi Zanetti','Chilavert','Ogro Fabbiani','Kobe Bryant','La Bombonera','Camp Nou','Pádel','Fútbol','Tenis','Basquet','Ping Pong','Polo','Bowling','Golazo','Árbitro','Coneja Baldassi','Zinedine Zidane','Walter Safarian','Pollo Vignolo','Mariano Closs','Franco Colapinto','F1','Lewis Hamilton','Max Verstappen','JM Fangio','Esteroides','Raqueta','Red','Estadio','Copa','Golf','Diego Latorre','JJ.OO.','Doping','Chipi Barijho','Wanchope Ábila' ], 
+      peliculasSeries: ['El secreto de sus ojos','Relatos salvajes','Nueve Reinas','Casados con hijos','Los simuladores','Okupas','El Marginal','La Casa de Papel','Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Titanic','El Padrino','Star Wars','Harry Potter','Toy Story','Shrek','Merlí','Spiderman','Los Simuladores','Blancanieves','History Channel','Los Simpsons','El chavo del 8','Alien','Terminator','Depredador','Scooby Doo','Matrix','Forrest Gump','Jumanji','El rey león','Volver al futuro','E.T.','James Bond','Hulk','Superman','Batman','Mi pobre angelito','El señor de los anillos','Telefé','Canal 13','ESPN','MTV','Dumbo','Dragon Ball','El Padrino'], 
+      objetos: ['Celular','Computadora','Notebook','Televisor','Controles remoto','Auriculares','Libro','Lapicera','Llave','Gafas de sol','Mochila','Billetera','Reloj','Cargador','Botella de agua','Paraguas','Cámara de fotos','Silla','Mesa','Espejo','Disco','Mesa','Auto','Moto','Dildo','Olla','Pala','Billete','Sobre','Paragüas','Puerta','Pelota','Parrilla','Remera','Alfombra','Bandera','Control remoto','Vaso','Piedra','Tijera','Libro','Planta','Maceta','Cartas','Vaso Stanley','Heladera','Gorra','Cama','Semáforo','Micrófono','Radio','Televisor','Computadora','Zapatillas','Silla','Celular','Aspiradora','Collar','Picador','Correa','Alfombra','Candado'], 
+      lugares: ['Buenos Aires','Obelisco','La Bombonera','El Monumental','Mar del Plata','Bariloche','Mendoza','Cataratas del Iguazú','La Patagonia','Córdoba','Rosario','Palermo','Recoleta','París','Roma','Madrid','Nueva York','Tokio','Playa','Montaña','Ranchos','Brandsen','CABA','Mar del Plata','Jamaica','Cuba','Uruguay','Montevideo','Asunción','Paraguay','Bolivia','Chile','Brasil','Rio de Janeiro','Italia','Roma','Milán','Madrid','Barcelona','España','Portugal','Islas Malvinas','Antártida','Asia','Japón','China','La luna','Marte','Abril','El Carmen','Greenville','EEUU','Miami','Canadá','México','Cancún','Sudáfrica','Australia','Segurola y La Habana','Microcentro','Pilar','Luján','Charita','La Boca','Angola','Escocia','Finlandia','Antártida','Berlín','Caribe','Sahara','Egipto','Himalayas','Perú','Machu Pichu','Lejos','Lo de kevito','La reja','Costanera','Puerto Madero','Alemania','Venezuela','Caracas','Grecia','Mykonos','Croacia','La Matanza','Villa 31','Barrio Marítimo','Formosa','Qatar','Pampa y la vía','Quilmes oeste','Pinamar','Cariló'], 
+      personalidades: ['Lionel Messi','Diego Maradona','Ricardo Darín','Susana Giménez','Mirtha Legrand','Gustavo Cerati','Charly García','Fito Páez','Tini Stoessel','Bizarrap','Duki','Papa Francisco','Jorge Luis Borges','Shakira','Bad Bunny','Michael Jackson','Barack Obama','Cristina Fernández de Kirchner','Mauricio Macri','Javier Milei','Elon Musk','Donald Trump','Alberto Fernandez','Mario','Lucre','Benja','Kevito','La Garza','El Rifle','Kike Feldman','Nicolas Occhiato','Miguel Granados','Sebastián Wanraich','Guillermo Francella','Ricardo Darín','Caruso Lombardi','Diego Maradona','Chiqui Tapia','Marcelo Polino','Marcelo Tinelli','Mario Pergolini','Steve Jobs','San Martín','Hitler','Vladimir Putin','Pablo Escobar','Pablo Lescano','Mahatma Gandhi','Cleopatra','Freddie Mercury','Shakira','Jorge Rial','Kun Agüero','Guido Kaczka','JM Fangio','Franco Colapinto','Poli Calello','Justin Bieber','Usain Bolt','Natacha Jaitt','Alberto Nisman','Jorge Andri','Florencia de la V','Marcos Galperín','Hugo Moyano','Horacio R. Larreta','Pato Bullrich','Axel Kicillof','Perón','René Favaloro','Marley','Bob Marley','Adrián Suar','JM Listorti','Larry de Clay','Andrés Calamaro','Diego Latorre','Albert Einstein','Ibai','Davoo Xeneixe','Mr Beast','Lamine Yamal','Dibu Martinez','Sasha Gery','La Roca','Vin Diesel','Jordi el niño polla','LeBron James','El Bananero','Marito Baracus','Jeff Epstein','Osama Bin Laden','Julio Grondona','El mago sin dientes','Napoleón'], 
+      cocina: ['Asado','Empanadas','Milanesa','Pizza','Fideos con tuco','Ñoquis','Locro','Choripán','Hamburguesa','Ensalada rusa','Helado','Torta','Dulce de leche','Mate','Café','Fernet con coca','Cerveza','Sushi','Cuchillo','Tenedor','Sartén','Heladera','Tequila','Olla','Parrilla','Sartén','Cuchara','Hornalla','Vaso Stanley','Lasagna','Milanesa','Huevo frito','Papa frita','Shawarma','Pescado','Ribs','Pollo','Vermut','Gin tonic','Soda','Pava','Bandeja','Horno','Microondas','Chef','Sopa','Pastelería','Panadería','Pan','Sanguche','Tostado','Café','Leche','Naranja','Banana','Tomate','Lechuga','Cebolla','Pomelo','Menta','Azúcar','Freezer','Restaurant','Bar','Cocktail','Trago','Postre','Desayuno','Almuerzo','Cena','Chocolate','Golosina','Caramelo','Chupetín','Miel','Mate','Jamón','Queso','Albóndiga'], 
+      animales: ['Perro','Gato','Carpincho','Loro','Caballo','Vaca','Oveja','Cerdo','Gallina','Pato','León','Tigre','Elefante','Jirafa','Mono','Pez','Delfín','Ballena','Tortuga','Ratón','Ardilla','Garza','Oso','Jirafa','Buitre','Koala','Cordero','Hormiga','Langosta','Cangrejo','Puma','Águila','Cóndor','Escarabajo','Cobra','Serpiente','Rinoceronte','Flamenco','Tigre','Iguana','Sabueso','Oca','Morsa','Foca','Cabra','Anguila','Mono','Gorila','Lobo','Leopardo','Yacaré','Piojo','Víbora','Alacrán','Escorpión','Cucaracha','Mosca','Mosquito','Tarántula','Liebre','Tiranosaurio','Tiburón','Ballena','Calamar','Estrella de mar','Pepino de mar','Dragón','Unicornio','Burro','Jabalí','Orangután','Pelicano','Tucán','Cuervo','Lagartija','Lagarto','Libélula','Pato','Ganso','Nutria'], 
+      musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Ciro y Los Persas','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Pibes Chorros','Los Piojos','La Renga','Radio Aspen','David Guetta','Los Redondos','Miranda','Airbag','Bono','Pappo','Coldplay','Ed Sheeran','Duki','Paulo Londra','Gustavo Cerati','Indio Solari','Andrés Calamaro','Javier Calamaro','Red Hot Chilli Peppers','Nirvana','Kurt Cobain','La Sole','Luck ra','La mona gimenez','Kapanga','Molotov','Alberto Spinetta','El plan de la mariposa','Los cafres','Autenticos Decadentes','Chano','Babasónicos','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Eros Ramazzoti','Reggae','Ópera','Folclore','Cumbia','Tango','Rap','Sumo','Rata Blanca','Los Pimpinela'], 
+      tecnologia: ['WhatsApp','Instagram','TikTok','Netflix','Spotify','YouTube','Google','Correo electrónico','WiFi','Bluetooth','Notebook','Tablet','Smart TV','Consola de videojuegos','PlayStation','Xbox','Mouse','Teclado','Pendrive','Nube','Criptomoneda','Hacker','Bitcoin','Ethereum','Internet','Nintendo','Gameboy','Atari','Láser','Iphone','Android','Robot','ChatGPT','Radio','Televisor','Radar','Satélite','Wifi','Wikipedia','Fibertel','Click','Excel','Mail','Videojuego','Sitio web']
     };
 
     let voteTimer = null;
     const STORAGE_KEY = 'impostor_config';
-    const STORAGE_EXPIRY = 2 * 60 * 60 * 1000; // 2 horas
+    const STORAGE_EXPIRY = 2 * 60 * 60 * 1000;
 
     // Navegación entre pantallas
     function showScreen(screenId) {
@@ -854,7 +865,6 @@
       const count = parseInt(document.getElementById('player-count').value);
       const container = document.getElementById('player-names-container');
       
-      // Guardar valores existentes
       const existingValues = [];
       const existingInputs = container.querySelectorAll('input');
       existingInputs.forEach(input => {
@@ -868,7 +878,6 @@
         input.type = 'text';
         input.placeholder = `Jugador ${i + 1}`;
         input.id = `player-${i}`;
-        // Restaurar valor si existía
         if (i < existingValues.length) {
           input.value = existingValues[i];
         }
@@ -895,7 +904,6 @@
       gameState.eliminated = [];
       gameState.currentRound = 0;
       
-      // Elegir primer jugador aleatorio
       gameState.initialFirstPlayer = Math.floor(Math.random() * gameState.players.length);
       gameState.firstPlayerIndex = gameState.initialFirstPlayer;
       
@@ -914,7 +922,17 @@
 
     // Asignar roles y palabra
     function assignRoles() {
-      const words = wordBank[gameState.wordCategory];
+      let categoryToUse = gameState.wordCategory;
+      
+      if (gameState.wordCategory === 'aleatoria') {
+        const categories = Object.keys(wordBank);
+        categoryToUse = categories[Math.floor(Math.random() * categories.length)];
+        gameState.currentCategory = categoryToUse;
+      } else {
+        gameState.currentCategory = gameState.wordCategory;
+      }
+      
+      const words = wordBank[categoryToUse];
       gameState.word = words[Math.floor(Math.random() * words.length)];
       
       const activeIndexes = gameState.players
@@ -982,21 +1000,31 @@
 
     // Mostrar pantalla de inicio de pistas
     function showStartCluesScreen() {
-      // Determinar quién empieza
       if (!gameState.eliminated.includes(gameState.initialFirstPlayer)) {
-        // Si el primer jugador original sigue vivo, arranca él
         gameState.firstPlayerIndex = gameState.initialFirstPlayer;
       } else {
-        // Si fue eliminado, buscar el siguiente vivo
         let nextIndex = (gameState.initialFirstPlayer + 1) % gameState.players.length;
         while (gameState.eliminated.includes(nextIndex)) {
           nextIndex = (nextIndex + 1) % gameState.players.length;
         }
         gameState.firstPlayerIndex = nextIndex;
-        gameState.initialFirstPlayer = nextIndex; // Actualizar para próximas rondas
+        gameState.initialFirstPlayer = nextIndex;
       }
       
+      const categoryNames = {
+        'deportes': 'Deportes',
+        'peliculasSeries': 'Películas y Series',
+        'objetos': 'Objetos',
+        'lugares': 'Lugares',
+        'personalidades': 'Personalidades',
+        'cocina': 'Cocina',
+        'animales': 'Animales',
+        'musica': 'Música',
+        'tecnologia': 'Tecnología'
+      };
+      
       document.getElementById('first-player-name').textContent = gameState.players[gameState.firstPlayerIndex];
+      document.getElementById('category-display').textContent = categoryNames[gameState.currentCategory] || gameState.currentCategory;
       showScreen('screen-start-clues');
     }
 
@@ -1038,7 +1066,6 @@
         gameState.currentClueIndex = (gameState.currentClueIndex + 1) % gameState.players.length;
       } while (gameState.eliminated.includes(gameState.currentClueIndex));
       
-      // Si volvimos al jugador que empezó, termina la vuelta
       if (gameState.currentClueIndex === gameState.firstPlayerIndex) {
         startVoteTimer();
       } else {
@@ -1128,7 +1155,6 @@
       const buttons = document.getElementById('result-buttons');
       buttons.innerHTML = '';
       
-      // Condición 1: Todos los impostores fueron eliminados
       if (activeImpostors.length === 0) {
         statusText.textContent = '¡Todos los impostores fueron eliminados!';
         const btn = document.createElement('button');
@@ -1136,27 +1162,21 @@
         btn.textContent = 'Ver resultado final';
         btn.onclick = () => endRound('citizens');
         buttons.appendChild(btn);
-      }
-      // Condición 2: Se alcanzó el número máximo de rondas
-      else if (gameState.currentRound >= gameState.maxRounds) {
+      } else if (gameState.currentRound >= gameState.maxRounds) {
         statusText.textContent = `Se alcanzó el máximo de rondas (${gameState.maxRounds})`;
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Ver resultado final';
         btn.onclick = () => endRound('impostors');
         buttons.appendChild(btn);
-      }
-      // Condición 3: Los impostores son mayoría o igual
-      else if (activePlayers.length <= activeImpostors.length * 2) {
+      } else if (activePlayers.length <= activeImpostors.length * 2) {
         statusText.textContent = '¡Los impostores tienen ventaja!';
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Ver resultado final';
         btn.onclick = () => endRound('impostors');
         buttons.appendChild(btn);
-      }
-      // Continuar jugando
-      else {
+      } else {
         statusText.textContent = `Quedan ${activeImpostors.length} impostor(es) activos. Ronda ${gameState.currentRound + 1} de ${gameState.maxRounds}`;
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
@@ -1200,7 +1220,7 @@
 
     // Cambiar solo categoría
     function changeCategory() {
-      const categories = ['mixto', 'comida', 'peliculas', 'lugares', 'objetos'];
+      const categories = ['aleatoria', 'deportes', 'peliculasSeries', 'objetos', 'lugares', 'personalidades', 'cocina', 'animales', 'musica', 'tecnologia'];
       const currentIndex = categories.indexOf(gameState.wordCategory);
       const nextIndex = (currentIndex + 1) % categories.length;
       gameState.wordCategory = categories[nextIndex];
