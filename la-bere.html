@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>La Bere · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --pink: #FF6B6B;
+      --blue: #335C81;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --gold: #FFD700;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+      --green: #4CAF50;
+      --red: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .floating-home {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      background: rgba(27, 40, 69, 0.9);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      transition: all 0.15s ease;
+    }
+
+    .floating-home:hover {
+      background: rgba(27, 40, 69, 1);
+      border-color: rgba(255, 255, 255, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .app {
+      width: 100%;
+      max-width: 480px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .title-group h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .content {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .intro-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+    }
+
+    .btn-primary {
+      background: var(--sky);
+      color: #ffffff;
+      border: 2px solid var(--sky);
+    }
+
+    .btn-primary:hover {
+      background: #4a8dd4;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(88, 153, 226, 0.3);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--indigo);
+      border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: #f9f9f9;
+      border-color: var(--blue);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+
+    .round-header {
+      background: linear-gradient(135deg, var(--sky) 0%, var(--blue) 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .round-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .starting-player {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .player-selection {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      margin: 12px 0;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .player-name {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 12px;
+    }
+
+    .choice-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .choice-btn {
+      padding: 12px;
+      min-height: 45px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .choice-btn:active {
+      transform: scale(0.95);
+    }
+
+    .choice-btn.selected {
+      background: var(--sky);
+      color: #ffffff;
+      border-color: var(--sky);
+    }
+
+    .choice-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .sum-display {
+      text-align: center;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 12px;
+      margin: 20px 0;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .sum-number {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--sky);
+      margin: 10px 0;
+    }
+
+    .fiummm-message {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 10px;
+    }
+
+    .fiummm-yes {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    .fiummm-no {
+      background: #d1ecf1;
+      color: #0c5460;
+    }
+
+    .score-input {
+      background: #ffffff;
+      padding: 16px;
+      border-radius: 12px;
+      margin: 12px 0;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .score-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .score-btn {
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .score-btn:active {
+      transform: scale(0.95);
+    }
+
+    .score-btn-yes {
+      background: var(--green);
+      color: white;
+    }
+
+    .score-btn-no {
+      background: #616161;
+      color: white;
+    }
+
+    .score-btn.selected {
+      box-shadow: 0 0 0 3px var(--gold);
+    }
+
+    .score-btn.unselected {
+      opacity: 0.3;
+    }
+
+    .score-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #ffffff;
+      border-radius: 10px;
+      margin: 10px 0;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .score-item.eliminated {
+      opacity: 0.6;
+      background: #ffe4e4;
+      border-color: var(--red);
+    }
+
+    .player-name-score {
+      font-weight: 600;
+      color: var(--indigo);
+    }
+
+    .player-score {
+      font-weight: 700;
+      color: var(--sky);
+      font-size: 1.3rem;
+    }
+
+    .score-item.eliminated .player-score {
+      color: var(--red);
+    }
+
+    .eliminated-badge {
+      background: var(--red);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      margin-left: 8px;
+    }
+
+    .dealer-badge {
+      background: var(--gold);
+      color: var(--indigo);
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-left: 8px;
+    }
+
+    .loser-announcement {
+      text-align: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #696969 0%, #909090 100%);
+      border-radius: 12px;
+      margin: 20px 0;
+      border: 3px solid #555;
+    }
+
+    .loser-announcement h2 {
+      color: white;
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .loser-name {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .edit-controls {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .adjust-btn {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: var(--sky);
+      color: white;
+    }
+
+    .adjust-btn:active {
+      transform: scale(0.9);
+    }
+
+    .btn-edit {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-edit.active {
+      background: #ff9800;
+    }
+
+    .roulette-wheel {
+      width: 240px;
+      height: 240px;
+      margin: 30px auto;
+      border: 6px solid var(--sky);
+      border-radius: 50%;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .roulette-names {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--indigo);
+      animation: spin 3s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+    }
+
+    @keyframes spin {
+      0%, 100% { transform: translateY(0); opacity: 1; }
+      10%, 30%, 50%, 70%, 90% { transform: translateY(-30px); opacity: 0.7; }
+      20%, 40%, 60%, 80% { transform: translateY(0); opacity: 1; }
+    }
+
+    .player-selection-btn {
+      width: 100%;
+      padding: 16px;
+      background: white;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 8px 0;
+    }
+
+    .player-selection-btn:hover {
+      background: #f8f9fa;
+      border-color: var(--sky);
+      transform: scale(1.02);
+    }
+
+    .player-selection-btn:active {
+      transform: scale(0.98);
+    }
+
+    .history-table-wrapper {
+      overflow-x: auto;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      margin-top: 16px;
+    }
+
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    .history-table th {
+      background: var(--sky);
+      color: white;
+      padding: 10px 6px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--blue);
+    }
+
+    .history-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #e9ecef;
+      color: var(--text);
+    }
+
+    .history-table tr:nth-child(even) {
+      background: #f8f9fa;
+    }
+
+    .history-achieved-yes {
+      color: var(--green);
+      font-weight: 600;
+    }
+
+    .history-achieved-no {
+      color: #616161;
+    }
+
+    .history-points {
+      font-weight: 600;
+      color: var(--sky);
+    }
+
+    .prediction-counter {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: linear-gradient(135deg, var(--sky) 0%, var(--blue) 100%);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      z-index: 999;
+      font-weight: 600;
+      text-align: center;
+      min-width: 100px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      display: none;
+    }
+
+    .prediction-counter.active {
+      display: block;
+    }
+
+    .prediction-counter-label {
+      font-size: 0.75rem;
+      opacity: 0.9;
+      margin-bottom: 4px;
+    }
+
+    .prediction-counter-value {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+
+    footer {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        padding: 12px 10px 10px;
+      }
+
+      .floating-home {
+        top: 10px;
+        right: 10px;
+        padding: 5px 12px;
+      }
+
+      .prediction-counter {
+        top: 10px;
+        left: 10px;
+        padding: 10px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="index.html" class="floating-home">← Inicio</a>
+
+  <main class="app">
+    <!-- PANTALLA 1: SPLASH -->
+    <div id="splashScreen" class="screen active">
+      <header>
+        <div class="title-group">
+          <h1>La Bere</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="intro-text">
+          Juego de cartas donde predecís cuántas manos vas a ganar.<br>
+          ¡El último en pie pierde!
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="startNewGame()">🎮 Nuevo Juego</button>
+          <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">▶️ Continuar Juego</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 2: CONFIGURACIÓN -->
+    <div id="setupScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Configurar Juego</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div id="playerCountInput">
+          <div class="form-group">
+            <label>¿Cuántos jugadores?</label>
+            <input type="number" id="playerCount" min="2" max="10" placeholder="Cantidad de jugadores">
+          </div>
+          <button class="btn btn-primary" onclick="setPlayerCount()">Continuar</button>
+        </div>
+
+        <div id="playerNamesInput" style="display: none;">
+          <h2 style="text-align:center;color:var(--indigo);margin-bottom:16px;font-size:1.1rem;">Nombres de Jugadores</h2>
+          <div id="nameInputs"></div>
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 3: SELECCIÓN DE DEALER -->
+    <div id="dealerScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Seleccionar Dealer</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="intro-text">¿Quién va a repartir?</p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="showRandomDealerSelection()">🎲 Al azar</button>
+          <button class="btn btn-secondary" onclick="showManualDealerSelection()">👆 Elegir manualmente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 4: DEALER ALEATORIO -->
+    <div id="randomDealerScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Seleccionando...</h1>
+        </div>
+      </header>
+
+      <div class="content" style="text-align:center;">
+        <div class="roulette-wheel">
+          <div class="roulette-names" id="rouletteNames"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 5: DEALER MANUAL -->
+    <div id="manualDealerScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Elegir Dealer</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="intro-text">Tocá un jugador para hacerlo dealer</p>
+        <div id="manualDealerList"></div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 6: CONFIRMACIÓN DEALER REPETIDO -->
+    <div id="dealerRepeatScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Dealer Repetido</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <p class="intro-text" style="font-size:1.05rem;">
+          <strong id="repeatDealerName"></strong> ya repartió la de uno
+        </p>
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="dealerRepeatConfirm()">Repartir igual</button>
+          <button class="btn btn-secondary" onclick="skipDealerForUno()">Saltear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANTALLA 7: SELECCIÓN DE RONDA -->
+    <div id="roundScreen" class="screen">
+      <div id="predictionCounter" class="prediction-counter">
+        <div class="prediction-counter-label">Total</div>
+        <div class="prediction-counter-value" id="predictionCounterValue">0</div>
+      </div>
+
+      <header>
+        <div class="title-group">
+          <h1>Selección</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="round-header">
+          <div class="round-name" id="roundName">RONDA</div>
+          <div class="starting-player" id="startingPlayer">Info</div>
+        </div>
+
+        <div id="playerSelections"></div>
+
+        <button id="showSumBtn" class="btn btn-primary" onclick="showSum()" disabled>Mostrar Total</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA 8: MOSTRAR SUMA -->
+    <div id="sumScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Total de la Ronda</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="sum-display">
+          <div style="font-size:0.9rem;color:var(--muted);">Total predicho:</div>
+          <div class="sum-number" id="sumNumber">0</div>
+          <div class="fiummm-message" id="fiummmMessage"></div>
+        </div>
+
+        <button class="btn btn-primary" onclick="showScoreInput()">Cargar Puntajes</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA 9: CARGAR PUNTAJES -->
+    <div id="scoreScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>¿Lograron su objetivo?</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div id="scoreInputs"></div>
+        <button class="btn btn-primary" onclick="calculateScores()">Calcular Puntajes</button>
+      </div>
+    </div>
+
+    <!-- PANTALLA 10: TABLA DE POSICIONES -->
+    <div id="scoreboardScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>📊 Tabla</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <button id="editModeBtn" class="btn btn-edit" onclick="toggleEditMode()">✏️ Editar</button>
+        
+        <div id="scoreboard" style="margin-top:16px;"></div>
+        
+        <div id="loserSection"></div>
+
+        <div class="btn-group" style="margin-top:16px;">
+          <button id="showHistoryBtn" class="btn btn-secondary" onclick="toggleHistory()">📜 Ver Historial</button>
+          <div id="historyContainer" style="display:none;">
+            <div class="history-table-wrapper">
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>Rnd</th>
+                    <th>Tipo</th>
+                    <th>Dealer</th>
+                    <th>Jugador</th>
+                    <th>Pidió</th>
+                    <th>Ok</th>
+                    <th>Pts</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+          <button id="nextRoundBtn" class="btn btn-primary" onclick="nextRound()">Siguiente Ronda</button>
+          <button class="btn btn-secondary" onclick="backToMainMenu()">Menú Principal</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <span>Carpincho Games · La Bere</span>
+    </footer>
+  </main>
+
+  <script>
+    // Estado del juego
+    let gameState = {
+      players: [],
+      currentRound: 0,
+      roundTypes: ['Uno', 'Tres', 'Cinco', 'Siete'],
+      roundMaxValues: { 'Uno': 1, 'Tres': 3, 'Cinco': 5, 'Siete': 7 },
+      currentRoundType: '',
+      dealerIndex: null,
+      startingPlayerIndex: 0,
+      currentSelections: [],
+      currentScores: {},
+      editMode: false,
+      roundHistory: [],
+      dealersWhoDealtUno: [],
+      playerOrder: []
+    };
+
+    window.onload = function() {
+      checkForSavedGame();
+    };
+
+    function checkForSavedGame() {
+      const saved = localStorage.getItem('laBereGame');
+      if (saved) {
+        document.getElementById('resumeBtn').style.display = 'block';
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('laBereGame', JSON.stringify(gameState));
+    }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('laBereGame');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        if (!gameState.playerOrder || gameState.playerOrder.length !== gameState.players.length) {
+          gameState.playerOrder = gameState.players.map((_, idx) => idx);
+        }
+        showScreen('scoreboardScreen');
+        updateScoreboard();
+      }
+    }
+
+    function startNewGame() {
+      if (localStorage.getItem('laBereGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) {
+          return;
+        }
+      }
+      localStorage.removeItem('laBereGame');
+      gameState = {
+        players: [],
+        currentRound: 0,
+        roundTypes: ['Uno', 'Tres', 'Cinco', 'Siete'],
+        roundMaxValues: { 'Uno': 1, 'Tres': 3, 'Cinco': 5, 'Siete': 7 },
+        currentRoundType: '',
+        dealerIndex: null,
+        startingPlayerIndex: 0,
+        currentSelections: [],
+        currentScores: {},
+        editMode: false,
+        roundHistory: [],
+        dealersWhoDealtUno: [],
+        playerOrder: []
+      };
+      showScreen('setupScreen');
+    }
+
+    function setPlayerCount() {
+      const count = parseInt(document.getElementById('playerCount').value);
+      if (count < 2) {
+        alert('Necesitás al menos 2 jugadores');
+        return;
+      }
+      if (count > 10) {
+        alert('Máximo 10 jugadores');
+        return;
+      }
+      
+      document.getElementById('playerCountInput').style.display = 'none';
+      document.getElementById('playerNamesInput').style.display = 'block';
+      
+      const container = document.getElementById('nameInputs');
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const div = document.createElement('div');
+        div.className = 'form-group';
+        div.innerHTML = `
+          <label>Jugador ${i + 1}</label>
+          <input type="text" id="playerName${i}" placeholder="Nombre">
+        `;
+        container.appendChild(div);
+      }
+    }
+
+    function startGame() {
+      const count = document.getElementById('nameInputs').children.length;
+      gameState.players = [];
+      
+      for (let i = 0; i < count; i++) {
+        const name = document.getElementById(`playerName${i}`).value.trim();
+        if (!name) {
+          alert(`Ingresá un nombre para Jugador ${i + 1}`);
+          return;
+        }
+        gameState.players.push({
+          name: name,
+          score: 0,
+          eliminated: false
+        });
+      }
+      
+      gameState.currentRound = 0;
+      gameState.playerOrder = gameState.players.map((_, idx) => idx);
+      showScreen('dealerScreen');
+    }
+
+    function startRound() {
+      const roundIndex = gameState.currentRound % 4;
+      gameState.currentRoundType = gameState.roundTypes[roundIndex];
+      gameState.currentSelections = Array(gameState.players.length).fill(null);
+      gameState.currentScores = {};
+      
+      if (gameState.currentRoundType === 'Uno' && 
+          gameState.dealersWhoDealtUno.includes(gameState.dealerIndex)) {
+        const dealerName = gameState.players[gameState.dealerIndex].name;
+        document.getElementById('repeatDealerName').textContent = dealerName;
+        showScreen('dealerRepeatScreen');
+        return;
+      }
+      
+      if (gameState.currentRoundType === 'Uno' && 
+          !gameState.dealersWhoDealtUno.includes(gameState.dealerIndex)) {
+        gameState.dealersWhoDealtUno.push(gameState.dealerIndex);
+      }
+      
+      showScreen('roundScreen');
+      updateRoundScreen();
+      document.getElementById('showSumBtn').disabled = true;
+      saveGame();
+    }
+
+    function updateRoundScreen() {
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      const startingPlayer = gameState.players[gameState.startingPlayerIndex];
+      const dealer = gameState.players[gameState.dealerIndex];
+      
+      document.getElementById('roundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
+      document.getElementById('startingPlayer').textContent = `Dealer: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+      
+      const container = document.getElementById('playerSelections');
+      container.innerHTML = '';
+      
+      const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) 
+        ? gameState.playerOrder 
+        : gameState.players.map((_, idx) => idx);
+      
+      let startingPosition = orderToUse.indexOf(gameState.startingPlayerIndex);
+      if (startingPosition === -1) startingPosition = 0;
+      
+      const activePlayers = [];
+      for (let i = 0; i < orderToUse.length; i++) {
+        const orderIndex = (startingPosition + i) % orderToUse.length;
+        const playerIndex = orderToUse[orderIndex];
+        if (!gameState.players[playerIndex].eliminated) {
+          activePlayers.push({...gameState.players[playerIndex], originalIndex: playerIndex});
+        }
+      }
+      
+      activePlayers.forEach((player, orderIndex) => {
+        const div = document.createElement('div');
+        div.className = 'player-selection';
+        const dealerBadge = player.originalIndex === gameState.dealerIndex ? '<span class="dealer-badge">🎴</span>' : '';
+        div.innerHTML = `
+          <div class="player-name">${player.name}${dealerBadge}</div>
+          <div class="choice-buttons" id="choices${player.originalIndex}"></div>
+        `;
+        container.appendChild(div);
+        createChoiceButtons(player.originalIndex, maxValue, orderIndex === activePlayers.length - 1, activePlayers.length);
+      });
+      
+      updatePredictionCounter();
+    }
+
+    function createChoiceButtons(playerIndex, maxValue, isLastPlayer, activePlayerCount) {
+      const container = document.getElementById(`choices${playerIndex}`);
+      container.innerHTML = '';
+      
+      for (let i = 0; i <= maxValue; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = i;
+        btn.onclick = () => selectChoice(playerIndex, i);
+        
+        if (gameState.currentSelections[playerIndex] === i) {
+          btn.classList.add('selected');
+        }
+        
+        if (isLastPlayer && activePlayerCount > 1) {
+          const currentSum = gameState.currentSelections.reduce((sum, val, idx) => {
+            if (idx !== playerIndex && val !== null) {
+              return sum + val;
+            }
+            return sum;
+          }, 0);
+          
+          if (currentSum + i === maxValue) {
+            btn.disabled = true;
+          }
+        }
+        
+        container.appendChild(btn);
+      }
+    }
+
+    function updatePredictionCounter() {
+      const counter = document.getElementById('predictionCounter');
+      const counterValue = document.getElementById('predictionCounterValue');
+      
+      if (!counter || !counterValue) return;
+      
+      const sum = gameState.currentSelections.reduce((total, val) => {
+        return total + (val !== null ? val : 0);
+      }, 0);
+      
+      counterValue.textContent = sum;
+    }
+
+    function selectChoice(playerIndex, value) {
+      gameState.currentSelections[playerIndex] = value;
+      updateRoundScreen();
+      updatePredictionCounter();
+      
+      const allSelected = gameState.players.every((player, idx) => {
+        return player.eliminated || gameState.currentSelections[idx] !== null;
+      });
+      
+      document.getElementById('showSumBtn').disabled = !allSelected;
+    }
+
+    function showSum() {
+      const sum = gameState.currentSelections.reduce((total, val) => {
+        return total + (val !== null ? val : 0);
+      }, 0);
+      
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      
+      document.getElementById('sumNumber').textContent = sum;
+      
+      const messageDiv = document.getElementById('fiummmMessage');
+      if (sum < maxValue) {
+        messageDiv.textContent = '🔥 HAY FIUMMM!!';
+        messageDiv.className = 'fiummm-message fiummm-yes';
+      } else {
+        messageDiv.textContent = 'No hay fium';
+        messageDiv.className = 'fiummm-message fiummm-no';
+      }
+      
+      showScreen('sumScreen');
+    }
+
+    function showScoreInput() {
+      const container = document.getElementById('scoreInputs');
+      container.innerHTML = '';
+      
+      if (Object.keys(gameState.currentScores).length === 0) {
+        gameState.currentScores = {};
+      }
+      
+      const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) 
+        ? gameState.playerOrder 
+        : gameState.players.map((_, idx) => idx);
+      
+      let startingPosition = orderToUse.indexOf(gameState.startingPlayerIndex);
+      if (startingPosition === -1) startingPosition = 0;
+      
+      const activePlayers = [];
+      for (let i = 0; i < orderToUse.length; i++) {
+        const orderIndex = (startingPosition + i) % orderToUse.length;
+        const playerIndex = orderToUse[orderIndex];
+        if (!gameState.players[playerIndex].eliminated) {
+          activePlayers.push(playerIndex);
+        }
+      }
+      
+      activePlayers.forEach(idx => {
+        const player = gameState.players[idx];
+        const div = document.createElement('div');
+        div.className = 'score-input';
+        div.innerHTML = `
+          <div class="player-name">${player.name} - Pidió: ${gameState.currentSelections[idx]}</div>
+          <div class="score-buttons">
+            <button class="score-btn score-btn-yes" id="scoreYes${idx}" onclick="setScore(${idx}, true)">✓ Sí</button>
+            <button class="score-btn score-btn-no" id="scoreNo${idx}" onclick="setScore(${idx}, false)">✗ No</button>
+          </div>
+        `;
+        container.appendChild(div);
+        
+        if (gameState.currentScores[idx] !== undefined) {
+          setScore(idx, gameState.currentScores[idx]);
+        }
+      });
+      
+      showScreen('scoreScreen');
+    }
+
+    function setScore(playerIndex, accomplished) {
+      gameState.currentScores[playerIndex] = accomplished;
+      
+      const yesBtn = document.getElementById(`scoreYes${playerIndex}`);
+      const noBtn = document.getElementById(`scoreNo${playerIndex}`);
+      
+      if (yesBtn && noBtn) {
+        yesBtn.classList.remove('selected', 'unselected');
+        noBtn.classList.remove('selected', 'unselected');
+        
+        if (accomplished) {
+          yesBtn.classList.add('selected');
+          noBtn.classList.add('unselected');
+        } else {
+          noBtn.classList.add('selected');
+          yesBtn.classList.add('unselected');
+        }
+      }
+    }
+
+    function calculateScores() {
+      const activePlayerCount = gameState.players.filter(p => !p.eliminated).length;
+      if (Object.keys(gameState.currentScores).length !== activePlayerCount) {
+        alert('Ingresá el resultado para todos los jugadores');
+        return;
+      }
+      
+      const allWon = Object.values(gameState.currentScores).every(score => score === true);
+      if (allWon) {
+        alert('No pueden ganar todos, revisá bien');
+        return;
+      }
+      
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      let sumOfWinners = 0;
+      gameState.players.forEach((player, idx) => {
+        if (!player.eliminated && gameState.currentScores[idx] === true) {
+          sumOfWinners += gameState.currentSelections[idx];
+        }
+      });
+      
+      if (sumOfWinners > maxValue) {
+        alert(`La suma de los que ganaron (${sumOfWinners}) no puede ser mayor que el máximo de la ronda (${maxValue})`);
+        return;
+      }
+      
+      const roundNumber = gameState.currentRound + 1;
+      const roundData = {
+        round: roundNumber,
+        type: gameState.currentRoundType,
+        dealer: gameState.players[gameState.dealerIndex].name,
+        results: []
+      };
+      
+      gameState.players.forEach((player, idx) => {
+        if (!player.eliminated && gameState.currentScores[idx] !== undefined) {
+          const pointsEarned = gameState.currentScores[idx] ? (5 + gameState.currentSelections[idx]) : 0;
+          
+          roundData.results.push({
+            player: player.name,
+            predicted: gameState.currentSelections[idx],
+            achieved: gameState.currentScores[idx],
+            points: pointsEarned
+          });
+          
+          if (gameState.currentScores[idx]) {
+            player.score += pointsEarned;
+          }
+          
+          if (player.score >= 50) {
+            player.eliminated = true;
+          }
+        }
+      });
+      
+      gameState.roundHistory.push(roundData);
+      
+      let attempts = 0;
+      do {
+        gameState.dealerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+        attempts++;
+      } while (gameState.players[gameState.dealerIndex].eliminated && attempts < gameState.players.length);
+      
+      attempts = 0;
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      while (gameState.players[gameState.startingPlayerIndex].eliminated && attempts < gameState.players.length) {
+        gameState.startingPlayerIndex = (gameState.startingPlayerIndex + 1) % gameState.players.length;
+        attempts++;
+      }
+      
+      gameState.currentRound++;
+      saveGame();
+      showScoreboard();
+    }
+
+    function showScoreboard() {
+      showScreen('scoreboardScreen');
+      const editBtn = document.getElementById('editModeBtn');
+      if (gameState.editMode) {
+        editBtn.textContent = '✓ Listo';
+        editBtn.classList.add('active');
+      } else {
+        editBtn.textContent = '✏️ Editar';
+        editBtn.classList.remove('active');
+      }
+      updateScoreboard();
+    }
+
+    function updateScoreboard() {
+      const container = document.getElementById('scoreboard');
+      container.innerHTML = '';
+      
+      const sortedPlayers = [...gameState.players].sort((a, b) => {
+        if (a.eliminated && !b.eliminated) return 1;
+        if (!a.eliminated && b.eliminated) return -1;
+        return a.score - b.score;
+      });
+      
+      sortedPlayers.forEach(player => {
+        const playerIndex = gameState.players.findIndex(p => p.name === player.name);
+        const div = document.createElement('div');
+        div.className = 'score-item' + (player.eliminated ? ' eliminated' : '');
+        
+        if (gameState.editMode) {
+          div.innerHTML = `
+            <span class="player-name-score" style="flex:1;">
+              ${player.name}
+              ${player.eliminated ? '<span class="eliminated-badge">ELIMINADO</span>' : ''}
+            </span>
+            <div class="edit-controls">
+              <button class="adjust-btn" onclick="adjustScore(${playerIndex}, -1)">-1</button>
+              <span class="player-score">${player.score}</span>
+              <button class="adjust-btn" onclick="adjustScore(${playerIndex}, 1)">+1</button>
+            </div>
+          `;
+        } else {
+          div.innerHTML = `
+            <span class="player-name-score">
+              ${player.name}
+              ${player.eliminated ? '<span class="eliminated-badge">ELIMINADO</span>' : ''}
+            </span>
+            <span class="player-score">${player.score}</span>
+          `;
+        }
+        container.appendChild(div);
+      });
+      
+      const activePlayers = gameState.players.filter(p => !p.eliminated);
+      const loserSection = document.getElementById('loserSection');
+      
+      if (activePlayers.length === 1) {
+        loserSection.innerHTML = `
+          <div class="loser-announcement">
+            <h2>💀 PERDEDOR 💀</h2>
+            <div class="loser-name">${activePlayers[0].name}</div>
+            <p style="margin-top:12px;color:white;font-size:0.9rem;">¡Todos los demás llegaron a 50+ puntos!</p>
+          </div>
+        `;
+        document.getElementById('nextRoundBtn').style.display = 'none';
+      } else {
+        loserSection.innerHTML = '';
+        document.getElementById('nextRoundBtn').style.display = 'block';
+      }
+    }
+
+    function nextRound() {
+      gameState.editMode = false;
+      startRound();
+    }
+
+    function backToMainMenu() {
+      gameState.editMode = false;
+      showScreen('splashScreen');
+      checkForSavedGame();
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(screenId).classList.add('active');
+      
+      const predictionCounter = document.getElementById('predictionCounter');
+      if (predictionCounter) {
+        if (screenId === 'roundScreen') {
+          predictionCounter.classList.add('active');
+          updatePredictionCounter();
+        } else {
+          predictionCounter.classList.remove('active');
+        }
+      }
+    }
+
+    function toggleEditMode() {
+      gameState.editMode = !gameState.editMode;
+      updateScoreboard();
+      saveGame();
+    }
+
+    function adjustScore(playerIndex, amount) {
+      gameState.players[playerIndex].score += amount;
+      
+      if (gameState.players[playerIndex].score < 0) {
+        gameState.players[playerIndex].score = 0;
+      }
+      
+      if (gameState.players[playerIndex].score >= 50) {
+        gameState.players[playerIndex].eliminated = true;
+      } else if (gameState.players[playerIndex].score < 50 && gameState.players[playerIndex].eliminated) {
+        gameState.players[playerIndex].eliminated = false;
+      }
+      
+      updateScoreboard();
+      saveGame();
+    }
+
+    function showRandomDealerSelection() {
+      showScreen('randomDealerScreen');
+      
+      const randomIndex = Math.floor(Math.random() * gameState.players.length);
+      const rouletteNames = document.getElementById('rouletteNames');
+      let currentIndex = 0;
+      let count = 0;
+      
+      const interval = setInterval(() => {
+        rouletteNames.textContent = gameState.players[currentIndex].name;
+        currentIndex = (currentIndex + 1) % gameState.players.length;
+        count++;
+        
+        if (count >= 20) {
+          clearInterval(interval);
+          rouletteNames.textContent = gameState.players[randomIndex].name;
+          gameState.dealerIndex = randomIndex;
+          gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+          
+          setTimeout(() => {
+            startRound();
+          }, 1500);
+        }
+      }, 150);
+    }
+
+    function showManualDealerSelection() {
+      showScreen('manualDealerScreen');
+      
+      const container = document.getElementById('manualDealerList');
+      container.innerHTML = '';
+      
+      gameState.players.forEach((player, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'player-selection-btn';
+        btn.textContent = player.name;
+        btn.onclick = () => selectDealer(index);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectDealer(index) {
+      gameState.dealerIndex = index;
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      startRound();
+    }
+
+    function dealerRepeatConfirm() {
+      showScreen('roundScreen');
+      updateRoundScreen();
+      document.getElementById('showSumBtn').disabled = true;
+      saveGame();
+    }
+
+    function skipDealerForUno() {
+      let attempts = 0;
+      do {
+        gameState.dealerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+        attempts++;
+      } while (gameState.players[gameState.dealerIndex].eliminated && attempts < gameState.players.length);
+      
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      startRound();
+    }
+
+    function toggleHistory() {
+      const container = document.getElementById('historyContainer');
+      const btn = document.getElementById('showHistoryBtn');
+      
+      if (container.style.display === 'none') {
+        container.style.display = 'block';
+        btn.textContent = '📜 Ocultar Historial';
+        updateHistoryTable();
+      } else {
+        container.style.display = 'none';
+        btn.textContent = '📜 Ver Historial';
+      }
+    }
+
+    function updateHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = '';
+      
+      if (gameState.roundHistory.length === 0) {
+        const row = tbody.insertRow();
+        const cell = row.insertCell(0);
+        cell.colSpan = 7;
+        cell.textContent = 'No hay rondas jugadas';
+        cell.style.textAlign = 'center';
+        cell.style.padding = '20px';
+        return;
+      }
+      
+      gameState.roundHistory.forEach(round => {
+        round.results.forEach((result, index) => {
+          const row = tbody.insertRow();
+          
+          if (index === 0) {
+            const roundCell = row.insertCell(0);
+            roundCell.textContent = round.round;
+            roundCell.rowSpan = round.results.length;
+            roundCell.style.fontWeight = 'bold';
+            roundCell.style.verticalAlign = 'middle';
+            
+            const typeCell = row.insertCell(1);
+            typeCell.textContent = round.type;
+            typeCell.rowSpan = round.results.length;
+            typeCell.style.verticalAlign = 'middle';
+            
+            const dealerCell = row.insertCell(2);
+            dealerCell.textContent = round.dealer;
+            dealerCell.rowSpan = round.results.length;
+            dealerCell.style.verticalAlign = 'middle';
+          }
+          
+          const playerCell = row.insertCell(index === 0 ? 3 : 0);
+          playerCell.textContent = result.player;
+          
+          const predictedCell = row.insertCell(index === 0 ? 4 : 1);
+          predictedCell.textContent = result.predicted;
+          predictedCell.style.textAlign = 'center';
+          
+          const resultCell = row.insertCell(index === 0 ? 5 : 2);
+          resultCell.textContent = result.achieved ? '✓' : '✗';
+          resultCell.className = result.achieved ? 'history-achieved-yes' : 'history-achieved-no';
+          resultCell.style.textAlign = 'center';
+          
+          const pointsCell = row.insertCell(index === 0 ? 6 : 3);
+          pointsCell.textContent = result.points;
+          pointsCell.className = 'history-points';
+          pointsCell.style.textAlign = 'center';
+        });
+      });
+    }
+  </script>
+</body>
+</html>
