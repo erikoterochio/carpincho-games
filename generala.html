@@ -89,7 +89,7 @@
 
     .app {
       width: 100%;
-      max-width: 600px;
+      max-width: 900px;
       background: var(--card);
       border-radius: 18px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
@@ -146,6 +146,16 @@
       background: #ffffff;
       color: var(--indigo);
       border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn-add {
+      background: var(--green);
+      color: white;
+      border: 2px solid var(--green);
+    }
+
+    .btn-add:hover {
+      background: #45a049;
     }
 
     .btn:active {
@@ -239,8 +249,6 @@
     .table-container {
       overflow-x: auto;
       margin-bottom: 16px;
-      display: flex;
-      justify-content: center;
     }
 
     .score-table {
@@ -249,6 +257,8 @@
       border-radius: 12px;
       overflow: hidden;
       border: 2px solid var(--border);
+      width: auto;
+      margin: 0 auto;
     }
 
     .score-table th {
@@ -260,11 +270,16 @@
       border: 1px solid rgba(255, 255, 255, 0.2);
       text-align: center;
       min-width: 70px;
+      position: relative;
     }
 
     .score-table th.category-header {
       text-align: center;
       min-width: 100px;
+      position: sticky;
+      left: 0;
+      z-index: 12;
+      background: var(--sky);
     }
 
     .score-table td {
@@ -279,6 +294,10 @@
       background: #f8f9fa;
       font-weight: 600;
       color: var(--indigo);
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.08);
     }
 
     .score-table td.score-cell {
@@ -311,7 +330,6 @@
     .score-table input.crossed {
       background: #fee2e2;
       color: var(--red);
-      text-decoration: line-through;
     }
 
     .score-table tr.total-row {
@@ -330,19 +348,38 @@
       padding: 10px 12px;
     }
 
-    .score-table th.category-header,
-    .score-table td.category-name {
-      position: sticky;
-      left: 0;
-      z-index: 10;
+    .score-table tr.total-row td.category-name {
+      background: #f8f9fa;
     }
-    
-    .score-table th.category-header {
-      z-index: 11;
+
+    .player-header {
+      position: relative;
     }
-    
-    .score-table td.category-name {
-      box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05);
+
+    .delete-player-btn {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.9);
+      color: white;
+      border: none;
+      font-size: 0.7rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+      opacity: 0.8;
+      transition: all 0.15s ease;
+    }
+
+    .delete-player-btn:hover {
+      opacity: 1;
+      transform: scale(1.1);
     }
 
     footer {
@@ -416,7 +453,10 @@
           </table>
         </div>
 
-        <button class="btn btn-secondary" onclick="backToMenu()">Volver al Menú</button>
+        <div class="btn-group">
+          <button class="btn btn-add" onclick="addPlayerDuringGame()">+ Agregar Jugador</button>
+          <button class="btn btn-secondary" onclick="backToMenu()">Volver al Menú</button>
+        </div>
       </div>
 
       <footer>
@@ -553,6 +593,44 @@
       renderTable();
     }
 
+    function addPlayerDuringGame() {
+      const name = prompt('Nombre del nuevo jugador:');
+      if (!name || name.trim() === '') return;
+      
+      const playerName = name.trim();
+      
+      // Verificar que no exista
+      if (gameState.players.includes(playerName)) {
+        alert('Ya existe un jugador con ese nombre');
+        return;
+      }
+      
+      // Agregar jugador
+      gameState.players.push(playerName);
+      
+      // Inicializar scores vacíos
+      gameState.scores[playerName] = {};
+      categories.forEach(cat => {
+        gameState.scores[playerName][cat.id] = '';
+      });
+      
+      saveGame();
+      renderTable();
+    }
+
+    function removePlayerDuringGame(player) {
+      if (!confirm(`¿Eliminar a ${player}?`)) return;
+      
+      // Eliminar del array de jugadores
+      gameState.players = gameState.players.filter(p => p !== player);
+      
+      // Eliminar scores
+      delete gameState.scores[player];
+      
+      saveGame();
+      renderTable();
+    }
+
     function showScreen(screenId) {
       document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
@@ -566,7 +644,10 @@
       
       html += '<th class="category-header">Categoría</th>';
       gameState.players.forEach(player => {
-        html += `<th>${player}</th>`;
+        html += `<th class="player-header">
+          ${player}
+          <button class="delete-player-btn" onclick="removePlayerDuringGame('${player}')" title="Eliminar jugador">×</button>
+        </th>`;
       });
       html += '</tr></thead><tbody>';
       
@@ -576,12 +657,12 @@
         html += `<tr${isDivider ? ' class="divider-row"' : ''}>`;
         html += `<td class="category-name">${cat.name}</td>`;
         gameState.players.forEach(player => {
-        const value = gameState.scores[player][cat.id];
-        const displayValue = value === 0 ? 'X' : (value || '');
-        const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
+          const value = gameState.scores[player][cat.id];
+          const displayValue = value === 0 ? 'X' : (value || '');
+          const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
           
           // Deshabilitar doble si no tiene generala
-          const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === '' || gameState.scores[player]['generala'] === 'X');
+          const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === '' || gameState.scores[player]['generala'] === 0);
           
           html += `<td class="score-cell">
             <input 
@@ -611,25 +692,27 @@
       table.innerHTML = html;
     }
 
-function updateScore(player, categoryId, value) {
-  value = value.trim().toUpperCase();
-  
-  if (value === 'X' || value === 'S') {
-    gameState.scores[player][categoryId] = 0; // Cambiar a 0 en vez de 'X'
-  } else if (value === '') {
-    gameState.scores[player][categoryId] = '';
-  } else {
-    const numValue = value.replace(/[^0-9]/g, '');
-    if (numValue !== '') {
-      gameState.scores[player][categoryId] = parseInt(numValue);
-    } else {
-      gameState.scores[player][categoryId] = '';
+    function updateScore(player, categoryId, value) {
+      // Permitir X, x, S, s para tachar (0), o números
+      value = value.trim().toUpperCase();
+      
+      if (value === 'X' || value === 'S') {
+        gameState.scores[player][categoryId] = 0;
+      } else if (value === '') {
+        gameState.scores[player][categoryId] = '';
+      } else {
+        // Filtrar solo números
+        const numValue = value.replace(/[^0-9]/g, '');
+        if (numValue !== '') {
+          gameState.scores[player][categoryId] = parseInt(numValue);
+        } else {
+          gameState.scores[player][categoryId] = '';
+        }
+      }
+      
+      saveGame();
+      renderTable();
     }
-  }
-  
-  saveGame();
-  renderTable();
-}
 
     function calculateTotal(player) {
       let total = 0;
