@@ -191,7 +191,7 @@
     }
 
     .form-group {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .form-group label {
@@ -199,7 +199,7 @@
       font-size: 0.9rem;
       font-weight: 600;
       color: var(--indigo);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .form-group input,
@@ -218,16 +218,150 @@
       border-color: var(--sky);
     }
 
-    .player-inputs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    /* Controles numéricos */
+    .number-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .number-control button {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .number-control button:hover {
+      border-color: var(--sky);
+      background: #e0f2fe;
+    }
+
+    .number-control button:active {
+      transform: scale(0.95);
+    }
+
+    .number-control .value {
+      min-width: 60px;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .number-control .time-value {
+      min-width: 80px;
+    }
+
+    /* Botones toggle */
+    .toggle-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .toggle-btn:hover {
+      border-color: var(--sky);
+      background: #f0f9ff;
+    }
+
+    .toggle-btn.active {
+      background: var(--sky);
+      color: white;
+      border-color: var(--sky);
+    }
+
+    .toggle-btn:active {
+      transform: scale(0.98);
+    }
+
+    /* Lista de jugadores dinámica */
+    .players-list {
+      display: flex;
+      flex-direction: column;
       gap: 8px;
     }
 
-    .inline-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .player-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .player-input-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .player-input-row input:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+
+    .player-input-row .remove-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      background: #ffffff;
+      color: #ef4444;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .player-input-row .remove-btn:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .add-player-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px dashed rgba(148, 163, 184, 0.4);
+      background: transparent;
+      color: var(--sky);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .add-player-btn:hover {
+      border-color: var(--sky);
+      background: #f0f9ff;
     }
 
     .info-text {
@@ -305,39 +439,6 @@
       color: var(--pink);
     }
 
-    .player-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin: 16px 0;
-    }
-
-    .player-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 16px;
-      background: #ffffff;
-      border-radius: 10px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .player-item.active {
-      border-color: var(--sky);
-      background: #e0f2fe;
-    }
-
-    .player-item.eliminated {
-      opacity: 0.5;
-      text-decoration: line-through;
-    }
-
-    .player-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--indigo);
-    }
-
     .timer {
       font-size: 3rem;
       font-weight: 700;
@@ -382,55 +483,6 @@
       background: var(--sky);
       color: white;
       border-color: var(--sky);
-    }
-
-    .vote-counter {
-      position: absolute;
-      top: 50%;
-      right: 16px;
-      transform: translateY(-50%);
-      background: var(--pink);
-      color: white;
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.9rem;
-      font-weight: 700;
-    }
-
-    .scoreboard {
-      margin: 20px 0;
-    }
-
-    .score-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: #ffffff;
-      border-radius: 10px;
-      margin-bottom: 8px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .score-item.winner {
-      border-color: var(--sky);
-      background: #e0f2fe;
-    }
-
-    .score-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--indigo);
-    }
-
-    .score-points {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: var(--sky);
     }
 
     .result-box {
@@ -604,43 +656,31 @@
 
       <div class="content">
         <form id="setup-form" onsubmit="startGame(event)">
-          <div class="inline-group">
-            <div class="form-group">
-              <label>Jugadores</label>
-              <select id="player-count" onchange="updatePlayerInputs()">
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5" selected>5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-                <option value="11">11</option>
-                <option value="12">12</option>
-                <option value="13">13</option>
-                <option value="14">14</option>
-                <option value="15">15</option>
-              </select>
-            </div>
+          <div class="form-group">
+            <label>Jugadores</label>
+            <div class="players-list" id="players-list"></div>
+            <button type="button" class="add-player-btn" onclick="addPlayer()">+ Agregar jugador</button>
+          </div>
 
-            <div class="form-group">
-              <label>Impostores</label>
-              <select id="impostor-count" onchange="updateImpostorOptions()">
-                <option value="1" selected>1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-              </select>
+          <div class="form-group">
+            <label>Impostores</label>
+            <div class="number-control">
+              <button type="button" onclick="changeImpostors(-1)">−</button>
+              <div class="value" id="impostor-count-display">1</div>
+              <button type="button" onclick="changeImpostors(1)">+</button>
+            </div>
+          </div>
+            
+          <div class="form-group" id="impostors-know-group" style="display:none;">
+            <label>¿Los impostores se conocen?</label>
+            <div class="toggle-group">
+              <button type="button" class="toggle-btn" id="know-no" onclick="toggleImpostorsKnow(false)">No</button>
+              <button type="button" class="toggle-btn active" id="know-yes" onclick="toggleImpostorsKnow(true)">Sí</button>
             </div>
           </div>
 
           <div class="form-group">
-            <label>Nombres de jugadores</label>
-            <div class="player-inputs" id="player-names-container"></div>
-          </div>
-
-          <div class="form-group">
-            <label>Categoría de palabra</label>
+            <label>Categoría</label>
             <select id="word-category">
               <option value="aleatoria" selected>Aleatoria</option>
               <option value="deportes">Deportes</option>
@@ -655,55 +695,42 @@
             </select>
           </div>
 
-          <div class="form-group" id="impostors-know-group" style="display:none;">
-            <label>¿Los impostores se conocen?</label>
-            <select id="impostors-know">
-              <option value="no">No se conocen</option>
-              <option value="yes">Sí se conocen</option>
-            </select>
-          </div>
-
           <div class="form-group">
             <label>Rondas de votación</label>
-            <select id="voting-rounds" onchange="updateVotingOptions()">
-              <option value="1" selected>1 votación (todo o nada)</option>
-              <option value="2">2 votaciones</option>
-              <option value="3">3 votaciones</option>
-              <option value="4">4 votaciones</option>
-              <option value="5">5 votaciones</option>
-            </select>
+            <div class="number-control">
+              <button type="button" onclick="changeVotingRounds(-1)">−</button>
+              <div class="value" id="voting-rounds-display">1</div>
+              <button type="button" onclick="changeVotingRounds(1)">+</button>
+            </div>
           </div>
 
           <div class="form-group" id="change-word-group" style="display:none;">
             <label>Entre votaciones</label>
-            <select id="change-word">
-              <option value="same">Mantener misma palabra</option>
-              <option value="change">Cambiar palabra y dar nuevas pistas</option>
-            </select>
+            <div class="toggle-group">
+              <button type="button" class="toggle-btn active" id="word-same" onclick="toggleChangeWord(false)">Misma palabra</button>
+              <button type="button" class="toggle-btn" id="word-change" onclick="toggleChangeWord(true)">Cambiar palabra</button>
+            </div>
           </div>
 
           <div class="form-group" id="multiple-votes-group" style="display:none;">
             <label>Votos por ronda</label>
-            <select id="multiple-votes">
-              <option value="single">Votar 1 persona por ronda</option>
-              <option value="multiple">Votar tantas como impostores haya</option>
-            </select>
+            <div class="toggle-group">
+              <button type="button" class="toggle-btn active" id="vote-single" onclick="toggleMultipleVotes(false)">1 persona</button>
+              <button type="button" class="toggle-btn" id="vote-multiple" onclick="toggleMultipleVotes(true)">Varios</button>
+            </div>
           </div>
 
-          <div class="inline-group">
-            <div class="form-group">
-              <label>Tiempo votación</label>
-              <select id="vote-time">
-                <option value="30">30 seg</option>
-                <option value="60" selected>1 min</option>
-                <option value="90">1:30 min</option>
-                <option value="120">2 min</option>
-              </select>
+          <div class="form-group">
+            <label>Tiempo de discusión</label>
+            <div class="number-control">
+              <button type="button" onclick="changeVoteTime(-30)">−</button>
+              <div class="value time-value" id="vote-time-display">01:00</div>
+              <button type="button" onclick="changeVoteTime(30)">+</button>
             </div>
           </div>
 
           <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Empezar Partida</button>
+            <button type="submit" class="btn btn-primary">Empezar</button>
           </div>
         </form>
       </div>
@@ -731,7 +758,7 @@
     <div class="screen" id="screen-show-word">
       <header>
         <div class="title-group">
-          <h1 id="word-header">Tu Palabra</h1>
+          <h1 id="word-header">Tu palabra</h1>
         </div>
       </header>
 
@@ -741,7 +768,7 @@
           <div class="category-name" id="word-category-display"></div>
           <div class="secret-word" id="word-display"></div>
           <div class="impostor-team" id="impostor-team-info" style="display:none;">
-            <div class="impostor-team-label">Tus compañeros impostores:</div>
+            <div class="impostor-team-label">Los otros impostores:</div>
             <div class="impostor-team-names" id="impostor-team-names"></div>
           </div>
         </div>
@@ -756,15 +783,15 @@
     <div class="screen" id="screen-start-clues">
       <header>
         <div class="title-group">
-          <h1>Iniciar Pistas</h1>
+          <h1>Iniciar pistas</h1>
         </div>
       </header>
 
       <div class="content">
         <p class="round-indicator" id="round-indicator-clues"></p>
-        <p class="info-text">Todos recibieron su palabra (o descubrieron que son impostores).</p>
+        <p class="info-text">Todos tienen la palabra o su rol de impostor.</p>
         <p class="info-text" style="font-size:1.4rem;color:var(--sky);font-weight:700;margin-bottom:24px;">Categoría: <span id="category-display"></span></p>
-        <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> diciendo una pista.</p>
+        <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> dando una pista en voz alta.</p>
         <p class="info-text" style="font-size:0.95rem;color:var(--muted);">El resto continúa en orden hacia la derecha.</p>
 
         <div class="btn-group">
@@ -783,7 +810,7 @@
 
       <div class="content">
         <p class="round-indicator" id="round-indicator-discussion"></p>
-        <p class="info-text">Discutir sobre quién es el/los impostor(es)</p>
+        <p class="info-text">Debatan quién es el/los impostor(es)</p>
 
         <div class="timer" id="vote-timer">01:00</div>
 
@@ -803,7 +830,7 @@
 
       <div class="content">
         <p class="round-indicator" id="round-indicator-vote"></p>
-        <p class="info-text" id="vote-instruction-text">¿A quién se voto?</p>
+        <p class="info-text" id="vote-instruction-text">¿Quién fue el elegido por el grupo?</p>
 
         <div class="vote-grid" id="vote-buttons"></div>
         
@@ -835,7 +862,7 @@
     <div class="screen" id="screen-end-game">
       <header>
         <div class="title-group">
-          <h1>Partida Terminada</h1>
+          <h1>Partida terminada</h1>
         </div>
       </header>
 
@@ -871,12 +898,22 @@
       currentPlayerIndex: 0,
       voteTime: 60,
       firstPlayerIndex: 0,
-      impostorsKnow: false,
+      impostorsKnow: true,
       votingRounds: 1,
       currentVotingRound: 0,
       changeWord: false,
       multipleVotes: false,
       selectedVotes: []
+    };
+
+    // Estado de configuración
+    const configState = {
+      impostorCount: 1,
+      votingRounds: 1,
+      voteTime: 60,
+      impostorsKnow: true,
+      changeWord: false,
+      multipleVotes: false
     };
 
     // Diccionario de palabras
@@ -888,14 +925,136 @@
     personalidades: ['Lionel Messi','Diego Maradona','Ricardo Darín','Susana Giménez','Mirtha Legrand','Gustavo Cerati','Charly García','Fito Páez','Tini Stoessel','Bizarrap','Duki','Papa Francisco','Jorge Luis Borges','Shakira','Bad Bunny','Michael Jackson','Barack Obama','Cristina Fernández de Kirchner','Mauricio Macri','Javier Milei','Elon Musk','Donald Trump','Alberto Fernandez','Mario','Lucre','Benja','Kevito','La Garza','El Rifle','Kike Feldman','Nicolas Occhiato','Miguel Granados','Sebastián Wanraich','Guillermo Francella','Ricardo Darín','Caruso Lombardi','Diego Maradona','Chiqui Tapia','Marcelo Polino','Marcelo Tinelli','Mario Pergolini','Steve Jobs','San Martín','Hitler','Vladimir Putin','Pablo Escobar','Pablo Lescano','Mahatma Gandhi','Cleopatra','Freddie Mercury','Shakira','Jorge Rial','Kun Agüero','Guido Kaczka','JM Fangio','Franco Colapinto','Poli Calello','Justin Bieber','Usain Bolt','Natacha Jaitt','Alberto Nisman','Jorge Andri','Florencia de la V','Marcos Galperín','Hugo Moyano','Horacio R. Larreta','Pato Bullrich','Axel Kicillof','Perón','René Favaloro','Marley','Bob Marley','Adrián Suar','JM Listorti','Larry de Clay','Andrés Calamaro','Diego Latorre','Albert Einstein','Ibai','Davoo Xeneixe','Mr Beast','Lamine Yamal','Dibu Martinez','Sasha Gery','La Roca','Vin Diesel','Jordi el niño polla','LeBron James','El Bananero','Marito Baracus','Jeff Epstein','Osama Bin Laden','Julio Grondona','El mago sin dientes','Napoleón','Lionel Scaloni','Diego Capusotto','Enrique Pinti','Tato Bores','Pablo Echarri','Nancy Dupláa','Natalia Oreiro','China Suárez','Valeria Mazza','Juana Viale','Sergio Massa','Ricardo Montaner','Alejandro Sanz','Gustavo Santaolalla','Lali Espósito','Abel Pintos','Sergio Hernández','Facu Campazzo'],
     cocina: ['Asado','Empanadas','Milanesa','Pizza','Fideos con tuco','Ñoquis','Locro','Choripán','Hamburguesa','Ensalada rusa','Helado','Torta','Dulce de leche','Mate','Café','Fernet con coca','Cerveza','Sushi','Cuchillo','Tenedor','Sartén','Heladera','Tequila','Olla','Parrilla','Sartén','Cuchara','Hornalla','Vaso Stanley','Lasagna','Milanesa','Huevo frito','Papa frita','Shawarma','Pescado','Ribs','Pollo','Vermut','Gin tonic','Soda','Pava','Bandeja','Horno','Microondas','Chef','Sopa','Pastelería','Panadería','Pan','Sanguche','Tostado','Café','Leche','Naranja','Banana','Tomate','Lechuga','Cebolla','Pomelo','Menta','Azúcar','Freezer','Restaurant','Bar','Cocktail','Trago','Postre','Desayuno','Almuerzo','Cena','Chocolate','Golosina','Caramelo','Chupetín','Miel','Mate','Jamón','Queso','Albóndiga','Mermelada','Manteca','Aceite de oliva','Vinagre','Sal','Pimienta','Orégano','Harina','Levadura','Salsa de tomate','Mayonesa','Mostaza','Ketchup','Ñoquis de papa','Ravioles','Tarta de jamón y queso','Tarta de verdura','Ensalada mixta','Empanada de carne','Empanada de pollo','Bizcochuelo','Brownie','Galletitas','Facturas','Medialuna','Churro','Flan','Pionono','Picada','Queso rallado','Aceitunas','Provoleta','Milanesa napolitana','Bondiola','Vacío','Matambre','Ensalada de frutas','Licuado','Smoothie','Copa helada','Picadita','Tabla de quesos','Caja de vino','Botella de vino','Pimentero'],
     animales: ['Perro','Gato','Carpincho','Loro','Caballo','Vaca','Oveja','Cerdo','Gallina','Pato','León','Tigre','Elefante','Jirafa','Mono','Pez','Delfín','Ballena','Tortuga','Ratón','Ardilla','Garza','Oso','Jirafa','Buitre','Koala','Cordero','Hormiga','Langosta','Cangrejo','Puma','Águila','Cóndor','Escarabajo','Cobra','Serpiente','Rinoceronte','Flamenco','Tigre','Iguana','Sabueso','Oca','Morsa','Foca','Cabra','Anguila','Mono','Gorila','Lobo','Leopardo','Yacaré','Piojo','Víbora','Alacrán','Escorpión','Cucaracha','Mosca','Mosquito','Tarántula','Liebre','Tiranosaurio','Tiburón','Ballena','Calamar','Estrella de mar','Pepino de mar','Dragón','Unicornio','Burro','Jabalí','Orangután','Pelicano','Tucán','Cuervo','Lagartija','Lagarto','Libélula','Pato','Ganso','Nutria','Zorro','Hipopótamo','Gacela','Camello','Dromedario','Llama','Alpaca','Murciélago','Erizo','Hurón','Mapache','Panda','Pantera','Guepardo','Ciervo','Reno','Faisán','Gallo','Pavo','Pavo real','Pingüino','Golondrina','Paloma','Canario','Loro barranquero','Carancho','Zorrino','Yaguareté','Conejo','Nutria marina','Mula','Cierva','Colibrí','Picaflor','Gato montés'],
-    musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Ciro y Los Persas','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Pibes Chorros','Los Piojos','La Renga','Radio Aspen','David Guetta','Los Redondos','Miranda','Airbag','Bono','Pappo','Coldplay','Ed Sheeran','Duki','Paulo Londra','Gustavo Cerati','Indio Solari','Andrés Calamaro','Javier Calamaro','Red Hot Chilli Peppers','Nirvana','Kurt Cobain','La Sole','Luck ra','La mona gimenez','Kapanga','Molotov','Alberto Spinetta','El plan de la mariposa','Los cafres','Autenticos Decadentes','Chano','Babasónicos','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Eros Ramazzoti','Reggae','Ópera','Folclore','Cumbia','Tango','Rap','Sumo','Rata Blanca','Los Pimpinela','Rock','Pop latino','Indie','Electrónica','Techno','House','Blues','Jazz','Soul','Funk','Metal','Heavy metal','Punk','Trap argentino','Balada','Bolero','Reggaetón viejo','RKT','Los Fabulosos Cadillacs','Los Pericos','Los Auténticos Decadentes','Los Auténticos','La Delio Valdez','Los Totora','Aerosmith','Guns N Roses','Metallica','AC/DC','Arctic Monkeys','The Strokes','Luis Miguel','Ricardo Arjona','Romeo Santos','Daddy Yankee','Karol G','Nicki Nicole','Trueno','Tiago PZK','Wos','Residente','Calle 13','Jorge Drexler','Fito Páez','Spinetta','Charly García en vivo','Festival Lollapalooza','Recital','Playlist','Auriculares puestos'],
+    musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Ciro y Los Persas','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Pibes Chorros','Los Piojos','La Renga','Radio Aspen','David Guetta','Los Redondos','Miranda','Airbag','Bono','Pappo','Coldplay','Ed Sheeran','Duki','Paulo Londra','Gustavo Cerati','Indio Solari','Andrés Calamaro','Javier Calamaro','Red Hot Chilli Peppers','Nirvana','Kurt Cobain','La Sole','Luck ra','La mona gimenez','Kapanga','Molotov','Alberto Spinetta','El plan de la mariposa','Los cafres','Autenticos Decadentes','Chano','Babasónicos','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Eros Ramazzoti','Reggae','Ópera','Folclore','Cumbia','Tango','Rap','Sumo','Rata Blanca','Los Pimpinela','Rock','Pop latino','Indie','Electrónica','Techno','House','Blues','Jazz','Soul','Funk','Metal','Heavy metal','Punk','Trap argentino','Balada','Bolero','Reggaetón viejo','RKT','Los Fabulosos Cadillacs','Los Pericos','Los Auténticos Decadentes','Los Totora','Aerosmith','Guns N Roses','Metallica','AC/DC','Arctic Monkeys','The Strokes','Luis Miguel','Ricardo Arjona','Romeo Santos','Daddy Yankee','Karol G','Nicki Nicole','Trueno','Tiago PZK','Wos','Residente','Calle 13','Jorge Drexler','Fito Páez','Spinetta','Charly García en vivo','Lollapalooza','Recital','Playlist','Auriculares'],
     tecnologia: ['WhatsApp','Instagram','TikTok','Netflix','Spotify','YouTube','Google','Correo electrónico','WiFi','Bluetooth','Notebook','Tablet','Smart TV','Consola de videojuegos','PlayStation','Xbox','Mouse','Teclado','Pendrive','Nube','Criptomoneda','Hacker','Bitcoin','Ethereum','Internet','Nintendo','Gameboy','Atari','Láser','Iphone','Android','Robot','ChatGPT','Radio','Televisor','Radar','Satélite','Wifi','Wikipedia','Fibertel','Click','Excel','Mail','Videojuego','Sitio web','Celular inteligente','Cámara digital','Auriculares inalámbricos','Parlante bluetooth','Parlante portátil','Impresora','Escáner','Monitor','Router','Módem','Cable HDMI','Cable USB','Cargador de celular','Batería externa','Pantalla táctil','Aplicación','App','Red social','Mensaje de voz','Videollamada','Selfie','Sticker','Emoticón','GIF','Historia de Instagram','Estado de WhatsApp','Filtro de cámara','Lente de cámara','Tarjeta SIM','Chip del celular','Memoria externa','Disco rígido','Disco sólido','Pendrive tipo C','Carpeta compartida','Archivo adjunto','Documento de Word','Hoja de cálculo','Presentación de PowerPoint','Carpeta en la nube','Contraseña','Usuario','Código QR','Código de barras','Ubicación en tiempo real','GPS','Mapa online','Buscador','Navegador de internet','Pestaña del navegador','Ventana emergente','Notificación','Alarma del celular','Calendario del celular','Lista de contactos','Grupo de WhatsApp','Reunión por Zoom','Llamada de Teams','Reproductor de música','Podcast','Auricular con micrófono','Joystick','Mando de consola','Streaming','Plataforma digital','Billetera virtual','Mercado Pago','Home banking','Banco online','Compra online','Carrito de compras','Sube virtual','QR para pagar','Turno online','Chat en vivo','Servicio técnico']
     };
 
-
     let voteTimer = null;
-    const STORAGE_KEY = 'impostor_config';
-    const STORAGE_EXPIRY = 2 * 60 * 60 * 1000;
+    let playerCounter = 0;
+
+    // Inicializar lista de jugadores
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      
+      // Agregar 5 jugadores iniciales
+      for (let i = 0; i < 5; i++) {
+        addPlayer();
+      }
+    }
+
+    // Agregar jugador
+    function addPlayer() {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      
+      const row = document.createElement('div');
+      row.className = 'player-input-row';
+      row.id = `player-row-${index}`;
+      row.innerHTML = `
+        <input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" />
+        <button type="button" class="remove-btn" onclick="removePlayer(${index})">×</button>
+      `;
+      
+      container.appendChild(row);
+      updateImpostorLimits();
+    }
+
+    // Remover jugador
+    function removePlayer(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) {
+        row.remove();
+        updateImpostorLimits();
+      }
+    }
+
+    // Actualizar límites de impostores
+    function updateImpostorLimits() {
+      const playerCount = document.querySelectorAll('.player-input-row').length;
+      const maxImpostors = Math.max(1, Math.floor(playerCount / 2));
+      
+      if (configState.impostorCount > maxImpostors) {
+        configState.impostorCount = maxImpostors;
+        document.getElementById('impostor-count-display').textContent = configState.impostorCount;
+      }
+      
+      updateImpostorOptions();
+    }
+
+    // Cambiar número de impostores
+    function changeImpostors(delta) {
+      const playerCount = document.querySelectorAll('.player-input-row').length;
+      const maxImpostors = Math.max(1, Math.floor(playerCount / 2));
+      
+      configState.impostorCount = Math.max(1, Math.min(maxImpostors, configState.impostorCount + delta));
+      document.getElementById('impostor-count-display').textContent = configState.impostorCount;
+      
+      updateImpostorOptions();
+    }
+
+    // Actualizar opciones de impostores
+    function updateImpostorOptions() {
+      const knowGroup = document.getElementById('impostors-know-group');
+      const multiVoteGroup = document.getElementById('multiple-votes-group');
+      
+      if (configState.impostorCount > 1) {
+        knowGroup.style.display = 'block';
+        multiVoteGroup.style.display = 'block';
+      } else {
+        knowGroup.style.display = 'none';
+        multiVoteGroup.style.display = 'none';
+      }
+    }
+
+    // Toggle impostores se conocen
+    function toggleImpostorsKnow(value) {
+      configState.impostorsKnow = value;
+      document.getElementById('know-no').classList.toggle('active', !value);
+      document.getElementById('know-yes').classList.toggle('active', value);
+    }
+
+    // Cambiar rondas de votación
+    function changeVotingRounds(delta) {
+      configState.votingRounds = Math.max(1, Math.min(5, configState.votingRounds + delta));
+      document.getElementById('voting-rounds-display').textContent = configState.votingRounds;
+      
+      updateVotingOptions();
+    }
+
+    // Actualizar opciones de votación
+    function updateVotingOptions() {
+      const changeWordGroup = document.getElementById('change-word-group');
+      
+      if (configState.votingRounds > 1) {
+        changeWordGroup.style.display = 'block';
+      } else {
+        changeWordGroup.style.display = 'none';
+      }
+    }
+
+    // Toggle cambiar palabra
+    function toggleChangeWord(value) {
+      configState.changeWord = value;
+      document.getElementById('word-same').classList.toggle('active', !value);
+      document.getElementById('word-change').classList.toggle('active', value);
+    }
+
+    // Toggle votos múltiples
+    function toggleMultipleVotes(value) {
+      configState.multipleVotes = value;
+      document.getElementById('vote-single').classList.toggle('active', !value);
+      document.getElementById('vote-multiple').classList.toggle('active', value);
+    }
+
+    // Cambiar tiempo de votación
+    function changeVoteTime(delta) {
+      configState.voteTime = Math.max(30, Math.min(300, configState.voteTime + delta));
+      const mins = Math.floor(configState.voteTime / 60);
+      const secs = configState.voteTime % 60;
+      document.getElementById('vote-time-display').textContent = 
+        `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
 
     // Navegación entre pantallas
     function showScreen(screenId) {
@@ -913,125 +1072,34 @@
       document.getElementById('round-indicator-result').textContent = text;
     }
 
-    // Guardar configuración
-    function saveConfig() {
-      const config = {
-        playerCount: document.getElementById('player-count').value,
-        impostorCount: document.getElementById('impostor-count').value,
-        wordCategory: document.getElementById('word-category').value,
-        voteTime: document.getElementById('vote-time').value,
-        impostorsKnow: document.getElementById('impostors-know').value,
-        votingRounds: document.getElementById('voting-rounds').value,
-        changeWord: document.getElementById('change-word').value,
-        multipleVotes: document.getElementById('multiple-votes').value,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
-    }
-
-    // Cargar configuración
-    function loadConfig() {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (!saved) return;
-      
-      try {
-        const config = JSON.parse(saved);
-        if (Date.now() - config.timestamp > STORAGE_EXPIRY) {
-          localStorage.removeItem(STORAGE_KEY);
-          return;
-        }
-        
-        document.getElementById('player-count').value = config.playerCount;
-        document.getElementById('impostor-count').value = config.impostorCount;
-        document.getElementById('word-category').value = config.wordCategory;
-        document.getElementById('vote-time').value = config.voteTime;
-        document.getElementById('impostors-know').value = config.impostorsKnow || 'no';
-        document.getElementById('voting-rounds').value = config.votingRounds || '1';
-        document.getElementById('change-word').value = config.changeWord || 'same';
-        document.getElementById('multiple-votes').value = config.multipleVotes || 'single';
-        updatePlayerInputs();
-        updateImpostorOptions();
-        updateVotingOptions();
-      } catch (e) {
-        localStorage.removeItem(STORAGE_KEY);
-      }
-    }
-
-    // Actualizar opciones de impostores
-    function updateImpostorOptions() {
-      const impostorCount = parseInt(document.getElementById('impostor-count').value);
-      const knowGroup = document.getElementById('impostors-know-group');
-      const multiVoteGroup = document.getElementById('multiple-votes-group');
-      
-      if (impostorCount > 1) {
-        knowGroup.style.display = 'block';
-        multiVoteGroup.style.display = 'block';
-      } else {
-        knowGroup.style.display = 'none';
-        multiVoteGroup.style.display = 'none';
-      }
-    }
-
-    // Actualizar opciones de votación
-    function updateVotingOptions() {
-      const rounds = parseInt(document.getElementById('voting-rounds').value);
-      const changeWordGroup = document.getElementById('change-word-group');
-      
-      if (rounds > 1) {
-        changeWordGroup.style.display = 'block';
-      } else {
-        changeWordGroup.style.display = 'none';
-      }
-    }
-
-    // Actualizar inputs de jugadores conservando valores existentes
-    function updatePlayerInputs() {
-      const count = parseInt(document.getElementById('player-count').value);
-      const container = document.getElementById('player-names-container');
-      
-      const existingValues = [];
-      const existingInputs = container.querySelectorAll('input');
-      existingInputs.forEach(input => {
-        existingValues.push(input.value);
-      });
-      
-      container.innerHTML = '';
-      
-      for (let i = 0; i < count; i++) {
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.placeholder = `Jugador ${i + 1}`;
-        input.id = `player-${i}`;
-        if (i < existingValues.length) {
-          input.value = existingValues[i];
-        }
-        container.appendChild(input);
-      }
-    }
-
     // Iniciar juego
     function startGame(event) {
       event.preventDefault();
       
-      const playerCount = parseInt(document.getElementById('player-count').value);
       gameState.players = [];
       
-      for (let i = 0; i < playerCount; i++) {
-        const name = document.getElementById(`player-${i}`).value.trim() || `Jugador ${i + 1}`;
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        const name = input.value.trim() || `Jugador ${i + 1}`;
         gameState.players.push(name);
+      });
+      
+      if (gameState.players.length < 3) {
+        alert('Necesitás al menos 3 jugadores');
+        return;
       }
       
-      gameState.impostorCount = parseInt(document.getElementById('impostor-count').value);
+      gameState.impostorCount = configState.impostorCount;
       gameState.wordCategory = document.getElementById('word-category').value;
-      gameState.voteTime = parseInt(document.getElementById('vote-time').value);
-      gameState.impostorsKnow = document.getElementById('impostors-know').value === 'yes';
-      gameState.votingRounds = parseInt(document.getElementById('voting-rounds').value);
-      gameState.changeWord = document.getElementById('change-word').value === 'change';
-      gameState.multipleVotes = document.getElementById('multiple-votes').value === 'multiple';
+      gameState.voteTime = configState.voteTime;
+      gameState.impostorsKnow = configState.impostorsKnow;
+      gameState.votingRounds = configState.votingRounds;
+      gameState.changeWord = configState.changeWord;
+      gameState.multipleVotes = configState.multipleVotes;
       gameState.eliminated = [];
       gameState.currentVotingRound = 0;
       
-      saveConfig();
       startNewRound();
     }
 
@@ -1102,7 +1170,6 @@
       const categoryDisplay = document.getElementById('word-category-display');
       const impostorTeamInfo = document.getElementById('impostor-team-info');
       
-      // Obtener el nombre de la categoría en español
       const categoryNames = {
         'deportes': 'Deportes',
         'peliculasSeries': 'Películas y Series',
@@ -1123,7 +1190,6 @@
         wordDisplay.textContent = 'IMPOSTOR';
         wordHeader.textContent = 'Tu Rol';
         
-        // Mostrar otros impostores si se conocen
         if (gameState.impostorsKnow && gameState.impostorIndexes.length > 1) {
           const otherImpostors = gameState.impostorIndexes
             .filter(idx => idx !== gameState.currentPlayerIndex)
@@ -1154,7 +1220,6 @@
 
     // Mostrar pantalla de inicio de pistas
     function showStartCluesScreen() {
-      // Seleccionar un jugador aleatorio que no esté eliminado
       const activePlayers = gameState.players
         .map((p, i) => i)
         .filter(i => !gameState.eliminated.includes(i));
@@ -1179,7 +1244,7 @@
       showScreen('screen-start-clues');
     }
 
-    // Iniciar discusión (reemplaza startClueTracking)
+    // Iniciar discusión
     function startDiscussion() {
       startVoteTimer();
     }
@@ -1250,7 +1315,6 @@
     // Toggle voto
     function toggleVote(idx, btn, maxVotes) {
       if (gameState.multipleVotes && gameState.impostorCount > 1) {
-        // Votación múltiple
         const voteIndex = gameState.selectedVotes.indexOf(idx);
         if (voteIndex > -1) {
           gameState.selectedVotes.splice(voteIndex, 1);
@@ -1262,7 +1326,6 @@
           }
         }
       } else {
-        // Votación única - eliminar inmediatamente
         eliminatePlayers([idx]);
       }
     }
@@ -1316,7 +1379,6 @@
       buttons.innerHTML = '';
       
       if (activeImpostors.length === 0) {
-        // Ganaron los ciudadanos
         statusText.textContent = '¡Todos los impostores fueron eliminados!';
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
@@ -1327,7 +1389,6 @@
         gameState.currentVotingRound++;
         
         if (gameState.currentVotingRound >= gameState.votingRounds) {
-          // Se acabaron las votaciones, ganaron los impostores
           statusText.textContent = `Se acabaron las ${gameState.votingRounds} votaciones sin eliminar a todos los impostores.`;
           const btn = document.createElement('button');
           btn.className = 'btn btn-primary';
@@ -1335,7 +1396,6 @@
           btn.onclick = () => endGame('impostors');
           buttons.appendChild(btn);
         } else {
-          // Continuar con siguiente votación
           statusText.textContent = `Quedan ${activeImpostors.length} impostor${activeImpostors.length > 1 ? 'es' : ''} activo${activeImpostors.length > 1 ? 's' : ''}`;
           
           const btn = document.createElement('button');
@@ -1352,10 +1412,8 @@
     // Continuar a siguiente votación
     function continueToNextVoting() {
       if (gameState.changeWord) {
-        // Cambiar palabra y mostrar de nuevo
         startNewRound();
       } else {
-        // Mantener palabra, ir directo a discusión
         updateRoundIndicators();
         startDiscussion();
       }
@@ -1394,8 +1452,7 @@
 
     // Inicialización
     document.addEventListener('DOMContentLoaded', () => {
-      loadConfig();
-      updatePlayerInputs();
+      initializePlayers();
       updateImpostorOptions();
       updateVotingOptions();
     });
