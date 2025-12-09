@@ -15,12 +15,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     :root {
-      --bg: #0A092C;     /* Alabaster Grey */
-      --pink: #FF6B6B;   /* Grapefruit Pink */
-      --blue: #335C81;   /* Baltic Blue */
-      --indigo: #1B2845; /* Space Indigo */
-      --sky: #5899E2;    /* Cloudy Sky */
-
+      --bg: #0A092C;
+      --pink: #FF6B6B;
+      --blue: #335C81;
+      --indigo: #1B2845;
+      --sky: #5899E2;
       --card: #ffffff;
       --text-main: #1B2845;
       --muted: #6b7280;
@@ -30,309 +29,240 @@
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     body {
       min-height: 100vh;
       background: var(--bg);
       color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0;
+      padding-top: 100px;
     }
 
-    .top-header {
-      width: 100%;
-      padding: 32px 24px 24px;
-      text-align: left;
+    /* Header fijo */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      padding: 24px 24px 16px;
+      z-index: 1000;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    .top-header h1 {
-      font-size: 2.5rem;
+    .fixed-header h1 {
+      font-size: 2rem;
       font-weight: 700;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       color: #ffffff;
     }
 
-    .top-header .tagline {
-      font-size: 0.95rem;
+    .fixed-header .tagline {
+      font-size: 0.9rem;
       color: rgba(255, 255, 255, 0.7);
     }
 
-    .app {
+    .container {
       width: 100%;
-      max-width: 520px;
-      background: var(--card);
-      border-radius: 24px 24px 0 0;
-      box-shadow:
-        0 -10px 25px rgba(0, 0, 0, 0.15),
-        0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 28px 20px;
-      margin-top: 20px;
-      flex: 1;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 24px 20px 40px;
     }
 
-    .grid {
+    /* Grid de íconos tipo iOS */
+    .apps-grid {
       display: grid;
-      grid-template-columns: 1fr;
-      gap: 14px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px 16px;
     }
 
-    .card {
-      position: relative;
-      border-radius: 16px;
-      padding: 16px;
-      background: #ffffff;
-      border: 2px solid rgba(148, 163, 184, 0.3);
+    .app-item {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 14px;
+      text-decoration: none;
       transition: all 0.2s ease;
     }
 
-    .card:hover {
-      border-color: var(--sky);
-      box-shadow: 0 4px 12px rgba(88, 153, 226, 0.15);
+    .app-item:active {
+      transform: scale(0.95);
     }
 
-    .card-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: #f1f5f9;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      flex-shrink: 0;
-      border: 2px solid rgba(148, 163, 184, 0.2);
+    .app-icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
       overflow: hidden;
+      margin-bottom: 8px;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
     }
 
-    .card-icon img {
+    .app-item:hover .app-icon {
+      transform: scale(1.05);
+      box-shadow: 
+        0 6px 16px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+
+    .app-icon img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
     }
 
-    .card-content {
-      flex: 1;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .card-title {
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: var(--indigo);
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      padding: 5px 12px;
-      border-radius: 999px;
-      white-space: nowrap;
-      font-weight: 600;
-    }
-
-    .badge-live {
-      background: var(--sky);
+    .app-name {
+      font-size: 0.85rem;
+      font-weight: 500;
       color: #ffffff;
+      text-align: center;
+      line-height: 1.3;
+      max-width: 90px;
     }
 
-    .badge-soon {
-      background: #f1f5f9;
-      color: var(--muted);
-      border: 1px solid rgba(148, 163, 184, 0.6);
-    }
-
-    .stripe {
-      position: absolute;
-      inset-inline-start: 0;
-      top: 0;
-      bottom: 0;
-      width: 5px;
-      border-radius: 16px 0 0 16px;
-    }
-
-    .stripe-blue {
-      background: var(--sky);
-    }
-    
-    .stripe-pink {
-      background: var(--pink);
-    }
-
-    a.card-link {
-      text-decoration: none;
-      color: inherit;
-    }
-
-    .card.disabled {
-      opacity: 0.7;
+    /* Estilo para app deshabilitada (próximamente) */
+    .app-item.disabled {
       cursor: default;
     }
 
-    .card.disabled:hover {
-      border-color: rgba(148, 163, 184, 0.3);
-      box-shadow: none;
+    .app-item.disabled .app-icon {
+      opacity: 0.5;
+      filter: grayscale(100%);
+    }
+
+    .app-item.disabled .app-name {
+      opacity: 0.6;
+    }
+
+    .app-item.disabled:hover .app-icon {
+      transform: none;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.1);
+    }
+
+    .app-item.disabled:active {
+      transform: none;
     }
 
     footer {
-      width: 100%;
-      max-width: 520px;
-      padding: 20px;
       text-align: center;
-      font-size: 0.8rem;
-      color: rgba(255, 255, 255, 0.6);
+      padding: 20px;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.5);
     }
 
     @media (max-width: 600px) {
-      .top-header {
-        padding: 24px 20px 20px;
+      body {
+        padding-top: 90px;
       }
 
-      .top-header h1 {
-        font-size: 2rem;
+      .fixed-header {
+        padding: 20px 20px 12px;
       }
 
-      .app {
-        padding: 24px 16px;
-        margin-top: 16px;
+      .fixed-header h1 {
+        font-size: 1.75rem;
       }
 
-      .card {
-        padding: 14px;
+      .fixed-header .tagline {
+        font-size: 0.85rem;
       }
 
-      .card-icon {
-        width: 42px;
-        height: 42px;
-        font-size: 20px;
+      .container {
+        padding: 20px 16px 40px;
       }
 
-      .card-title {
-        font-size: 0.95rem;
+      .apps-grid {
+        gap: 20px 12px;
+      }
+
+      .app-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 18px;
+      }
+
+      .app-name {
+        font-size: 0.8rem;
+        max-width: 80px;
       }
     }
   </style>
 </head>
 <body>
-  <header class="top-header">
+  <!-- Header fijo -->
+  <header class="fixed-header">
     <h1>Ranchadapp</h1>
     <p class="tagline">La app oficial de ranchada.</p>
   </header>
 
-  <main class="app">
-    <section class="grid">
-      <!-- BerenjenApp -->
-      <a class="card-link" href="berenjena.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="bere-icon.jpg" alt="BerenjenApp" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">Anotador de Bere</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+  <!-- Grid de apps -->
+  <div class="container">
+    <main class="apps-grid">
+      <!-- Berenjena -->
+      <a class="app-item" href="berenjena.html">
+        <div class="app-icon">
+          <img src="bere-icon.jpg" alt="Berenjena" />
+        </div>
+        <span class="app-name">Berenjena</span>
       </a>
-      
-      <!-- Anotador de Truco -->
-      <a class="card-link" href="truco.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="truco-icon.jpg" alt="Truco" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">Anotador de Truco</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+
+      <!-- Truco -->
+      <a class="app-item" href="truco.html">
+        <div class="app-icon">
+          <img src="truco-icon.jpg" alt="Truco" />
+        </div>
+        <span class="app-name">Truco</span>
       </a>
-      
-      <!-- Anotador de Generala -->
-      <a class="card-link" href="generala.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="generala-icon.jpg" alt="Truco" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">Anotador de Generala</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+
+      <!-- Generala -->
+      <a class="app-item" href="generala.html">
+        <div class="app-icon">
+          <img src="generala-icon.jpg" alt="Generala" />
+        </div>
+        <span class="app-name">Generala</span>
       </a>
 
       <!-- El Impostor -->
-      <a class="card-link" href="impostor.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="impostor-icon.jpg" alt="El Impostor" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">El Impostor</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+      <a class="app-item" href="impostor.html">
+        <div class="app-icon">
+          <img src="impostor-icon.jpg" alt="El Impostor" />
+        </div>
+        <span class="app-name">El Impostor</span>
       </a>
 
       <!-- Dígalo con mímica -->
-      <a class="card-link" href="mimica.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="mimica-icon.jpg" alt="Mímica" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">Dígalo con mímica</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+      <a class="app-item" href="mimica.html">
+        <div class="app-icon">
+          <img src="mimica-icon.jpg" alt="Mímica" />
+        </div>
+        <span class="app-name">Dígalo con mímica</span>
       </a>
 
       <!-- Splitwise -->
-      <a class="card-link" href="splitwise.html">
-        <article class="card">
-          <div class="stripe stripe-blue"></div>
-          <div class="card-icon">
-            <img src="split-icon.png" alt="Splitwise" />
-          </div>
-          <div class="card-content">
-            <h2 class="card-title">Splitwise</h2>
-            <span class="badge badge-live">Disponible</span>
-          </div>
-        </article>
+      <a class="app-item" href="splitwise.html">
+        <div class="app-icon">
+          <img src="split-icon.png" alt="Splitwise" />
+        </div>
+        <span class="app-name">Splitwise</span>
       </a>
 
-      <!-- Prode Mundial 2026 -->
-      <article class="card disabled">
-        <div class="stripe stripe-pink"></div>
-        <div class="card-icon">
+      <!-- Prode Mundial 2026 (próximamente) -->
+      <div class="app-item disabled">
+        <div class="app-icon">
           <img src="prode-icon.jpg" alt="Prode Mundial" />
         </div>
-        <div class="card-content">
-          <h2 class="card-title">Prode Mundial 2026</h2>
-          <span class="badge badge-soon">Próximamente</span>
-        </div>
-      </article>
-    </section>
-  </main>
+        <span class="app-name">Prode Mundial 2026</span>
+      </div>
+    </main>
 
-  <footer>
-    By Carpincho Games®
-  </footer>
+    <footer>
+      By Carpincho Games®
+    </footer>
+  </div>
 </body>
 </html>
