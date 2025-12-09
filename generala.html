@@ -561,9 +561,9 @@
         html += `<tr${isDivider ? ' class="divider-row"' : ''}>`;
         html += `<td class="category-name">${cat.name}</td>`;
         gameState.players.forEach(player => {
-          const value = gameState.scores[player][cat.id];
-          const displayValue = value || '';
-          const inputClass = value === 'X' ? 'crossed' : (value && value !== '' && value !== 'X' ? 'filled' : '');
+        const value = gameState.scores[player][cat.id];
+        const displayValue = value === 0 ? 'X' : (value || '');
+        const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
           
           // Deshabilitar doble si no tiene generala
           const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === '' || gameState.scores[player]['generala'] === 'X');
@@ -596,37 +596,39 @@
       table.innerHTML = html;
     }
 
-    function updateScore(player, categoryId, value) {
-      // Permitir X, x, S, s para tachar, o números
-      value = value.trim().toUpperCase();
-      
-      if (value === 'X' || value === 'S') {
-        gameState.scores[player][categoryId] = 'X';
-      } else if (value === '') {
-        gameState.scores[player][categoryId] = '';
-      } else {
-        // Filtrar solo números
-        const numValue = value.replace(/[^0-9]/g, '');
-        if (numValue !== '') {
-          gameState.scores[player][categoryId] = parseInt(numValue);
-        } else {
-          gameState.scores[player][categoryId] = '';
-        }
-      }
-      
-      saveGame();
-      renderTable();
+function updateScore(player, categoryId, value) {
+  value = value.trim().toUpperCase();
+  
+  if (value === 'X' || value === 'S') {
+    gameState.scores[player][categoryId] = 0; // Cambiar a 0 en vez de 'X'
+  } else if (value === '') {
+    gameState.scores[player][categoryId] = '';
+  } else {
+    const numValue = value.replace(/[^0-9]/g, '');
+    if (numValue !== '') {
+      gameState.scores[player][categoryId] = parseInt(numValue);
+    } else {
+      gameState.scores[player][categoryId] = '';
     }
+  }
+  
+  saveGame();
+  renderTable();
+}
 
     function calculateTotal(player) {
       let total = 0;
+      let hasValues = false;
+      
       categories.forEach(cat => {
         const value = gameState.scores[player][cat.id];
-        if (value !== '' && value !== 'X' && !isNaN(value)) {
+        if (value !== '' && !isNaN(value)) {
           total += parseInt(value);
+          hasValues = true;
         }
       });
-      return total || '';
+      
+      return hasValues ? total : '';
     }
 
     function backToMenu() {
