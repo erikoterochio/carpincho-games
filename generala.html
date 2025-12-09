@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CYTN5F1X5W"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-CYTN5F1X5W');
+  </script>
+  <meta charset="UTF-8" />
+  <title>🎲 Generala · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+      --green: #4CAF50;
+      --red: #ef4444;
+      --border: #e9ecef;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: 60px;
+    }
+
+    /* Header fijo */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--indigo);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .home-btn {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.15s ease;
+    }
+
+    .home-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 600px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 20px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .content {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .intro-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--sky);
+      color: #ffffff;
+      border: 2px solid var(--sky);
+    }
+
+    .btn-primary:hover {
+      background: #4a8dd4;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      color: var(--indigo);
+      border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 10px;
+    }
+
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .player-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .player-input-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .player-input-row input:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+
+    .player-input-row .remove-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      background: #ffffff;
+      color: #ef4444;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .player-input-row .remove-btn:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .add-player-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px dashed rgba(148, 163, 184, 0.4);
+      background: transparent;
+      color: var(--sky);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .add-player-btn:hover {
+      border-color: var(--sky);
+      background: #f0f9ff;
+    }
+
+    /* Tabla de puntajes */
+    .table-container {
+      overflow-x: auto;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .score-table {
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 2px solid var(--border);
+    }
+
+    .score-table th {
+      background: var(--sky);
+      color: white;
+      padding: 10px 12px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      text-align: center;
+      min-width: 70px;
+    }
+
+    .score-table th.category-header {
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .score-table td {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.95rem;
+    }
+
+    .score-table td.category-name {
+      text-align: center;
+      background: #f8f9fa;
+      font-weight: 600;
+      color: var(--indigo);
+    }
+
+    .score-table td.score-cell {
+      padding: 0;
+      position: relative;
+    }
+
+    .score-table input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 8px 4px;
+      color: var(--text);
+    }
+
+    .score-table input:focus {
+      outline: none;
+      background: #e0f2fe;
+    }
+
+    .score-table input.filled {
+      background: #dcfce7;
+      color: var(--green);
+    }
+
+    .score-table input.crossed {
+      background: #fee2e2;
+      color: var(--red);
+      text-decoration: line-through;
+    }
+
+    .score-table tr.total-row {
+      background: #f8f9fa;
+      font-weight: 700;
+    }
+
+    .score-table tr.divider-row td {
+      border-top: 3px solid var(--sky);
+    }
+
+    .score-table tr.total-row td {
+      border-top: 3px solid var(--sky);
+      font-size: 1rem;
+      color: var(--sky);
+      padding: 10px 12px;
+    }
+
+    footer {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 16px;
+      }
+
+      .score-table th,
+      .score-table td {
+        font-size: 0.85rem;
+        padding: 6px 8px;
+      }
+
+      .score-table th {
+        min-width: 60px;
+      }
+
+      .score-table th.category-header {
+        min-width: 90px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header fijo -->
+  <div class="fixed-header">
+    <div class="header-title" id="pageTitle">Generala</div>
+    <a href="index.html" class="home-btn" id="homeBtn" style="display:none;">← Inicio</a>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <!-- PANTALLA 1: INICIO -->
+      <div id="splashScreen" class="screen active">
+        <div class="content">
+          <p class="intro-text">
+            Anotador para el clásico juego de dados argentino.
+          </p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startNewGame()">Nuevo juego</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">Reanudar juego</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 2: CONFIGURACIÓN -->
+      <div id="setupScreen" class="screen">
+        <div class="content">
+          <div class="form-group">
+            <label>Jugadores</label>
+            <div class="players-list" id="players-list"></div>
+            <button type="button" class="add-player-btn" onclick="addPlayerSetup()">+ Agregar jugador</button>
+          </div>
+
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+
+      <!-- PANTALLA 3: JUEGO -->
+      <div id="gameScreen" class="screen">
+        <div class="table-container">
+          <table class="score-table" id="scoreTable">
+            <!-- La tabla se genera dinámicamente -->
+          </table>
+        </div>
+
+        <button class="btn btn-secondary" onclick="backToMenu()">Volver al Menú</button>
+      </div>
+
+      <footer>
+        <span>Carpincho Games · 🎲 Generala</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    let gameState = {
+      players: [],
+      scores: {}
+    };
+
+    let playerCounter = 0;
+
+    const categories = [
+      { id: '1', name: '1' },
+      { id: '2', name: '2' },
+      { id: '3', name: '3' },
+      { id: '4', name: '4' },
+      { id: '5', name: '5' },
+      { id: '6', name: '6' },
+      { id: 'escalera', name: 'Escalera' },
+      { id: 'full', name: 'Full' },
+      { id: 'poker', name: 'Póker' },
+      { id: 'generala', name: 'Generala' },
+      { id: 'doble', name: 'Doble' }
+    ];
+
+    window.onload = function() {
+      checkForSavedGame();
+      updateHeader('Generala', false);
+    };
+
+    function updateHeader(title, showHome) {
+      document.getElementById('pageTitle').textContent = title;
+      document.getElementById('homeBtn').style.display = showHome ? 'block' : 'none';
+    }
+
+    function checkForSavedGame() {
+      const saved = localStorage.getItem('generalaGame');
+      if (saved) {
+        document.getElementById('resumeBtn').style.display = 'block';
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('generalaGame', JSON.stringify(gameState));
+    }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('generalaGame');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        showScreen('gameScreen');
+        updateHeader('Anotador', true);
+        renderTable();
+      }
+    }
+
+    function startNewGame() {
+      if (localStorage.getItem('generalaGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) {
+          return;
+        }
+      }
+      localStorage.removeItem('generalaGame');
+      gameState = {
+        players: [],
+        scores: {}
+      };
+      playerCounter = 0;
+      showScreen('setupScreen');
+      updateHeader('Configurar', true);
+      initializePlayers();
+    }
+
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      
+      for (let i = 0; i < 2; i++) {
+        addPlayerSetup();
+      }
+    }
+
+    function addPlayerSetup() {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      
+      const row = document.createElement('div');
+      row.className = 'player-input-row';
+      row.id = `player-row-${index}`;
+      row.innerHTML = `
+        <input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" />
+        <button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>
+      `;
+      
+      container.appendChild(row);
+    }
+
+    function removePlayerSetup(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) {
+        row.remove();
+      }
+    }
+
+    function startGame() {
+      gameState.players = [];
+      gameState.scores = {};
+      
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        const name = input.value.trim() || `Jugador ${i + 1}`;
+        gameState.players.push(name);
+        
+        gameState.scores[name] = {};
+        categories.forEach(cat => {
+          gameState.scores[name][cat.id] = '';
+        });
+      });
+      
+      if (gameState.players.length < 1) {
+        alert('Necesitás al menos 1 jugador');
+        return;
+      }
+      
+      saveGame();
+      showScreen('gameScreen');
+      updateHeader('Anotador', true);
+      renderTable();
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function renderTable() {
+      const table = document.getElementById('scoreTable');
+      let html = '<thead><tr>';
+      
+      html += '<th class="category-header">Categoría</th>';
+      gameState.players.forEach(player => {
+        html += `<th>${player}</th>`;
+      });
+      html += '</tr></thead><tbody>';
+      
+      // Todas las categorías
+      categories.forEach((cat, index) => {
+        const isDivider = index === 6; // Escalera es la posición 6 (después del 6)
+        html += `<tr${isDivider ? ' class="divider-row"' : ''}>`;
+        html += `<td class="category-name">${cat.name}</td>`;
+        gameState.players.forEach(player => {
+          const value = gameState.scores[player][cat.id];
+          const displayValue = value || '';
+          const inputClass = value === 'X' ? 'crossed' : (value && value !== '' && value !== 'X' ? 'filled' : '');
+          
+          // Deshabilitar doble si no tiene generala
+          const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === '' || gameState.scores[player]['generala'] === 'X');
+          
+          html += `<td class="score-cell">
+            <input 
+              type="text" 
+              inputmode="numeric" 
+              pattern="[0-9XxSs]*" 
+              value="${displayValue}" 
+              class="${inputClass}"
+              onchange="updateScore('${player}', '${cat.id}', this.value)"
+              ${isDisabled ? 'disabled style="opacity:0.3;"' : ''}
+            />
+          </td>`;
+        });
+        html += '</tr>';
+      });
+      
+      // Total
+      html += '<tr class="total-row">';
+      html += '<td class="category-name">TOTAL</td>';
+      gameState.players.forEach(player => {
+        const total = calculateTotal(player);
+        html += `<td>${total}</td>`;
+      });
+      html += '</tr>';
+      
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function updateScore(player, categoryId, value) {
+      // Permitir X, x, S, s para tachar, o números
+      value = value.trim().toUpperCase();
+      
+      if (value === 'X' || value === 'S') {
+        gameState.scores[player][categoryId] = 'X';
+      } else if (value === '') {
+        gameState.scores[player][categoryId] = '';
+      } else {
+        // Filtrar solo números
+        const numValue = value.replace(/[^0-9]/g, '');
+        if (numValue !== '') {
+          gameState.scores[player][categoryId] = parseInt(numValue);
+        } else {
+          gameState.scores[player][categoryId] = '';
+        }
+      }
+      
+      saveGame();
+      renderTable();
+    }
+
+    function calculateTotal(player) {
+      let total = 0;
+      categories.forEach(cat => {
+        const value = gameState.scores[player][cat.id];
+        if (value !== '' && value !== 'X' && !isNaN(value)) {
+          total += parseInt(value);
+        }
+      });
+      return total || '';
+    }
+
+    function backToMenu() {
+      showScreen('splashScreen');
+      updateHeader('Generala', false);
+      checkForSavedGame();
+    }
+  </script>
+</body>
+</html>
