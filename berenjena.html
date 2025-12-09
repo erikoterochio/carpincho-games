@@ -173,7 +173,7 @@
     }
 
     .form-group {
-      margin-bottom: 12px;
+      margin-bottom: 20px;
     }
 
     .form-group label {
@@ -181,7 +181,7 @@
       font-size: 0.9rem;
       font-weight: 600;
       color: var(--indigo);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .form-group input {
@@ -196,6 +196,124 @@
     .form-group input:focus {
       outline: none;
       border-color: var(--sky);
+    }
+
+    /* Controles numéricos */
+    .number-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .number-control button {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .number-control button:hover {
+      border-color: var(--sky);
+      background: #e0f2fe;
+    }
+
+    .number-control button:active {
+      transform: scale(0.95);
+    }
+
+    .number-control .value {
+      min-width: 60px;
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    /* Lista de jugadores dinámica */
+    .players-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .player-input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .player-input-row input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .player-input-row input:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+
+    .player-input-row .remove-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid rgba(239, 68, 68, 0.3);
+      background: #ffffff;
+      color: #ef4444;
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .player-input-row .remove-btn:hover {
+      background: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .add-player-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: 2px dashed rgba(148, 163, 184, 0.4);
+      background: transparent;
+      color: var(--sky);
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      margin-top: 8px;
+    }
+
+    .add-player-btn:hover {
+      border-color: var(--sky);
+      background: #f0f9ff;
+    }
+
+    .info-box {
+      background: #e0f2fe;
+      border: 2px solid var(--sky);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 0.85rem;
+      color: var(--indigo);
+      line-height: 1.5;
     }
 
     .round-header {
@@ -483,6 +601,12 @@
       background: #ff9800;
     }
 
+    .btn-add-player {
+      background: var(--pink);
+      color: white;
+      margin-top: 10px;
+    }
+
     .player-selection-btn {
       width: 100%;
       padding: 16px;
@@ -624,19 +748,26 @@
       </header>
 
       <div class="content">
-        <div id="playerCountInput">
-          <div class="form-group">
-            <label>¿Cuántos jugadores?</label>
-            <input type="number" inputmode="numeric" pattern="[0-9]*" id="playerCount" min="2" max="10" placeholder="Cantidad de jugadores">
-          </div>
-          <button class="btn btn-primary" onclick="setPlayerCount()">Continuar</button>
+        <div class="form-group">
+          <label>Jugadores</label>
+          <div class="players-list" id="players-list"></div>
+          <button type="button" class="add-player-btn" onclick="addPlayerSetup()">+ Agregar jugador</button>
         </div>
 
-        <div id="playerNamesInput" style="display: none;">
-          <h2 style="text-align:center;color:var(--indigo);margin-bottom:16px;font-size:1.1rem;">Nombres de Jugadores</h2>
-          <div id="nameInputs"></div>
-          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        <div class="form-group">
+          <label>Cartas en el mazo</label>
+          <div class="number-control">
+            <button type="button" onclick="changeCardCount(-5)">−</button>
+            <div class="value" id="card-count-display">50</div>
+            <button type="button" onclick="changeCardCount(5)">+</button>
+          </div>
         </div>
+
+        <div class="info-box" id="rounds-info">
+          Rondas a jugar: 1, 3, 5, 7
+        </div>
+
+        <button class="btn btn-primary" onclick="startGame()">Empezar</button>
       </div>
     </div>
 
@@ -758,7 +889,10 @@
       </header>
 
       <div class="content">
-        <button id="editModeBtn" class="btn btn-edit" onclick="toggleEditMode()">Editar</button>
+        <div class="btn-group">
+          <button id="editModeBtn" class="btn btn-edit" onclick="toggleEditMode()">Editar</button>
+          <button class="btn btn-add-player" onclick="showAddPlayerScreen()">+ Jugador</button>
+        </div>
         
         <div id="scoreboard" style="margin-top:16px;"></div>
         
@@ -793,6 +927,32 @@
       </div>
     </div>
 
+    <!-- PANTALLA 10: AGREGAR JUGADOR -->
+    <div id="addPlayerScreen" class="screen">
+      <header>
+        <div class="title-group">
+          <h1>Agregar Jugador</h1>
+        </div>
+      </header>
+
+      <div class="content">
+        <div class="form-group">
+          <label>Nombre del jugador</label>
+          <input type="text" id="newPlayerName" placeholder="Nombre">
+        </div>
+
+        <div class="form-group">
+          <label>¿En qué posición entra?</label>
+          <div id="positionSelection"></div>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-primary" onclick="confirmAddPlayer()">Agregar</button>
+          <button class="btn btn-secondary" onclick="cancelAddPlayer()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
     <footer>
       <span>Carpincho Games · 🍆 BerenjenApp</span>
     </footer>
@@ -803,8 +963,8 @@
     let gameState = {
       players: [],
       currentRound: 0,
-      roundTypes: ['Uno', 'Tres', 'Cinco', 'Siete'],
-      roundMaxValues: { 'Uno': 1, 'Tres': 3, 'Cinco': 5, 'Siete': 7 },
+      roundTypes: [],
+      roundMaxValues: {},
       currentRoundType: '',
       dealerIndex: null,
       startingPlayerIndex: 0,
@@ -813,8 +973,12 @@
       editMode: false,
       roundHistory: [],
       dealersWhoDealtUno: [],
-      playerOrder: []
+      playerOrder: [],
+      cardCount: 50
     };
+
+    let playerCounter = 0;
+    let selectedPosition = 0;
 
     window.onload = function() {
       checkForSavedGame();
@@ -853,8 +1017,8 @@
       gameState = {
         players: [],
         currentRound: 0,
-        roundTypes: ['Uno', 'Tres', 'Cinco', 'Siete'],
-        roundMaxValues: { 'Uno': 1, 'Tres': 3, 'Cinco': 5, 'Siete': 7 },
+        roundTypes: [],
+        roundMaxValues: {},
         currentRoundType: '',
         dealerIndex: null,
         startingPlayerIndex: 0,
@@ -863,61 +1027,152 @@
         editMode: false,
         roundHistory: [],
         dealersWhoDealtUno: [],
-        playerOrder: []
+        playerOrder: [],
+        cardCount: 50
       };
+      playerCounter = 0;
       showScreen('setupScreen');
+      initializePlayers();
+      updateRoundsInfo();
     }
 
-    function setPlayerCount() {
-      const count = parseInt(document.getElementById('playerCount').value);
-      if (count < 2) {
-        alert('Necesitás al menos 2 jugadores');
-        return;
-      }
-      if (count > 10) {
-        alert('Máximo 10 jugadores');
-        return;
-      }
-      
-      document.getElementById('playerCountInput').style.display = 'none';
-      document.getElementById('playerNamesInput').style.display = 'block';
-      
-      const container = document.getElementById('nameInputs');
+    // Inicializar lista de jugadores
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
       container.innerHTML = '';
-      for (let i = 0; i < count; i++) {
-        const div = document.createElement('div');
-        div.className = 'form-group';
-        div.innerHTML = `
-          <input type="text" id="playerName${i}" placeholder="Jugador ${i + 1}">
-        `;
-        container.appendChild(div);
+      
+      // Agregar 4 jugadores iniciales
+      for (let i = 0; i < 4; i++) {
+        addPlayerSetup();
+      }
+    }
+
+    // Agregar jugador en setup
+    function addPlayerSetup() {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      
+      const row = document.createElement('div');
+      row.className = 'player-input-row';
+      row.id = `player-row-${index}`;
+      row.innerHTML = `
+        <input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" />
+        <button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>
+      `;
+      
+      container.appendChild(row);
+      updateRoundsInfo();
+    }
+
+    // Remover jugador en setup
+    function removePlayerSetup(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) {
+        row.remove();
+        updateRoundsInfo();
+      }
+    }
+
+    // Cambiar número de cartas
+    function changeCardCount(delta) {
+      gameState.cardCount = Math.max(20, Math.min(100, gameState.cardCount + delta));
+      document.getElementById('card-count-display').textContent = gameState.cardCount;
+      updateRoundsInfo();
+    }
+
+    // Calcular qué rondas se pueden jugar
+    function calculateAvailableRounds(cardCount, playerCount) {
+      const activePlayerCount = playerCount;
+      const rounds = [];
+      const maxValues = {};
+      
+      // Intentar con 1, 3, 5, 7
+      const possibleRounds = [
+        { name: 'Uno', value: 1 },
+        { name: 'Tres', value: 3 },
+        { name: 'Cinco', value: 5 },
+        { name: 'Siete', value: 7 }
+      ];
+      
+      possibleRounds.forEach(round => {
+        const cardsNeeded = round.value * activePlayerCount;
+        if (cardsNeeded <= cardCount) {
+          rounds.push(round.name);
+          maxValues[round.name] = round.value;
+        }
+      });
+      
+      // Si la de 7 no alcanza, probar con 6
+      if (!rounds.includes('Siete')) {
+        const cardsNeededFor6 = 6 * activePlayerCount;
+        if (cardsNeededFor6 <= cardCount) {
+          rounds.push('Seis');
+          maxValues['Seis'] = 6;
+        }
+      }
+      
+      return { rounds, maxValues };
+    }
+
+    // Actualizar info de rondas
+    function updateRoundsInfo() {
+      const playerRows = document.querySelectorAll('.player-input-row');
+      const playerCount = playerRows.length;
+      const { rounds } = calculateAvailableRounds(gameState.cardCount, playerCount);
+      
+      const infoBox = document.getElementById('rounds-info');
+      if (rounds.length > 0) {
+        infoBox.textContent = `Rondas a jugar: ${rounds.join(', ')}`;
+        infoBox.style.background = '#e0f2fe';
+        infoBox.style.borderColor = 'var(--sky)';
+      } else {
+        infoBox.textContent = '⚠️ No hay suficientes cartas para jugar';
+        infoBox.style.background = '#fee2e2';
+        infoBox.style.borderColor = 'var(--red)';
       }
     }
 
     function startGame() {
-      const count = document.getElementById('nameInputs').children.length;
       gameState.players = [];
       
-      for (let i = 0; i < count; i++) {
-        const name = document.getElementById(`playerName${i}`).value.trim();
-        if (!name) {
-          alert(`Ingresá un nombre para Jugador ${i + 1}`);
-          return;
-        }
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        const name = input.value.trim() || `Jugador ${i + 1}`;
         gameState.players.push({
           name: name,
           score: 0,
           eliminated: false
         });
+      });
+      
+      if (gameState.players.length < 2) {
+        alert('Necesitás al menos 2 jugadores');
+        return;
       }
       
+      const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, gameState.players.length);
+      
+      if (rounds.length === 0) {
+        alert('No hay suficientes cartas para jugar con esta cantidad de jugadores');
+        return;
+      }
+      
+      gameState.roundTypes = rounds;
+      gameState.roundMaxValues = maxValues;
       gameState.currentRound = 0;
       gameState.playerOrder = gameState.players.map((_, idx) => idx);
       showScreen('dealerScreen');
     }
 
     function startRound() {
-      const roundIndex = gameState.currentRound % 4;
+      // Recalcular rondas disponibles en caso de que haya cambiado la cantidad de jugadores
+      const activePlayers = gameState.players.filter(p => !p.eliminated);
+      const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, activePlayers.length);
+      gameState.roundTypes = rounds;
+      gameState.roundMaxValues = maxValues;
+      
+      const roundIndex = gameState.currentRound % gameState.roundTypes.length;
       gameState.currentRoundType = gameState.roundTypes[roundIndex];
       gameState.currentSelections = Array(gameState.players.length).fill(null);
       gameState.currentScores = {};
@@ -1267,6 +1522,88 @@
         loserSection.innerHTML = '';
         document.getElementById('nextRoundBtn').style.display = 'block';
       }
+    }
+
+    function showAddPlayerScreen() {
+      document.getElementById('newPlayerName').value = '';
+      
+      const container = document.getElementById('positionSelection');
+      container.innerHTML = '';
+      
+      selectedPosition = 0;
+      
+      gameState.players.forEach((player, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'player-selection-btn';
+        btn.textContent = `Después de ${player.name}`;
+        btn.onclick = () => {
+          selectedPosition = idx + 1;
+          document.querySelectorAll('#positionSelection .player-selection-btn').forEach(b => {
+            b.style.background = 'white';
+            b.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+          });
+          btn.style.background = '#e0f2fe';
+          btn.style.borderColor = 'var(--sky)';
+        };
+        container.appendChild(btn);
+      });
+      
+      // Opción para agregar al final
+      const btnLast = document.createElement('button');
+      btnLast.className = 'player-selection-btn';
+      btnLast.textContent = 'Al final';
+      btnLast.onclick = () => {
+        selectedPosition = gameState.players.length;
+        document.querySelectorAll('#positionSelection .player-selection-btn').forEach(b => {
+          b.style.background = 'white';
+          b.style.borderColor = 'rgba(148, 163, 184, 0.3)';
+        });
+        btnLast.style.background = '#e0f2fe';
+        btnLast.style.borderColor = 'var(--sky)';
+      };
+      container.appendChild(btnLast);
+      
+      showScreen('addPlayerScreen');
+    }
+
+    function confirmAddPlayer() {
+      const name = document.getElementById('newPlayerName').value.trim();
+      if (!name) {
+        alert('Ingresá un nombre para el jugador');
+        return;
+      }
+      
+      // Obtener puntaje mínimo
+      const minScore = Math.min(...gameState.players.map(p => p.score));
+      
+      // Crear nuevo jugador
+      const newPlayer = {
+        name: name,
+        score: minScore,
+        eliminated: false
+      };
+      
+      // Insertar en la posición seleccionada
+      gameState.players.splice(selectedPosition, 0, newPlayer);
+      
+      // Actualizar playerOrder
+      gameState.playerOrder = gameState.players.map((_, idx) => idx);
+      
+      // Ajustar índices
+      if (selectedPosition <= gameState.dealerIndex) {
+        gameState.dealerIndex++;
+      }
+      if (selectedPosition <= gameState.startingPlayerIndex) {
+        gameState.startingPlayerIndex++;
+      }
+      
+      saveGame();
+      showScreen('scoreboardScreen');
+      updateScoreboard();
+    }
+
+    function cancelAddPlayer() {
+      showScreen('scoreboardScreen');
     }
 
     function nextRound() {
