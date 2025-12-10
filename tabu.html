@@ -220,53 +220,46 @@
     }
 
     /* Game screen */
-    .score-bar {
+    .game-header {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 12px;
     }
 
-    .team-score {
+    .current-team-info {
       flex: 1;
       background: white;
       border-radius: 12px;
-      padding: 12px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-      text-align: center;
-    }
-
-    .team-score.active {
-      border-color: var(--sky);
+      padding: 12px 16px;
+      border: 2px solid var(--sky);
       background: #e0f2fe;
     }
 
-    .team-score-name {
-      font-size: 0.8rem;
+    .team-name {
+      font-size: 0.85rem;
       font-weight: 600;
-      color: var(--muted);
+      color: var(--sky);
       margin-bottom: 4px;
     }
 
-    .team-score.active .team-score-name {
-      color: var(--sky);
-    }
-
-    .team-score-points {
-      font-size: 1.8rem;
+    .team-points {
+      font-size: 2rem;
       font-weight: 700;
       color: var(--indigo);
+      line-height: 1;
     }
 
     .timer {
       background: var(--indigo);
       color: white;
-      font-size: 2.5rem;
+      font-size: 2rem;
       font-weight: 700;
       text-align: center;
-      padding: 20px;
+      padding: 16px 20px;
       border-radius: 12px;
-      margin-bottom: 20px;
+      min-width: 100px;
     }
 
     .timer.warning {
@@ -282,8 +275,8 @@
     .word-card {
       background: white;
       border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
+      padding: 20px;
+      margin-bottom: 12px;
       border: 2px solid rgba(148, 163, 184, 0.3);
       text-align: center;
     }
@@ -292,7 +285,7 @@
       font-size: 2.2rem;
       font-weight: 700;
       color: var(--indigo);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
@@ -300,14 +293,14 @@
     .forbidden-words {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .forbidden-word {
       font-size: 1rem;
       font-weight: 600;
       color: var(--red);
-      padding: 8px 12px;
+      padding: 6px 10px;
       background: #fee2e2;
       border-radius: 8px;
     }
@@ -316,7 +309,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .action-btn {
@@ -360,11 +353,13 @@
       background: #dc2626;
     }
 
-    .turn-info {
-      text-align: center;
-      font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 16px;
+    .control-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-half {
+      flex: 1;
     }
 
     /* Winner screen */
@@ -432,11 +427,26 @@
     @media (max-width: 600px) {
       .word-to-guess {
         font-size: 1.8rem;
+        margin-bottom: 12px;
       }
 
       .action-btn {
         padding: 14px;
         font-size: 1.3rem;
+      }
+
+      .timer {
+        font-size: 1.8rem;
+        padding: 12px 16px;
+        min-width: 90px;
+      }
+
+      .team-points {
+        font-size: 1.8rem;
+      }
+
+      .word-card {
+        padding: 16px;
       }
     }
   </style>
@@ -526,21 +536,12 @@
 
       <!-- PANTALLA 4: JUEGO -->
       <div id="gameScreen" class="screen">
-        <div class="score-bar">
-          <div class="team-score" id="team1Score">
-            <div class="team-score-name" id="team1NameDisplay">Equipo 1</div>
-            <div class="team-score-points" id="team1Points">0</div>
+        <div class="game-header">
+          <div class="current-team-info">
+            <div class="team-name" id="currentTeamName">Equipo 1</div>
+            <div class="team-points" id="currentTeamPoints">0</div>
           </div>
-          <div class="team-score" id="team2Score">
-            <div class="team-score-name" id="team2NameDisplay">Equipo 2</div>
-            <div class="team-score-points" id="team2Points">0</div>
-          </div>
-        </div>
-
-        <div class="timer" id="timer">60</div>
-
-        <div class="turn-info" id="turnInfo">
-          Turno de: <strong>Equipo 1</strong>
+          <div class="timer" id="timer">60</div>
         </div>
 
         <div class="word-card">
@@ -556,9 +557,9 @@
           <button class="action-btn btn-correct" onclick="correct()">+1</button>
         </div>
 
-        <div class="btn-group">
-          <button class="btn btn-secondary" id="pauseBtn" onclick="togglePause()">⏸ Pausar</button>
-          <button class="btn btn-secondary" onclick="endTurnManually()">Terminar turno</button>
+        <div class="control-buttons">
+          <button class="btn btn-secondary btn-half" id="pauseBtn" onclick="togglePause()">⏸ Pausar</button>
+          <button class="btn btn-secondary btn-half" onclick="endTurnManually()">Terminar turno</button>
         </div>
       </div>
 
@@ -919,20 +920,11 @@
     }
 
     function updateGameScreen() {
-      document.getElementById('team1NameDisplay').textContent = gameState.team1Name;
-      document.getElementById('team2NameDisplay').textContent = gameState.team2Name;
-      document.getElementById('team1Points').textContent = gameState.team1Points;
-      document.getElementById('team2Points').textContent = gameState.team2Points;
+      const currentTeamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      const currentTeamPoints = gameState.currentTeam === 1 ? gameState.team1Points : gameState.team2Points;
       
-      if (gameState.currentTeam === 1) {
-        document.getElementById('team1Score').classList.add('active');
-        document.getElementById('team2Score').classList.remove('active');
-        document.getElementById('turnInfo').innerHTML = `Turno de: <strong>${gameState.team1Name}</strong>`;
-      } else {
-        document.getElementById('team1Score').classList.remove('active');
-        document.getElementById('team2Score').classList.add('active');
-        document.getElementById('turnInfo').innerHTML = `Turno de: <strong>${gameState.team2Name}</strong>`;
-      }
+      document.getElementById('currentTeamName').textContent = currentTeamName;
+      document.getElementById('currentTeamPoints').textContent = currentTeamPoints;
     }
 
     function startNewTurn() {
