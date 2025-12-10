@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CYTN5F1X5W"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-CYTN5F1X5W');
+  </script>
+  <meta charset="UTF-8" />
+  <title>Tabú · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+      --green: #4CAF50;
+      --red: #ef4444;
+      --orange: #f97316;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: 60px;
+    }
+
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--indigo);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .home-btn {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.15s ease;
+    }
+
+    .home-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 500px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 20px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .content {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .intro-text {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: var(--text);
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px 20px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-primary {
+      background: var(--sky);
+      color: #ffffff;
+      border: 2px solid var(--sky);
+    }
+
+    .btn-primary:hover {
+      background: #4a8dd4;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--indigo);
+      color: var(--card);
+      border: 2px solid rgba(51, 92, 129, 0.3);
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      border-radius: 10px;
+      font-size: 1rem;
+      background: #ffffff;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--sky);
+    }
+
+    .number-control {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .number-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 2px solid var(--sky);
+      background: white;
+      color: var(--sky);
+      font-size: 1.3rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .number-btn:hover {
+      background: var(--sky);
+      color: white;
+    }
+
+    .number-display {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--indigo);
+      min-width: 80px;
+      text-align: center;
+    }
+
+    /* Game screen */
+    .score-bar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .team-score {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 12px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      text-align: center;
+    }
+
+    .team-score.active {
+      border-color: var(--sky);
+      background: #e0f2fe;
+    }
+
+    .team-score-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .team-score.active .team-score-name {
+      color: var(--sky);
+    }
+
+    .team-score-points {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--indigo);
+    }
+
+    .timer {
+      background: var(--indigo);
+      color: white;
+      font-size: 2.5rem;
+      font-weight: 700;
+      text-align: center;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .timer.warning {
+      background: var(--orange);
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    .word-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      text-align: center;
+    }
+
+    .word-to-guess {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 24px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .forbidden-words {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .forbidden-word {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--red);
+      padding: 8px 12px;
+      background: #fee2e2;
+      border-radius: 8px;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .action-btn {
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.5rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+    }
+
+    .btn-correct {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-correct:hover {
+      background: #45a049;
+    }
+
+    .btn-skip {
+      background: #e9ecef;
+      color: var(--muted);
+    }
+
+    .btn-skip:hover {
+      background: #cbd5e0;
+    }
+
+    .btn-wrong {
+      background: var(--red);
+      color: white;
+    }
+
+    .btn-wrong:hover {
+      background: #dc2626;
+    }
+
+    .turn-info {
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* Winner screen */
+    .winner-card {
+      text-align: center;
+      padding: 20px;
+    }
+
+    .winner-emoji {
+      font-size: 4rem;
+      margin-bottom: 16px;
+    }
+
+    .winner-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 8px;
+    }
+
+    .winner-subtitle {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .final-scores {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .final-score-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+    }
+
+    .final-score-row:not(:last-child) {
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .final-score-team {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--indigo);
+    }
+
+    .final-score-points {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--sky);
+    }
+
+    footer {
+      margin-top: 12px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .word-to-guess {
+        font-size: 1.8rem;
+      }
+
+      .action-btn {
+        padding: 14px;
+        font-size: 1.3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-title" id="pageTitle">Tabú</div>
+    <a href="index.html" class="home-btn" id="homeBtn" style="display:none;">← Inicio</a>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <!-- PANTALLA 1: INICIO -->
+      <div id="splashScreen" class="screen active">
+        <div class="content">
+          <p class="intro-text">
+            ¡Hacé que tu equipo adivine la palabra sin usar las palabras prohibidas!
+          </p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToSetup()">Nuevo juego</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 2: CONFIGURACIÓN -->
+      <div id="setupScreen" class="screen">
+        <div class="content">
+          <div class="form-group">
+            <label>Nombre Equipo 1</label>
+            <input type="text" id="team1Name" placeholder="Los Carpinchos" />
+          </div>
+
+          <div class="form-group">
+            <label>Nombre Equipo 2</label>
+            <input type="text" id="team2Name" placeholder="Los Ñandúes" />
+          </div>
+
+          <div class="form-group">
+            <label>Tiempo por ronda (segundos)</label>
+            <div class="number-control">
+              <button class="number-btn" onclick="changeTime(-15)">−</button>
+              <div class="number-display" id="timeDisplay">60</div>
+              <button class="number-btn" onclick="changeTime(15)">+</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Puntos para ganar</label>
+            <div class="number-control">
+              <button class="number-btn" onclick="changePoints(-5)">−</button>
+              <div class="number-display" id="pointsDisplay">30</div>
+              <button class="number-btn" onclick="changePoints(5)">+</button>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+
+      <!-- PANTALLA 3: INICIO DE TURNO -->
+      <div id="turnStartScreen" class="screen">
+        <div class="content">
+          <div class="winner-card">
+            <div class="winner-emoji">🎯</div>
+            <div class="winner-title" id="turnStartTeamName">Turno del Equipo 1</div>
+            <div class="winner-subtitle">¿Listos para empezar?</div>
+          </div>
+
+          <div class="final-scores">
+            <div class="final-score-row">
+              <span class="final-score-team" id="scoreTeam1Name">Equipo 1</span>
+              <span class="final-score-points" id="scoreTeam1Points">0</span>
+            </div>
+            <div class="final-score-row">
+              <span class="final-score-team" id="scoreTeam2Name">Equipo 2</span>
+              <span class="final-score-points" id="scoreTeam2Points">0</span>
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="startTurnFromScreen()">Empezar turno</button>
+        </div>
+      </div>
+
+      <!-- PANTALLA 4: JUEGO -->
+      <div id="gameScreen" class="screen">
+        <div class="score-bar">
+          <div class="team-score" id="team1Score">
+            <div class="team-score-name" id="team1NameDisplay">Equipo 1</div>
+            <div class="team-score-points" id="team1Points">0</div>
+          </div>
+          <div class="team-score" id="team2Score">
+            <div class="team-score-name" id="team2NameDisplay">Equipo 2</div>
+            <div class="team-score-points" id="team2Points">0</div>
+          </div>
+        </div>
+
+        <div class="timer" id="timer">60</div>
+
+        <div class="turn-info" id="turnInfo">
+          Turno de: <strong>Equipo 1</strong>
+        </div>
+
+        <div class="word-card">
+          <div class="word-to-guess" id="wordToGuess">CARPINCHO</div>
+          <div class="forbidden-words" id="forbiddenWords">
+            <!-- Se llenan dinámicamente -->
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button class="action-btn btn-wrong" onclick="penalize()">−1</button>
+          <button class="action-btn btn-skip" onclick="skip()">PASO</button>
+          <button class="action-btn btn-correct" onclick="correct()">+1</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="pauseBtn" onclick="togglePause()">⏸ Pausar</button>
+          <button class="btn btn-secondary" onclick="endTurnManually()">Terminar turno</button>
+        </div>
+      </div>
+
+      <!-- PANTALLA 5: GANADOR -->
+      <div id="winnerScreen" class="screen">
+        <div class="content">
+          <div class="winner-card">
+            <div class="winner-emoji">🏆</div>
+            <div class="winner-title" id="winnerName">¡Equipo Ganador!</div>
+            <div class="winner-subtitle">¡Felicitaciones!</div>
+          </div>
+
+          <div class="final-scores">
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam1Name">Equipo 1</span>
+              <span class="final-score-points" id="finalTeam1Points">0</span>
+            </div>
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam2Name">Equipo 2</span>
+              <span class="final-score-points" id="finalTeam2Points">0</span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToSetup()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="goToHome()">Volver al inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <span>Carpincho Games · 🎯 Tabú</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Base de datos de palabras (250+)
+    const wordDatabase = [
+      { word: "MATE", forbidden: ["YERBA", "BOMBILLA", "CALABAZA", "AMARGO", "ARGENTINO"] },
+      { word: "ASADO", forbidden: ["CARNE", "PARRILLA", "FUEGO", "CARBÓN", "DOMINGO"] },
+      { word: "TANGO", forbidden: ["BAILE", "ARGENTINA", "GARDEL", "MÚSICA", "BANDONEÓN"] },
+      { word: "FÚTBOL", forbidden: ["PELOTA", "GOL", "CANCHA", "DEPORTE", "EQUIPO"] },
+      { word: "PIZZA", forbidden: ["MASA", "QUESO", "HORNO", "SALSA", "ITALIANA"] },
+      { word: "CELULAR", forbidden: ["TELÉFONO", "WHATSAPP", "PANTALLA", "LLAMAR", "MÓVIL"] },
+      { word: "PERRO", forbidden: ["ANIMAL", "MASCOTA", "LADRAR", "CACHORRO", "CUATRO"] },
+      { word: "PELÍCULA", forbidden: ["CINE", "ACTOR", "DIRECTOR", "NETFLIX", "VER"] },
+      { word: "PLAYA", forbidden: ["MAR", "ARENA", "SOL", "VERANO", "AGUA"] },
+      { word: "CAMA", forbidden: ["DORMIR", "COLCHÓN", "SÁBANAS", "ALMOHADA", "MUEBLE"] },
+      
+      { word: "MILANESA", forbidden: ["CARNE", "EMPANADA", "FRITA", "NAPOLITANA", "REBOZADA"] },
+      { word: "CHORIPÁN", forbidden: ["CHORIZO", "PAN", "ASADO", "CHIMICHURRI", "SÁNDWICH"] },
+      { word: "EMPANADA", forbidden: ["MASA", "RELLENO", "HORNO", "CARNE", "FRITA"] },
+      { word: "DULCE DE LECHE", forbidden: ["LECHE", "POSTRE", "CARAMELO", "AZÚCAR", "ARGENTINO"] },
+      { word: "ALFAJOR", forbidden: ["CHOCOLATE", "DULCE", "POSTRE", "MAICENA", "GOLOSINA"] },
+      
+      { word: "BONDI", forbidden: ["COLECTIVO", "TRANSPORTE", "PARAR", "BOLETO", "SUBIR"] },
+      { word: "SUBTE", forbidden: ["METRO", "TREN", "SUBTERRÁNEO", "TRANSPORTE", "BAJO"] },
+      { word: "TAXI", forbidden: ["AUTO", "CONDUCTOR", "VIAJE", "PAGAR", "AMARILLO"] },
+      { word: "REMIS", forbidden: ["AUTO", "TAXI", "CONDUCTOR", "VIAJE", "LLAMAR"] },
+      { word: "BICICLETA", forbidden: ["PEDAL", "RUEDA", "ANDAR", "MANUBRIO", "CADENA"] },
+      
+      { word: "COMPUTADORA", forbidden: ["PANTALLA", "TECLADO", "MOUSE", "ESCRITORIO", "PC"] },
+      { word: "TELEVISOR", forbidden: ["PANTALLA", "CANAL", "VER", "CONTROL", "PROGRAMA"] },
+      { word: "HELADERA", forbidden: ["FRÍO", "COMIDA", "FREEZER", "COCINA", "GUARDAR"] },
+      { word: "LAVARROPAS", forbidden: ["ROPA", "LAVAR", "JABÓN", "TAMBOR", "ELECTRODOMÉSTICO"] },
+      { word: "MICROONDAS", forbidden: ["CALENTAR", "COCINAR", "HORNO", "ELECTRODOMÉSTICO", "RÁPIDO"] },
+      
+      { word: "MÉDICO", forbidden: ["DOCTOR", "HOSPITAL", "ENFERMO", "CURAR", "CONSULTA"] },
+      { word: "MAESTRO", forbidden: ["PROFESOR", "ESCUELA", "ENSEÑAR", "ALUMNO", "CLASE"] },
+      { word: "POLICÍA", forbidden: ["UNIFORMADO", "LEY", "ORDEN", "ARRESTAR", "PATRULLA"] },
+      { word: "BOMBERO", forbidden: ["FUEGO", "INCENDIO", "APAGAR", "CAMIÓN", "ROJO"] },
+      { word: "CARTERO", forbidden: ["CORREO", "CARTA", "BUZÓN", "ENTREGAR", "REPARTIR"] },
+      
+      { word: "PRIMAVERA", forbidden: ["ESTACIÓN", "FLORES", "SEPTIEMBRE", "CLIMA", "JARDÍN"] },
+      { word: "VERANO", forbidden: ["CALOR", "ESTACIÓN", "PLAYA", "DICIEMBRE", "ENERO"] },
+      { word: "OTOÑO", forbidden: ["ESTACIÓN", "HOJAS", "MARZO", "VIENTO", "CAER"] },
+      { word: "INVIERNO", forbidden: ["FRÍO", "ESTACIÓN", "NIEVE", "JUNIO", "JULIO"] },
+      { word: "LLUVIA", forbidden: ["AGUA", "PARAGUAS", "MOJADO", "NUBE", "CAER"] },
+      
+      { word: "CUMPLEAÑOS", forbidden: ["TORTA", "VELAS", "REGALO", "FESTEJAR", "EDAD"] },
+      { word: "CASAMIENTO", forbidden: ["BODA", "NOVIOS", "IGLESIA", "ANILLO", "FIESTA"] },
+      { word: "NAVIDAD", forbidden: ["DICIEMBRE", "ÁRBOL", "PAPA NOEL", "REGALOS", "FIESTA"] },
+      { word: "AÑO NUEVO", forbidden: ["ENERO", "BRINDIS", "FIESTA", "FUEGOS", "MEDIANOCHE"] },
+      { word: "CARNAVAL", forbidden: ["FIESTA", "DISFRAZ", "MÚSICA", "FEBRERO", "COMPARSA"] },
+      
+      { word: "GUITARRA", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "TOCAR", "SONIDO"] },
+      { word: "PIANO", forbidden: ["INSTRUMENTO", "TECLAS", "MÚSICA", "TOCAR", "BLANCO"] },
+      { word: "BATERÍA", forbidden: ["INSTRUMENTO", "TAMBOR", "MÚSICA", "GOLPEAR", "RITMO"] },
+      { word: "FLAUTA", forbidden: ["INSTRUMENTO", "SOPLAR", "MÚSICA", "SONIDO", "TUBO"] },
+      { word: "VIOLÍN", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "ARCO", "SONIDO"] },
+      
+      { word: "BANANA", forbidden: ["FRUTA", "AMARILLO", "MONO", "COMER", "CÁSCARA"] },
+      { word: "MANZANA", forbidden: ["FRUTA", "ROJA", "COMER", "VERDE", "ÁRBOL"] },
+      { word: "NARANJA", forbidden: ["FRUTA", "COLOR", "JUGO", "CÍTRICO", "VITAMINA"] },
+      { word: "SANDÍA", forbidden: ["FRUTA", "ROJA", "GRANDE", "SEMILLAS", "VERANO"] },
+      { word: "UVA", forbidden: ["FRUTA", "VINO", "RACIMO", "PEQUEÑA", "MORADA"] },
+      
+      { word: "CEBOLLA", forbidden: ["VERDURA", "LLORAR", "CORTAR", "COCINAR", "BLANCA"] },
+      { word: "TOMATE", forbidden: ["VERDURA", "ROJO", "SALSA", "ENSALADA", "REDONDO"] },
+      { word: "LECHUGA", forbidden: ["VERDURA", "VERDE", "ENSALADA", "HOJAS", "FRESCA"] },
+      { word: "PAPA", forbidden: ["VERDURA", "FRITAS", "PURÉ", "TIERRA", "REDONDA"] },
+      { word: "ZANAHORIA", forbidden: ["VERDURA", "NARANJA", "CONEJO", "LARGA", "RAÍZ"] },
+      
+      { word: "CAFÉ", forbidden: ["BEBIDA", "NEGRO", "CAFEÍNA", "TAZA", "MAÑANA"] },
+      { word: "CERVEZA", forbidden: ["BEBIDA", "ALCOHOL", "ESPUMA", "BAR", "LATA"] },
+      { word: "VINO", forbidden: ["BEBIDA", "ALCOHOL", "UVA", "TINTO", "COPA"] },
+      { word: "AGUA", forbidden: ["BEBIDA", "LÍQUIDO", "SED", "TRANSPARENTE", "BEBER"] },
+      { word: "GASEOSA", forbidden: ["BEBIDA", "COCA", "BURBUJAS", "DULCE", "BOTELLA"] },
+      
+      { word: "PANTALÓN", forbidden: ["ROPA", "PIERNAS", "JEAN", "VESTIR", "LARGO"] },
+      { word: "REMERA", forbidden: ["ROPA", "MANGA", "VESTIR", "CAMISETA", "TORSO"] },
+      { word: "ZAPATILLAS", forbidden: ["CALZADO", "PIES", "CORRER", "DEPORTIVO", "CORDONES"] },
+      { word: "CAMPERA", forbidden: ["ROPA", "ABRIGO", "FRÍO", "MANGAS", "VESTIR"] },
+      { word: "GORRA", forbidden: ["ACCESORIO", "CABEZA", "VISERA", "SOL", "BÉISBOL"] },
+      
+      { word: "LIBRO", forbidden: ["LEER", "PÁGINAS", "HISTORIA", "TEXTO", "AUTOR"] },
+      { word: "LÁPIZ", forbidden: ["ESCRIBIR", "GRAFITO", "PUNTA", "DIBUJAR", "MADERA"] },
+      { word: "CUADERNO", forbidden: ["ESCRIBIR", "HOJAS", "ESPIRAL", "ESCUELA", "ANOTACIONES"] },
+      { word: "MOCHILA", forbidden: ["BOLSO", "ESPALDA", "CARGAR", "ESCUELA", "GUARDAR"] },
+      { word: "PIZARRA", forbidden: ["ESCRIBIR", "TIZA", "AULA", "BORRAR", "VERDE"] },
+      
+      { word: "RELOJ", forbidden: ["HORA", "TIEMPO", "MUÑECA", "AGUJAS", "PULSERA"] },
+      { word: "ANTEOJOS", forbidden: ["VER", "LENTES", "OJOS", "VISTA", "MARCO"] },
+      { word: "BILLETERA", forbidden: ["DINERO", "BOLSILLO", "TARJETAS", "DOCUMENTOS", "CUERO"] },
+      { word: "PARAGUAS", forbidden: ["LLUVIA", "MOJARSE", "ABRIR", "AGUA", "PROTEGER"] },
+      { word: "LLAVE", forbidden: ["PUERTA", "ABRIR", "CERRADURA", "METAL", "CERRAR"] },
+      
+      { word: "SILLA", forbidden: ["SENTARSE", "MUEBLE", "PATAS", "RESPALDO", "ASIENTO"] },
+      { word: "MESA", forbidden: ["MUEBLE", "COMER", "SUPERFICIE", "PATAS", "APOYO"] },
+      { word: "SILLÓN", forbidden: ["MUEBLE", "SENTARSE", "CÓMODO", "LIVING", "GRANDE"] },
+      { word: "VENTANA", forbidden: ["VIDRIO", "ABRIR", "LUZ", "AFUERA", "MARCO"] },
+      { word: "PUERTA", forbidden: ["ENTRAR", "ABRIR", "CERRAR", "SALIR", "MADERA"] },
+      
+      { word: "AVIÓN", forbidden: ["VOLAR", "CIELO", "AEROPUERTO", "PASAJEROS", "ALAS"] },
+      { word: "TREN", forbidden: ["VÍAS", "ESTACIÓN", "TRANSPORTE", "PASAJEROS", "VAGÓN"] },
+      { word: "BARCO", forbidden: ["MAR", "AGUA", "NAVEGAR", "PUERTO", "VELA"] },
+      { word: "MOTO", forbidden: ["DOS", "RUEDAS", "MOTOR", "CASCO", "ANDAR"] },
+      { word: "CAMIÓN", forbidden: ["GRANDE", "CARGA", "TRANSPORTE", "RUEDAS", "MERCADERÍA"] },
+      
+      { word: "HOSPITAL", forbidden: ["MÉDICO", "ENFERMO", "CURAR", "SALUD", "PACIENTE"] },
+      { word: "ESCUELA", forbidden: ["ESTUDIAR", "MAESTRO", "ALUMNO", "APRENDER", "AULA"] },
+      { word: "SUPERMERCADO", forbidden: ["COMPRAR", "COMIDA", "PRODUCTOS", "CARRITO", "GÓNDOLA"] },
+      { word: "BANCO", forbidden: ["DINERO", "PLATA", "CUENTA", "CAJERO", "PRÉSTAMO"] },
+      { word: "RESTAURANTE", forbidden: ["COMER", "COMIDA", "MENÚ", "MESERO", "PLATOS"] },
+      
+      { word: "PAÍS", forbidden: ["NACIÓN", "BANDERA", "TERRITORIO", "GOBIERNO", "FRONTERA"] },
+      { word: "CIUDAD", forbidden: ["PUEBLO", "URBANO", "EDIFICIOS", "CALLES", "GENTE"] },
+      { word: "BARRIO", forbidden: ["CIUDAD", "ZONA", "VECINO", "CASA", "LUGAR"] },
+      { word: "PARQUE", forbidden: ["VERDE", "JUEGOS", "ÁRBOLES", "PLAZA", "CÉSPED"] },
+      { word: "PLAZA", forbidden: ["PARQUE", "BANCO", "CENTRO", "MONUMENTO", "PALOMAS"] },
+      
+      { word: "SOL", forbidden: ["ASTRO", "LUZ", "DÍA", "CALOR", "AMARILLO"] },
+      { word: "LUNA", forbidden: ["SATÉLITE", "NOCHE", "BRILLA", "CIELO", "REDONDA"] },
+      { word: "ESTRELLA", forbidden: ["CIELO", "NOCHE", "BRILLA", "PUNTA", "LUZ"] },
+      { word: "NUBE", forbidden: ["CIELO", "AGUA", "BLANCA", "LLUVIA", "FLOTAR"] },
+      { word: "ARCOÍRIS", forbidden: ["COLORES", "LLUVIA", "SOL", "CIELO", "SIETE"] },
+      
+      { word: "MONTAÑA", forbidden: ["ALTO", "ESCALADA", "NIEVE", "PICO", "CORDILLERA"] },
+      { word: "RÍO", forbidden: ["AGUA", "CORRIENTE", "PECES", "PUENTE", "CAUDAL"] },
+      { word: "LAGO", forbidden: ["AGUA", "QUIETA", "PECES", "GRANDE", "REDONDO"] },
+      { word: "DESIERTO", forbidden: ["ARENA", "CALOR", "SECO", "CACTUS", "CAMELLO"] },
+      { word: "SELVA", forbidden: ["ÁRBOLES", "VERDE", "ANIMALES", "HUMEDAD", "PLANTAS"] },
+      
+      { word: "LEÓN", forbidden: ["ANIMAL", "MELENA", "RUGIR", "ÁFRICA", "REY"] },
+      { word: "ELEFANTE", forbidden: ["ANIMAL", "TROMPA", "GRANDE", "GRIS", "COLMILLOS"] },
+      { word: "JIRAFA", forbidden: ["ANIMAL", "CUELLO", "ALTA", "MANCHAS", "ÁFRICA"] },
+      { word: "MONO", forbidden: ["ANIMAL", "BANANA", "ÁRBOL", "COLA", "CHIMPANCÉ"] },
+      { word: "VACA", forbidden: ["ANIMAL", "LECHE", "CAMPO", "MUGIR", "CUERNOS"] },
+      
+      { word: "GATO", forbidden: ["ANIMAL", "MASCOTA", "MAULLAR", "BIGOTES", "PELUDO"] },
+      { word: "PÁJARO", forbidden: ["ANIMAL", "VOLAR", "ALAS", "CANTAR", "PICO"] },
+      { word: "PEZ", forbidden: ["ANIMAL", "AGUA", "NADAR", "ESCAMAS", "ALETAS"] },
+      { word: "ARAÑA", forbidden: ["INSECTO", "TELARAÑA", "OCHO", "PATAS", "VENENOSA"] },
+      { word: "HORMIGA", forbidden: ["INSECTO", "PEQUEÑA", "TRABAJADORA", "COLONIA", "ROJA"] },
+      
+      { word: "FLOR", forbidden: ["PLANTA", "PÉTALOS", "ROSA", "JARDÍN", "OLOR"] },
+      { word: "ÁRBOL", forbidden: ["PLANTA", "TRONCO", "HOJAS", "GRANDE", "MADERA"] },
+      { word: "CÉSPED", forbidden: ["PASTO", "VERDE", "CORTAR", "JARDÍN", "CRECER"] },
+      { word: "SEMILLA", forbidden: ["PLANTA", "PEQUEÑA", "GERMINAR", "TIERRA", "CRECER"] },
+      { word: "RAÍZ", forbidden: ["PLANTA", "TIERRA", "ABAJO", "ALIMENTAR", "ENTERRADA"] },
+      
+      { word: "MARTILLO", forbidden: ["HERRAMIENTA", "CLAVO", "GOLPEAR", "MADERA", "METAL"] },
+      { word: "DESTORNILLADOR", forbidden: ["HERRAMIENTA", "TORNILLO", "GIRAR", "PUNTA", "ATORNILLAR"] },
+      { word: "SIERRA", forbidden: ["HERRAMIENTA", "CORTAR", "MADERA", "DIENTES", "FILO"] },
+      { word: "PINZA", forbidden: ["HERRAMIENTA", "AGARRAR", "SUJETAR", "METAL", "ELECTRICIDAD"] },
+      { word: "TIJERA", forbidden: ["CORTAR", "PAPEL", "FILO", "DOS", "HOJAS"] },
+      
+      { word: "PINTURA", forbidden: ["COLOR", "PINTAR", "CUADRO", "PINCEL", "ARTE"] },
+      { word: "DIBUJO", forbidden: ["LÁPIZ", "PAPEL", "LÍNEA", "IMAGEN", "ARTE"] },
+      { word: "MÚSICA", forbidden: ["SONIDO", "CANCIÓN", "ESCUCHAR", "INSTRUMENTO", "RITMO"] },
+      { word: "DANZA", forbidden: ["BAILAR", "MÚSICA", "RITMO", "MOVIMIENTO", "CUERPO"] },
+      { word: "TEATRO", forbidden: ["OBRA", "ACTOR", "ESCENARIO", "PÚBLICO", "REPRESENTACIÓN"] },
+      
+      { word: "BOXEO", forbidden: ["DEPORTE", "PELEA", "GUANTES", "RING", "GOLPEAR"] },
+      { word: "NATACIÓN", forbidden: ["DEPORTE", "AGUA", "NADAR", "PILETA", "BRAZADA"] },
+      { word: "TENIS", forbidden: ["DEPORTE", "RAQUETA", "PELOTA", "CANCHA", "RED"] },
+      { word: "BÁSQUET", forbidden: ["DEPORTE", "ARO", "PELOTA", "ENCESTE", "CINCO"] },
+      { word: "VOLEY", forbidden: ["DEPORTE", "RED", "PELOTA", "SACAR", "EQUIPO"] },
+      
+      { word: "RISA", forbidden: ["REÍR", "ALEGRE", "BOCA", "GRACIA", "CARCAJADA"] },
+      { word: "LLANTO", forbidden: ["LLORAR", "LÁGRIMAS", "TRISTE", "SOLLOZAR", "PENA"] },
+      { word: "ENOJO", forbidden: ["RABIA", "BRONCA", "MOLESTO", "FURIA", "ENFADADO"] },
+      { word: "MIEDO", forbidden: ["SUSTO", "TEMOR", "ASUSTAR", "TERROR", "PELIGRO"] },
+      { word: "AMOR", forbidden: ["QUERER", "SENTIMIENTO", "CORAZÓN", "PAREJA", "AMAR"] },
+      
+      { word: "DORMIR", forbidden: ["SUEÑO", "CAMA", "NOCHE", "DESCANSAR", "OJOS"] },
+      { word: "COMER", forbidden: ["ALIMENTO", "BOCA", "HAMBRE", "MASTICAR", "TRAGAR"] },
+      { word: "CAMINAR", forbidden: ["ANDAR", "PIES", "PASEO", "PIERNAS", "MOVIMIENTO"] },
+      { word: "CORRER", forbidden: ["RÁPIDO", "TROTAR", "CARRERA", "VELOCIDAD", "PIERNAS"] },
+      { word: "SALTAR", forbidden: ["BRINCO", "ARRIBA", "ALTURA", "PIES", "ELEVARSE"] },
+      
+      { word: "HABLAR", forbidden: ["DECIR", "PALABRA", "BOCA", "CONVERSAR", "VOZ"] },
+      { word: "ESCUCHAR", forbidden: ["OÍR", "OÍDO", "SONIDO", "ATENDER", "ESCUCHA"] },
+      { word: "MIRAR", forbidden: ["VER", "OJOS", "OBSERVAR", "VISTA", "CONTEMPLAR"] },
+      { word: "TOCAR", forbidden: ["MANO", "SENTIR", "TACTO", "PALPAR", "PIEL"] },
+      { word: "OLER", forbidden: ["OLFATO", "NARIZ", "AROMA", "PERFUME", "SENTIR"] },
+      
+      { word: "CALIENTE", forbidden: ["TEMPERATURA", "FUEGO", "QUEMAR", "ARDIENTE", "FRÍO"] },
+      { word: "FRÍO", forbidden: ["TEMPERATURA", "HIELO", "CONGELADO", "HELADO", "CALIENTE"] },
+      { word: "GRANDE", forbidden: ["TAMAÑO", "ENORME", "GIGANTE", "PEQUEÑO", "AMPLIO"] },
+      { word: "PEQUEÑO", forbidden: ["TAMAÑO", "CHICO", "DIMINUTO", "GRANDE", "REDUCIDO"] },
+      { word: "RÁPIDO", forbidden: ["VELOCIDAD", "VELOZ", "APURADO", "LENTO", "PRONTO"] },
+      
+      { word: "ARRIBA", forbidden: ["ALTO", "CIELO", "SUBIR", "ABAJO", "SUPERIOR"] },
+      { word: "ABAJO", forbidden: ["BAJO", "SUELO", "BAJAR", "ARRIBA", "INFERIOR"] },
+      { word: "ADELANTE", forbidden: ["FRENTE", "DELANTE", "AVANZAR", "ATRÁS", "PRIMERO"] },
+      { word: "ATRÁS", forbidden: ["DETRÁS", "RETROCEDER", "ADELANTE", "POSTERIOR", "ANTES"] },
+      { word: "ADENTRO", forbidden: ["DENTRO", "INTERIOR", "ENTRAR", "AFUERA", "CASA"] },
+      
+      { word: "DOMINGO", forbidden: ["DÍA", "SEMANA", "DESCANSO", "FIN", "ASADO"] },
+      { word: "LUNES", forbidden: ["DÍA", "SEMANA", "PRIMERO", "TRABAJO", "ESCUELA"] },
+      { word: "ENERO", forbidden: ["MES", "PRIMERO", "VERANO", "AÑO", "NUEVO"] },
+      { word: "DICIEMBRE", forbidden: ["MES", "ÚLTIMO", "NAVIDAD", "AÑO", "VERANO"] },
+      { word: "MAÑANA", forbidden: ["DÍA", "SOL", "DESPERTAR", "TEMPRANO", "TARDE"] },
+      
+      { word: "ROJO", forbidden: ["COLOR", "SANGRE", "FUEGO", "TOMATE", "VERDE"] },
+      { word: "AZUL", forbidden: ["COLOR", "CIELO", "MAR", "CELESTE", "VERDE"] },
+      { word: "VERDE", forbidden: ["COLOR", "PASTO", "ÁRBOL", "AZUL", "ROJO"] },
+      { word: "AMARILLO", forbidden: ["COLOR", "SOL", "BANANA", "PATITO", "VERDE"] },
+      { word: "NEGRO", forbidden: ["COLOR", "OSCURO", "NOCHE", "CARBÓN", "BLANCO"] },
+      
+      { word: "UNO", forbidden: ["NÚMERO", "PRIMERO", "ÚNICO", "SOLO", "DOS"] },
+      { word: "DOS", forbidden: ["NÚMERO", "PAR", "SEGUNDO", "UNO", "TRES"] },
+      { word: "TRES", forbidden: ["NÚMERO", "TERCERO", "DOS", "CUATRO", "TRÍO"] },
+      { word: "DIEZ", forbidden: ["NÚMERO", "DEDOS", "CIFRA", "ONCE", "NUEVE"] },
+      { word: "CIEN", forbidden: ["NÚMERO", "CIENTO", "MIL", "CIFRA", "GRANDE"] },
+      
+      { word: "CÍRCULO", forbidden: ["FORMA", "REDONDO", "RUEDA", "GEOMETRÍA", "CURVA"] },
+      { word: "CUADRADO", forbidden: ["FORMA", "CUATRO", "LADOS", "GEOMETRÍA", "ÁNGULOS"] },
+      { word: "TRIÁNGULO", forbidden: ["FORMA", "TRES", "LADOS", "PICO", "GEOMETRÍA"] },
+      { word: "RECTÁNGULO", forbidden: ["FORMA", "CUADRADO", "LARGO", "LADOS", "GEOMETRÍA"] },
+      { word: "ESTRELLA", forbidden: ["FORMA", "PUNTAS", "CIELO", "CINCO", "BRILLA"] },
+      
+      { word: "PAPA NOEL", forbidden: ["NAVIDAD", "REGALOS", "BARBA", "ROJO", "DICIEMBRE"] },
+      { word: "RATÓN PÉREZ", forbidden: ["DIENTE", "DINERO", "ALMOHADA", "NIÑO", "RATÓN"] },
+      { word: "SUPERHÉROE", forbidden: ["CAPA", "PODER", "SALVAR", "VOLAR", "FUERTE"] },
+      { word: "PRINCESA", forbidden: ["CASTILLO", "CORONA", "PRÍNCIPE", "VESTIDO", "REINA"] },
+      { word: "DINOSAURIO", forbidden: ["EXTINTO", "ENORME", "ANTIGUO", "REPTIL", "TIRANOSAURIO"] },
+      
+      { word: "COCINAR", forbidden: ["COMIDA", "COCINA", "CHEF", "PREPARAR", "HORNO"] },
+      { word: "LIMPIAR", forbidden: ["SUCIO", "TRAPO", "LAVAR", "ORDENAR", "ESCOBA"] },
+      { word: "ESTUDIAR", forbidden: ["LIBRO", "APRENDER", "EXAMEN", "ESCUELA", "LEER"] },
+      { word: "TRABAJAR", forbidden: ["EMPLEO", "OFICINA", "JEFE", "SUELDO", "LABOR"] },
+      { word: "JUGAR", forbidden: ["DIVERSIÓN", "JUEGO", "ENTRETENIMIENTO", "NIÑO", "PELOTA"] }
+    ];
+
+    let gameState = {
+      team1Name: "Equipo 1",
+      team2Name: "Equipo 2",
+      team1Points: 0,
+      team2Points: 0,
+      currentTeam: 1,
+      timePerRound: 60,
+      pointsToWin: 30,
+      currentWord: null,
+      usedWords: [],
+      timerInterval: null,
+      timeRemaining: 60,
+      isPaused: false
+    };
+
+    function updateHeader(title, showHome) {
+      document.getElementById('pageTitle').textContent = title;
+      document.getElementById('homeBtn').style.display = showHome ? 'block' : 'none';
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToSetup() {
+      showScreen('setupScreen');
+      updateHeader('Configurar', true);
+    }
+
+    function goToHome() {
+      showScreen('splashScreen');
+      updateHeader('Tabú', false);
+    }
+
+    function changeTime(delta) {
+      gameState.timePerRound = Math.max(15, Math.min(180, gameState.timePerRound + delta));
+      document.getElementById('timeDisplay').textContent = gameState.timePerRound;
+    }
+
+    function changePoints(delta) {
+      gameState.pointsToWin = Math.max(10, Math.min(100, gameState.pointsToWin + delta));
+      document.getElementById('pointsDisplay').textContent = gameState.pointsToWin;
+    }
+
+    function startGame() {
+      const team1Input = document.getElementById('team1Name').value.trim();
+      const team2Input = document.getElementById('team2Name').value.trim();
+      
+      gameState.team1Name = team1Input || "Equipo 1";
+      gameState.team2Name = team2Input || "Equipo 2";
+      gameState.team1Points = 0;
+      gameState.team2Points = 0;
+      gameState.currentTeam = 1;
+      gameState.usedWords = [];
+      
+      showTurnStartScreen();
+    }
+
+    function showTurnStartScreen() {
+      const teamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      document.getElementById('turnStartTeamName').textContent = `Turno de ${teamName}`;
+      document.getElementById('scoreTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('scoreTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('scoreTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('scoreTeam2Points').textContent = gameState.team2Points;
+      
+      showScreen('turnStartScreen');
+      updateHeader('Preparando turno', true);
+    }
+
+    function startTurnFromScreen() {
+      updateGameScreen();
+      showScreen('gameScreen');
+      updateHeader('Jugando', true);
+      startNewTurn();
+    }
+
+    function updateGameScreen() {
+      document.getElementById('team1NameDisplay').textContent = gameState.team1Name;
+      document.getElementById('team2NameDisplay').textContent = gameState.team2Name;
+      document.getElementById('team1Points').textContent = gameState.team1Points;
+      document.getElementById('team2Points').textContent = gameState.team2Points;
+      
+      if (gameState.currentTeam === 1) {
+        document.getElementById('team1Score').classList.add('active');
+        document.getElementById('team2Score').classList.remove('active');
+        document.getElementById('turnInfo').innerHTML = `Turno de: <strong>${gameState.team1Name}</strong>`;
+      } else {
+        document.getElementById('team1Score').classList.remove('active');
+        document.getElementById('team2Score').classList.add('active');
+        document.getElementById('turnInfo').innerHTML = `Turno de: <strong>${gameState.team2Name}</strong>`;
+      }
+    }
+
+    function startNewTurn() {
+      gameState.timeRemaining = gameState.timePerRound;
+      gameState.isPaused = false;
+      document.getElementById('pauseBtn').textContent = '⏸ Pausar';
+      updateTimer();
+      pickNewWord();
+      
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      gameState.timerInterval = setInterval(() => {
+        if (!gameState.isPaused) {
+          gameState.timeRemaining--;
+          updateTimer();
+          
+          if (gameState.timeRemaining <= 10) {
+            document.getElementById('timer').classList.add('warning');
+          }
+          
+          if (gameState.timeRemaining <= 0) {
+            endTurn();
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      document.getElementById('timer').textContent = gameState.timeRemaining;
+    }
+
+    function pickNewWord() {
+      let availableWords = wordDatabase.filter(w => !gameState.usedWords.includes(w.word));
+      
+      if (availableWords.length === 0) {
+        gameState.usedWords = [];
+        availableWords = wordDatabase;
+      }
+      
+      const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      gameState.currentWord = randomWord;
+      gameState.usedWords.push(randomWord.word);
+      
+      document.getElementById('wordToGuess').textContent = randomWord.word;
+      
+      const forbiddenContainer = document.getElementById('forbiddenWords');
+      forbiddenContainer.innerHTML = '';
+      randomWord.forbidden.forEach(word => {
+        const div = document.createElement('div');
+        div.className = 'forbidden-word';
+        div.textContent = word;
+        forbiddenContainer.appendChild(div);
+      });
+    }
+
+    function correct() {
+      if (gameState.currentTeam === 1) {
+        gameState.team1Points++;
+      } else {
+        gameState.team2Points++;
+      }
+      updateGameScreen();
+      
+      if (checkWinner()) {
+        return;
+      }
+      
+      pickNewWord();
+    }
+
+    function skip() {
+      pickNewWord();
+    }
+
+    function penalize() {
+      if (gameState.currentTeam === 1) {
+        gameState.team1Points = Math.max(0, gameState.team1Points - 1);
+      } else {
+        gameState.team2Points = Math.max(0, gameState.team2Points - 1);
+      }
+      updateGameScreen();
+      pickNewWord();
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      const btn = document.getElementById('pauseBtn');
+      
+      if (gameState.isPaused) {
+        btn.textContent = '▶ Reanudar';
+      } else {
+        btn.textContent = '⏸ Pausar';
+      }
+    }
+
+    function endTurnManually() {
+      endTurn();
+    }
+
+    function endTurn() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      document.getElementById('timer').classList.remove('warning');
+      
+      gameState.currentTeam = gameState.currentTeam === 1 ? 2 : 1;
+      showTurnStartScreen();
+    }
+
+    function checkWinner() {
+      if (gameState.team1Points >= gameState.pointsToWin) {
+        showWinner(gameState.team1Name, gameState.team1Points, gameState.team2Points);
+        return true;
+      } else if (gameState.team2Points >= gameState.pointsToWin) {
+        showWinner(gameState.team2Name, gameState.team2Points, gameState.team1Points);
+        return true;
+      }
+      return false;
+    }
+
+    function showWinner(winnerName, winnerPoints, loserPoints) {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      document.getElementById('winnerName').textContent = `¡${winnerName} ganó!`;
+      document.getElementById('finalTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('finalTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('finalTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('finalTeam2Points').textContent = gameState.team2Points;
+      
+      showScreen('winnerScreen');
+      updateHeader('¡Fin del juego!', true);
+    }
+
+    // Initialize
+    updateHeader('Tabú', false);
+  </script>
+</body>
+</html>
