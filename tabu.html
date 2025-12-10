@@ -142,8 +142,8 @@
     }
 
     .btn-secondary {
-      background: var(--indigo);
-      color: var(--card);
+      background: #ffffff;
+      color: var(--indigo);
       border: 2px solid rgba(51, 92, 129, 0.3);
     }
 
@@ -457,6 +457,7 @@
           </p>
           <div class="btn-group">
             <button class="btn btn-primary" onclick="goToSetup()">Nuevo juego</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">Reanudar juego</button>
           </div>
         </div>
       </div>
@@ -516,7 +517,10 @@
             </div>
           </div>
 
-          <button class="btn btn-primary" onclick="startTurnFromScreen()">Empezar turno</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startTurnFromScreen()">Empezar turno</button>
+            <button class="btn btn-secondary" onclick="goToHome()">Volver al inicio</button>
+          </div>
         </div>
       </div>
 
@@ -850,13 +854,23 @@
     }
 
     function goToSetup() {
+      if (localStorage.getItem('tabuGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) {
+          return;
+        }
+        clearSavedGame();
+      }
       showScreen('setupScreen');
       updateHeader('Configurar', true);
     }
 
     function goToHome() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
       showScreen('splashScreen');
       updateHeader('Tabú', false);
+      checkForSavedGame();
     }
 
     function changeTime(delta) {
@@ -880,6 +894,7 @@
       gameState.currentTeam = 1;
       gameState.usedWords = [];
       
+      saveGame();
       showTurnStartScreen();
     }
 
@@ -891,6 +906,7 @@
       document.getElementById('scoreTeam1Points').textContent = gameState.team1Points;
       document.getElementById('scoreTeam2Points').textContent = gameState.team2Points;
       
+      saveGame();
       showScreen('turnStartScreen');
       updateHeader('Preparando turno', true);
     }
@@ -961,6 +977,7 @@
       const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
       gameState.currentWord = randomWord;
       gameState.usedWords.push(randomWord.word);
+      saveGame();
       
       document.getElementById('wordToGuess').textContent = randomWord.word;
       
@@ -981,6 +998,7 @@
         gameState.team2Points++;
       }
       updateGameScreen();
+      saveGame();
       
       if (checkWinner()) {
         return;
@@ -1000,6 +1018,7 @@
         gameState.team2Points = Math.max(0, gameState.team2Points - 1);
       }
       updateGameScreen();
+      saveGame();
       pickNewWord();
     }
 
@@ -1026,6 +1045,7 @@
       document.getElementById('timer').classList.remove('warning');
       
       gameState.currentTeam = gameState.currentTeam === 1 ? 2 : 1;
+      saveGame();
       showTurnStartScreen();
     }
 
@@ -1045,6 +1065,8 @@
         clearInterval(gameState.timerInterval);
       }
       
+      clearSavedGame();
+      
       document.getElementById('winnerName').textContent = `¡${winnerName} ganó!`;
       document.getElementById('finalTeam1Name').textContent = gameState.team1Name;
       document.getElementById('finalTeam2Name').textContent = gameState.team2Name;
@@ -1056,7 +1078,40 @@
     }
 
     // Initialize
-    updateHeader('Tabú', false);
+    window.onload = function() {
+      checkForSavedGame();
+      updateHeader('Tabú', false);
+    };
+
+    function checkForSavedGame() {
+      const saved = localStorage.getItem('tabuGame');
+      if (saved) {
+        document.getElementById('resumeBtn').style.display = 'block';
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('tabuGame', JSON.stringify(gameState));
+    }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('tabuGame');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        
+        // Si estaba en medio de un turno, mostrar pantalla de inicio de turno
+        if (gameState.timeRemaining > 0 && gameState.timeRemaining < gameState.timePerRound) {
+          showTurnStartScreen();
+        } else {
+          showTurnStartScreen();
+        }
+      }
+    }
+
+    function clearSavedGame() {
+      localStorage.removeItem('tabuGame');
+      document.getElementById('resumeBtn').style.display = 'none';
+    }
   </script>
 </body>
 </html>
