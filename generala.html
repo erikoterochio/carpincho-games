@@ -662,8 +662,8 @@
           const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
           
           // Deshabilitar doble si no tiene generala
-          // const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === 'A' || gameState.scores[player]['generala'] === 300);
-            const isDisabled = FALSE;
+          const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === 'A' || gameState.scores[player]['generala'] === 300);
+          // const isDisabled = FALSE;
 
             
           html += `<td class="score-cell">
