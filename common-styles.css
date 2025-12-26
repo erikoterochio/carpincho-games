@@ -1,0 +1,272 @@
+:root {
+  --bg: #0A092C;
+  --pink: #FF6B6B;
+  --blue: #335C81;
+  --indigo: #1B2845;
+  --sky: #5899E2;
+  --card: #ffffff;
+  --text: #1B2845;
+  --muted: #6b7280;
+  --green: #4CAF50;
+  --red: #ef4444;
+  --orange: #f97316;
+  --gold: #FFD700;
+  --border: #e9ecef;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  padding-top: 100px;
+}
+
+/* Header fijo con decoración navideña */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--indigo);
+  padding: 12px 16px 16px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.christmas-lights {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.christmas-lights img {
+  width: 100%;
+  max-width: 600px;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+}
+
+.header-content {
+  position: relative;
+  padding-top: 35px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: white;
+}
+
+.home-btn {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-decoration: none;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.1);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.home-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Container principal */
+.container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 100px);
+  padding: 16px;
+}
+
+/* App card */
+.app {
+  width: 100%;
+  max-width: 480px;
+  background: var(--card);
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+  padding: 14px 14px 12px;
+  border: 1px solid rgba(27, 40, 69, 0.1);
+}
+
+/* Pantallas */
+.screen {
+  display: none;
+}
+
+.screen.active {
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Content area */
+.content {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 20px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.intro-text {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Botones comunes */
+.btn {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 12px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  touch-action: manipulation;
+}
+
+.btn-primary {
+  background: var(--sky);
+  color: #ffffff;
+  border: 2px solid var(--sky);
+}
+
+.btn-primary:hover {
+  background: #4a8dd4;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(88, 153, 226, 0.3);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: var(--indigo);
+  border: 2px solid rgba(51, 92, 129, 0.3);
+}
+
+.btn-secondary:hover {
+  background: #f9f9f9;
+  border-color: var(--blue);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Form groups */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--indigo);
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid rgba(148, 163, 184, 0.3);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: #ffffff;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: var(--sky);
+}
+
+/* Footer */
+footer {
+  margin-top: 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  body {
+    padding-top: 90px;
+  }
+
+  .fixed-header {
+    padding: 10px 14px 14px;
+  }
+
+  .christmas-lights {
+    height: 35px;
+  }
+
+  .header-content {
+    padding-top: 30px;
+  }
+
+  .header-title {
+    font-size: 1.1rem;
+  }
+
+  .container {
+    padding: 12px;
+    min-height: calc(100vh - 90px);
+  }
+
+  .app {
+    padding: 12px 10px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 10px;
+  }
+}
