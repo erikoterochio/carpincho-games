@@ -36,7 +36,7 @@
       min-height: 100vh;
       background: var(--bg);
       color: #ffffff;
-      padding-top: 100px;
+      padding-top: 140px;
     }
 
     /* Header fijo */
@@ -51,16 +51,43 @@
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
 
+    .christmas-decoration {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .christmas-decoration img {
+      width: 100%;
+      max-width: 600px;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0.9;
+    }
+
+    .header-content {
+      position: relative;
+      padding-top: 40px;
+    }
+
     .fixed-header h1 {
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 4px;
       color: #ffffff;
+      text-align: center;
     }
 
     .fixed-header .tagline {
       font-size: 0.9rem;
       color: rgba(255, 255, 255, 0.7);
+      text-align: center;
     }
 
     .container {
@@ -157,11 +184,19 @@
 
     @media (max-width: 600px) {
       body {
-        padding-top: 90px;
+        padding-top: 130px;
       }
 
       .fixed-header {
         padding: 20px 20px 12px;
+      }
+
+      .christmas-decoration {
+        height: 45px;
+      }
+
+      .header-content {
+        padding-top: 35px;
       }
 
       .fixed-header h1 {
@@ -196,8 +231,13 @@
 <body>
   <!-- Header fijo -->
   <header class="fixed-header">
-    <h1>Ranchadapp</h1>
-    <p class="tagline">La app oficial de ranchada.</p>
+    <div class="christmas-decoration">
+      <img src="gorro.png" alt="Decoración navideña">
+    </div>
+    <div class="header-content">
+      <h1>Ranchadapp</h1>
+      <p class="tagline">La app oficial de ranchada.</p>
+    </div>
   </header>
 
   <!-- Grid de apps -->
