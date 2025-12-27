@@ -650,36 +650,30 @@
         </th>`;
       });
       html += '</tr></thead><tbody>';
-      
-      // Todas las categorías
-      categories.forEach((cat, index) => {
-        const isDivider = index === 6; // Escalera es la posición 6 (después del 6)
-        html += `<tr${isDivider ? ' class="divider-row"' : ''}>`;
-        html += `<td class="category-name">${cat.name}</td>`;
-        gameState.players.forEach(player => {
-          const value = gameState.scores[player][cat.id];
-          const displayValue = value === 0 ? 'X' : (value || '');
-          const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
-          
-          // Deshabilitar doble si no tiene generala
-          const isDisabled = cat.id === 'doble' && (!gameState.scores[player]['generala'] || gameState.scores[player]['generala'] === 'A' || gameState.scores[player]['generala'] === 300);
-          // const isDisabled = FALSE;
 
-            
-          html += `<td class="score-cell">
-            <input 
-              type="text" 
-              inputmode="numeric" 
-              pattern="[0-9XxSs]*" 
-              value="${displayValue}" 
-              class="${inputClass}"
-              onchange="updateScore('${player}', '${cat.id}', this.value)"
-              ${isDisabled ? 'disabled style="opacity:0.3;"' : ''}
-            />
-          </td>`;
-        });
-        html += '</tr>';
+    // Todas las categorías
+    categories.forEach((cat, index) => {
+      const isDivider = index === 6; // Escalera es la posición 6 (después del 6)
+      html += `<tr${isDivider ? ' class="divider-row"' : ''}>`;
+      html += `<td class="category-name">${cat.name}</td>`;
+      gameState.players.forEach(player => {
+        const value = gameState.scores[player][cat.id];
+        const displayValue = value === 0 ? 'X' : (value || '');
+        const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
+        
+        html += `<td class="score-cell">
+          <input 
+            type="text" 
+            inputmode="numeric" 
+            pattern="[0-9XxSs]*" 
+            value="${displayValue}" 
+            class="${inputClass}"
+            onchange="updateScore('${player}', '${cat.id}', this.value)"
+          />
+        </td>`;
       });
+      html += '</tr>';
+    });
       
       // Total
       html += '<tr class="total-row">';
