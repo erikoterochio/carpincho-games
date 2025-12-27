@@ -13,124 +13,11 @@
   <meta charset="UTF-8" />
   <title>Dígalo con Mímica · Carpincho Games</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles.css">
   <style>
-    :root {
-      --bg: #0A092C;
-      --pink: #FF6B6B;
-      --blue: #335C81;
-      --indigo: #1B2845;
-      --sky: #5899E2;
-      --card: #ffffff;
-      --text: #1B2845;
-      --muted: #6b7280;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
+    /* Estilos específicos de Mímica */
     .app {
-      width: 100%;
       max-width: 480px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 14px 14px 12px;
-      border: 1px solid rgba(27, 40, 69, 0.1);
-    }
-
-    .screen {
-      display: none;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .title-group h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--indigo);
-    }
-
-    .back-link {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--indigo);
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(51, 92, 129, 0.3);
-      padding: 6px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #ffffff;
-      white-space: nowrap;
-    }
-
-    .back-link:hover {
-      background: #f9f9f9;
-      border-color: var(--blue);
-    }
-
-    .content {
-      background: #f8f9fa;
-      border-radius: 16px;
-      padding: 20px 16px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .intro-text {
-      font-size: 0.9rem;
-      line-height: 1.6;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px 20px;
-      border-radius: 12px;
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      touch-action: manipulation;
-    }
-
-    .btn-primary {
-      background: var(--pink);
-      color: #ffffff;
-      border: 2px solid var(--pink);
-    }
-
-    .btn-primary:hover {
-      background: #ff5252;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
     }
 
     .btn-primary.btn-blue {
@@ -141,55 +28,6 @@
     .btn-primary.btn-blue:hover {
       background: #4a8dd4;
       box-shadow: 0 4px 12px rgba(88, 153, 226, 0.3);
-    }
-
-    .btn-secondary {
-      background: #ffffff;
-      color: var(--indigo);
-      border: 2px solid rgba(51, 92, 129, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: #f9f9f9;
-      border-color: var(--blue);
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .form-group {
-      margin-bottom: 16px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--indigo);
-      margin-bottom: 8px;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-      border-radius: 10px;
-      font-size: 1rem;
-      background: #ffffff;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--pink);
     }
 
     .inline-group {
@@ -301,14 +139,6 @@
       border-color: var(--pink);
     }
 
-    .info-text {
-      font-size: 1.15rem;
-      line-height: 1.6;
-      text-align: center;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
     .info-text.large {
       font-size: 1.4rem;
       font-weight: 700;
@@ -335,46 +165,7 @@
       color: var(--indigo);
     }
 
-    footer {
-      margin-top: 12px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .floating-home {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 6px 14px;
-      background: rgba(27, 40, 69, 0.9);
-      backdrop-filter: blur(10px);
-      z-index: 1000;
-      transition: all 0.15s ease;
-    }
-    
-    .floating-home:hover {
-      background: rgba(27, 40, 69, 1);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-    }
-
     @media (max-width: 480px) {
-      body {
-        padding: 10px;
-      }
-
-      .app {
-        padding: 12px 10px 10px;
-      }
-
       .movie-title {
         font-size: 1.6rem;
       }
@@ -386,205 +177,173 @@
   </style>
 </head>
 <body>
-  <a href="index.html" class="floating-home">← Inicio</a>
-  <main class="app">
-    <!-- PANTALLA 1: INICIO -->
-    <div class="screen active" id="screen-home">
-      <header>
-        <div class="title-group">
-          <h1>Dígalo con Mímica</h1>
-        </div>
-        <!-- <a href="index.html" class="back-link">← Inicio</a> -->
-      </header>
+  <div class="fixed-header">
+    <div class="christmas-lights">
+      <img src="gorro.png" alt="">
+    </div>
+    <div class="header-content">
+      <div class="header-title">Dígalo con Mímica</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
 
-      <div class="content">
-        <p class="intro-text">
-          Actuá películas y series sin hablar.<br>
-          ¡Que tu equipo adivine antes de que se acabe el tiempo!
-        </p>
-        
-        <div class="btn-group">
-          <button class="btn btn-primary btn-blue" onclick="showScreen('screen-setup')">Jugar</button>
+  <div class="container">
+    <main class="app">
+      <!-- PANTALLA 1: INICIO -->
+      <div class="screen active" id="screen-home">
+        <div class="content">
+          <p class="intro-text">
+            Actuá películas y series sin hablar.<br>
+            ¡Que tu equipo adivine antes de que se acabe el tiempo!
+          </p>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary btn-blue" onclick="showScreen('screen-setup')">Jugar</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 2: CONFIGURACIÓN -->
-    <div class="screen" id="screen-setup">
-      <header>
-        <div class="title-group">
-          <h1>Configurar Juego</h1>
+      <!-- PANTALLA 2: CONFIGURACIÓN -->
+      <div class="screen" id="screen-setup">
+        <div class="content">
+          <form id="setup-form" onsubmit="startGame(event)">
+            <div class="inline-group">
+              <div class="form-group">
+                <label>Equipos</label>
+                <select id="team-count">
+                  <option value="2" selected>2 equipos</option>
+                  <option value="3">3 equipos</option>
+                  <option value="4">4 equipos</option>
+                  <option value="5">5 equipos</option>
+                  <option value="6">6 equipos</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Tiempo por turno</label>
+                <select id="time-limit">
+                  <option value="30">30 seg</option>
+                  <option value="45">45 seg</option>
+                  <option value="60" selected>1 min</option>
+                  <option value="90">1:30 min</option>
+                  <option value="120">2 min</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Modo de juego</label>
+              <select id="game-mode" onchange="toggleGameMode()">
+                <option value="rounds" selected>Por rondas</option>
+                <option value="points">Hasta X puntos</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="rounds-group">
+              <label>Número de rondas</label>
+              <input type="number" id="rounds-count" min="1" max="20" value="5" />
+            </div>
+
+            <div class="form-group" id="points-group" style="display:none;">
+              <label>Puntos para ganar</label>
+              <input type="number" id="points-goal" min="1" max="50" value="15" />
+            </div>
+
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary btn-blue">Empezar Juego</button>
+            </div>
+          </form>
         </div>
-        <button class="back-link" onclick="showScreen('screen-home')" style="border:none;background:transparent;cursor:pointer;">← Volver</button>
-      </header>
+      </div>
 
-      <div class="content">
-        <form id="setup-form" onsubmit="startGame(event)">
-          <div class="inline-group">
-            <div class="form-group">
-              <label>Equipos</label>
-              <select id="team-count">
-                <option value="2" selected>2 equipos</option>
-                <option value="3">3 equipos</option>
-                <option value="4">4 equipos</option>
-                <option value="5">5 equipos</option>
-                <option value="6">6 equipos</option>
-              </select>
-            </div>
+      <!-- PANTALLA 3: PREPARAR TURNO -->
+      <div class="screen" id="screen-prepare">
+        <div class="content">
+          <p class="info-text">
+            <span id="prepare-info">Ronda 1 de 5</span>
+          </p>
+          <p class="info-text large">Turno del <span id="current-team-name">Equipo 1</span></p>
+          <p class="intro-text">
+            Solo la persona que va a actuar debe tocar "Mostrar película".<br>
+            Luego actuá sin hablar mientras tu equipo intenta adivinar.
+          </p>
 
-            <div class="form-group">
-              <label>Tiempo por turno</label>
-              <select id="time-limit">
-                <option value="30">30 seg</option>
-                <option value="45">45 seg</option>
-                <option value="60" selected>1 min</option>
-                <option value="90">1:30 min</option>
-                <option value="120">2 min</option>
-              </select>
-            </div>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-blue" onclick="showMovie()">Mostrar película</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 4: MOSTRAR PELÍCULA -->
+      <div class="screen" id="screen-movie">
+        <div class="content">
+          <div class="movie-card">
+            <div class="movie-title" id="movie-title">Título de Película</div>
           </div>
 
-          <div class="form-group">
-            <label>Modo de juego</label>
-            <select id="game-mode" onchange="toggleGameMode()">
-              <option value="rounds" selected>Por rondas</option>
-              <option value="points">Hasta X puntos</option>
-            </select>
-          </div>
+          <p class="intro-text">Memorizá el título y empezá a actuar cuando toques "Iniciar"</p>
 
-          <div class="form-group" id="rounds-group">
-            <label>Número de rondas</label>
-            <input type="number" id="rounds-count" min="1" max="20" value="5" />
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startTimer()">Iniciar Cronómetro</button>
           </div>
+        </div>
+      </div>
 
-          <div class="form-group" id="points-group" style="display:none;">
-            <label>Puntos para ganar</label>
-            <input type="number" id="points-goal" min="1" max="50" value="15" />
+      <!-- PANTALLA 5: JUGANDO (CON CRONÓMETRO) -->
+      <div class="screen" id="screen-playing">
+        <div class="content">
+          <p class="info-text large" id="playing-team-name">Equipo 1</p>
+          <div class="timer" id="timer">01:00</div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="stopTimer(true)">¡Adivinaron!</button>
+            <button class="btn btn-secondary" onclick="stopTimer(false)">No adivinaron</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 6: MARCADOR -->
+      <div class="screen" id="screen-scoreboard">
+        <div class="content">
+          <p class="info-text" id="score-info">Ronda 1 de 5</p>
+
+          <div class="scoreboard" id="scoreboard-list">
+            <!-- Los equipos se agregan dinámicamente -->
           </div>
 
           <div class="btn-group">
-            <button type="submit" class="btn btn-primary btn-blue">Empezar Juego</button>
+            <button class="btn btn-primary btn-blue" onclick="nextTurn()">Siguiente Turno</button>
           </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- PANTALLA 3: PREPARAR TURNO -->
-    <div class="screen" id="screen-prepare">
-      <header>
-        <div class="title-group">
-          <h1>Turno del <span id="current-team-name">Equipo 1</span></h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <p class="info-text">
-          <span id="prepare-info">Ronda 1 de 5</span>
-        </p>
-        <p class="info-text large">¿Listos?</p>
-        <p class="intro-text">
-          Solo la persona que va a actuar debe tocar "Mostrar película".<br>
-          Luego actuá sin hablar mientras tu equipo intenta adivinar.
-        </p>
-
-        <div class="btn-group">
-          <button class="btn btn-primary btn-blue" onclick="showMovie()">Mostrar película</button>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 4: MOSTRAR PELÍCULA -->
-    <div class="screen" id="screen-movie">
-      <header>
-        <div class="title-group">
-          <h1>Tu película es...</h1>
-        </div>
-      </header>
+      <!-- PANTALLA 7: GANADOR -->
+      <div class="screen" id="screen-winner">
+        <div class="content">
+          <div class="winner-box">
+            <h2>🏆 Ganador</h2>
+            <div class="team-name" id="winner-name">Equipo 1</div>
+            <p style="margin-top:16px;font-size:1.2rem;color:var(--muted);">
+              <span id="winner-points">10</span> puntos
+            </p>
+          </div>
 
-      <div class="content">
-        <div class="movie-card">
-          <div class="movie-title" id="movie-title">Título de Película</div>
-        </div>
+          <div class="scoreboard" id="final-scoreboard">
+            <!-- Marcador final -->
+          </div>
 
-        <p class="intro-text">Memorizá el título y empezá a actuar cuando toques "Iniciar"</p>
-
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="startTimer()">Iniciar Cronómetro</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 5: JUGANDO (CON CRONÓMETRO) -->
-    <div class="screen" id="screen-playing">
-      <header>
-        <div class="title-group">
-          <h1 id="playing-team-name">Equipo 1</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <div class="timer" id="timer">01:00</div>
-
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="stopTimer(true)">¡Adivinaron!</button>
-          <button class="btn btn-secondary" onclick="stopTimer(false)">No adivinaron</button>
+          <div class="btn-group" style="margin-top:20px;">
+            <button class="btn btn-primary btn-blue" onclick="playAgain()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al inicio</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 6: MARCADOR -->
-    <div class="screen" id="screen-scoreboard">
-      <header>
-        <div class="title-group">
-          <h1>Marcador</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <p class="info-text" id="score-info">Ronda 1 de 5</p>
-
-        <div class="scoreboard" id="scoreboard-list">
-          <!-- Los equipos se agregan dinámicamente -->
-        </div>
-
-        <div class="btn-group">
-          <button class="btn btn-primary btn-blue" onclick="nextTurn()">Siguiente Turno</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 7: GANADOR -->
-    <div class="screen" id="screen-winner">
-      <header>
-        <div class="title-group">
-          <h1>¡Fin del Juego!</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <div class="winner-box">
-          <h2>🏆 Ganador</h2>
-          <div class="team-name" id="winner-name">Equipo 1</div>
-          <p style="margin-top:16px;font-size:1.2rem;color:var(--muted);">
-            <span id="winner-points">10</span> puntos
-          </p>
-        </div>
-
-        <div class="scoreboard" id="final-scoreboard">
-          <!-- Marcador final -->
-        </div>
-
-        <div class="btn-group" style="margin-top:20px;">
-          <button class="btn btn-primary btn-blue" onclick="playAgain()">Jugar de nuevo</button>
-          <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al inicio</button>
-        </div>
-      </div>
-    </div>
-
-    <footer>
-      <span>Carpincho Games · Dígalo con Mímica</span>
-    </footer>
-  </main>
+      <footer>
+        <span>Carpincho Games · Dígalo con Mímica</span>
+      </footer>
+    </main>
+  </div>
 
   <script>
     // Estado del juego
