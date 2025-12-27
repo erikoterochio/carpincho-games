@@ -12,92 +12,12 @@
   </script>
   <meta charset="UTF-8" />
   <title>Anotador de Truco · Carpincho Games</title>
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-  />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles.css">
   <style>
-    :root {
-      --bg: #0A092C;
-      --pink: #FF6B6B;
-      --blue: #335C81;
-      --indigo: #1B2845;
-      --sky: #5899E2;
-      --card: #ffffff;
-      --text: #1B2845;
-      --muted: #6b7280;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
+    /* Estilos específicos de Truco */
     .app {
-      width: 100%;
       max-width: 480px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 14px 14px 10px;
-      border: 1px solid rgba(27, 40, 69, 0.1);
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-
-    .title-group {
-      flex: 1;
-    }
-
-    .title-group h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--indigo);
-      margin-bottom: 2px;
-    }
-
-    .title-group span {
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
-
-    .back-link {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--indigo);
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(51, 92, 129, 0.3);
-      padding: 6px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #ffffff;
-      white-space: nowrap;
-    }
-
-    .back-link:hover {
-      background: #f9f9f9;
-      border-color: var(--blue);
     }
 
     .scoreboard {
@@ -233,100 +153,69 @@
       justify-content: space-between;
       gap: 8px;
     }
-
-    .floating-home {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 6px 14px;
-      background: rgba(27, 40, 69, 0.9);
-      backdrop-filter: blur(10px);
-      z-index: 1000;
-      transition: all 0.15s ease;
-    }
-    
-    .floating-home:hover {
-      background: rgba(27, 40, 69, 1);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 10px;
-      }
-
-      .app {
-        padding: 12px 10px 8px;
-      }
-    }
   </style>
 </head>
 <body>
+  <div class="fixed-header">
+    <div class="christmas-lights">
+      <img src="gorro.png" alt="">
+    </div>
+    <div class="header-content">
+      <div class="header-title">Anotador de Truco</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
 
-  <main class="app">
-    <header>
-      <div class="title-group">
-        <h1>Anotador de Truco</h1>
-        <img src="gorro.png" style="width:100%;height:100%;object-fit:contain;" alt="">
-      </div>
-      <a href="index.html" class="back-link">← Inicio</a>
-    </header>
+  <div class="container">
+    <main class="app">
+      <section class="scoreboard">
+        <div class="teams">
+          <!-- NOSOTROS -->
+          <div class="team-column" data-team="A">
+            <div class="team-header">
+              <span class="team-name">Nosotros</span>
+            </div>
 
-    <section class="scoreboard">
-      <div class="teams">
-        <!-- NOSOTROS -->
-        <div class="team-column" data-team="A">
-          <div class="team-header">
-            <span class="team-name">Nosotros</span>
+            <div class="score-display">
+              <div class="score-number" id="scoreA">0</div>
+              <div class="score-label">puntos</div>
+            </div>
+
+            <div class="score-buttons">
+              <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
+              <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
+            </div>
           </div>
 
-          <div class="score-display">
-            <div class="score-number" id="scoreA">0</div>
-            <div class="score-label">puntos</div>
-          </div>
+          <!-- ELLOS -->
+          <div class="team-column" data-team="B">
+            <div class="team-header">
+              <span class="team-name">Ellos</span>
+            </div>
 
-          <div class="score-buttons">
-            <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
-            <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
+            <div class="score-display">
+              <div class="score-number" id="scoreB">0</div>
+              <div class="score-label">puntos</div>
+            </div>
+
+            <div class="score-buttons">
+              <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
+              <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
+            </div>
           </div>
         </div>
 
-        <!-- ELLOS -->
-        <div class="team-column" data-team="B">
-          <div class="team-header">
-            <span class="team-name">Ellos</span>
-          </div>
-
-          <div class="score-display">
-            <div class="score-number" id="scoreB">0</div>
-            <div class="score-label">puntos</div>
-          </div>
-
-          <div class="score-buttons">
-            <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
-            <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
-          </div>
+        <div class="controls">
+          <button onclick="resetScores()">Reiniciar</button>
         </div>
-      </div>
+      </section>
 
-      <div class="controls">
-        <button onclick="resetScores()">Reiniciar</button>
-      </div>
-    </section>
-
-    <footer>
-      <span>Carpincho Games · Truco</span>
-      <span>30 tantos</span>
-    </footer>
-  </main>
+      <footer>
+        <span>Carpincho Games · Truco</span>
+        <span>30 tantos</span>
+      </footer>
+    </main>
+  </div>
 
   <script>
     const MAX_POINTS = 30;
