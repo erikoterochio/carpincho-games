@@ -13,159 +13,11 @@
   <meta charset="UTF-8" />
   <title>El Impostor · Carpincho Games</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles.css">
   <style>
-    :root {
-      --bg: #0A092C;
-      --pink: #FF6B6B;
-      --blue: #335C81;
-      --indigo: #1B2845;
-      --sky: #5899E2;
-      --card: #ffffff;
-      --text: #1B2845;
-      --muted: #6b7280;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-
+    /* Estilos específicos de El Impostor */
     .app {
-      width: 100%;
       max-width: 480px;
-      background: var(--card);
-      border-radius: 18px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
-      padding: 14px 14px 12px;
-      border: 1px solid rgba(27, 40, 69, 0.1);
-    }
-
-    .screen {
-      display: none;
-    }
-
-    .screen.active {
-      display: block;
-    }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 12px;
-      padding-top: 40px;
-      position: relative;
-    }
-
-    .christmas-lights {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 35px;
-      background-size: contain;
-      background-repeat: repeat-x;
-      background-position: center top;
-      pointer-events: none;
-    }
-
-    .title-group h1 {
-      font-size: 1.35rem;
-      font-weight: 700;
-      color: var(--indigo);
-    }
-
-    .back-link {
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--indigo);
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(51, 92, 129, 0.3);
-      padding: 6px 14px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      background: #ffffff;
-      white-space: nowrap;
-    }
-
-    .back-link:hover {
-      background: #f9f9f9;
-      border-color: var(--blue);
-    }
-
-    .content {
-      background: #f8f9fa;
-      border-radius: 16px;
-      padding: 20px 16px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .intro-text {
-      font-size: 0.9rem;
-      line-height: 1.6;
-      color: var(--text);
-      margin-bottom: 20px;
-    }
-
-    .btn {
-      width: 100%;
-      padding: 14px 20px;
-      border-radius: 12px;
-      border: none;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s ease;
-      touch-action: manipulation;
-    }
-
-    .btn-primary {
-      background: var(--sky);
-      color: #ffffff;
-      border: 2px solid var(--sky);
-    }
-
-    .btn-primary:hover {
-      background: #4a8dd4;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(88, 153, 226, 0.3);
-    }
-
-    .btn-secondary {
-      background: #ffffff;
-      color: var(--indigo);
-      border: 2px solid rgba(51, 92, 129, 0.3);
-    }
-
-    .btn-secondary:hover {
-      background: #f9f9f9;
-      border-color: var(--blue);
-    }
-
-    .btn:active {
-      transform: scale(0.98);
-    }
-
-    .btn-group {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
     }
 
     .instructions {
@@ -202,34 +54,6 @@
       min-width: 24px;
       font-weight: 700;
       color: var(--sky);
-    }
-
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group label {
-      display: block;
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--indigo);
-      margin-bottom: 10px;
-    }
-
-    .form-group input,
-    .form-group select {
-      width: 100%;
-      padding: 12px 14px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-      border-radius: 10px;
-      font-size: 1rem;
-      background: #ffffff;
-    }
-
-    .form-group input:focus,
-    .form-group select:focus {
-      outline: none;
-      border-color: var(--sky);
     }
 
     /* Controles numéricos */
@@ -545,375 +369,282 @@
       text-align: center;
       margin-bottom: 12px;
     }
-
-    footer {
-      margin-top: 12px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      text-align: center;
-    }
-
-    .floating-home {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: #ffffff;
-      text-decoration: none;
-      border-radius: 999px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      padding: 6px 14px;
-      background: rgba(27, 40, 69, 0.9);
-      backdrop-filter: blur(10px);
-      z-index: 1000;
-      transition: all 0.15s ease;
-    }
-    
-    .floating-home:hover {
-      background: rgba(27, 40, 69, 1);
-      border-color: rgba(255, 255, 255, 0.5);
-      transform: translateY(-1px);
-    }
-
-    @media (max-width: 480px) {
-      body {
-        padding: 10px;
-      }
-
-      .app {
-        padding: 12px 10px 10px;
-      }
-    }
   </style>
 </head>
 <body>
-  <a href="index.html" class="floating-home">← Inicio</a>
-  <main class="app">
-    <!-- PANTALLA 1: INICIO -->
-    <div class="screen active" id="screen-home">
-      <header>
-        <!-- Espacio para guirnalda navideña -->
-        <div class="christmas-lights">
-          <!-- Aquí puedes agregar la imagen de la guirnalda con: -->
-               <img src="gorro.png" style="width:100%;height:100%;object-fit:contain;" alt=""> 
-        </div>
-        <div class="title-group">
-          <h1>El Impostor</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <p class="intro-text">
-          Usen un solo celular.<br>
-          La app se ocupa de la palabra, los roles, el orden y la votación.
-        </p>
-        
-        <div class="btn-group">
-          <button class="btn btn-secondary" onclick="showScreen('screen-instructions')">Cómo se juega</button>
-          <button class="btn btn-primary" onclick="startNewGame()">Jugar</button>
-          <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">Reanudar juego</button>
-        </div>
-      </div>
+  <div class="fixed-header">
+    <div class="christmas-lights">
+      <img src="gorro.png" alt="">
     </div>
+    <div class="header-content">
+      <div class="header-title">El Impostor</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
 
-    <!-- PANTALLA 2: INSTRUCCIONES -->
-    <div class="screen" id="screen-instructions">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Cómo se juega</h1>
-        </div>
-        <button class="back-link" onclick="showScreen('screen-home')" style="border:none;background:transparent;cursor:pointer;">← Volver</button>
-      </header>
-
-      <div class="content">
-        <div class="instructions">
-          <p>Uno o más jugadores son impostores y no conocen la palabra secreta. Todos dan pistas en voz alta y luego votan quién creen que miente.</p>
+  <div class="container">
+    <main class="app">
+      <!-- PANTALLA 1: INICIO -->
+      <div class="screen active" id="screen-home">
+        <div class="content">
+          <p class="intro-text">
+            Usen un solo celular.<br>
+            La app se ocupa de la palabra, los roles, el orden y la votación.
+          </p>
           
-          <ul class="step-list">
-            <li>
-              <span class="step-number">1.</span>
-              <span>Configuran jugadores, impostores, categoría y opciones de votación.</span>
-            </li>
-            <li>
-              <span class="step-number">2.</span>
-              <span>El celular se pasa y cada uno ve su palabra (o descubre que es impostor).</span>
-            </li>
-            <li>
-              <span class="step-number">3.</span>
-              <span>Todos dan una pista en voz alta, en ronda.</span>
-            </li>
-            <li>
-              <span class="step-number">4.</span>
-              <span>Discusión con tiempo limitado.</span>
-            </li>
-            <li>
-              <span class="step-number">5.</span>
-              <span>Votación para eliminar jugador(es).</span>
-            </li>
-            <li>
-              <span class="step-number">6.</span>
-              <span>Se repite si quedan votaciones o se termina la partida.</span>
-            </li>
-          </ul>
-        </div>
-        
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="showScreen('screen-home')">Entendido</button>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="showScreen('screen-instructions')">Cómo se juega</button>
+            <button class="btn btn-primary" onclick="startNewGame()">Jugar</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display: none;">Reanudar juego</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 3: CONFIGURACIÓN -->
-    <div class="screen" id="screen-setup">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Configurar Partida</h1>
-        </div>
-        <button class="back-link" onclick="backToHome()" style="border:none;background:transparent;cursor:pointer;">← Volver</button>
-      </header>
-
-      <div class="content">
-        <form id="setup-form" onsubmit="startGame(event)">
-          <div class="form-group">
-            <label>Jugadores</label>
-            <div class="players-list" id="players-list"></div>
-            <button type="button" class="add-player-btn" onclick="addPlayer()">+ Agregar jugador</button>
-          </div>
-
-          <div class="form-group">
-            <label>Impostores</label>
-            <div class="number-control">
-              <button type="button" onclick="changeImpostors(-1)">−</button>
-              <div class="value" id="impostor-count-display">1</div>
-              <button type="button" onclick="changeImpostors(1)">+</button>
-            </div>
-          </div>
+      <!-- PANTALLA 2: INSTRUCCIONES -->
+      <div class="screen" id="screen-instructions">
+        <div class="content">
+          <div class="instructions">
+            <p>Uno o más jugadores son impostores y no conocen la palabra secreta. Todos dan pistas en voz alta y luego votan quién creen que miente.</p>
             
-          <div class="form-group" id="impostors-know-group" style="display:none;">
-            <label>¿Los impostores se conocen?</label>
-            <div class="toggle-group">
-              <button type="button" class="toggle-btn" id="know-no" onclick="toggleImpostorsKnow(false)">No</button>
-              <button type="button" class="toggle-btn active" id="know-yes" onclick="toggleImpostorsKnow(true)">Sí</button>
+            <ul class="step-list">
+              <li>
+                <span class="step-number">1.</span>
+                <span>Configuran jugadores, impostores, categoría y opciones de votación.</span>
+              </li>
+              <li>
+                <span class="step-number">2.</span>
+                <span>El celular se pasa y cada uno ve su palabra (o descubre que es impostor).</span>
+              </li>
+              <li>
+                <span class="step-number">3.</span>
+                <span>Todos dan una pista en voz alta, en ronda.</span>
+              </li>
+              <li>
+                <span class="step-number">4.</span>
+                <span>Discusión con tiempo limitado.</span>
+              </li>
+              <li>
+                <span class="step-number">5.</span>
+                <span>Votación para eliminar jugador(es).</span>
+              </li>
+              <li>
+                <span class="step-number">6.</span>
+                <span>Se repite si quedan votaciones o se termina la partida.</span>
+              </li>
+            </ul>
+          </div>
+          
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScreen('screen-home')">Entendido</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 3: CONFIGURACIÓN -->
+      <div class="screen" id="screen-setup">
+        <div class="content">
+          <form id="setup-form" onsubmit="startGame(event)">
+            <div class="form-group">
+              <label>Jugadores</label>
+              <div class="players-list" id="players-list"></div>
+              <button type="button" class="add-player-btn" onclick="addPlayer()">+ Agregar jugador</button>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>Categoría</label>
-            <select id="word-category">
-              <option value="aleatoria" selected>Aleatoria</option>
-              <option value="deportes">Deportes</option>
-              <option value="peliculasSeries">Películas y Series</option>
-              <option value="objetos">Objetos</option>
-              <option value="lugares">Lugares</option>
-              <option value="personalidades">Personalidades</option>
-              <option value="cocina">Cocina</option>
-              <option value="animales">Animales</option>
-              <option value="musica">Música</option>
-              <option value="tecnologia">Tecnología</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Rondas de votación</label>
-            <div class="number-control">
-              <button type="button" onclick="changeVotingRounds(-1)">−</button>
-              <div class="value" id="voting-rounds-display">1</div>
-              <button type="button" onclick="changeVotingRounds(1)">+</button>
+            <div class="form-group">
+              <label>Impostores</label>
+              <div class="number-control">
+                <button type="button" onclick="changeImpostors(-1)">−</button>
+                <div class="value" id="impostor-count-display">1</div>
+                <button type="button" onclick="changeImpostors(1)">+</button>
+              </div>
             </div>
-          </div>
-
-          <div class="form-group" id="change-word-group" style="display:none;">
-            <label>Entre votaciones</label>
-            <div class="toggle-group">
-              <button type="button" class="toggle-btn active" id="word-same" onclick="toggleChangeWord(false)">Misma palabra</button>
-              <button type="button" class="toggle-btn" id="word-change" onclick="toggleChangeWord(true)">Cambiar palabra</button>
+              
+            <div class="form-group" id="impostors-know-group" style="display:none;">
+              <label>¿Los impostores se conocen?</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn" id="know-no" onclick="toggleImpostorsKnow(false)">No</button>
+                <button type="button" class="toggle-btn active" id="know-yes" onclick="toggleImpostorsKnow(true)">Sí</button>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group" id="multiple-votes-group" style="display:none;">
-            <label>Votos por ronda</label>
-            <div class="toggle-group">
-              <button type="button" class="toggle-btn active" id="vote-single" onclick="toggleMultipleVotes(false)">1 persona</button>
-              <button type="button" class="toggle-btn" id="vote-multiple" onclick="toggleMultipleVotes(true)">Varios</button>
+            <div class="form-group">
+              <label>Categoría</label>
+              <select id="word-category">
+                <option value="aleatoria" selected>Aleatoria</option>
+                <option value="deportes">Deportes</option>
+                <option value="peliculasSeries">Películas y Series</option>
+                <option value="objetos">Objetos</option>
+                <option value="lugares">Lugares</option>
+                <option value="personalidades">Personalidades</option>
+                <option value="cocina">Cocina</option>
+                <option value="animales">Animales</option>
+                <option value="musica">Música</option>
+                <option value="tecnologia">Tecnología</option>
+              </select>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label>Tiempo de discusión</label>
-            <div class="number-control">
-              <button type="button" onclick="changeVoteTime(-30)">−</button>
-              <div class="value time-value" id="vote-time-display">01:00</div>
-              <button type="button" onclick="changeVoteTime(30)">+</button>
+            <div class="form-group">
+              <label>Rondas de votación</label>
+              <div class="number-control">
+                <button type="button" onclick="changeVotingRounds(-1)">−</button>
+                <div class="value" id="voting-rounds-display">1</div>
+                <button type="button" onclick="changeVotingRounds(1)">+</button>
+              </div>
+            </div>
+
+            <div class="form-group" id="change-word-group" style="display:none;">
+              <label>Entre votaciones</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn active" id="word-same" onclick="toggleChangeWord(false)">Misma palabra</button>
+                <button type="button" class="toggle-btn" id="word-change" onclick="toggleChangeWord(true)">Cambiar palabra</button>
+              </div>
+            </div>
+
+            <div class="form-group" id="multiple-votes-group" style="display:none;">
+              <label>Votos por ronda</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn active" id="vote-single" onclick="toggleMultipleVotes(false)">1 persona</button>
+                <button type="button" class="toggle-btn" id="vote-multiple" onclick="toggleMultipleVotes(true)">Varios</button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Tiempo de discusión</label>
+              <div class="number-control">
+                <button type="button" onclick="changeVoteTime(-30)">−</button>
+                <div class="value time-value" id="vote-time-display">01:00</div>
+                <button type="button" onclick="changeVoteTime(30)">+</button>
+              </div>
+            </div>
+
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary">Empezar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- PANTALLA 4: PASAR CELULAR PARA VER PALABRA -->
+      <div class="screen" id="screen-pass-phone">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-pass"></p>
+          <p class="info-text large" id="pass-phone-text">Pasá el celular a [Jugador]</p>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showWord()">Mostrar palabra</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANTALLA 5: MOSTRAR PALABRA/IMPOSTOR -->
+      <div class="screen" id="screen-show-word">
+        <div class="content">
+          <div class="word-card" id="word-card">
+            <div class="category-label">Categoría</div>
+            <div class="category-name" id="word-category-display"></div>
+            <div class="secret-word" id="word-display"></div>
+            <div class="impostor-team" id="impostor-team-info" style="display:none;">
+              <div class="impostor-team-label">Los otros impostores:</div>
+              <div class="impostor-team-names" id="impostor-team-names"></div>
             </div>
           </div>
 
           <div class="btn-group">
-            <button type="submit" class="btn btn-primary">Empezar</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- PANTALLA 4: PASAR CELULAR PARA VER PALABRA -->
-    <div class="screen" id="screen-pass-phone">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Revelar Palabra</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <p class="round-indicator" id="round-indicator-pass"></p>
-        <p class="info-text large" id="pass-phone-text">Pasá el celular a [Jugador]</p>
-
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="showWord()">Mostrar palabra</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 5: MOSTRAR PALABRA/IMPOSTOR -->
-    <div class="screen" id="screen-show-word">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1 id="word-header">Tu palabra</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <div class="word-card" id="word-card">
-          <div class="category-label">Categoría</div>
-          <div class="category-name" id="word-category-display"></div>
-          <div class="secret-word" id="word-display"></div>
-          <div class="impostor-team" id="impostor-team-info" style="display:none;">
-            <div class="impostor-team-label">Los otros impostores:</div>
-            <div class="impostor-team-names" id="impostor-team-names"></div>
+            <button class="btn btn-primary" onclick="nextPlayerWord()">Listo, siguiente jugador</button>
           </div>
         </div>
+      </div>
 
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="nextPlayerWord()">Listo, siguiente jugador</button>
+      <!-- PANTALLA 6: INICIAR RONDA DE PISTAS -->
+      <div class="screen" id="screen-start-clues">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-clues"></p>
+          <p class="info-text">Todos tienen la palabra o su rol de impostor.</p>
+          <p class="info-text" style="font-size:1.4rem;color:var(--sky);font-weight:700;margin-bottom:24px;">Categoría: <span id="category-display"></span></p>
+          <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> dando una pista en voz alta.</p>
+          <p class="info-text" style="font-size:0.95rem;color:var(--muted);">El resto continúa en orden hacia la derecha.</p>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startDiscussion()">Iniciar discusión</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 6: INICIAR RONDA DE PISTAS -->
-    <div class="screen" id="screen-start-clues">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Iniciar pistas</h1>
-        </div>
-      </header>
+      <!-- PANTALLA 7: VOTACIÓN CON TIMER -->
+      <div class="screen" id="screen-vote-timer">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-discussion"></p>
+          <p class="info-text">Debatan quién es el/los impostor(es)</p>
 
-      <div class="content">
-        <p class="round-indicator" id="round-indicator-clues"></p>
-        <p class="info-text">Todos tienen la palabra o su rol de impostor.</p>
-        <p class="info-text" style="font-size:1.4rem;color:var(--sky);font-weight:700;margin-bottom:24px;">Categoría: <span id="category-display"></span></p>
-        <p class="info-text">Empieza <strong id="first-player-name" style="color:var(--sky);"></strong> dando una pista en voz alta.</p>
-        <p class="info-text" style="font-size:0.95rem;color:var(--muted);">El resto continúa en orden hacia la derecha.</p>
+          <div class="timer" id="vote-timer">01:00</div>
 
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="startDiscussion()">Iniciar discusión</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="skipToVote()">Ir a votación</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 7: VOTACIÓN CON TIMER -->
-    <div class="screen" id="screen-vote-timer">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Discusión</h1>
-        </div>
-      </header>
+      <!-- PANTALLA 8: VOTACIÓN ABIERTA -->
+      <div class="screen" id="screen-vote">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-vote"></p>
+          <p class="info-text" id="vote-instruction-text">¿Quién fue el elegido por el grupo?</p>
 
-      <div class="content">
-        <p class="round-indicator" id="round-indicator-discussion"></p>
-        <p class="info-text">Debatan quién es el/los impostor(es)</p>
-
-        <div class="timer" id="vote-timer">01:00</div>
-
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="skipToVote()">Ir a votación</button>
+          <div class="vote-grid" id="vote-buttons"></div>
+          
+          <div class="btn-group" id="vote-confirm-container" style="display:none;">
+            <button class="btn btn-primary" onclick="confirmVotes()">Confirmar votación</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 8: VOTACIÓN ABIERTA -->
-    <div class="screen" id="screen-vote">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Votación</h1>
-        </div>
-      </header>
+      <!-- PANTALLA 9: RESULTADO DE VOTACIÓN -->
+      <div class="screen" id="screen-vote-result">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-result"></p>
+          <div id="eliminated-players-container"></div>
 
-      <div class="content">
-        <p class="round-indicator" id="round-indicator-vote"></p>
-        <p class="info-text" id="vote-instruction-text">¿Quién fue el elegido por el grupo?</p>
+          <p class="info-text" id="game-status-text" style="font-size:1rem;"></p>
 
-        <div class="vote-grid" id="vote-buttons"></div>
-        
-        <div class="btn-group" id="vote-confirm-container" style="display:none;">
-          <button class="btn btn-primary" onclick="confirmVotes()">Confirmar votación</button>
+          <div class="btn-group" id="result-buttons"></div>
         </div>
       </div>
-    </div>
 
-    <!-- PANTALLA 9: RESULTADO DE VOTACIÓN -->
-    <div class="screen" id="screen-vote-result">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Resultado</h1>
-        </div>
-      </header>
+      <!-- PANTALLA 10: FIN DE PARTIDA -->
+      <div class="screen" id="screen-end-game">
+        <div class="content">
+          <div class="result-box" id="final-result-box">
+            <h3 id="game-winner-text">Ganaron los Ciudadanos</h3>
+            <p style="margin-top:12px;font-size:0.95rem;color:var(--muted);" id="game-summary"></p>
+          </div>
 
-      <div class="content">
-        <p class="round-indicator" id="round-indicator-result"></p>
-        <div id="eliminated-players-container"></div>
-
-        <p class="info-text" id="game-status-text" style="font-size:1rem;"></p>
-
-        <div class="btn-group" id="result-buttons"></div>
-      </div>
-    </div>
-
-    <!-- PANTALLA 10: FIN DE PARTIDA -->
-    <div class="screen" id="screen-end-game">
-      <header>
-        <div class="christmas-lights"></div>
-        <div class="title-group">
-          <h1>Partida terminada</h1>
-        </div>
-      </header>
-
-      <div class="content">
-        <div class="result-box" id="final-result-box">
-          <h3 id="game-winner-text">Ganaron los Ciudadanos</h3>
-          <p style="margin-top:12px;font-size:0.95rem;color:var(--muted);" id="game-summary"></p>
-        </div>
-
-        <div class="btn-group">
-          <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
-          <button class="btn btn-secondary" onclick="changeConfig()">Cambiar configuración</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="changeConfig()">Cambiar configuración</button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <footer>
-      <span>Carpincho Games · El Impostor</span>
-    </footer>
-  </main>
+      <footer>
+        <span>Carpincho Games · El Impostor</span>
+      </footer>
+    </main>
+  </div>
 
   <script>
+    // Diccionario de palabras - EXPANDIDO con 100 palabras más por categoría
+    const wordBank = { 
+    deportes: ['River Plate','Yoga','Crossfit','Gimnasio','Pilates','Jabalina','Boca Juniors','Selección Argentina','La Scaloneta','Lionel Messi','Diego Maradona','Ángel Di María','Juan Román Riquelme','Marcelo Gallardo','Carlos Tevez','Racing Club','Independiente','San Lorenzo','Newells','Rosario Central','Banfield','Lanus','Barracas Central','Riestra','Peñarol','Nacional','Gustavo Alfaro','Carlos Bianchi','Sir Alex Ferguson','Rafael Nadal','Gato Gaudio','Agustín Pichot','Los Pumas','Manu Ginóbili','Michael Jordan','Roger Federer','Copa Libertadores','Champions League','Chiqui Tapia','Caruso Lombardi','Cristiano Ronaldo','Neymar','Ronaldinho','Ronaldo','Carlos Bilardo','Pupi Zanetti','Chilavert','Ogro Fabbiani','Kobe Bryant','La Bombonera','Camp Nou','Pádel','Fútbol','Tenis','Basquet','Ping Pong','Polo','Bowling','Golazo','Árbitro','Coneja Baldassi','Zinedine Zidane','Walter Safarian','Pollo Vignolo','Mariano Closs','Franco Colapinto','F1','Lewis Hamilton','Max Verstappen','JM Fangio','Esteroides','Raqueta','Red','Estadio','Copa','Golf','Diego Latorre','JJ.OO.','Doping','Chipi Barijho','Wanchope Ábila','Arquero','Defensor','Mediocampista','Delantero','Lateral izquierdo','Lateral derecho','Volante central','Enganche','Extremo derecho','Extremo izquierdo','Cinco','Nueve de área','Puntero','Capitán','Director técnico','Hincha','Tribuna','Clásico','Superclásico','Penal','Corner','Tiempo suplementario','Alargue','Patear al arco','Tiro libre','Saque de banda','Camiseta','Botines','Cancha de once','Enzo Fernández','Julián Álvarez','Lautaro Martínez','Rodrigo De Paul','Emiliano Dibu Martínez','Ángel Correa','Giovani Lo Celso','Nicolás Otamendi','Alexis Mac Allister','Paulo Dybala','Leandro Paredes','Nicolás Tagliafico','Molina','Palacios','Gimnasia y Esgrima','Estudiantes de La Plata','Vélez Sarsfield','Huracán','Argentinos Juniors','Talleres','Belgrano','Instituto','Godoy Cruz','Colón','Unión','Central Córdoba','Tigre','Platense','Sarmiento','Arsenal','Defensa y Justicia','All Boys','Chacarita','Atlanta','Almagro','Deportivo Morón','San Miguel','Sacachispas','Comunicaciones','Dock Sud','Defensores de Belgrano','Chicago','Deportivo Merlo','Fénix','Deportivo Español','Liniers','Los Andes','Excursionistas','UAI Urquiza','Flandria','Claypole','Cañuelas','Colegiales','Acassuso','El Porvenir','Sportivo Barracas','Victoriano Arenas','Midland','Villa San Carlos','Luján','Berazategui','Temperley','Brown de Adrogué','Almirante Brown','Quilmes','UAI Urquiza','Fénix','Tristán Suárez','Deportivo Riestra','San Telmo','Estudiantes de Caseros','Sacachispas','Ferrocarril Oeste','Ituzaingó','Deportivo Merlo','Laferrere','Argentino de Quilmes','Argentino de Merlo','Leandro N Alem','San Miguel','Juventud Unida','Cambaceres','Deportivo Laferrere','Deportivo Paraguayo','Yupanqui','Muñiz','Puerto Nuevo','Sportivo Italiano'],
+    peliculasSeries: ['El secreto de sus ojos','Relatos salvajes','Nueve Reinas','Casados con hijos','Los simuladores','Okupas','El Marginal','La Casa de Papel','Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Titanic','El Padrino','Star Wars','Harry Potter','Toy Story','Shrek','Merlí','Spiderman','Los Simuladores','Blancanieves','History Channel','Los Simpsons','El chavo del 8','Alien','Terminator','Depredador','Scooby Doo','Matrix','Forrest Gump','Jumanji','El rey león','Volver al futuro','E.T.','James Bond','Hulk','Superman','Batman','Mi pobre angelito','El señor de los anillos','Telefé','Canal 13','ESPN','MTV','Dumbo','Dragon Ball','El Padrino','Avatar','Avatar 2','Avengers','Avengers Endgame','Iron Man','Capitán América','Pantera Negra','Jurassic Park','Jurassic World','Rápido y furioso','Mi villano favorito','Buscando a Nemo','Intensamente','Coco','La La Land','Bohemian Rhapsody','El diablo viste a la moda','Guasón','Joker','Argentina 1985','El encargado','Gran Hermano','MasterChef','MasterChef Celebrity','Bake Off','La Voz Argentina','Showmatch','Videomatch','CQC','Polémica en el bar','100 argentinos dicen','Periodismo para todos','Intratables','PH Podemos Hablar','Los ocho escalones','La peña de Morfi','La Noche de Mirtha','Almorzando con Mirtha Legrand','Chiquititas','Rebelde Way','Floricienta','Cebollitas','Patito Feo','Violetta','Soy Luna','Narcos','La Casa del Dragón','The Big Bang Theory','How I Met Your Mother','Two and a Half Men','Peaky Blinders','Better Call Saul','The Crown','Dark','The Last of Us','The Walking Dead','Lost','Black Mirror','Vikingos','House','Greys Anatomy','CSI','La ley y el orden','Prison Break','Esperando la carroza','El hijo de la novia','Un novio para mi mujer','Corazón de León','No sos vos soy yo','Metegol','Gilda no me arrepiento de este amor','El Ángel','La odisea de los giles','Heroic Losers','Historias del Mundo de Freddy','La tregua','La historia oficial','Camila','El lado oscuro del corazón','La ciénaga','El clan','El ciudadano ilustre','Wakolda','Wild Tales','Valentín','Luna de Avellaneda','XXY','Plata quemada','La noche de los lápices','Garage Olimpo','Kamchatka','Pizza birra faso','Los rubios','Mundo grúa','La mujer sin cabeza','Las viudas de los jueves','Elsa y Fred','Medianeras','El mismo amor la misma lluvia','Yo no se que me han hecho tus ojos','El fútbol o yo','Papeles en el viento','Un cuento chino','La luz incidente','El estudiante','Igualita a mí','Sin hijos','Dos más dos','A boyfriend for my wife','La suerte está echada','Cohen vs Rosi','El robo del siglo','El reino','4x4','Sos mi vida','Casi ángeles','Violetta','Chiquititas','Rebelde Way','Erreway','Verano del 98','Montaña rusa','Son Amores','Amor mío','Muñeca brava','Celeste','Mi Cuñado','Peter Capusotto y sus videos','Peligro sin codificar','Los 7 locos y los Lanzallamas','El puntero','Guapas','Tiempos compulsivos','El jardín de bronce','Apache','La fragilidad de los cuerpos','Signos','Epitafios','Acusados','Separadas','Las estrellas','Soy gitano','Resistiré','El tigre Verón','Son de Fierro','099 Central','Tiempo final','Tumberos','Botineras','Socias','Farsantes','Argentina tierra de amor y venganza','Amar después de amar','Los unicos','Lobo'],
+    objetos: ['Celular','Computadora','Notebook','Televisor','Controles remoto','Auriculares','Libro','Lapicera','Llave','Gafas de sol','Mochila','Billetera','Reloj','Cargador','Botella de agua','Paraguas','Cámara de fotos','Silla','Mesa','Espejo','Disco','Mesa','Auto','Moto','Dildo','Olla','Pala','Billete','Sobre','Paragüas','Puerta','Pelota','Parrilla','Remera','Alfombra','Bandera','Control remoto','Vaso','Piedra','Tijera','Libro','Planta','Maceta','Cartas','Vaso Stanley','Heladera','Gorra','Cama','Semáforo','Micrófono','Radio','Televisor','Computadora','Zapatillas','Silla','Celular','Aspiradora','Collar','Picador','Correa','Alfombra','Candado','Lámpara','Ventilador','Aire acondicionado','Cortina','Almohada','Sábana','Toalla','Ducha','Inodoro','Cepillo de dientes','Pasta de dientes','Jabón','Shampoo','Perfume','Escritorio','Cuadro','Marco de fotos','Foto','Ropero','Perchero','Pantalón','Camisa','Campera','Bufanda','Guantes','Medias','Zapato','Sandalia','Valija','Bolso','Moneda','Tarjeta de crédito','Tarjeta SUBE','Llaverito','Encendedor','Cenicero','Llave inglesa','Martillo','Destornillador','Clavo','Tornillo','Regla','Goma de borrar','Cuaderno','Agenda','Carpeta','Caja','Bolsa de compras','Cesto de basura','Jarrón','Esponja','Trapo','Balde','Escoba','Recogedor','Mate','Bombilla','Termo','Pava eléctrica','Tostadora','Licuadora','Batidora','Procesadora','Juguera','Cafetera','Exprimidor','Abrelatas','Sacacorchos','Rallador','Colador','Espumadera','Cucharon','Pinza','Pala de asado','Tenedor de asado','Cuchillo de asado','Bandeja','Fuente','Bowl','Ensaladera','Salero','Pimentero','Azucarera','Mantequera','Aceitera','Vinagrera','Servilletero','Individual','Salvamanteles','Repasador','Secaplatos','Secador de pelo','Plancha','Tabla de planchar','Tender','Broches','Palangana','Fuentón','Jarra','Botellón','Damajuana','Sifón','Dispenser de agua','Calefón','Estufa','Caloventor','Radiador','Brasero','Anafe','Horno eléctrico','Microondas','Multiprocesadora','Batidora de mano','Minipimer','Sandwichera','Waflera','Freidora','Olla arrocera','Olla express','Cacerola','Sartén antiadherente','Wok','Asadera','Budinera','Molde','Espátula','Cuchara de madera','Palo de amasar','Cortapastas','Manga pastelera','Batidor manual','Timer','Balanza de cocina','Termómetro','Despertador','Teléfono fijo','Contestador','Fax','Calculadora','Reloj de pared','Reloj cucú','Cuadro','Espejito','Portarretrato','Álbum de fotos','Carpeta','Bibliorato','Archivador','Separador','Resaltador','Corrector','Sacapuntas','Compás','Transportador','Escuadra','Cartabón','Papel afiche','Cartulina','Cartón','Pegamento','Plasticola','Voligoma','Cinta adhesiva','Cinta de papel','Chinches','Clips','Abrochadora','Perforadora','Almohadilla'],
+    lugares: ['Buenos Aires','Obelisco','La Bombonera','El Monumental','Mar del Plata','Bariloche','Mendoza','Cataratas del Iguazú','La Patagonia','Córdoba','Rosario','Palermo','Recoleta','París','Roma','Madrid','Nueva York','Tokio','Playa','Montaña','Ranchos','Brandsen','CABA','Mar del Plata','Jamaica','Cuba','Uruguay','Montevideo','Asunción','Paraguay','Bolivia','Chile','Brasil','Rio de Janeiro','Italia','Roma','Milán','Madrid','Barcelona','España','Portugal','Islas Malvinas','Antártida','Asia','Japón','China','La luna','Marte','Abril','El Carmen','Greenville','EEUU','Miami','Canadá','México','Cancún','Sudáfrica','Australia','Segurola y La Habana','Microcentro','Pilar','Luján','Charita','La Boca','Angola','Escocia','Finlandia','Antártida','Berlín','Caribe','Sahara','Egipto','Himalayas','Perú','Machu Pichu','Lejos','Lo de kevito','La reja','Costanera','Puerto Madero','Alemania','Venezuela','Caracas','Grecia','Mykonos','Croacia','La Matanza','Villa 31','Barrio Marítimo','Formosa','Qatar','Pampa y la vía','Quilmes oeste','Pinamar','Cariló','San Telmo','Belgrano','Villa Crespo','Almagro','Caballito','San Isidro','Tigre','Nordelta','La Plata','San Martín de los Andes','El Calafate','Ushuaia','Salta','Jujuy','Tilcara','Purmamarca','Humahuaca','Villa Gesell','Mar de las Pampas','Chapadmalal','Caminito','Casa Rosada','Congreso de la Nación','Plaza de Mayo','Plaza San Martín','Avenida 9 de Julio','Avenida Corrientes','Calle Florida','Galerías Pacífico','Teatro Colón','Café Tortoni','La Recoleta','Cementerio de la Recoleta','Bosques de Palermo','Jardín Botánico','Jardín Zoológico','Planetario','Reserva Ecológica','Parque 3 de Febrero','Parque Lezama','Parque Centenario','Parque Rivadavia','Parque Chacabuco','Parque Avellaneda','Parque Sarmiento','Costanera Norte','Costanera Sur','Dique 1','Dique 2','Dique 3','Dique 4','Caminito','La Vuelta de Rocha','Fundación Proa','Museo Quinquela Martín','Museo Benito Quinquela','Vuelta de Rocha','Puente Alsina','Puente Pueyrredón','Puente de la Mujer','Puente Avellaneda','Autopista 25 de Mayo','Autopista Perito Moreno','Autopista Lugones','General Paz','Panamericana','Acceso Norte','Acceso Oeste','Camino Negro','Camino de Cintura','Ruta 2','Ruta 3','Ruta 5','Ruta 7','Ruta 8','Ruta 9','Ruta 11','Ruta 14','Ruta 40','Tranquera de Fierro','El Talar','Villa Adelina','Boulogne','Martínez','Acassuso','San Fernando','Victoria','Virreyes','Carupá','Rincón de Milberg','Dique Luján','Don Torcuato','General Pacheco','Benavídez','Campo de Mayo','José C. Paz','Tortuguitas','Del Viso','Los Polvorines','Pablo Podestá','Villa Bosch','Caseros','Santos Lugares','Ciudadela','Ramos Mejía','Villa Luzuriaga','San Justo','Isidro Casanova','González Catán','Virrey del Pino','Pontevedra','Tapiales','Aldo Bonzi','Villa Madero','Villa Celina','Ezeiza','Tristán Suárez','Cañuelas','Máximo Paz','Lobos','Navarro','Mercedes','Chivilcoy','Bragado','25 de Mayo','9 de Julio','Pehuajó','Carlos Casares','Bolívar','Olavarría','Azul','Tandil','Balcarce','Necochea','Miramar','Dolores','Chascomús','Lezama','Castelli','Pila','Rauch','Ayacucho','Tapalqué','Las Flores','Saladillo','Roque Pérez','Lobos','General Belgrano','Monte','San Vicente','Cañuelas','Alejandro Korn','Guernica','Burzaco','Adrogué','Longchamps','Glew','José Mármol','Rafael Calzada','Claypole','Bernal','Quilmes','Berazategui','Platanos','Hudson','Pereyra','Villa Elisa','City Bell','Gonnet','Ringuelet','Tolosa','Hernández','Gorina','Los Hornos','San Carlos','Abasto','Melchor Romero','Lisandro Olmos','Etcheverry','El Peligro','Arturo Seguí','Parque Pereyra Iraola'],
+    personalidades: ['Lionel Messi','Diego Maradona','Ricardo Darín','Susana Giménez','Mirtha Legrand','Gustavo Cerati','Charly García','Fito Páez','Tini Stoessel','Bizarrap','Duki','Papa Francisco','Jorge Luis Borges','Shakira','Bad Bunny','Michael Jackson','Barack Obama','Cristina Fernández de Kirchner','Mauricio Macri','Javier Milei','Elon Musk','Donald Trump','Alberto Fernandez','Mario','Lucre','Benja','Kevito','La Garza','El Rifle','Kike Feldman','Nicolas Occhiato','Miguel Granados','Sebastián Wanraich','Guillermo Francella','Ricardo Darín','Caruso Lombardi','Diego Maradona','Chiqui Tapia','Marcelo Polino','Marcelo Tinelli','Mario Pergolini','Steve Jobs','San Martín','Hitler','Vladimir Putin','Pablo Escobar','Pablo Lescano','Mahatma Gandhi','Cleopatra','Freddie Mercury','Shakira','Jorge Rial','Kun Agüero','Guido Kaczka','JM Fangio','Franco Colapinto','Poli Calello','Justin Bieber','Usain Bolt','Natacha Jaitt','Alberto Nisman','Jorge Andri','Florencia de la V','Marcos Galperín','Hugo Moyano','Horacio R. Larreta','Pato Bullrich','Axel Kicillof','Perón','René Favaloro','Marley','Bob Marley','Adrián Suar','JM Listorti','Larry de Clay','Andrés Calamaro','Diego Latorre','Albert Einstein','Ibai','Davoo Xeneixe','Mr Beast','Lamine Yamal','Dibu Martinez','Sasha Gery','La Roca','Vin Diesel','Jordi el niño polla','LeBron James','El Bananero','Marito Baracus','Jeff Epstein','Osama Bin Laden','Julio Grondona','El mago sin dientes','Napoleón','Lionel Scaloni','Diego Capusotto','Enrique Pinti','Tato Bores','Pablo Echarri','Nancy Dupláa','Natalia Oreiro','China Suárez','Valeria Mazza','Juana Viale','Sergio Massa','Ricardo Montaner','Alejandro Sanz','Gustavo Santaolalla','Lali Espósito','Abel Pintos','Sergio Hernández','Facu Campazzo','Mercedes Sosa','Sandro','Palito Ortega','Leo Dan','Raffaella Carrà','Julio Iglesias','José Luis Perales','Emmanuel','Camilo Sesto','Nino Bravo','Joan Manuel Serrat','Joaquín Sabina','Alejandro Lerner','León Gieco','Víctor Heredia','Raúl Porchetto','Moris','Pappo','Luis Alberto Spinetta','Norberto Napolitano','Piero','Sergio Denis','Juan Carlos Baglietto','Silvina Garre','Fabiana Cantilo','Vicentico','Fernando Peña','Antonio Gasalla','Olmedo','Javier Portales','Tristán','Raúl Taibo','Carlín Calvo','Pepe Soriano','Norma Aleandro','Héctor Alterio','Federico Luppi','Luis Brandoni','China Zorrilla','Dora Baret','Graciela Borges','Susú Pecoraro','Andrea Del Boca','Gabriela Sabatini','David Nalbandian','Guillermo Vilas','José Luis Clerc','Paola Suárez','Gisela Dulko','Guillermo Coria','Juan Martín Del Potro','Diego Schwartzman','Horacio Zeballos','Leonardo Mayer','Guido Pella','Federico Delbonis','Carlos Monzón','Nicolino Locche','Pascual Pérez','Víctor Galíndez','Jorge Newbery','Juan Manuel Fangio','Oscar Alfredo Gálvez','Carlos Reutemann','José Froilán González','Oscar Larrauri','Carlos Pairetti','Gastón Mazzacane','Esteban Tuero','Gabriele Tarquini','José María López','Pechito López','Agustín Canapino','Matías Rossi','Mariano Werner','Omar Martínez','Guillermo Ortelli','Ernesto Bessone','Christian Ledesma','Emanuel Moriatis','Emiliano Spataro','Julián Santero','Facundo Ardusso','Leonel Pernía','Bernardo Llaver','Juan Pablo Gianini','Diego Ciantini','Esteban Guerrieri','Néstor Girolami','Matías Muñoz Marchesi','José Manuel Urcera','Facundo Della Motta','Sergio Alaux','Santiago Mangoni'],
+    cocina: ['Asado','Empanadas','Milanesa','Pizza','Fideos con tuco','Ñoquis','Locro','Choripán','Hamburguesa','Ensalada rusa','Helado','Torta','Dulce de leche','Mate','Café','Fernet con coca','Cerveza','Sushi','Cuchillo','Tenedor','Sartén','Heladera','Tequila','Olla','Parrilla','Sartén','Cuchara','Hornalla','Vaso Stanley','Lasagna','Milanesa','Huevo frito','Papa frita','Shawarma','Pescado','Ribs','Pollo','Vermut','Gin tonic','Soda','Pava','Bandeja','Horno','Microondas','Chef','Sopa','Pastelería','Panadería','Pan','Sanguche','Tostado','Café','Leche','Naranja','Banana','Tomate','Lechuga','Cebolla','Pomelo','Menta','Azúcar','Freezer','Restaurant','Bar','Cocktail','Trago','Postre','Desayuno','Almuerzo','Cena','Chocolate','Golosina','Caramelo','Chupetín','Miel','Mate','Jamón','Queso','Albóndiga','Mermelada','Manteca','Aceite de oliva','Vinagre','Sal','Pimienta','Orégano','Harina','Levadura','Salsa de tomate','Mayonesa','Mostaza','Ketchup','Ñoquis de papa','Ravioles','Tarta de jamón y queso','Tarta de verdura','Ensalada mixta','Empanada de carne','Empanada de pollo','Bizcochuelo','Brownie','Galletitas','Facturas','Medialuna','Churro','Flan','Pionono','Picada','Queso rallado','Aceitunas','Provoleta','Milanesa napolitana','Bondiola','Vacío','Matambre','Ensalada de frutas','Licuado','Smoothie','Copa helada','Picadita','Tabla de quesos','Caja de vino','Botella de vino','Pimentero','Choripán','Pancho','Completo','Lomito','Bondiola','Sándwich de miga','Carlitos','Triple de jamón y queso','Tostado mixto','Sándwich de milanesa','Hamburguesa completa','Cheeseburger','Súper pancho','Zapallitos rellenos','Berenjenas al escabeche','Carbonada','Guiso de lentejas','Guiso de arroz','Puchero','Mondongo','Osobuco','Riñones al jerez','Hígado encebollado','Mollejas','Chinchulines','Morcilla','Chorizo colorado','Chorizo parrillero','Salchicha parrillera','Costilla de cerdo','Lechón','Matambrito de cerdo','Cuadril','Bife de chorizo','Bife ancho','Bife angosto','Entraña','Tapa de asado','Asado de tira','Falda','Rosbif','Osobuco','Carnaza','Tortuguita','Peceto','Nalga','Cuadrada','Paleta','Aguja','Marucha','Colita de cuadril','Lomo','Solomillo','Bola de lomo','Pulpa negra','Pulpa blanca','Garrón','Osobuco de novillo','Pata','Caracú','Tuétano','Achuras','Criadillas','Sesos','Lengua','Corazón','Hígado','Riñón','Tripa gorda','Mondongo crudo','Chinchulín','Tripa','Chunchule','Vacío de cordero','Costillar de cordero','Paleta de cordero','Pata de cordero','Pierna de cordero','Cordero patagónico','Chivo','Cabrito','Pollo al horno','Pollo al disco','Pollo a la cerveza','Pollo al verdeo','Suprema de pollo','Pechuga','Pata muslo','Cuarto trasero','Cuarto delantero','Ala'],
+    animales: ['Perro','Gato','Carpincho','Loro','Caballo','Vaca','Oveja','Cerdo','Gallina','Pato','León','Tigre','Elefante','Jirafa','Mono','Pez','Delfín','Ballena','Tortuga','Ratón','Ardilla','Garza','Oso','Jirafa','Buitre','Koala','Cordero','Hormiga','Langosta','Cangrejo','Puma','Águila','Cóndor','Escarabajo','Cobra','Serpiente','Rinoceronte','Flamenco','Tigre','Iguana','Sabueso','Oca','Morsa','Foca','Cabra','Anguila','Mono','Gorila','Lobo','Leopardo','Yacaré','Piojo','Víbora','Alacrán','Escorpión','Cucaracha','Mosca','Mosquito','Tarántula','Liebre','Tiranosaurio','Tiburón','Ballena','Calamar','Estrella de mar','Pepino de mar','Dragón','Unicornio','Burro','Jabalí','Orangután','Pelicano','Tucán','Cuervo','Lagartija','Lagarto','Libélula','Pato','Ganso','Nutria','Zorro','Hipopótamo','Gacela','Camello','Dromedario','Llama','Alpaca','Murciélago','Erizo','Hurón','Mapache','Panda','Pantera','Guepardo','Ciervo','Reno','Faisán','Gallo','Pavo','Pavo real','Pingüino','Golondrina','Paloma','Canario','Loro barranquero','Carancho','Zorrino','Yaguareté','Conejo','Nutria marina','Mula','Cierva','Colibrí','Picaflor','Gato montés','Overo','Tordillo','Zaino','Alazán','Moro','Petiso','Yegua','Potrillo','Potranca','Padrillo','Burrito','Chivo','Cabra montés','Cordera','Carnero','Capón','Becerro','Vaquillona','Novillo','Toro','Buey','Ternero','Ternera','Vaquita','Torito','Novillito','Chancho','Lechón','Marrana','Verraco','Chanchito','Cerda','Gorrión','Hornero','Benteveo','Tero','Calandria','Churrinche','Cardenal','Tijereta','Chiflón','Tordo','Zorzal','Calandria mora','Corbatita','Jilguero','Cabecita negra','Misto','Diuca','Chingolo','Corbatita común','Pirincho','Carancho','Chimango','Halconcito','Aguilucho','Milano','Lechuza','Lechuzón','Buho','Cacuy','Atajacaminos','Gallito de agua','Polla de agua','Garza mora','Garza blanca','Garcita','Hocó','Mirasol','Biguá','Pato barcino','Pato maicero','Pato picazo','Pato sirirí','Cisne de cuello negro','Coscoroba','Flamenco austral','Ñandú','Martineta','Perdiz','Codorniz','Paloma','Torcaza','Torcacita','Yerutí','Cotorra','Catita','Calancate','Loro hablador','Cata','Maracaná','Picaflor común','Picaflor verde','Colibrí gigante','Carpintero','Carpinterito','Trepatroncos','Hornero','Leñatero','Cascarita','Espartillero','Junquero','Pájaro carpintero','Tacuarita','Cachirla','Ratona','Ratonera','Calandria grande','Chaiña','Loica','Pecho colorado','Boyero','Tordo músico','Tordo renegrido','Músico','Celestino','Sietevestidos','Espinero'],
+    musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Ciro y Los Persas','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Pibes Chorros','Los Piojos','La Renga','Radio Aspen','David Guetta','Los Redondos','Miranda','Airbag','Bono','Pappo','Coldplay','Ed Sheeran','Duki','Paulo Londra','Gustavo Cerati','Indio Solari','Andrés Calamaro','Javier Calamaro','Red Hot Chilli Peppers','Nirvana','Kurt Cobain','La Sole','Luck ra','La mona gimenez','Kapanga','Molotov','Alberto Spinetta','El plan de la mariposa','Los cafres','Autenticos Decadentes','Chano','Babasónicos','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Eros Ramazzoti','Reggae','Ópera','Folclore','Cumbia','Tango','Rap','Sumo','Rata Blanca','Los Pimpinela','Rock','Pop latino','Indie','Electrónica','Techno','House','Blues','Jazz','Soul','Funk','Metal','Heavy metal','Punk','Trap argentino','Balada','Bolero','Reggaetón viejo','RKT','Los Fabulosos Cadillars','Los Pericos','Los Auténticos Decadentes','Los Totora','Aerosmith','Guns N Roses','Metallica','AC/DC','Arctic Monkeys','The Strokes','Luis Miguel','Ricardo Arjona','Romeo Santos','Daddy Yankee','Karol G','Nicki Nicole','Trueno','Tiago PZK','Wos','Residente','Calle 13','Jorge Drexler','Fito Páez','Spinetta','Charly García en vivo','Lollapalooza','Recital','Playlist','Auriculares','Divididos','Viejas Locas','Intoxicados','Las Pelotas','Callejeros','Almafuerte','Hermética','Ataque 77','Attaque 77','Los Violadores','2 Minutos','Flema','Mal Momento','Bulldog','Boom Boom Kid','Eterna Inocencia','Shaila','Superuva','Smitten','Shaila','Fun People','Todos Tus Muertos','Bersuit Vergarabat','Tan Biónica','No Te Va Gustar','La Vela Puerca','Cuarteto de Nos','El Otro Yo','Catupecu Machu','Los Tipitos','Kapanga','Los Cafres','Nonpalidece','Dread Mar I','Zona Ganjah','Cultura Profética','Gondwana','Mensajeros Reggae','Los Pericos','Resistencia Suburbana','Alika','Fidel Nadal','Morbo y Mambo','El Bordo','Las Pastillas del Abuelo','La Franela','La Beriso','Ciro y los Persas','Estelares','Los Rodríguez','Fabiana Cantilo','Vicentico','Onda Vaga','Conociendo Rusia','Bandalos Chinos','Él Mató a un Policía Motorizado','Mi Amigo Invencible','1915','Los Espíritus','Usted Señalemelo','Las Ligas Menores','Still Lover','Lucy Patané','Marilina Bertoldi','Miss Bolivia','Juana Molina','Kevin Johansen','Lisandro Aristimuño','Dante Spinetta','Illya Kuryaki','Emmanuel Horvilleur','Massacre','V8','Horcas','Malón','Tren Loco','Logos','Lethal','A.N.I.M.A.L.','Alakran','JAF','Riff','Matanza','Carajo','Asspera','La Renga','Logos','A.N.I.M.A.L.','Alakran','Horcas','Malón','Tren Loco','Aonikenk','Razones Concientes','Destrucción','Hermética','Almafuerte','JAF','Kamikaze','V8','Riff','Pappo Blues','Pescado Rabioso','Invisible','Aquelarre','Arco Iris','Billy Bond y la Pesada','Color Humano','Crucis','Espíritu','La Máquina de Hacer Pájaros','Punch','Vox Dei','PorSuiGieco','Serú Girán','Manal','Almendra','Los Gatos'],
+    tecnologia: ['WhatsApp','Instagram','TikTok','Netflix','Spotify','YouTube','Google','Correo electrónico','WiFi','Bluetooth','Notebook','Tablet','Smart TV','Consola de videojuegos','PlayStation','Xbox','Mouse','Teclado','Pendrive','Nube','Criptomoneda','Hacker','Bitcoin','Ethereum','Internet','Nintendo','Gameboy','Atari','Láser','Iphone','Android','Robot','ChatGPT','Radio','Televisor','Radar','Satélite','Wifi','Wikipedia','Fibertel','Click','Excel','Mail','Videojuego','Sitio web','Celular inteligente','Cámara digital','Auriculares inalámbricos','Parlante bluetooth','Parlante portátil','Impresora','Escáner','Monitor','Router','Módem','Cable HDMI','Cable USB','Cargador de celular','Batería externa','Pantalla táctil','Aplicación','App','Red social','Mensaje de voz','Videollamada','Selfie','Sticker','Emoticón','GIF','Historia de Instagram','Estado de WhatsApp','Filtro de cámara','Lente de cámara','Tarjeta SIM','Chip del celular','Memoria externa','Disco rígido','Disco sólido','Pendrive tipo C','Carpeta compartida','Archivo adjunto','Documento de Word','Hoja de cálculo','Presentación de PowerPoint','Carpeta en la nube','Contraseña','Usuario','Código QR','Código de barras','Ubicación en tiempo real','GPS','Mapa online','Buscador','Navegador de internet','Pestaña del navegador','Ventana emergente','Notificación','Alarma del celular','Calendario del celular','Lista de contactos','Grupo de WhatsApp','Reunión por Zoom','Llamada de Teams','Reproductor de música','Podcast','Auricular con micrófono','Joystick','Mando de consola','Streaming','Plataforma digital','Billetera virtual','Mercado Pago','Home banking','Banco online','Compra online','Carrito de compras','Sube virtual','QR para pagar','Turno online','Chat en vivo','Servicio técnico','Facebook','Twitter','X','Threads','LinkedIn','Pinterest','Reddit','Tumblr','Snapchat','Telegram','Signal','Discord','Twitch','Kick','Steam','Epic Games','Origin','Ubisoft Connect','Battle.net','GOG','Riot Games','Roblox','Minecraft','Fortnite','League of Legends','Counter Strike','Valorant','GTA','Call of Duty','FIFA','PES','eFootball','F1','Gran Turismo','Rocket League','Fall Guys','Among Us','PUBG','Free Fire','Apex Legends','Overwatch','Dota','Starcraft','Age of Empires','Civilization','The Sims','Candy Crush','Clash Royale','Clash of Clans','Brawl Stars','Pokémon GO','Genshin Impact','Zelda','Mario Bros','Mario Kart','Metroid','Donkey Kong','Sonic','Street Fighter','Mortal Kombat','Tekken','Soul Calibur','Smash Bros','Halo','Gears of War','Uncharted','The Last of Us','God of War','Spider-Man','Batman Arkham','Assassins Creed','Far Cry','Watch Dogs','Resident Evil','Silent Hill','Dead Space','Doom','Wolfenstein','Quake','Half-Life','Portal','Left 4 Dead','Team Fortress','Skyrim','Fallout','The Witcher','Dark Souls','Elden Ring','Bloodborne','Sekiro','Hollow Knight','Celeste','Cuphead','Undertale','Stardew Valley','Terraria','Subnautica','No Mans Sky','Elite Dangerous','Microsoft Flight Simulator','Euro Truck Simulator','Cities Skylines','Planet Coaster','Roller Coaster Tycoon','Zoo Tycoon','Jurassic World Evolution','The Sims 4']
+    };
+
     // Estado del juego
     const gameState = {
       players: [],
@@ -948,23 +679,21 @@
       multipleVotes: false
     };
 
-    // Diccionario de palabras - EXPANDIDO con 100 palabras más por categoría
-    const wordBank = { 
-    deportes: ['River Plate','Yoga','Crossfit','Gimnasio','Pilates','Jabalina','Boca Juniors','Selección Argentina','La Scaloneta','Lionel Messi','Diego Maradona','Ángel Di María','Juan Román Riquelme','Marcelo Gallardo','Carlos Tevez','Racing Club','Independiente','San Lorenzo','Newells','Rosario Central','Banfield','Lanus','Barracas Central','Riestra','Peñarol','Nacional','Gustavo Alfaro','Carlos Bianchi','Sir Alex Ferguson','Rafael Nadal','Gato Gaudio','Agustín Pichot','Los Pumas','Manu Ginóbili','Michael Jordan','Roger Federer','Copa Libertadores','Champions League','Chiqui Tapia','Caruso Lombardi','Cristiano Ronaldo','Neymar','Ronaldinho','Ronaldo','Carlos Bilardo','Pupi Zanetti','Chilavert','Ogro Fabbiani','Kobe Bryant','La Bombonera','Camp Nou','Pádel','Fútbol','Tenis','Basquet','Ping Pong','Polo','Bowling','Golazo','Árbitro','Coneja Baldassi','Zinedine Zidane','Walter Safarian','Pollo Vignolo','Mariano Closs','Franco Colapinto','F1','Lewis Hamilton','Max Verstappen','JM Fangio','Esteroides','Raqueta','Red','Estadio','Copa','Golf','Diego Latorre','JJ.OO.','Doping','Chipi Barijho','Wanchope Ábila','Arquero','Defensor','Mediocampista','Delantero','Lateral izquierdo','Lateral derecho','Volante central','Enganche','Extremo derecho','Extremo izquierdo','Cinco','Nueve de área','Puntero','Capitán','Director técnico','Hincha','Tribuna','Clásico','Superclásico','Penal','Corner','Tiempo suplementario','Alargue','Patear al arco','Tiro libre','Saque de banda','Camiseta','Botines','Cancha de once','Enzo Fernández','Julián Álvarez','Lautaro Martínez','Rodrigo De Paul','Emiliano Dibu Martínez','Ángel Correa','Giovani Lo Celso','Nicolás Otamendi','Alexis Mac Allister','Paulo Dybala','Leandro Paredes','Nicolás Tagliafico','Molina','Palacios','Gimnasia y Esgrima','Estudiantes de La Plata','Vélez Sarsfield','Huracán','Argentinos Juniors','Talleres','Belgrano','Instituto','Godoy Cruz','Colón','Unión','Central Córdoba','Tigre','Platense','Sarmiento','Arsenal','Defensa y Justicia','All Boys','Chacarita','Atlanta','Almagro','Deportivo Morón','San Miguel','Sacachispas','Comunicaciones','Dock Sud','Defensores de Belgrano','Chicago','Deportivo Merlo','Fénix','Deportivo Español','Liniers','Los Andes','Excursionistas','UAI Urquiza','Flandria','Claypole','Cañuelas','Colegiales','Acassuso','El Porvenir','Sportivo Barracas','Victoriano Arenas','Midland','Villa San Carlos','Luján','Berazategui','Temperley','Brown de Adrogué','Almirante Brown','Quilmes','UAI Urquiza','Fénix','Tristán Suárez','Deportivo Riestra','San Telmo','Estudiantes de Caseros','Sacachispas','Ferrocarril Oeste','Ituzaingó','Deportivo Merlo','Laferrere','Argentino de Quilmes','Argentino de Merlo','Leandro N Alem','San Miguel','Juventud Unida','Cambaceres','Deportivo Laferrere','Deportivo Paraguayo','Yupanqui','Muñiz','Puerto Nuevo','Sportivo Italiano'],
-    peliculasSeries: ['El secreto de sus ojos','Relatos salvajes','Nueve Reinas','Casados con hijos','Los simuladores','Okupas','El Marginal','La Casa de Papel','Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Titanic','El Padrino','Star Wars','Harry Potter','Toy Story','Shrek','Merlí','Spiderman','Los Simuladores','Blancanieves','History Channel','Los Simpsons','El chavo del 8','Alien','Terminator','Depredador','Scooby Doo','Matrix','Forrest Gump','Jumanji','El rey león','Volver al futuro','E.T.','James Bond','Hulk','Superman','Batman','Mi pobre angelito','El señor de los anillos','Telefé','Canal 13','ESPN','MTV','Dumbo','Dragon Ball','El Padrino','Avatar','Avatar 2','Avengers','Avengers Endgame','Iron Man','Capitán América','Pantera Negra','Jurassic Park','Jurassic World','Rápido y furioso','Mi villano favorito','Buscando a Nemo','Intensamente','Coco','La La Land','Bohemian Rhapsody','El diablo viste a la moda','Guasón','Joker','Argentina 1985','El encargado','Gran Hermano','MasterChef','MasterChef Celebrity','Bake Off','La Voz Argentina','Showmatch','Videomatch','CQC','Polémica en el bar','100 argentinos dicen','Periodismo para todos','Intratables','PH Podemos Hablar','Los ocho escalones','La peña de Morfi','La Noche de Mirtha','Almorzando con Mirtha Legrand','Chiquititas','Rebelde Way','Floricienta','Cebollitas','Patito Feo','Violetta','Soy Luna','Narcos','La Casa del Dragón','The Big Bang Theory','How I Met Your Mother','Two and a Half Men','Peaky Blinders','Better Call Saul','The Crown','Dark','The Last of Us','The Walking Dead','Lost','Black Mirror','Vikingos','House','Greys Anatomy','CSI','La ley y el orden','Prison Break','Esperando la carroza','El hijo de la novia','Un novio para mi mujer','Corazón de León','No sos vos soy yo','Metegol','Gilda no me arrepiento de este amor','El Ángel','La odisea de los giles','Heroic Losers','Historias del Mundo de Freddy','La tregua','La historia oficial','Camila','El lado oscuro del corazón','La ciénaga','El clan','El ciudadano ilustre','Wakolda','Wild Tales','Valentín','Luna de Avellaneda','XXY','Plata quemada','La noche de los lápices','Garage Olimpo','Kamchatka','Pizza birra faso','Los rubios','Mundo grúa','La mujer sin cabeza','Las viudas de los jueves','Elsa y Fred','Medianeras','El mismo amor la misma lluvia','Yo no se que me han hecho tus ojos','El fútbol o yo','Papeles en el viento','Un cuento chino','La luz incidente','El estudiante','Igualita a mí','Sin hijos','Dos más dos','A boyfriend for my wife','La suerte está echada','Cohen vs Rosi','El robo del siglo','El reino','4x4','Sos mi vida','Casi ángeles','Violetta','Chiquititas','Rebelde Way','Erreway','Verano del 98','Montaña rusa','Son Amores','Amor mío','Muñeca brava','Celeste','Mi Cuñado','Peter Capusotto y sus videos','Peligro sin codificar','Los 7 locos y los Lanzallamas','El puntero','Guapas','Tiempos compulsivos','El jardín de bronce','Apache','La fragilidad de los cuerpos','Signos','Epitafios','Acusados','Separadas','Las estrellas','Soy gitano','Resistiré','El tigre Verón','Son de Fierro','099 Central','Tiempo final','Tumberos','Botineras','Socias','Farsantes','Argentina tierra de amor y venganza','Amar después de amar','Los unicos','Lobo'],
-    objetos: ['Celular','Computadora','Notebook','Televisor','Controles remoto','Auriculares','Libro','Lapicera','Llave','Gafas de sol','Mochila','Billetera','Reloj','Cargador','Botella de agua','Paraguas','Cámara de fotos','Silla','Mesa','Espejo','Disco','Mesa','Auto','Moto','Dildo','Olla','Pala','Billete','Sobre','Paragüas','Puerta','Pelota','Parrilla','Remera','Alfombra','Bandera','Control remoto','Vaso','Piedra','Tijera','Libro','Planta','Maceta','Cartas','Vaso Stanley','Heladera','Gorra','Cama','Semáforo','Micrófono','Radio','Televisor','Computadora','Zapatillas','Silla','Celular','Aspiradora','Collar','Picador','Correa','Alfombra','Candado','Lámpara','Ventilador','Aire acondicionado','Cortina','Almohada','Sábana','Toalla','Ducha','Inodoro','Cepillo de dientes','Pasta de dientes','Jabón','Shampoo','Perfume','Escritorio','Cuadro','Marco de fotos','Foto','Ropero','Perchero','Pantalón','Camisa','Campera','Bufanda','Guantes','Medias','Zapato','Sandalia','Valija','Bolso','Moneda','Tarjeta de crédito','Tarjeta SUBE','Llaverito','Encendedor','Cenicero','Llave inglesa','Martillo','Destornillador','Clavo','Tornillo','Regla','Goma de borrar','Cuaderno','Agenda','Carpeta','Caja','Bolsa de compras','Cesto de basura','Jarrón','Esponja','Trapo','Balde','Escoba','Recogedor','Mate','Bombilla','Termo','Pava eléctrica','Tostadora','Licuadora','Batidora','Procesadora','Juguera','Cafetera','Exprimidor','Abrelatas','Sacacorchos','Rallador','Colador','Espumadera','Cucharon','Pinza','Pala de asado','Tenedor de asado','Cuchillo de asado','Bandeja','Fuente','Bowl','Ensaladera','Salero','Pimentero','Azucarera','Mantequera','Aceitera','Vinagrera','Servilletero','Individual','Salvamanteles','Repasador','Secaplatos','Secador de pelo','Plancha','Tabla de planchar','Tender','Broches','Palangana','Fuentón','Jarra','Botellón','Damajuana','Sifón','Dispenser de agua','Calefón','Estufa','Caloventor','Radiador','Brasero','Anafe','Horno eléctrico','Microondas','Multiprocesadora','Batidora de mano','Minipimer','Sandwichera','Waflera','Freidora','Olla arrocera','Olla express','Cacerola','Sartén antiadherente','Wok','Asadera','Budinera','Molde','Espátula','Cuchara de madera','Palo de amasar','Cortapastas','Manga pastelera','Batidor manual','Timer','Balanza de cocina','Termómetro','Despertador','Teléfono fijo','Contestador','Fax','Calculadora','Reloj de pared','Reloj cucú','Cuadro','Espejito','Portarretrato','Álbum de fotos','Carpeta','Bibliorato','Archivador','Separador','Resaltador','Corrector','Sacapuntas','Compás','Transportador','Escuadra','Cartabón','Papel afiche','Cartulina','Cartón','Pegamento','Plasticola','Voligoma','Cinta adhesiva','Cinta de papel','Chinches','Clips','Abrochadora','Perforadora','Almohadilla'],
-    lugares: ['Buenos Aires','Obelisco','La Bombonera','El Monumental','Mar del Plata','Bariloche','Mendoza','Cataratas del Iguazú','La Patagonia','Córdoba','Rosario','Palermo','Recoleta','París','Roma','Madrid','Nueva York','Tokio','Playa','Montaña','Ranchos','Brandsen','CABA','Mar del Plata','Jamaica','Cuba','Uruguay','Montevideo','Asunción','Paraguay','Bolivia','Chile','Brasil','Rio de Janeiro','Italia','Roma','Milán','Madrid','Barcelona','España','Portugal','Islas Malvinas','Antártida','Asia','Japón','China','La luna','Marte','Abril','El Carmen','Greenville','EEUU','Miami','Canadá','México','Cancún','Sudáfrica','Australia','Segurola y La Habana','Microcentro','Pilar','Luján','Charita','La Boca','Angola','Escocia','Finlandia','Antártida','Berlín','Caribe','Sahara','Egipto','Himalayas','Perú','Machu Pichu','Lejos','Lo de kevito','La reja','Costanera','Puerto Madero','Alemania','Venezuela','Caracas','Grecia','Mykonos','Croacia','La Matanza','Villa 31','Barrio Marítimo','Formosa','Qatar','Pampa y la vía','Quilmes oeste','Pinamar','Cariló','San Telmo','Belgrano','Villa Crespo','Almagro','Caballito','San Isidro','Tigre','Nordelta','La Plata','San Martín de los Andes','El Calafate','Ushuaia','Salta','Jujuy','Tilcara','Purmamarca','Humahuaca','Villa Gesell','Mar de las Pampas','Chapadmalal','Caminito','Casa Rosada','Congreso de la Nación','Plaza de Mayo','Plaza San Martín','Avenida 9 de Julio','Avenida Corrientes','Calle Florida','Galerías Pacífico','Teatro Colón','Café Tortoni','La Recoleta','Cementerio de la Recoleta','Bosques de Palermo','Jardín Botánico','Jardín Zoológico','Planetario','Reserva Ecológica','Parque 3 de Febrero','Parque Lezama','Parque Centenario','Parque Rivadavia','Parque Chacabuco','Parque Avellaneda','Parque Sarmiento','Costanera Norte','Costanera Sur','Dique 1','Dique 2','Dique 3','Dique 4','Caminito','La Vuelta de Rocha','Fundación Proa','Museo Quinquela Martín','Museo Benito Quinquela','Vuelta de Rocha','Puente Alsina','Puente Pueyrredón','Puente de la Mujer','Puente Avellaneda','Autopista 25 de Mayo','Autopista Perito Moreno','Autopista Lugones','General Paz','Panamericana','Acceso Norte','Acceso Oeste','Camino Negro','Camino de Cintura','Ruta 2','Ruta 3','Ruta 5','Ruta 7','Ruta 8','Ruta 9','Ruta 11','Ruta 14','Ruta 40','Tranquera de Fierro','El Talar','Villa Adelina','Boulogne','Martínez','Acassuso','San Fernando','Victoria','Virreyes','Carupá','Rincón de Milberg','Dique Luján','Don Torcuato','General Pacheco','Benavídez','Campo de Mayo','José C. Paz','Tortuguitas','Del Viso','Los Polvorines','Pablo Podestá','Villa Bosch','Caseros','Santos Lugares','Ciudadela','Ramos Mejía','Villa Luzuriaga','San Justo','Isidro Casanova','González Catán','Virrey del Pino','Pontevedra','Tapiales','Aldo Bonzi','Villa Madero','Villa Celina','Ezeiza','Tristán Suárez','Cañuelas','Máximo Paz','Lobos','Navarro','Mercedes','Chivilcoy','Bragado','25 de Mayo','9 de Julio','Pehuajó','Carlos Casares','Bolívar','Olavarría','Azul','Tandil','Balcarce','Necochea','Miramar','Dolores','Chascomús','Lezama','Castelli','Pila','Rauch','Ayacucho','Tapalqué','Las Flores','Saladillo','Roque Pérez','Lobos','General Belgrano','Monte','San Vicente','Cañuelas','Alejandro Korn','Guernica','Burzaco','Adrogué','Longchamps','Glew','José Mármol','Rafael Calzada','Claypole','Bernal','Quilmes','Berazategui','Platanos','Hudson','Pereyra','Villa Elisa','City Bell','Gonnet','Ringuelet','Tolosa','Hernández','Gorina','Los Hornos','San Carlos','Abasto','Melchor Romero','Lisandro Olmos','Etcheverry','El Peligro','Arturo Seguí','Parque Pereyra Iraola'],
-    personalidades: ['Lionel Messi','Diego Maradona','Ricardo Darín','Susana Giménez','Mirtha Legrand','Gustavo Cerati','Charly García','Fito Páez','Tini Stoessel','Bizarrap','Duki','Papa Francisco','Jorge Luis Borges','Shakira','Bad Bunny','Michael Jackson','Barack Obama','Cristina Fernández de Kirchner','Mauricio Macri','Javier Milei','Elon Musk','Donald Trump','Alberto Fernandez','Mario','Lucre','Benja','Kevito','La Garza','El Rifle','Kike Feldman','Nicolas Occhiato','Miguel Granados','Sebastián Wanraich','Guillermo Francella','Ricardo Darín','Caruso Lombardi','Diego Maradona','Chiqui Tapia','Marcelo Polino','Marcelo Tinelli','Mario Pergolini','Steve Jobs','San Martín','Hitler','Vladimir Putin','Pablo Escobar','Pablo Lescano','Mahatma Gandhi','Cleopatra','Freddie Mercury','Shakira','Jorge Rial','Kun Agüero','Guido Kaczka','JM Fangio','Franco Colapinto','Poli Calello','Justin Bieber','Usain Bolt','Natacha Jaitt','Alberto Nisman','Jorge Andri','Florencia de la V','Marcos Galperín','Hugo Moyano','Horacio R. Larreta','Pato Bullrich','Axel Kicillof','Perón','René Favaloro','Marley','Bob Marley','Adrián Suar','JM Listorti','Larry de Clay','Andrés Calamaro','Diego Latorre','Albert Einstein','Ibai','Davoo Xeneixe','Mr Beast','Lamine Yamal','Dibu Martinez','Sasha Gery','La Roca','Vin Diesel','Jordi el niño polla','LeBron James','El Bananero','Marito Baracus','Jeff Epstein','Osama Bin Laden','Julio Grondona','El mago sin dientes','Napoleón','Lionel Scaloni','Diego Capusotto','Enrique Pinti','Tato Bores','Pablo Echarri','Nancy Dupláa','Natalia Oreiro','China Suárez','Valeria Mazza','Juana Viale','Sergio Massa','Ricardo Montaner','Alejandro Sanz','Gustavo Santaolalla','Lali Espósito','Abel Pintos','Sergio Hernández','Facu Campazzo','Mercedes Sosa','Sandro','Palito Ortega','Leo Dan','Raffaella Carrà','Julio Iglesias','José Luis Perales','Emmanuel','Camilo Sesto','Nino Bravo','Joan Manuel Serrat','Joaquín Sabina','Alejandro Lerner','León Gieco','Víctor Heredia','Raúl Porchetto','Moris','Pappo','Luis Alberto Spinetta','Norberto Napolitano','Piero','Sergio Denis','Juan Carlos Baglietto','Silvina Garre','Fabiana Cantilo','Vicentico','Fernando Peña','Antonio Gasalla','Olmedo','Javier Portales','Tristán','Raúl Taibo','Carlín Calvo','Pepe Soriano','Norma Aleandro','Héctor Alterio','Federico Luppi','Luis Brandoni','China Zorrilla','Dora Baret','Graciela Borges','Susú Pecoraro','Andrea Del Boca','Gabriela Sabatini','David Nalbandian','Guillermo Vilas','José Luis Clerc','Paola Suárez','Gisela Dulko','Guillermo Coria','Juan Martín Del Potro','Diego Schwartzman','Horacio Zeballos','Leonardo Mayer','Guido Pella','Federico Delbonis','Carlos Monzón','Nicolino Locche','Pascual Pérez','Víctor Galíndez','Jorge Newbery','Juan Manuel Fangio','Oscar Alfredo Gálvez','Carlos Reutemann','José Froilán González','Oscar Larrauri','Carlos Pairetti','Gastón Mazzacane','Esteban Tuero','Gabriele Tarquini','José María López','Pechito López','Agustín Canapino','Matías Rossi','Mariano Werner','Omar Martínez','Guillermo Ortelli','Ernesto Bessone','Christian Ledesma','Emanuel Moriatis','Emiliano Spataro','Julián Santero','Facundo Ardusso','Leonel Pernía','Bernardo Llaver','Juan Pablo Gianini','Diego Ciantini','Esteban Guerrieri','Néstor Girolami','Matías Muñoz Marchesi','José Manuel Urcera','Facundo Della Motta','Sergio Alaux','Santiago Mangoni'],
-    cocina: ['Asado','Empanadas','Milanesa','Pizza','Fideos con tuco','Ñoquis','Locro','Choripán','Hamburguesa','Ensalada rusa','Helado','Torta','Dulce de leche','Mate','Café','Fernet con coca','Cerveza','Sushi','Cuchillo','Tenedor','Sartén','Heladera','Tequila','Olla','Parrilla','Sartén','Cuchara','Hornalla','Vaso Stanley','Lasagna','Milanesa','Huevo frito','Papa frita','Shawarma','Pescado','Ribs','Pollo','Vermut','Gin tonic','Soda','Pava','Bandeja','Horno','Microondas','Chef','Sopa','Pastelería','Panadería','Pan','Sanguche','Tostado','Café','Leche','Naranja','Banana','Tomate','Lechuga','Cebolla','Pomelo','Menta','Azúcar','Freezer','Restaurant','Bar','Cocktail','Trago','Postre','Desayuno','Almuerzo','Cena','Chocolate','Golosina','Caramelo','Chupetín','Miel','Mate','Jamón','Queso','Albóndiga','Mermelada','Manteca','Aceite de oliva','Vinagre','Sal','Pimienta','Orégano','Harina','Levadura','Salsa de tomate','Mayonesa','Mostaza','Ketchup','Ñoquis de papa','Ravioles','Tarta de jamón y queso','Tarta de verdura','Ensalada mixta','Empanada de carne','Empanada de pollo','Bizcochuelo','Brownie','Galletitas','Facturas','Medialuna','Churro','Flan','Pionono','Picada','Queso rallado','Aceitunas','Provoleta','Milanesa napolitana','Bondiola','Vacío','Matambre','Ensalada de frutas','Licuado','Smoothie','Copa helada','Picadita','Tabla de quesos','Caja de vino','Botella de vino','Pimentero','Choripán','Pancho','Completo','Lomito','Bondiola','Sándwich de miga','Carlitos','Triple de jamón y queso','Tostado mixto','Sándwich de milanesa','Hamburguesa completa','Cheeseburger','Súper pancho','Zapallitos rellenos','Berenjenas al escabeche','Carbonada','Guiso de lentejas','Guiso de arroz','Puchero','Mondongo','Osobuco','Riñones al jerez','Hígado encebollado','Mollejas','Chinchulines','Morcilla','Chorizo colorado','Chorizo parrillero','Salchicha parrillera','Costilla de cerdo','Lechón','Matambrito de cerdo','Cuadril','Bife de chorizo','Bife ancho','Bife angosto','Entraña','Tapa de asado','Asado de tira','Falda','Rosbif','Osobuco','Carnaza','Tortuguita','Peceto','Nalga','Cuadrada','Paleta','Aguja','Marucha','Colita de cuadril','Lomo','Solomillo','Bola de lomo','Pulpa negra','Pulpa blanca','Garrón','Osobuco de novillo','Pata','Caracú','Tuétano','Achuras','Criadillas','Sesos','Lengua','Corazón','Hígado','Riñón','Tripa gorda','Mondongo crudo','Chinchulín','Tripa','Chunchule','Vacío de cordero','Costillar de cordero','Paleta de cordero','Pata de cordero','Pierna de cordero','Cordero patagónico','Chivo','Cabrito','Pollo al horno','Pollo al disco','Pollo a la cerveza','Pollo al verdeo','Suprema de pollo','Pechuga','Pata muslo','Cuarto trasero','Cuarto delantero','Ala'],
-    animales: ['Perro','Gato','Carpincho','Loro','Caballo','Vaca','Oveja','Cerdo','Gallina','Pato','León','Tigre','Elefante','Jirafa','Mono','Pez','Delfín','Ballena','Tortuga','Ratón','Ardilla','Garza','Oso','Jirafa','Buitre','Koala','Cordero','Hormiga','Langosta','Cangrejo','Puma','Águila','Cóndor','Escarabajo','Cobra','Serpiente','Rinoceronte','Flamenco','Tigre','Iguana','Sabueso','Oca','Morsa','Foca','Cabra','Anguila','Mono','Gorila','Lobo','Leopardo','Yacaré','Piojo','Víbora','Alacrán','Escorpión','Cucaracha','Mosca','Mosquito','Tarántula','Liebre','Tiranosaurio','Tiburón','Ballena','Calamar','Estrella de mar','Pepino de mar','Dragón','Unicornio','Burro','Jabalí','Orangután','Pelicano','Tucán','Cuervo','Lagartija','Lagarto','Libélula','Pato','Ganso','Nutria','Zorro','Hipopótamo','Gacela','Camello','Dromedario','Llama','Alpaca','Murciélago','Erizo','Hurón','Mapache','Panda','Pantera','Guepardo','Ciervo','Reno','Faisán','Gallo','Pavo','Pavo real','Pingüino','Golondrina','Paloma','Canario','Loro barranquero','Carancho','Zorrino','Yaguareté','Conejo','Nutria marina','Mula','Cierva','Colibrí','Picaflor','Gato montés','Overo','Tordillo','Zaino','Alazán','Moro','Petiso','Yegua','Potrillo','Potranca','Padrillo','Burrito','Chivo','Cabra montés','Cordera','Carnero','Capón','Becerro','Vaquillona','Novillo','Toro','Buey','Ternero','Ternera','Vaquita','Torito','Novillito','Chancho','Lechón','Marrana','Verraco','Chanchito','Cerda','Gorrión','Hornero','Benteveo','Tero','Calandria','Churrinche','Cardenal','Tijereta','Chiflón','Tordo','Zorzal','Calandria mora','Corbatita','Jilguero','Cabecita negra','Misto','Diuca','Chingolo','Corbatita común','Pirincho','Carancho','Chimango','Halconcito','Aguilucho','Milano','Lechuza','Lechuzón','Buho','Cacuy','Atajacaminos','Gallito de agua','Polla de agua','Garza mora','Garza blanca','Garcita','Hocó','Mirasol','Biguá','Pato barcino','Pato maicero','Pato picazo','Pato sirirí','Cisne de cuello negro','Coscoroba','Flamenco austral','Ñandú','Martineta','Perdiz','Codorniz','Paloma','Torcaza','Torcacita','Yerutí','Cotorra','Catita','Calancate','Loro hablador','Cata','Maracaná','Picaflor común','Picaflor verde','Colibrí gigante','Carpintero','Carpinterito','Trepatroncos','Hornero','Leñatero','Cascarita','Espartillero','Junquero','Pájaro carpintero','Tacuarita','Cachirla','Ratona','Ratonera','Calandria grande','Chaiña','Loica','Pecho colorado','Boyero','Tordo músico','Tordo renegrido','Músico','Celestino','Sietevestidos','Espinero'],
-    musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Ciro y Los Persas','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Pibes Chorros','Los Piojos','La Renga','Radio Aspen','David Guetta','Los Redondos','Miranda','Airbag','Bono','Pappo','Coldplay','Ed Sheeran','Duki','Paulo Londra','Gustavo Cerati','Indio Solari','Andrés Calamaro','Javier Calamaro','Red Hot Chilli Peppers','Nirvana','Kurt Cobain','La Sole','Luck ra','La mona gimenez','Kapanga','Molotov','Alberto Spinetta','El plan de la mariposa','Los cafres','Autenticos Decadentes','Chano','Babasónicos','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Eros Ramazzoti','Reggae','Ópera','Folclore','Cumbia','Tango','Rap','Sumo','Rata Blanca','Los Pimpinela','Rock','Pop latino','Indie','Electrónica','Techno','House','Blues','Jazz','Soul','Funk','Metal','Heavy metal','Punk','Trap argentino','Balada','Bolero','Reggaetón viejo','RKT','Los Fabulosos Cadillars','Los Pericos','Los Auténticos Decadentes','Los Totora','Aerosmith','Guns N Roses','Metallica','AC/DC','Arctic Monkeys','The Strokes','Luis Miguel','Ricardo Arjona','Romeo Santos','Daddy Yankee','Karol G','Nicki Nicole','Trueno','Tiago PZK','Wos','Residente','Calle 13','Jorge Drexler','Fito Páez','Spinetta','Charly García en vivo','Lollapalooza','Recital','Playlist','Auriculares','Divididos','Viejas Locas','Intoxicados','Las Pelotas','Callejeros','Almafuerte','Hermética','Ataque 77','Attaque 77','Los Violadores','2 Minutos','Flema','Mal Momento','Bulldog','Boom Boom Kid','Eterna Inocencia','Shaila','Superuva','Smitten','Shaila','Fun People','Todos Tus Muertos','Bersuit Vergarabat','Tan Biónica','No Te Va Gustar','La Vela Puerca','Cuarteto de Nos','El Otro Yo','Catupecu Machu','Los Tipitos','Kapanga','Los Cafres','Nonpalidece','Dread Mar I','Zona Ganjah','Cultura Profética','Gondwana','Mensajeros Reggae','Los Pericos','Resistencia Suburbana','Alika','Fidel Nadal','Morbo y Mambo','El Bordo','Las Pastillas del Abuelo','La Franela','La Beriso','Ciro y los Persas','Estelares','Los Rodríguez','Fabiana Cantilo','Vicentico','Onda Vaga','Conociendo Rusia','Bandalos Chinos','Él Mató a un Policía Motorizado','Mi Amigo Invencible','1915','Los Espíritus','Usted Señalemelo','Las Ligas Menores','Still Lover','Lucy Patané','Marilina Bertoldi','Miss Bolivia','Juana Molina','Kevin Johansen','Lisandro Aristimuño','Dante Spinetta','Illya Kuryaki','Emmanuel Horvilleur','Massacre','V8','Horcas','Malón','Tren Loco','Logos','Lethal','A.N.I.M.A.L.','Alakran','JAF','Riff','Matanza','Carajo','Asspera','La Renga','Logos','A.N.I.M.A.L.','Alakran','Horcas','Malón','Tren Loco','Aonikenk','Razones Concientes','Destrucción','Hermética','Almafuerte','JAF','Kamikaze','V8','Riff','Pappo Blues','Pescado Rabioso','Invisible','Aquelarre','Arco Iris','Billy Bond y la Pesada','Color Humano','Crucis','Espíritu','La Máquina de Hacer Pájaros','Punch','Vox Dei','PorSuiGieco','Serú Girán','Manal','Almendra','Los Gatos'],
-    tecnologia: ['WhatsApp','Instagram','TikTok','Netflix','Spotify','YouTube','Google','Correo electrónico','WiFi','Bluetooth','Notebook','Tablet','Smart TV','Consola de videojuegos','PlayStation','Xbox','Mouse','Teclado','Pendrive','Nube','Criptomoneda','Hacker','Bitcoin','Ethereum','Internet','Nintendo','Gameboy','Atari','Láser','Iphone','Android','Robot','ChatGPT','Radio','Televisor','Radar','Satélite','Wifi','Wikipedia','Fibertel','Click','Excel','Mail','Videojuego','Sitio web','Celular inteligente','Cámara digital','Auriculares inalámbricos','Parlante bluetooth','Parlante portátil','Impresora','Escáner','Monitor','Router','Módem','Cable HDMI','Cable USB','Cargador de celular','Batería externa','Pantalla táctil','Aplicación','App','Red social','Mensaje de voz','Videollamada','Selfie','Sticker','Emoticón','GIF','Historia de Instagram','Estado de WhatsApp','Filtro de cámara','Lente de cámara','Tarjeta SIM','Chip del celular','Memoria externa','Disco rígido','Disco sólido','Pendrive tipo C','Carpeta compartida','Archivo adjunto','Documento de Word','Hoja de cálculo','Presentación de PowerPoint','Carpeta en la nube','Contraseña','Usuario','Código QR','Código de barras','Ubicación en tiempo real','GPS','Mapa online','Buscador','Navegador de internet','Pestaña del navegador','Ventana emergente','Notificación','Alarma del celular','Calendario del celular','Lista de contactos','Grupo de WhatsApp','Reunión por Zoom','Llamada de Teams','Reproductor de música','Podcast','Auricular con micrófono','Joystick','Mando de consola','Streaming','Plataforma digital','Billetera virtual','Mercado Pago','Home banking','Banco online','Compra online','Carrito de compras','Sube virtual','QR para pagar','Turno online','Chat en vivo','Servicio técnico','Facebook','Twitter','X','Threads','LinkedIn','Pinterest','Reddit','Tumblr','Snapchat','Telegram','Signal','Discord','Twitch','Kick','Steam','Epic Games','Origin','Ubisoft Connect','Battle.net','GOG','Riot Games','Roblox','Minecraft','Fortnite','League of Legends','Counter Strike','Valorant','GTA','Call of Duty','FIFA','PES','eFootball','F1','Gran Turismo','Rocket League','Fall Guys','Among Us','PUBG','Free Fire','Apex Legends','Overwatch','Dota','Starcraft','Age of Empires','Civilization','The Sims','Candy Crush','Clash Royale','Clash of Clans','Brawl Stars','Pokémon GO','Genshin Impact','Zelda','Mario Bros','Mario Kart','Metroid','Donkey Kong','Sonic','Street Fighter','Mortal Kombat','Tekken','Soul Calibur','Smash Bros','Halo','Gears of War','Uncharted','The Last of Us','God of War','Spider-Man','Batman Arkham','Assassins Creed','Far Cry','Watch Dogs','Resident Evil','Silent Hill','Dead Space','Doom','Wolfenstein','Quake','Half-Life','Portal','Left 4 Dead','Team Fortress','Skyrim','Fallout','The Witcher','Dark Souls','Elden Ring','Bloodborne','Sekiro','Hollow Knight','Celeste','Cuphead','Undertale','Stardew Valley','Terraria','Subnautica','No Mans Sky','Elite Dangerous','Microsoft Flight Simulator','Euro Truck Simulator','Cities Skylines','Planet Coaster','Roller Coaster Tycoon','Zoo Tycoon','Jurassic World Evolution','The Sims 4']
-    };
-
-    let voteTimer = null;
+    let timerInterval = null;
     let playerCounter = 0;
 
-    // Funciones de guardado y carga
+    // Inicialización
+    window.onload = function() {
+      checkForSavedGame();
+    };
+
+    function checkForSavedGame() {
+      const saved = localStorage.getItem('impostorGame');
+      if (saved) {
+        document.getElementById('resumeBtn').style.display = 'block';
+      }
+    }
+
     function saveGame() {
       try {
         gameState.currentScreen = getCurrentScreen();
@@ -986,12 +715,6 @@
         console.error('Error cargando juego:', e);
       }
       return false;
-    }
-
-    function checkForSavedGame() {
-      if (localStorage.getItem('impostorGame')) {
-        document.getElementById('resumeBtn').style.display = 'block';
-      }
     }
 
     function getCurrentScreen() {
@@ -1033,17 +756,6 @@
       showScreen('screen-setup');
       initializePlayers();
     }
-
-    function backToHome() {
-      saveGame();
-      showScreen('screen-home');
-      checkForSavedGame();
-    }
-
-    // Inicialización
-    window.onload = function() {
-      checkForSavedGame();
-    };
 
     // Inicializar lista de jugadores
     function initializePlayers() {
@@ -1186,7 +898,7 @@
       document.getElementById('round-indicator-result').textContent = text;
     }
 
-    // Iniciar juego
+ // Iniciar juego
     function startGame(event) {
       event.preventDefault();
       
@@ -1591,6 +1303,7 @@
       updateImpostorOptions();
       updateVotingOptions();
     });
+  
   </script>
 </body>
 </html>
