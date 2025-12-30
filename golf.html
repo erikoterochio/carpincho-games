@@ -232,6 +232,16 @@
             color: #2ecc71;
         }
 
+        .info-banner {
+            background: #fff3cd;
+            padding: 15px;
+            margin: 20px 40px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            color: #856404;
+            font-size: 0.9em;
+        }
+
         @media (max-width: 768px) {
             .search-box {
                 flex-direction: column;
@@ -250,6 +260,11 @@
         <div class="header">
             <h1>🏌️ Consulta de Handicap</h1>
             <p>Golf Argentina - Sistema Nacional</p>
+        </div>
+
+        <div class="info-banner">
+            ℹ️ <strong>Nota:</strong> Esta app usa un proxy para evitar restricciones CORS. 
+            Si el proxy está lento, espera unos segundos.
         </div>
 
         <div class="search-section">
@@ -343,7 +358,11 @@
             document.getElementById('loading').classList.add('active');
 
             try {
-                const response = await fetch('https://www.vistagolf.com.ar/handicap/FiltroArg.asp', {
+                // Usar proxy CORS
+                const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                const targetUrl = encodeURIComponent('https://www.vistagolf.com.ar/handicap/FiltroArg.asp');
+                
+                const response = await fetch(proxyUrl + targetUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -376,7 +395,6 @@
                         const textoHcp = celdas[2].textContent.trim();
                         const textoClub = celdas[3].textContent.trim();
 
-                        // Verificar que no sean headers
                         if (textoMat && textoMat !== 'Matrícula' && 
                             textoHcp && textoHcp !== 'HCP INDEX' &&
                             !isNaN(parseFloat(textoHcp.replace(',', '.')))) {
