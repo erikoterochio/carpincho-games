@@ -408,4 +408,530 @@
           <div class="winner-card">
             <div class="winner-emoji">🏆</div>
             <div class="winner-title" id="winnerName">¡Equipo Ganador!</div>
-            <div class="winner-subtitle">¡Felicit
+            <div class="winner-subtitle">¡Felicitaciones!</div>
+          </div>
+
+          <div class="final-scores">
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam1Name">Equipo 1</span>
+              <span class="final-score-points" id="finalTeam1Points">0</span>
+            </div>
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam2Name">Equipo 2</span>
+              <span class="final-score-points" id="finalTeam2Points">0</span>
+            </div>
+          </div>
+
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToSetup()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="goToHome()">Volver al inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <span>Carpincho Games · 🎯 Tabú</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Base de datos de palabras (250+)
+    const wordDatabase = [
+      { word: "MATE", forbidden: ["YERBA", "BOMBILLA", "CALABAZA", "AMARGO", "ARGENTINO"] },
+      { word: "ASADO", forbidden: ["CARNE", "PARRILLA", "FUEGO", "CARBÓN", "DOMINGO"] },
+      { word: "TANGO", forbidden: ["BAILE", "ARGENTINA", "GARDEL", "MÚSICA", "BANDONEÓN"] },
+      { word: "FÚTBOL", forbidden: ["PELOTA", "GOL", "CANCHA", "DEPORTE", "EQUIPO"] },
+      { word: "PIZZA", forbidden: ["MASA", "QUESO", "HORNO", "SALSA", "ITALIANA"] },
+      { word: "CELULAR", forbidden: ["TELÉFONO", "WHATSAPP", "PANTALLA", "LLAMAR", "MÓVIL"] },
+      { word: "PERRO", forbidden: ["ANIMAL", "MASCOTA", "LADRAR", "CACHORRO", "CUATRO"] },
+      { word: "PELÍCULA", forbidden: ["CINE", "ACTOR", "DIRECTOR", "NETFLIX", "VER"] },
+      { word: "PLAYA", forbidden: ["MAR", "ARENA", "SOL", "VERANO", "AGUA"] },
+      { word: "CAMA", forbidden: ["DORMIR", "COLCHÓN", "SÁBANAS", "ALMOHADA", "MUEBLE"] },
+      
+      { word: "MILANESA", forbidden: ["CARNE", "EMPANADA", "FRITA", "NAPOLITANA", "REBOZADA"] },
+      { word: "CHORIPÁN", forbidden: ["CHORIZO", "PAN", "ASADO", "CHIMICHURRI", "SÁNDWICH"] },
+      { word: "EMPANADA", forbidden: ["MASA", "RELLENO", "HORNO", "CARNE", "FRITA"] },
+      { word: "DULCE DE LECHE", forbidden: ["LECHE", "POSTRE", "CARAMELO", "AZÚCAR", "ARGENTINO"] },
+      { word: "ALFAJOR", forbidden: ["CHOCOLATE", "DULCE", "POSTRE", "MAICENA", "GOLOSINA"] },
+      
+      { word: "BONDI", forbidden: ["COLECTIVO", "TRANSPORTE", "PARAR", "BOLETO", "SUBIR"] },
+      { word: "SUBTE", forbidden: ["METRO", "TREN", "SUBTERRÁNEO", "TRANSPORTE", "BAJO"] },
+      { word: "TAXI", forbidden: ["AUTO", "CONDUCTOR", "VIAJE", "PAGAR", "AMARILLO"] },
+      { word: "REMIS", forbidden: ["AUTO", "TAXI", "CONDUCTOR", "VIAJE", "LLAMAR"] },
+      { word: "BICICLETA", forbidden: ["PEDAL", "RUEDA", "ANDAR", "MANUBRIO", "CADENA"] },
+      
+      { word: "COMPUTADORA", forbidden: ["PANTALLA", "TECLADO", "MOUSE", "ESCRITORIO", "PC"] },
+      { word: "TELEVISOR", forbidden: ["PANTALLA", "CANAL", "VER", "CONTROL", "PROGRAMA"] },
+      { word: "HELADERA", forbidden: ["FRÍO", "COMIDA", "FREEZER", "COCINA", "GUARDAR"] },
+      { word: "LAVARROPAS", forbidden: ["ROPA", "LAVAR", "JABÓN", "TAMBOR", "ELECTRODOMÉSTICO"] },
+      { word: "MICROONDAS", forbidden: ["CALENTAR", "COCINAR", "HORNO", "ELECTRODOMÉSTICO", "RÁPIDO"] },
+      
+      { word: "MÉDICO", forbidden: ["DOCTOR", "HOSPITAL", "ENFERMO", "CURAR", "CONSULTA"] },
+      { word: "MAESTRO", forbidden: ["PROFESOR", "ESCUELA", "ENSEÑAR", "ALUMNO", "CLASE"] },
+      { word: "POLICÍA", forbidden: ["UNIFORMADO", "LEY", "ORDEN", "ARRESTAR", "PATRULLA"] },
+      { word: "BOMBERO", forbidden: ["FUEGO", "INCENDIO", "APAGAR", "CAMIÓN", "ROJO"] },
+      { word: "CARTERO", forbidden: ["CORREO", "CARTA", "BUZÓN", "ENTREGAR", "REPARTIR"] },
+      
+      { word: "PRIMAVERA", forbidden: ["ESTACIÓN", "FLORES", "SEPTIEMBRE", "CLIMA", "JARDÍN"] },
+      { word: "VERANO", forbidden: ["CALOR", "ESTACIÓN", "PLAYA", "DICIEMBRE", "ENERO"] },
+      { word: "OTOÑO", forbidden: ["ESTACIÓN", "HOJAS", "MARZO", "VIENTO", "CAER"] },
+      { word: "INVIERNO", forbidden: ["FRÍO", "ESTACIÓN", "NIEVE", "JUNIO", "JULIO"] },
+      { word: "LLUVIA", forbidden: ["AGUA", "PARAGUAS", "MOJADO", "NUBE", "CAER"] },
+      
+      { word: "CUMPLEAÑOS", forbidden: ["TORTA", "VELAS", "REGALO", "FESTEJAR", "EDAD"] },
+      { word: "CASAMIENTO", forbidden: ["BODA", "NOVIOS", "IGLESIA", "ANILLO", "FIESTA"] },
+      { word: "NAVIDAD", forbidden: ["DICIEMBRE", "ÁRBOL", "PAPA NOEL", "REGALOS", "FIESTA"] },
+      { word: "AÑO NUEVO", forbidden: ["ENERO", "BRINDIS", "FIESTA", "FUEGOS", "MEDIANOCHE"] },
+      { word: "CARNAVAL", forbidden: ["FIESTA", "DISFRAZ", "MÚSICA", "FEBRERO", "COMPARSA"] },
+      
+      { word: "GUITARRA", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "TOCAR", "SONIDO"] },
+      { word: "PIANO", forbidden: ["INSTRUMENTO", "TECLAS", "MÚSICA", "TOCAR", "BLANCO"] },
+      { word: "BATERÍA", forbidden: ["INSTRUMENTO", "TAMBOR", "MÚSICA", "GOLPEAR", "RITMO"] },
+      { word: "FLAUTA", forbidden: ["INSTRUMENTO", "SOPLAR", "MÚSICA", "SONIDO", "TUBO"] },
+      { word: "VIOLÍN", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "ARCO", "SONIDO"] },
+      
+      { word: "BANANA", forbidden: ["FRUTA", "AMARILLO", "MONO", "COMER", "CÁSCARA"] },
+      { word: "MANZANA", forbidden: ["FRUTA", "ROJA", "COMER", "VERDE", "ÁRBOL"] },
+      { word: "NARANJA", forbidden: ["FRUTA", "COLOR", "JUGO", "CÍTRICO", "VITAMINA"] },
+      { word: "SANDÍA", forbidden: ["FRUTA", "ROJA", "GRANDE", "SEMILLAS", "VERANO"] },
+      { word: "UVA", forbidden: ["FRUTA", "VINO", "RACIMO", "PEQUEÑA", "MORADA"] },
+      
+      { word: "CEBOLLA", forbidden: ["VERDURA", "LLORAR", "CORTAR", "COCINAR", "BLANCA"] },
+      { word: "TOMATE", forbidden: ["VERDURA", "ROJO", "SALSA", "ENSALADA", "REDONDO"] },
+      { word: "LECHUGA", forbidden: ["VERDURA", "VERDE", "ENSALADA", "HOJAS", "FRESCA"] },
+      { word: "PAPA", forbidden: ["VERDURA", "FRITAS", "PURÉ", "TIERRA", "REDONDA"] },
+      { word: "ZANAHORIA", forbidden: ["VERDURA", "NARANJA", "CONEJO", "LARGA", "RAÍZ"] },
+      
+      { word: "CAFÉ", forbidden: ["BEBIDA", "NEGRO", "CAFEÍNA", "TAZA", "MAÑANA"] },
+      { word: "CERVEZA", forbidden: ["BEBIDA", "ALCOHOL", "ESPUMA", "BAR", "LATA"] },
+      { word: "VINO", forbidden: ["BEBIDA", "ALCOHOL", "UVA", "TINTO", "COPA"] },
+      { word: "AGUA", forbidden: ["BEBIDA", "LÍQUIDO", "SED", "TRANSPARENTE", "BEBER"] },
+      { word: "GASEOSA", forbidden: ["BEBIDA", "COCA", "BURBUJAS", "DULCE", "BOTELLA"] },
+      
+      { word: "PANTALÓN", forbidden: ["ROPA", "PIERNAS", "JEAN", "VESTIR", "LARGO"] },
+      { word: "REMERA", forbidden: ["ROPA", "MANGA", "VESTIR", "CAMISETA", "TORSO"] },
+      { word: "ZAPATILLAS", forbidden: ["CALZADO", "PIES", "CORRER", "DEPORTIVO", "CORDONES"] },
+      { word: "CAMPERA", forbidden: ["ROPA", "ABRIGO", "FRÍO", "MANGAS", "VESTIR"] },
+      { word: "GORRA", forbidden: ["ACCESORIO", "CABEZA", "VISERA", "SOL", "BÉISBOL"] },
+      
+      { word: "LIBRO", forbidden: ["LEER", "PÁGINAS", "HISTORIA", "TEXTO", "AUTOR"] },
+      { word: "LÁPIZ", forbidden: ["ESCRIBIR", "GRAFITO", "PUNTA", "DIBUJAR", "MADERA"] },
+      { word: "CUADERNO", forbidden: ["ESCRIBIR", "HOJAS", "ESPIRAL", "ESCUELA", "ANOTACIONES"] },
+      { word: "MOCHILA", forbidden: ["BOLSO", "ESPALDA", "CARGAR", "ESCUELA", "GUARDAR"] },
+      { word: "PIZARRA", forbidden: ["ESCRIBIR", "TIZA", "AULA", "BORRAR", "VERDE"] },
+      
+      { word: "RELOJ", forbidden: ["HORA", "TIEMPO", "MUÑECA", "AGUJAS", "PULSERA"] },
+      { word: "ANTEOJOS", forbidden: ["VER", "LENTES", "OJOS", "VISTA", "MARCO"] },
+      { word: "BILLETERA", forbidden: ["DINERO", "BOLSILLO", "TARJETAS", "DOCUMENTOS", "CUERO"] },
+      { word: "PARAGUAS", forbidden: ["LLUVIA", "MOJARSE", "ABRIR", "AGUA", "PROTEGER"] },
+      { word: "LLAVE", forbidden: ["PUERTA", "ABRIR", "CERRADURA", "METAL", "CERRAR"] },
+      
+      { word: "SILLA", forbidden: ["SENTARSE", "MUEBLE", "PATAS", "RESPALDO", "ASIENTO"] },
+      { word: "MESA", forbidden: ["MUEBLE", "COMER", "SUPERFICIE", "PATAS", "APOYO"] },
+      { word: "SILLÓN", forbidden: ["MUEBLE", "SENTARSE", "CÓMODO", "LIVING", "GRANDE"] },
+      { word: "VENTANA", forbidden: ["VIDRIO", "ABRIR", "LUZ", "AFUERA", "MARCO"] },
+      { word: "PUERTA", forbidden: ["ENTRAR", "ABRIR", "CERRAR", "SALIR", "MADERA"] },
+      
+      { word: "AVIÓN", forbidden: ["VOLAR", "CIELO", "AEROPUERTO", "PASAJEROS", "ALAS"] },
+      { word: "TREN", forbidden: ["VÍAS", "ESTACIÓN", "TRANSPORTE", "PASAJEROS", "VAGÓN"] },
+      { word: "BARCO", forbidden: ["MAR", "AGUA", "NAVEGAR", "PUERTO", "VELA"] },
+      { word: "MOTO", forbidden: ["DOS", "RUEDAS", "MOTOR", "CASCO", "ANDAR"] },
+      { word: "CAMIÓN", forbidden: ["GRANDE", "CARGA", "TRANSPORTE", "RUEDAS", "MERCADERÍA"] },
+      
+      { word: "HOSPITAL", forbidden: ["MÉDICO", "ENFERMO", "CURAR", "SALUD", "PACIENTE"] },
+      { word: "ESCUELA", forbidden: ["ESTUDIAR", "MAESTRO", "ALUMNO", "APRENDER", "AULA"] },
+      { word: "SUPERMERCADO", forbidden: ["COMPRAR", "COMIDA", "PRODUCTOS", "CARRITO", "GÓNDOLA"] },
+      { word: "BANCO", forbidden: ["DINERO", "PLATA", "CUENTA", "CAJERO", "PRÉSTAMO"] },
+      { word: "RESTAURANTE", forbidden: ["COMER", "COMIDA", "MENÚ", "MESERO", "PLATOS"] },
+      
+      { word: "PAÍS", forbidden: ["NACIÓN", "BANDERA", "TERRITORIO", "GOBIERNO", "FRONTERA"] },
+      { word: "CIUDAD", forbidden: ["PUEBLO", "URBANO", "EDIFICIOS", "CALLES", "GENTE"] },
+      { word: "BARRIO", forbidden: ["CIUDAD", "ZONA", "VECINO", "CASA", "LUGAR"] },
+      { word: "PARQUE", forbidden: ["VERDE", "JUEGOS", "ÁRBOLES", "PLAZA", "CÉSPED"] },
+      { word: "PLAZA", forbidden: ["PARQUE", "BANCO", "CENTRO", "MONUMENTO", "PALOMAS"] },
+      
+      { word: "SOL", forbidden: ["ASTRO", "LUZ", "DÍA", "CALOR", "AMARILLO"] },
+      { word: "LUNA", forbidden: ["SATÉLITE", "NOCHE", "BRILLA", "CIELO", "REDONDA"] },
+      { word: "ESTRELLA", forbidden: ["CIELO", "NOCHE", "BRILLA", "PUNTA", "LUZ"] },
+      { word: "NUBE", forbidden: ["CIELO", "AGUA", "BLANCA", "LLUVIA", "FLOTAR"] },
+      { word: "ARCOÍRIS", forbidden: ["COLORES", "LLUVIA", "SOL", "CIELO", "SIETE"] },
+      
+      { word: "MONTAÑA", forbidden: ["ALTO", "ESCALADA", "NIEVE", "PICO", "CORDILLERA"] },
+      { word: "RÍO", forbidden: ["AGUA", "CORRIENTE", "PECES", "PUENTE", "CAUDAL"] },
+      { word: "LAGO", forbidden: ["AGUA", "QUIETA", "PECES", "GRANDE", "REDONDO"] },
+      { word: "DESIERTO", forbidden: ["ARENA", "CALOR", "SECO", "CACTUS", "CAMELLO"] },
+      { word: "SELVA", forbidden: ["ÁRBOLES", "VERDE", "ANIMALES", "HUMEDAD", "PLANTAS"] },
+      
+      { word: "LEÓN", forbidden: ["ANIMAL", "MELENA", "RUGIR", "ÁFRICA", "REY"] },
+      { word: "ELEFANTE", forbidden: ["ANIMAL", "TROMPA", "GRANDE", "GRIS", "COLMILLOS"] },
+      { word: "JIRAFA", forbidden: ["ANIMAL", "CUELLO", "ALTA", "MANCHAS", "ÁFRICA"] },
+      { word: "MONO", forbidden: ["ANIMAL", "BANANA", "ÁRBOL", "COLA", "CHIMPANCÉ"] },
+      { word: "VACA", forbidden: ["ANIMAL", "LECHE", "CAMPO", "MUGIR", "CUERNOS"] },
+      
+      { word: "GATO", forbidden: ["ANIMAL", "MASCOTA", "MAULLAR", "BIGOTES", "PELUDO"] },
+      { word: "PÁJARO", forbidden: ["ANIMAL", "VOLAR", "ALAS", "CANTAR", "PICO"] },
+      { word: "PEZ", forbidden: ["ANIMAL", "AGUA", "NADAR", "ESCAMAS", "ALETAS"] },
+      { word: "ARAÑA", forbidden: ["INSECTO", "TELARAÑA", "OCHO", "PATAS", "VENENOSA"] },
+      { word: "HORMIGA", forbidden: ["INSECTO", "PEQUEÑA", "TRABAJADORA", "COLONIA", "ROJA"] },
+      
+      { word: "FLOR", forbidden: ["PLANTA", "PÉTALOS", "ROSA", "JARDÍN", "OLOR"] },
+      { word: "ÁRBOL", forbidden: ["PLANTA", "TRONCO", "HOJAS", "GRANDE", "MADERA"] },
+      { word: "CÉSPED", forbidden: ["PASTO", "VERDE", "CORTAR", "JARDÍN", "CRECER"] },
+      { word: "SEMILLA", forbidden: ["PLANTA", "PEQUEÑA", "GERMINAR", "TIERRA", "CRECER"] },
+      { word: "RAÍZ", forbidden: ["PLANTA", "TIERRA", "ABAJO", "ALIMENTAR", "ENTERRADA"] },
+      
+      { word: "MARTILLO", forbidden: ["HERRAMIENTA", "CLAVO", "GOLPEAR", "MADERA", "METAL"] },
+      { word: "DESTORNILLADOR", forbidden: ["HERRAMIENTA", "TORNILLO", "GIRAR", "PUNTA", "ATORNILLAR"] },
+      { word: "SIERRA", forbidden: ["HERRAMIENTA", "CORTAR", "MADERA", "DIENTES", "FILO"] },
+      { word: "PINZA", forbidden: ["HERRAMIENTA", "AGARRAR", "SUJETAR", "METAL", "ELECTRICIDAD"] },
+      { word: "TIJERA", forbidden: ["CORTAR", "PAPEL", "FILO", "DOS", "HOJAS"] },
+      
+      { word: "PINTURA", forbidden: ["COLOR", "PINTAR", "CUADRO", "PINCEL", "ARTE"] },
+      { word: "DIBUJO", forbidden: ["LÁPIZ", "PAPEL", "LÍNEA", "IMAGEN", "ARTE"] },
+      { word: "MÚSICA", forbidden: ["SONIDO", "CANCIÓN", "ESCUCHAR", "INSTRUMENTO", "RITMO"] },
+      { word: "DANZA", forbidden: ["BAILAR", "MÚSICA", "RITMO", "MOVIMIENTO", "CUERPO"] },
+      { word: "TEATRO", forbidden: ["OBRA", "ACTOR", "ESCENARIO", "PÚBLICO", "REPRESENTACIÓN"] },
+      
+      { word: "BOXEO", forbidden: ["DEPORTE", "PELEA", "GUANTES", "RING", "GOLPEAR"] },
+      { word: "NATACIÓN", forbidden: ["DEPORTE", "AGUA", "NADAR", "PILETA", "BRAZADA"] },
+      { word: "TENIS", forbidden: ["DEPORTE", "RAQUETA", "PELOTA", "CANCHA", "RED"] },
+      { word: "BÁSQUET", forbidden: ["DEPORTE", "ARO", "PELOTA", "ENCESTE", "CINCO"] },
+      { word: "VOLEY", forbidden: ["DEPORTE", "RED", "PELOTA", "SACAR", "EQUIPO"] },
+      
+      { word: "RISA", forbidden: ["REÍR", "ALEGRE", "BOCA", "GRACIA", "CARCAJADA"] },
+      { word: "LLANTO", forbidden: ["LLORAR", "LÁGRIMAS", "TRISTE", "SOLLOZAR", "PENA"] },
+      { word: "ENOJO", forbidden: ["RABIA", "BRONCA", "MOLESTO", "FURIA", "ENFADADO"] },
+      { word: "MIEDO", forbidden: ["SUSTO", "TEMOR", "ASUSTAR", "TERROR", "PELIGRO"] },
+      { word: "AMOR", forbidden: ["QUERER", "SENTIMIENTO", "CORAZÓN", "PAREJA", "AMAR"] },
+      
+      { word: "DORMIR", forbidden: ["SUEÑO", "CAMA", "NOCHE", "DESCANSAR", "OJOS"] },
+      { word: "COMER", forbidden: ["ALIMENTO", "BOCA", "HAMBRE", "MASTICAR", "TRAGAR"] },
+      { word: "CAMINAR", forbidden: ["ANDAR", "PIES", "PASEO", "PIERNAS", "MOVIMIENTO"] },
+      { word: "CORRER", forbidden: ["RÁPIDO", "TROTAR", "CARRERA", "VELOCIDAD", "PIERNAS"] },
+      { word: "SALTAR", forbidden: ["BRINCO", "ARRIBA", "ALTURA", "PIES", "ELEVARSE"] },
+      
+      { word: "HABLAR", forbidden: ["DECIR", "PALABRA", "BOCA", "CONVERSAR", "VOZ"] },
+      { word: "ESCUCHAR", forbidden: ["OÍR", "OÍDO", "SONIDO", "ATENDER", "ESCUCHA"] },
+      { word: "MIRAR", forbidden: ["VER", "OJOS", "OBSERVAR", "VISTA", "CONTEMPLAR"] },
+      { word: "TOCAR", forbidden: ["MANO", "SENTIR", "TACTO", "PALPAR", "PIEL"] },
+      { word: "OLER", forbidden: ["OLFATO", "NARIZ", "AROMA", "PERFUME", "SENTIR"] },
+      
+      { word: "CALIENTE", forbidden: ["TEMPERATURA", "FUEGO", "QUEMAR", "ARDIENTE", "FRÍO"] },
+      { word: "FRÍO", forbidden: ["TEMPERATURA", "HIELO", "CONGELADO", "HELADO", "CALIENTE"] },
+      { word: "GRANDE", forbidden: ["TAMAÑO", "ENORME", "GIGANTE", "PEQUEÑO", "AMPLIO"] },
+      { word: "PEQUEÑO", forbidden: ["TAMAÑO", "CHICO", "DIMINUTO", "GRANDE", "REDUCIDO"] },
+      { word: "RÁPIDO", forbidden: ["VELOCIDAD", "VELOZ", "APURADO", "LENTO", "PRONTO"] },
+      
+      { word: "ARRIBA", forbidden: ["ALTO", "CIELO", "SUBIR", "ABAJO", "SUPERIOR"] },
+      { word: "ABAJO", forbidden: ["BAJO", "SUELO", "BAJAR", "ARRIBA", "INFERIOR"] },
+      { word: "ADELANTE", forbidden: ["FRENTE", "DELANTE", "AVANZAR", "ATRÁS", "PRIMERO"] },
+      { word: "ATRÁS", forbidden: ["DETRÁS", "RETROCEDER", "ADELANTE", "POSTERIOR", "ANTES"] },
+      { word: "ADENTRO", forbidden: ["DENTRO", "INTERIOR", "ENTRAR", "AFUERA", "CASA"] },
+      
+      { word: "DOMINGO", forbidden: ["DÍA", "SEMANA", "DESCANSO", "FIN", "ASADO"] },
+      { word: "LUNES", forbidden: ["DÍA", "SEMANA", "PRIMERO", "TRABAJO", "ESCUELA"] },
+      { word: "ENERO", forbidden: ["MES", "PRIMERO", "VERANO", "AÑO", "NUEVO"] },
+      { word: "DICIEMBRE", forbidden: ["MES", "ÚLTIMO", "NAVIDAD", "AÑO", "VERANO"] },
+      { word: "MAÑANA", forbidden: ["DÍA", "SOL", "DESPERTAR", "TEMPRANO", "TARDE"] },
+      
+      { word: "ROJO", forbidden: ["COLOR", "SANGRE", "FUEGO", "TOMATE", "VERDE"] },
+      { word: "AZUL", forbidden: ["COLOR", "CIELO", "MAR", "CELESTE", "VERDE"] },
+      { word: "VERDE", forbidden: ["COLOR", "PASTO", "ÁRBOL", "AZUL", "ROJO"] },
+      { word: "AMARILLO", forbidden: ["COLOR", "SOL", "BANANA", "PATITO", "VERDE"] },
+      { word: "NEGRO", forbidden: ["COLOR", "OSCURO", "NOCHE", "CARBÓN", "BLANCO"] },
+      
+      { word: "UNO", forbidden: ["NÚMERO", "PRIMERO", "ÚNICO", "SOLO", "DOS"] },
+      { word: "DOS", forbidden: ["NÚMERO", "PAR", "SEGUNDO", "UNO", "TRES"] },
+      { word: "TRES", forbidden: ["NÚMERO", "TERCERO", "DOS", "CUATRO", "TRÍO"] },
+      { word: "DIEZ", forbidden: ["NÚMERO", "DEDOS", "CIFRA", "ONCE", "NUEVE"] },
+      { word: "CIEN", forbidden: ["NÚMERO", "CIENTO", "MIL", "CIFRA", "GRANDE"] },
+      
+      { word: "CÍRCULO", forbidden: ["FORMA", "REDONDO", "RUEDA", "GEOMETRÍA", "CURVA"] },
+      { word: "CUADRADO", forbidden: ["FORMA", "CUATRO", "LADOS", "GEOMETRÍA", "ÁNGULOS"] },
+      { word: "TRIÁNGULO", forbidden: ["FORMA", "TRES", "LADOS", "PICO", "GEOMETRÍA"] },
+      { word: "RECTÁNGULO", forbidden: ["FORMA", "CUADRADO", "LARGO", "LADOS", "GEOMETRÍA"] },
+      { word: "ESTRELLA", forbidden: ["FORMA", "PUNTAS", "CIELO", "CINCO", "BRILLA"] },
+      
+      { word: "PAPA NOEL", forbidden: ["NAVIDAD", "REGALOS", "BARBA", "ROJO", "DICIEMBRE"] },
+      { word: "RATÓN PÉREZ", forbidden: ["DIENTE", "DINERO", "ALMOHADA", "NIÑO", "RATÓN"] },
+      { word: "SUPERHÉROE", forbidden: ["CAPA", "PODER", "SALVAR", "VOLAR", "FUERTE"] },
+      { word: "PRINCESA", forbidden: ["CASTILLO", "CORONA", "PRÍNCIPE", "VESTIDO", "REINA"] },
+      { word: "DINOSAURIO", forbidden: ["EXTINTO", "ENORME", "ANTIGUO", "REPTIL", "TIRANOSAURIO"] },
+      
+      { word: "COCINAR", forbidden: ["COMIDA", "COCINA", "CHEF", "PREPARAR", "HORNO"] },
+      { word: "LIMPIAR", forbidden: ["SUCIO", "TRAPO", "LAVAR", "ORDENAR", "ESCOBA"] },
+      { word: "ESTUDIAR", forbidden: ["LIBRO", "APRENDER", "EXAMEN", "ESCUELA", "LEER"] },
+      { word: "TRABAJAR", forbidden: ["EMPLEO", "OFICINA", "JEFE", "SUELDO", "LABOR"] },
+      { word: "JUGAR", forbidden: ["DIVERSIÓN", "JUEGO", "ENTRETENIMIENTO", "NIÑO", "PELOTA"] }
+    ];
+
+    let gameState = {
+      team1Name: "Equipo 1",
+      team2Name: "Equipo 2",
+      team1Points: 0,
+      team2Points: 0,
+      currentTeam: 1,
+      timePerRound: 60,
+      pointsToWin: 30,
+      currentWord: null,
+      usedWords: [],
+      timerInterval: null,
+      timeRemaining: 60,
+      isPaused: false
+    };
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToSetup() {
+      if (localStorage.getItem('tabuGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) {
+          return;
+        }
+        clearSavedGame();
+      }
+      showScreen('setupScreen');
+    }
+
+    function goToHome() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      showScreen('splashScreen');
+      checkForSavedGame();
+    }
+
+    function changeTime(delta) {
+      gameState.timePerRound = Math.max(15, Math.min(180, gameState.timePerRound + delta));
+      document.getElementById('timeDisplay').textContent = gameState.timePerRound;
+    }
+
+    function changePoints(delta) {
+      gameState.pointsToWin = Math.max(10, Math.min(100, gameState.pointsToWin + delta));
+      document.getElementById('pointsDisplay').textContent = gameState.pointsToWin;
+    }
+
+    function startGame() {
+      const team1Input = document.getElementById('team1Name').value.trim();
+      const team2Input = document.getElementById('team2Name').value.trim();
+      
+      gameState.team1Name = team1Input || "Equipo 1";
+      gameState.team2Name = team2Input || "Equipo 2";
+      gameState.team1Points = 0;
+      gameState.team2Points = 0;
+      gameState.currentTeam = 1;
+      gameState.usedWords = [];
+      
+      saveGame();
+      showTurnStartScreen();
+    }
+
+    function showTurnStartScreen() {
+      const teamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      document.getElementById('turnStartTeamName').textContent = `Turno de ${teamName}`;
+      document.getElementById('scoreTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('scoreTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('scoreTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('scoreTeam2Points').textContent = gameState.team2Points;
+      
+      saveGame();
+      showScreen('turnStartScreen');
+    }
+
+    function startTurnFromScreen() {
+      updateGameScreen();
+      showScreen('gameScreen');
+      startNewTurn();
+    }
+
+    function updateGameScreen() {
+      const currentTeamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      const currentTeamPoints = gameState.currentTeam === 1 ? gameState.team1Points : gameState.team2Points;
+      
+      document.getElementById('currentTeamName').textContent = currentTeamName;
+      document.getElementById('currentTeamPoints').textContent = currentTeamPoints;
+    }
+
+    function startNewTurn() {
+      gameState.timeRemaining = gameState.timePerRound;
+      gameState.isPaused = false;
+      document.getElementById('pauseBtn').textContent = '⏸ Pausar';
+      updateTimer();
+      pickNewWord();
+      
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      gameState.timerInterval = setInterval(() => {
+        if (!gameState.isPaused) {
+          gameState.timeRemaining--;
+          updateTimer();
+          
+          if (gameState.timeRemaining <= 10) {
+            document.getElementById('timer').classList.add('warning');
+          }
+          
+          if (gameState.timeRemaining <= 0) {
+            endTurn();
+          }
+        }
+      }, 1000);
+    }
+
+    function updateTimer() {
+      document.getElementById('timer').textContent = gameState.timeRemaining;
+    }
+
+    function pickNewWord() {
+      let availableWords = wordDatabase.filter(w => !gameState.usedWords.includes(w.word));
+      
+      if (availableWords.length === 0) {
+        gameState.usedWords = [];
+        availableWords = wordDatabase;
+      }
+      
+      const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      gameState.currentWord = randomWord;
+      gameState.usedWords.push(randomWord.word);
+      saveGame();
+      
+      document.getElementById('wordToGuess').textContent = randomWord.word;
+      
+      const forbiddenContainer = document.getElementById('forbiddenWords');
+      forbiddenContainer.innerHTML = '';
+      randomWord.forbidden.forEach(word => {
+        const div = document.createElement('div');
+        div.className = 'forbidden-word';
+        div.textContent = word;
+        forbiddenContainer.appendChild(div);
+      });
+    }
+
+    function correct() {
+      if (gameState.currentTeam === 1) {
+        gameState.team1Points++;
+      } else {
+        gameState.team2Points++;
+      }
+      updateGameScreen();
+      saveGame();
+      
+      if (checkWinner()) {
+        return;
+      }
+      
+      pickNewWord();
+    }
+
+    function skip() {
+      pickNewWord();
+    }
+
+    function penalize() {
+      if (gameState.currentTeam === 1) {
+        gameState.team1Points = Math.max(0, gameState.team1Points - 1);
+      } else {
+        gameState.team2Points = Math.max(0, gameState.team2Points - 1);
+      }
+      updateGameScreen();
+      saveGame();
+      pickNewWord();
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      const btn = document.getElementById('pauseBtn');
+      
+      if (gameState.isPaused) {
+        btn.textContent = '▶ Reanudar';
+      } else {
+        btn.textContent = '⏸ Pausar';
+      }
+    }
+
+    function endTurnManually() {
+      endTurn();
+    }
+
+    function endTurn() {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      document.getElementById('timer').classList.remove('warning');
+      
+      gameState.currentTeam = gameState.currentTeam === 1 ? 2 : 1;
+      saveGame();
+      showTurnStartScreen();
+    }
+
+    function checkWinner() {
+      if (gameState.team1Points >= gameState.pointsToWin) {
+        showWinner(gameState.team1Name, gameState.team1Points, gameState.team2Points);
+        return true;
+      } else if (gameState.team2Points >= gameState.pointsToWin) {
+        showWinner(gameState.team2Name, gameState.team2Points, gameState.team1Points);
+        return true;
+      }
+      return false;
+    }
+
+    function showWinner(winnerName, winnerPoints, loserPoints) {
+      if (gameState.timerInterval) {
+        clearInterval(gameState.timerInterval);
+      }
+      
+      clearSavedGame();
+      
+      document.getElementById('winnerName').textContent = `¡${winnerName} ganó!`;
+      document.getElementById('finalTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('finalTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('finalTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('finalTeam2Points').textContent = gameState.team2Points;
+      
+      showScreen('winnerScreen');
+    }
+
+    // Initialize
+    window.onload = function() {
+      checkForSavedGame();
+    };
+
+    function checkForSavedGame() {
+      const saved = localStorage.getItem('tabuGame');
+      if (saved) {
+        document.getElementById('resumeBtn').style.display = 'block';
+      }
+    }
+
+    function saveGame() {
+      localStorage.setItem('tabuGame', JSON.stringify(gameState));
+    }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('tabuGame');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        
+        // Si estaba en medio de un turno, mostrar pantalla de inicio de turno
+        if (gameState.timeRemaining > 0 && gameState.timeRemaining < gameState.timePerRound) {
+          showTurnStartScreen();
+        } else {
+          showTurnStartScreen();
+        }
+      }
+    }
+
+    function clearSavedGame() {
+      localStorage.removeItem('tabuGame');
+      document.getElementById('resumeBtn').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
