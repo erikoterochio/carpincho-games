@@ -209,6 +209,23 @@
       color: var(--muted);
     }
 
+    .weekday-mobile {
+      display: none;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    @media (max-width: 768px) {
+      .weekday-mobile {
+        display: block;
+      }
+    }
+
     .predictions {
       flex: 1;
       display: flex;
@@ -231,6 +248,62 @@
       background: #e2e8f0;
       border-color: var(--disabled);
       color: var(--muted);
+    }
+
+    /* Versión móvil: scroll horizontal */
+    @media (max-width: 768px) {
+      .weekdays {
+        display: none;
+      }
+
+      .days-grid {
+        display: flex;
+        flex-direction: row;
+        overflow-x: auto;
+        gap: 12px;
+        padding: 8px 4px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .day-cell {
+        min-width: 180px;
+        max-width: 180px;
+        min-height: 160px;
+        flex-shrink: 0;
+        scroll-snap-align: start;
+        padding: 16px 12px;
+      }
+
+      .day-cell.empty {
+        display: none;
+      }
+
+      .day-number {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+      }
+
+      .prediction-name {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+      }
+
+      .calendar-wrapper {
+        padding: 16px 12px;
+      }
+
+      .scroll-hint {
+        display: block;
+        text-align: center;
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 12px;
+      }
+    }
+
+    .scroll-hint {
+      display: none;
     }
 
     .legend {
@@ -302,46 +375,8 @@
         padding: 16px;
       }
 
-      .calendar-wrapper {
-        padding: 16px;
-      }
-
-      .day-cell {
-        min-height: 100px;
-        padding: 8px 4px;
-      }
-
-      .day-number {
-        font-size: 1rem;
-      }
-
-      .prediction-name {
-        font-size: 0.7rem;
-        padding: 2px 4px;
-      }
-
       .intro h2 {
         font-size: 1.5rem;
-      }
-
-      .weekday {
-        font-size: 0.75rem;
-        padding: 6px 4px;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .days-grid {
-        gap: 4px;
-      }
-
-      .day-cell {
-        min-height: 90px;
-        padding: 6px 3px;
-      }
-
-      .prediction-name {
-        font-size: 0.65rem;
       }
     }
   </style>
@@ -376,6 +411,8 @@
         </div>
 
         <div class="days-grid" id="calendar"></div>
+
+        <div class="scroll-hint">← Deslizá para ver más días →</div>
 
         <div class="legend">
           <div class="legend-title">Referencias:</div>
@@ -422,6 +459,7 @@
     // Enero 2026 empieza en miércoles (día 3 de la semana, 0=domingo)
     const firstDayOfMonth = 3; // Miércoles
     const daysInMonth = 31;
+    const weekdayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
     function renderCalendar() {
       const calendar = document.getElementById('calendar');
@@ -443,6 +481,16 @@
         if (day < today) {
           dayCell.classList.add('disabled');
         }
+
+        // Calcular día de la semana para este día
+        const weekdayIndex = (firstDayOfMonth + day - 1) % 7;
+        const weekdayName = weekdayNames[weekdayIndex];
+
+        // Día de la semana (solo móvil)
+        const weekdayMobile = document.createElement('div');
+        weekdayMobile.className = 'weekday-mobile';
+        weekdayMobile.textContent = weekdayName;
+        dayCell.appendChild(weekdayMobile);
 
         // Número del día
         const dayNumber = document.createElement('div');
