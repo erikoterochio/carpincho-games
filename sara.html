@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CYTN5F1X5W"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+  
+    gtag('config', 'G-CYTN5F1X5W');
+  </script>
+  <meta charset="UTF-8" />
+  <title>Prode Sara · Carpincho Games</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0A092C;
+      --pink: #FFB6C1;
+      --pink-dark: #FF69B4;
+      --indigo: #1B2845;
+      --sky: #5899E2;
+      --card: #ffffff;
+      --text: #1B2845;
+      --muted: #6b7280;
+      --disabled: #d1d5db;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding-top: 60px;
+    }
+
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--pink-dark);
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .header-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+    }
+
+    .home-btn {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 6px 14px;
+      background: rgba(255, 255, 255, 0.1);
+      transition: all 0.15s ease;
+    }
+
+    .home-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+      padding: 16px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.03);
+      padding: 24px;
+      border: 1px solid rgba(27, 40, 69, 0.1);
+    }
+
+    .intro {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .intro h2 {
+      font-size: 1.8rem;
+      color: var(--pink-dark);
+      margin-bottom: 8px;
+    }
+
+    .intro p {
+      font-size: 0.95rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .calendar-wrapper {
+      background: #f8f9fa;
+      border-radius: 16px;
+      padding: 20px;
+      border: 2px solid rgba(255, 182, 193, 0.3);
+    }
+
+    .calendar-header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .month-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 4px;
+    }
+
+    .year {
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .weekday {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      padding: 8px;
+    }
+
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+    }
+
+    .day-cell {
+      background: white;
+      border-radius: 10px;
+      padding: 12px 8px;
+      min-height: 120px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+
+    .day-cell:hover:not(.disabled):not(.empty) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
+      border-color: var(--pink-dark);
+    }
+
+    .day-cell.empty {
+      background: transparent;
+      border: none;
+    }
+
+    .day-cell.disabled {
+      background: #f1f5f9;
+      opacity: 0.6;
+      position: relative;
+    }
+
+    .day-cell.disabled::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      right: 10%;
+      height: 3px;
+      background: var(--muted);
+      transform: translateY(-50%) rotate(-15deg);
+    }
+
+    .day-number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .day-cell.disabled .day-number {
+      color: var(--muted);
+    }
+
+    .predictions {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: auto;
+    }
+
+    .prediction-name {
+      font-size: 0.75rem;
+      color: var(--text);
+      padding: 3px 6px;
+      background: #fff1f2;
+      border-radius: 4px;
+      text-align: center;
+      border: 1px solid rgba(255, 182, 193, 0.5);
+    }
+
+    .day-cell.disabled .prediction-name {
+      background: #e2e8f0;
+      border-color: var(--disabled);
+      color: var(--muted);
+    }
+
+    .legend {
+      margin-top: 20px;
+      padding: 16px;
+      background: white;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .legend-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--indigo);
+      margin-bottom: 8px;
+    }
+
+    .legend-items {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+
+    .legend-box {
+      width: 24px;
+      height: 24px;
+      border-radius: 4px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+    }
+
+    .legend-box.disabled {
+      background: #f1f5f9;
+      position: relative;
+    }
+
+    .legend-box.disabled::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 2px;
+      right: 2px;
+      height: 2px;
+      background: var(--muted);
+      transform: translateY(-50%) rotate(-15deg);
+    }
+
+    .legend-box.active {
+      background: white;
+      border-color: var(--pink-dark);
+    }
+
+    footer {
+      margin-top: 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .app {
+        padding: 16px;
+      }
+
+      .calendar-wrapper {
+        padding: 16px;
+      }
+
+      .day-cell {
+        min-height: 100px;
+        padding: 8px 4px;
+      }
+
+      .day-number {
+        font-size: 1rem;
+      }
+
+      .prediction-name {
+        font-size: 0.7rem;
+        padding: 2px 4px;
+      }
+
+      .intro h2 {
+        font-size: 1.5rem;
+      }
+
+      .weekday {
+        font-size: 0.75rem;
+        padding: 6px 4px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .days-grid {
+        gap: 4px;
+      }
+
+      .day-cell {
+        min-height: 90px;
+        padding: 6px 3px;
+      }
+
+      .prediction-name {
+        font-size: 0.65rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-title">👶 Prode Sara</div>
+    <a href="index.html" class="home-btn">← Inicio</a>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div class="intro">
+        <h2>¿Cuándo nace Sara?</h2>
+        <p>Prode del nacimiento · Cada uno eligió el día que cree que va a nacer</p>
+      </div>
+
+      <div class="calendar-wrapper">
+        <div class="calendar-header">
+          <div class="month-title">Enero</div>
+          <div class="year">2026</div>
+        </div>
+
+        <div class="weekdays">
+          <div class="weekday">Dom</div>
+          <div class="weekday">Lun</div>
+          <div class="weekday">Mar</div>
+          <div class="weekday">Mié</div>
+          <div class="weekday">Jue</div>
+          <div class="weekday">Vie</div>
+          <div class="weekday">Sáb</div>
+        </div>
+
+        <div class="days-grid" id="calendar"></div>
+
+        <div class="legend">
+          <div class="legend-title">Referencias:</div>
+          <div class="legend-items">
+            <div class="legend-item">
+              <div class="legend-box disabled"></div>
+              <span>Día ya pasado</span>
+            </div>
+            <div class="legend-item">
+              <div class="legend-box active"></div>
+              <span>Predicción activa</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <span>Carpincho Games · 👶 Prode Sara</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    // Fecha de hoy (6 de enero)
+    const today = 6;
+
+    // Datos de las predicciones por día
+    const predictions = {
+      1: ['Martin', 'Flor'],
+      2: ['Aba'],
+      3: ['Fede', 'Luli', 'Cami R', 'Sabrina', 'Diego'],
+      4: ['Vicky', 'Mili', 'Erik', 'Sabue', 'Horacio'],
+      5: ['Tia', 'Maru', 'Tuli', 'Pia', 'Andrew'],
+      6: ['Mechi', 'Cami', 'Sol', 'Negro', 'Cami DLH'],
+      7: ['Pri', 'Roma', 'Vale'],
+      8: ['Lencha', 'Agus', 'Kevo'],
+      9: ['Tata', 'Regina'],
+      10: ['Luli', 'Luna', 'Mer', 'Maru C'],
+      11: ['Bachu', 'Bati'],
+      12: ['Cangre'],
+      13: ['Nina', 'Mia', 'Mario']
+    };
+
+    // Enero 2026 empieza en miércoles (día 3 de la semana, 0=domingo)
+    const firstDayOfMonth = 3; // Miércoles
+    const daysInMonth = 31;
+
+    function renderCalendar() {
+      const calendar = document.getElementById('calendar');
+      calendar.innerHTML = '';
+
+      // Agregar celdas vacías antes del primer día
+      for (let i = 0; i < firstDayOfMonth; i++) {
+        const emptyCell = document.createElement('div');
+        emptyCell.className = 'day-cell empty';
+        calendar.appendChild(emptyCell);
+      }
+
+      // Agregar los días del mes
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dayCell = document.createElement('div');
+        dayCell.className = 'day-cell';
+
+        // Marcar como deshabilitado si ya pasó
+        if (day < today) {
+          dayCell.classList.add('disabled');
+        }
+
+        // Número del día
+        const dayNumber = document.createElement('div');
+        dayNumber.className = 'day-number';
+        dayNumber.textContent = day;
+        dayCell.appendChild(dayNumber);
+
+        // Predicciones para este día
+        if (predictions[day]) {
+          const predictionsDiv = document.createElement('div');
+          predictionsDiv.className = 'predictions';
+
+          predictions[day].forEach(name => {
+            const nameSpan = document.createElement('div');
+            nameSpan.className = 'prediction-name';
+            nameSpan.textContent = name;
+            predictionsDiv.appendChild(nameSpan);
+          });
+
+          dayCell.appendChild(predictionsDiv);
+        }
+
+        calendar.appendChild(dayCell);
+      }
+    }
+
+    // Renderizar el calendario al cargar
+    renderCalendar();
+  </script>
+</body>
+</html>
