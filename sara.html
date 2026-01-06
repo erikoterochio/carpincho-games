@@ -169,6 +169,11 @@
       transition: all 0.2s ease;
     }
 
+    .day-cell.active {
+      background: #FFF0F5;
+      border-color: rgba(255, 182, 193, 0.5);
+    }
+
     .day-cell:hover:not(.disabled):not(.empty) {
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(255, 105, 180, 0.2);
@@ -183,18 +188,6 @@
     .day-cell.disabled {
       background: #f1f5f9;
       opacity: 0.6;
-      position: relative;
-    }
-
-    .day-cell.disabled::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 10%;
-      right: 10%;
-      height: 3px;
-      background: var(--muted);
-      transform: translateY(-50%) rotate(-15deg);
     }
 
     .day-number {
@@ -242,6 +235,13 @@
       border-radius: 4px;
       text-align: center;
       border: 1px solid rgba(255, 182, 193, 0.5);
+    }
+
+    .day-cell.active .prediction-name {
+      background: var(--pink-dark);
+      color: white;
+      border-color: var(--pink-dark);
+      font-weight: 500;
     }
 
     .day-cell.disabled .prediction-name {
@@ -306,63 +306,6 @@
       display: none;
     }
 
-    .legend {
-      margin-top: 20px;
-      padding: 16px;
-      background: white;
-      border-radius: 10px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .legend-title {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--indigo);
-      margin-bottom: 8px;
-    }
-
-    .legend-items {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      color: var(--text);
-    }
-
-    .legend-box {
-      width: 24px;
-      height: 24px;
-      border-radius: 4px;
-      border: 2px solid rgba(148, 163, 184, 0.3);
-    }
-
-    .legend-box.disabled {
-      background: #f1f5f9;
-      position: relative;
-    }
-
-    .legend-box.disabled::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 2px;
-      right: 2px;
-      height: 2px;
-      background: var(--muted);
-      transform: translateY(-50%) rotate(-15deg);
-    }
-
-    .legend-box.active {
-      background: white;
-      border-color: var(--pink-dark);
-    }
-
     footer {
       margin-top: 16px;
       font-size: 0.75rem;
@@ -383,7 +326,7 @@
 </head>
 <body>
   <div class="fixed-header">
-    <div class="header-title">👶 Prode Sara</div>
+    <div class="header-title">Prode Sarita 👶💗</div>
     <a href="index.html" class="home-btn">← Inicio</a>
   </div>
 
@@ -413,24 +356,10 @@
         <div class="days-grid" id="calendar"></div>
 
         <div class="scroll-hint">← Deslizá para ver más días →</div>
-
-        <div class="legend">
-          <div class="legend-title">Referencias:</div>
-          <div class="legend-items">
-            <div class="legend-item">
-              <div class="legend-box disabled"></div>
-              <span>Día ya pasado</span>
-            </div>
-            <div class="legend-item">
-              <div class="legend-box active"></div>
-              <span>Predicción activa</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <footer>
-        <span>Carpincho Games · 👶 Prode Sara</span>
+        <span>Carpincho Games · Prode Sarita 👶💗</span>
       </footer>
     </main>
   </div>
@@ -441,19 +370,19 @@
 
     // Datos de las predicciones por día
     const predictions = {
-      1: ['Martin', 'Flor'],
-      2: ['Aba'],
-      3: ['Fede', 'Luli', 'Cami R', 'Sabrina', 'Diego'],
-      4: ['Vicky', 'Mili', 'Erik', 'Sabue', 'Horacio'],
-      5: ['Tia', 'Maru', 'Tuli', 'Pia', 'Andrew'],
-      6: ['Mechi', 'Cami', 'Sol', 'Negro', 'Cami DLH'],
-      7: ['Pri', 'Roma', 'Vale'],
-      8: ['Lencha', 'Agus', 'Kevo'],
-      9: ['Tata', 'Regina'],
-      10: ['Luli', 'Luna', 'Mer', 'Maru C'],
-      11: ['Bachu', 'Bati'],
-      12: ['Cangre'],
-      13: ['Nina', 'Mia', 'Mario']
+      4: ['Martin', 'Flor'],
+      5: ['Aba'],
+      6: ['Fede', 'Luli', 'Cami R', 'Sabrina', 'Diego'],
+      7: ['Vicky', 'Mili', 'Erik', 'Sabue', 'Horacio'],
+      8: ['Tia', 'Maru', 'Tuli', 'Pia', 'Andrew'],
+      9: ['Mechi', 'Cami', 'Sol', 'Negro', 'Cami DLH'],
+      10: ['Pri', 'Roma', 'Vale'],
+      11: ['Lencha', 'Agus', 'Kevo'],
+      12: ['Tata', 'Regina'],
+      13: ['Luli', 'Luna', 'Mer', 'Maru C'],
+      14: ['Bachu', 'Bati'],
+      15: ['Cangre'],
+      16: ['Nina', 'Mia', 'Mario']
     };
 
     // Enero 2026 empieza en miércoles (día 3 de la semana, 0=domingo)
@@ -500,6 +429,11 @@
 
         // Predicciones para este día
         if (predictions[day]) {
+          // Marcar como activo si tiene predicciones y no está deshabilitado
+          if (day >= today) {
+            dayCell.classList.add('active');
+          }
+          
           const predictionsDiv = document.createElement('div');
           predictionsDiv.className = 'predictions';
 
