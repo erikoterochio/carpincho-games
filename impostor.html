@@ -136,6 +136,43 @@
       transform: scale(0.98);
     }
 
+    /* Grid de categorías */
+    .category-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .category-btn {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 2px solid rgba(148, 163, 184, 0.3);
+      background: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--indigo);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+
+    .category-btn:hover {
+      border-color: var(--sky);
+      background: #f0f9ff;
+    }
+
+    .category-btn.active {
+      background: var(--sky);
+      color: white;
+      border-color: var(--sky);
+    }
+
+    .category-btn.all-btn.active {
+      background: var(--indigo);
+      border-color: var(--indigo);
+      color: white;
+    }
+
     /* Lista de jugadores dinámica */
     .players-list {
       display: flex;
@@ -474,19 +511,19 @@
             </div>
 
             <div class="form-group">
-              <label>Categoría</label>
-              <select id="word-category">
-                <option value="aleatoria" selected>Aleatoria</option>
-                <option value="deportes">Deportes</option>
-                <option value="peliculasSeries">Películas y Series</option>
-                <option value="objetos">Objetos</option>
-                <option value="lugares">Lugares</option>
-                <option value="personalidades">Personalidades</option>
-                <option value="cocina">Cocina</option>
-                <option value="animales">Animales</option>
-                <option value="musica">Música</option>
-                <option value="tecnologia">Tecnología</option>
-              </select>
+              <label>Categorías</label>
+              <div class="category-grid" id="category-grid">
+                <button type="button" class="category-btn all-btn active" id="cat-all" onclick="toggleCategory('all')" style="grid-column: span 2;">🎲 Todas (aleatorio)</button>
+                <button type="button" class="category-btn" id="cat-deportes" onclick="toggleCategory('deportes')">⚽ Deportes</button>
+                <button type="button" class="category-btn" id="cat-peliculasSeries" onclick="toggleCategory('peliculasSeries')">🎬 Películas y Series</button>
+                <button type="button" class="category-btn" id="cat-objetos" onclick="toggleCategory('objetos')">📦 Objetos</button>
+                <button type="button" class="category-btn" id="cat-lugares" onclick="toggleCategory('lugares')">📍 Lugares</button>
+                <button type="button" class="category-btn" id="cat-personalidades" onclick="toggleCategory('personalidades')">🧑 Personalidades</button>
+                <button type="button" class="category-btn" id="cat-cocina" onclick="toggleCategory('cocina')">🍳 Cocina</button>
+                <button type="button" class="category-btn" id="cat-animales" onclick="toggleCategory('animales')">🐾 Animales</button>
+                <button type="button" class="category-btn" id="cat-musica" onclick="toggleCategory('musica')">🎵 Música</button>
+                <button type="button" class="category-btn" id="cat-tecnologia" onclick="toggleCategory('tecnologia')">💻 Tecnología</button>
+              </div>
             </div>
 
             <div class="form-group">
@@ -643,7 +680,7 @@
       players: [],
       eliminated: [],
       impostorCount: 1,
-      wordCategory: 'aleatoria',
+      wordCategories: [],      // [] = todas
       currentCategory: '',
       word: '',
       roles: [],
@@ -669,7 +706,8 @@
       voteTime: 60,
       impostorsKnow: true,
       changeWord: false,
-      multipleVotes: false
+      multipleVotes: false,
+      wordCategories: []       // [] = todas
     };
 
     // Diccionario de palabras
@@ -884,6 +922,40 @@
       document.getElementById('vote-multiple').classList.toggle('active', value);
     }
 
+    // Toggle de categoría (multi-select)
+    function toggleCategory(cat) {
+      const allBtn = document.getElementById('cat-all');
+      const allCategories = ['deportes','peliculasSeries','objetos','lugares','personalidades','cocina','animales','musica','tecnologia'];
+
+      if (cat === 'all') {
+        // "Todas" desactiva las individuales
+        configState.wordCategories = [];
+        allCategories.forEach(c => {
+          document.getElementById('cat-' + c).classList.remove('active');
+        });
+        allBtn.classList.add('active');
+        return;
+      }
+
+      // Toggle categoría individual
+      const idx = configState.wordCategories.indexOf(cat);
+      if (idx > -1) {
+        configState.wordCategories.splice(idx, 1);
+        document.getElementById('cat-' + cat).classList.remove('active');
+      } else {
+        configState.wordCategories.push(cat);
+        document.getElementById('cat-' + cat).classList.add('active');
+      }
+
+      // Si hay al menos una seleccionada, desactivar "todas"
+      // Si se deseleccionaron todas, volver a activar "todas"
+      if (configState.wordCategories.length > 0) {
+        allBtn.classList.remove('active');
+      } else {
+        allBtn.classList.add('active');
+      }
+    }
+
     // Cambiar tiempo de votación
     function changeVoteTime(delta) {
       configState.voteTime = Math.max(30, Math.min(300, configState.voteTime + delta));
@@ -929,7 +1001,7 @@
       }
       
       gameState.impostorCount = configState.impostorCount;
-      gameState.wordCategory = document.getElementById('word-category').value;
+      gameState.wordCategories = [...configState.wordCategories];  // copia del array
       gameState.voteTime = configState.voteTime;
       gameState.impostorsKnow = configState.impostorsKnow;
       gameState.votingRounds = configState.votingRounds;
@@ -952,16 +1024,21 @@
 
     // Asignar roles y palabra
     function assignRoles() {
-      let categoryToUse = gameState.wordCategory;
-      
-      if (gameState.wordCategory === 'aleatoria') {
+      let categoryToUse;
+
+      if (!gameState.wordCategories || gameState.wordCategories.length === 0) {
+        // Sin filtro = todas las categorías
         const categories = Object.keys(wordBank);
         categoryToUse = categories[Math.floor(Math.random() * categories.length)];
-        gameState.currentCategory = categoryToUse;
+      } else if (gameState.wordCategories.length === 1) {
+        categoryToUse = gameState.wordCategories[0];
       } else {
-        gameState.currentCategory = gameState.wordCategory;
+        // Elegir aleatoriamente entre las seleccionadas
+        categoryToUse = gameState.wordCategories[Math.floor(Math.random() * gameState.wordCategories.length)];
       }
-      
+
+      gameState.currentCategory = categoryToUse;
+
       const words = wordBank[categoryToUse];
       gameState.word = words[Math.floor(Math.random() * words.length)];
       
