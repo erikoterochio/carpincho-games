@@ -1,3 +1,3 @@
-export default function MimicaPage() {
-  return <div>Mímica</div>
+ï»¿export default function MimicaPage() {
+  return <div>Mimica</div>
 }
