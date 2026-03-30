@@ -1,21 +1,21 @@
 import Link from 'next/link'
 
 const FEATURED = [
-  { name: 'El Impostor', href: '/(games)/impostor', color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',   href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'El Impostor', href: '/impostor.html', color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',   href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
 ]
 
 const MULTIPLAYER = [
-  { name: 'El Impostor',       href: '/(games)/impostor',  color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',         href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
-  { name: 'Tabú',              href: '/(games)/tabu',      color: '#065c6c', img: '/images/tabu.png' },
-  { name: 'Dígalo con mímica', href: '/(games)/mimica',    color: '#055074', img: '/images/mimica.png' },
-  { name: 'Truco',             href: '/(tools)/truco',     color: '#110736', img: '/images/truco.png' },
-  { name: 'Generala',          href: '/(tools)/generala',  color: '#0b2659', img: '/images/generala.png' },
+  { name: 'El Impostor',       href: '/impostor.html',  color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',         href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'Tabú',              href: '/tabu.html',      color: '#065c6c', img: '/images/tabu.png' },
+  { name: 'Dígalo con mímica', href: '/mimica.html',    color: '#055074', img: '/images/mimica.png' },
+  { name: 'Truco',             href: '/truco.html',     color: '#110736', img: '/images/truco.png' },
+  { name: 'Generala',          href: '/generala.html',  color: '#0b2659', img: '/images/generala.png' },
 ]
 
 const TOOLS = [
-  { name: 'Divisor de gastos', href: '/(tools)/splitwise', color: '#04447b', img: '/images/splitwise.png' },
+  { name: 'Divisor de gastos', href: '/splitwise.html', color: '#04447b', img: '/images/splitwise.png' },
 ]
 
 export default function HomePage() {
