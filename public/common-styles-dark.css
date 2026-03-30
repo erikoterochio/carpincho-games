@@ -261,3 +261,50 @@ footer {
   text-align: center;
   padding-bottom: 8px;
 }
+
+/* ── Player input rows: fondo blanco con borde ── */
+.player-input-row input {
+  background: #ffffff !important;
+  color: #01050F !important;
+  -webkit-text-fill-color: #01050F !important;
+  border: 1.5px solid #9e9ea8 !important;
+  border-radius: 8px !important;
+}
+
+/* ── Botón agregar jugador: celeste ── */
+.add-player-btn {
+  background: #055074 !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+}
+
+.add-player-btn:hover {
+  background: #04447b !important;
+}
+
+/* ── Botones + y - : celeste con texto blanco ── */
+.number-control button,
+.number-btn {
+  background: #055074 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.number-control button:hover,
+.number-btn:hover {
+  background: #04447b !important;
+}
+
+/* ── Botones eliminar jugador: rojo con x blanca ── */
+.player-input-row .remove-btn,
+.remove-btn {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.player-input-row .remove-btn:hover,
+.remove-btn:hover {
+  background: #b91c1c !important;
+}
