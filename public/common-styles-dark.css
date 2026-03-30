@@ -79,10 +79,7 @@ body {
   transition: all 0.15s ease;
 }
 
-.home-btn:hover {
-  color: #ffffff;
-  border-color: #055074;
-}
+.home-btn:hover { color: #ffffff; border-color: #055074; }
 
 /* ─── Layout ──────────────────────────────── */
 .container {
@@ -93,10 +90,7 @@ body {
   padding: 16px;
 }
 
-.app {
-  width: 100%;
-  max-width: 480px;
-}
+.app { width: 100%; max-width: 480px; }
 
 /* ─── Screens ─────────────────────────────── */
 .screen { display: none; }
@@ -143,33 +137,16 @@ body {
 
 .btn:active { transform: scale(0.98); }
 
-.btn-primary {
-  background: #055074;
-  color: #ffffff;
-  border: none;
-}
-
+.btn-primary { background: #055074; color: #ffffff; border: none; }
 .btn-primary:hover { background: #04447b; }
 
-.btn-secondary {
-  background: #ffffff;
-  color: #01050F;
-  border: 1px solid #9e9ea8;
-}
-
+.btn-secondary { background: #ffffff; color: #01050F; border: 1px solid #9e9ea8; }
 .btn-secondary:hover { border-color: #4a4a55; }
 
-.btn-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 16px;
-}
+.btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 
 /* ─── Form elements ───────────────────────── */
-.form-group {
-  margin-bottom: 18px;
-}
+.form-group { margin-bottom: 18px; }
 
 .form-group label {
   display: block;
@@ -181,6 +158,7 @@ body {
   margin-bottom: 8px;
 }
 
+/* ── Inputs: fondo blanco, borde visible ── */
 input[type="text"],
 input[type="number"],
 input[type="email"],
@@ -191,7 +169,7 @@ textarea {
   background: #ffffff !important;
   color: #01050F !important;
   -webkit-text-fill-color: #01050F !important;
-  border: none;
+  border: 1.5px solid #9e9ea8 !important;
   border-radius: 8px;
   font-family: 'Ubuntu', sans-serif;
   font-size: 0.95rem;
@@ -202,7 +180,7 @@ textarea {
 }
 
 input::placeholder { color: #706c7e !important; -webkit-text-fill-color: #706c7e !important; }
-input:focus { outline: 2px solid #055074; outline-offset: 1px; }
+input:focus { outline: 2px solid #055074; outline-offset: 1px; border-color: #055074 !important; }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
@@ -218,6 +196,61 @@ select {
   background-color: #ffffff !important;
   padding-right: 36px;
   cursor: pointer;
+}
+
+/* ── Number controls ── */
+.number-control .value,
+.number-control .number-display {
+  color: #01050F !important;
+  font-weight: 700;
+}
+
+/* ── Category buttons: blanco inactivo, celeste activo ── */
+.category-btn {
+  background: #ffffff !important;
+  color: #1e1736 !important;
+  border: 1.5px solid #9e9ea8 !important;
+}
+
+.category-btn:hover {
+  border-color: #055074 !important;
+  color: #055074 !important;
+}
+
+.category-btn.active {
+  background: #055074 !important;
+  color: #ffffff !important;
+  border-color: #055074 !important;
+}
+
+.category-btn.all-btn.active {
+  background: #1e1736 !important;
+  color: #ffffff !important;
+  border-color: #1e1736 !important;
+}
+
+/* ── Toggle buttons ── */
+.toggle-btn {
+  background: #ffffff !important;
+  color: #1e1736 !important;
+  border: 1.5px solid #9e9ea8 !important;
+}
+
+.toggle-btn.active {
+  background: #055074 !important;
+  color: #ffffff !important;
+  border-color: #055074 !important;
+}
+
+/* ── Number control buttons ── */
+.number-btn, .number-control button {
+  background: #1e1736 !important;
+  color: #ffffff !important;
+  border: 1px solid #2a2448 !important;
+}
+
+.number-btn:hover, .number-control button:hover {
+  background: #055074 !important;
 }
 
 /* ─── Footer ──────────────────────────────── */
