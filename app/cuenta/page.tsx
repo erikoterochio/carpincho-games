@@ -116,7 +116,7 @@ export default function CuentaPage() {
         .btn-secondary:hover { border-color: #706c7e !important; }
         .btn-danger { background: #2a0a0a; color: #f87171; border: 1px solid #f87171 !important; }
         .btn-danger:hover:not(:disabled) { background: #3a1010; }
-        .section { background: #1e1736; border: 1px solid #2a2448; border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
+        .section { background: #c1c1c6; border: 1px solid #2a2448; border-radius: 16px; margin-bottom: 14px; overflow: hidden; }
         .section-header { padding: 14px 18px; border-bottom: 1px solid #2a2448; }
         .section-title { font-size: 13px; font-weight: 700; color: #c1c1c6; }
         .section-body { padding: 18px; }
@@ -162,7 +162,7 @@ export default function CuentaPage() {
                 </div>
               </div>
               <input ref={fileRef} type="file" accept="image/png,image/jpeg" style={{ display: 'none' }} onChange={handleAvatarUpload} />
-              <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}>Subir foto</button>
+              <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>Subir foto</button>
               {uploadMsg && <div className={uploadMsg.startsWith('✓') ? 'msg-success' : 'msg-error'} style={{ marginTop: '10px' }}>{uploadMsg}</div>}
               <div style={{ fontSize: '11px', color: '#706c7e', textAlign: 'center', marginTop: '8px' }}>JPG o PNG · máx 2MB</div>
             </div>
@@ -195,10 +195,10 @@ export default function CuentaPage() {
           <div className="section">
             <div className="section-header"><span className="section-title">Contraseña</span></div>
             <div className="section-body">
-              <p style={{ fontSize: '13px', color: '#706c7e', lineHeight: 1.6, marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: '#2a2448', lineHeight: 1.6, marginBottom: '16px' }}>
                 Te vamos a enviar un link a tu mail para que puedas crear una nueva contraseña de forma segura.
               </p>
-              <button className="btn btn-secondary" onClick={handlePasswordReset} disabled={passSent}>
+              <button className="btn btn-primary" onClick={handlePasswordReset} disabled={passSent}>
                 Cambiar contraseña
               </button>
               {passMsg && <div className={passSent ? 'msg-success' : 'msg-error'}>{passMsg}</div>}
@@ -220,7 +220,7 @@ export default function CuentaPage() {
 
               {showDeleteConfirm && (
                 <div>
-                  <p style={{ fontSize: '13px', color: '#c1c1c6', marginBottom: '12px', lineHeight: 1.6 }}>
+                  <p style={{ fontSize: '13px', color: '#2a2448', marginBottom: '12px', lineHeight: 1.6 }}>
                     Para confirmar escribí <strong style={{ color: '#f87171' }}>soy ortiva</strong> en el campo de abajo.
                   </p>
                   <input
