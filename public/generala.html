@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generala · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+    :root {
+      --bg: #01050F;
+      --card: #1e1736;
+      --card-alt: #110736;
+      --sky: #055074;
+      --text: #c1c1c6;
+      --muted: #706c7e;
+      --border: #2a2448;
+      --green: #4ade80;
+      --red: #f87171;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Ubuntu', sans-serif; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+    body { min-height: 100vh; background: var(--bg); color: var(--text); padding-top: 60px; }
+
+    .fixed-header { position: fixed; top: 0; left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 16px; height: 60px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
+    .header-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
+    .home-btn { font-size: 0.78rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; background: transparent; transition: all 0.15s; }
+    .home-btn:hover { color: var(--text); border-color: var(--sky); }
+
+    .container { display: flex; align-items: flex-start; justify-content: center; min-height: calc(100vh - 60px); padding: 16px; }
+    .app { width: 100%; max-width: 900px; }
+
+    .screen { display: none; }
+    .screen.active { display: block; }
+
+    .content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+
+    .intro-text { font-size: 0.9rem; line-height: 1.6; color: var(--muted); margin-bottom: 20px; text-align: center; }
+
+    .btn { width: 100%; padding: 13px 20px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; display: block; }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--sky); color: var(--text); }
+    .btn-primary:hover { background: #04447b; }
+    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+    .btn-add { background: #0a2a1a; color: var(--green); border: 1px solid var(--green); }
+    .btn-add:hover { background: var(--green); color: var(--bg); }
+    .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
+
+    .players-list { display: flex; flex-direction: column; gap: 8px; }
+    .player-input-row { display: flex; gap: 8px; align-items: center; }
+    .player-input-row input { flex: 1; padding: 11px 14px; background: #c1c1c6 !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: none; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.95rem; font-weight: 500; outline: none; }
+    .player-input-row input:focus { outline: 2px solid var(--sky); }
+    .player-input-row .remove-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(248,113,113,0.3); background: transparent; color: #f87171; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .player-input-row .remove-btn:hover { background: #2a0a0a; border-color: #f87171; }
+
+    .add-player-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--sky); font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+    .add-player-btn:hover { border-color: var(--sky); }
+
+    .table-container { overflow-x: auto; margin-bottom: 16px; }
+
+    .score-table { border-collapse: collapse; background: var(--card-alt); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin: 0 auto; }
+    .score-table th { background: var(--sky); color: var(--text); padding: 10px 12px; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; min-width: 70px; position: relative; }
+    .score-table th.category-header { text-align: center; min-width: 100px; position: sticky; left: 0; z-index: 12; background: var(--sky); }
+    .score-table td { padding: 8px 12px; border: 1px solid var(--border); text-align: center; font-size: 0.9rem; color: var(--text); }
+    .score-table td.category-name { text-align: center; background: #0b2659; font-weight: 600; color: var(--text); position: sticky; left: 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
+    .score-table td.score-cell { padding: 0; position: relative; }
+    .score-table input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-size: 0.9rem; font-weight: 600; padding: 8px 4px; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; font-family: 'Ubuntu', sans-serif; }
+    .score-table input:focus { outline: none; background: #0b2659; }
+    .score-table input.filled { background: #0a2a1a; color: var(--green) !important; -webkit-text-fill-color: var(--green) !important; }
+    .score-table input.crossed { background: #2a0a0a; color: var(--red) !important; -webkit-text-fill-color: var(--red) !important; }
+    .score-table tr.total-row { background: #0b2659; font-weight: 700; }
+    .score-table tr.divider-row td { border-top: 2px solid var(--sky); }
+    .score-table tr.total-row td { border-top: 2px solid var(--sky); font-size: 0.95rem; color: var(--sky); padding: 10px 12px; }
+    .score-table tr.total-row td.category-name { background: #0b2659; }
+
+    .player-header { position: relative; }
+    .delete-player-btn { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: rgba(248,113,113,0.8); color: white; border: none; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; transition: all 0.15s; }
+    .delete-player-btn:hover { opacity: 1; transform: scale(1.1); }
+
+    footer { margin-top: 16px; font-size: 0.75rem; color: var(--border); text-align: center; padding-bottom: 8px; }
+
+    @media (max-width: 768px) {
+      .score-table th, .score-table td { font-size: 0.8rem; padding: 6px 8px; }
+      .score-table th { min-width: 60px; }
+      .score-table th.category-header { min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-title" id="pageTitle">Generala</div>
+    <a href="index.html" class="home-btn" id="homeBtn" style="display:none;">← Inicio</a>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div id="splashScreen" class="screen active">
+        <div class="content">
+          <p class="intro-text">Anotador para el clásico juego de dados argentino.</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startNewGame()">Nuevo juego</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Reanudar juego</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="setupScreen" class="screen">
+        <div class="content">
+          <div class="form-group">
+            <label>Jugadores</label>
+            <div class="players-list" id="players-list"></div>
+            <button type="button" class="add-player-btn" onclick="addPlayerSetup()">+ Agregar jugador</button>
+          </div>
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+
+      <div id="gameScreen" class="screen">
+        <div class="table-container">
+          <table class="score-table" id="scoreTable"></table>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-add" onclick="addPlayerDuringGame()">+ Agregar Jugador</button>
+          <button class="btn btn-secondary" onclick="backToMenu()">Volver al Menú</button>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    let gameState = { players: [], scores: {} };
+    let playerCounter = 0;
+
+    const categories = [
+      { id: '1', name: '1' }, { id: '2', name: '2' }, { id: '3', name: '3' },
+      { id: '4', name: '4' }, { id: '5', name: '5' }, { id: '6', name: '6' },
+      { id: 'escalera', name: 'Escalera' }, { id: 'full', name: 'Full' },
+      { id: 'poker', name: 'Póker' }, { id: 'generala', name: 'Generala' }, { id: 'doble', name: 'Doble' }
+    ];
+
+    window.onload = function() { checkForSavedGame(); updateHeader('Generala', false); };
+
+    function updateHeader(title, showHome) {
+      document.getElementById('pageTitle').textContent = title;
+      document.getElementById('homeBtn').style.display = showHome ? 'block' : 'none';
+    }
+
+    function checkForSavedGame() {
+      if (localStorage.getItem('generalaGame')) document.getElementById('resumeBtn').style.display = 'block';
+    }
+
+    function saveGame() { localStorage.setItem('generalaGame', JSON.stringify(gameState)); }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('generalaGame');
+      if (saved) { gameState = JSON.parse(saved); showScreen('gameScreen'); updateHeader('Anotador', true); renderTable(); }
+    }
+
+    function startNewGame() {
+      if (localStorage.getItem('generalaGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) return;
+      }
+      localStorage.removeItem('generalaGame');
+      gameState = { players: [], scores: {} };
+      playerCounter = 0;
+      showScreen('setupScreen');
+      updateHeader('Configurar', true);
+      initializePlayers();
+    }
+
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      for (let i = 0; i < 2; i++) addPlayerSetup();
+    }
+
+    function addPlayerSetup() {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      const row = document.createElement('div');
+      row.className = 'player-input-row';
+      row.id = `player-row-${index}`;
+      row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>`;
+      container.appendChild(row);
+    }
+
+    function removePlayerSetup(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) row.remove();
+    }
+
+    function startGame() {
+      gameState.players = []; gameState.scores = {};
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        const name = input.value.trim() || `Jugador ${i + 1}`;
+        gameState.players.push(name);
+        gameState.scores[name] = {};
+        categories.forEach(cat => { gameState.scores[name][cat.id] = ''; });
+      });
+      if (gameState.players.length < 1) { alert('Necesitás al menos 1 jugador'); return; }
+      saveGame(); showScreen('gameScreen'); updateHeader('Anotador', true); renderTable();
+    }
+
+    function addPlayerDuringGame() {
+      const name = prompt('Nombre del nuevo jugador:');
+      if (!name || name.trim() === '') return;
+      const playerName = name.trim();
+      if (gameState.players.includes(playerName)) { alert('Ya existe un jugador con ese nombre'); return; }
+      gameState.players.push(playerName);
+      gameState.scores[playerName] = {};
+      categories.forEach(cat => { gameState.scores[playerName][cat.id] = ''; });
+      saveGame(); renderTable();
+    }
+
+    function removePlayerDuringGame(player) {
+      if (!confirm(`¿Eliminar a ${player}?`)) return;
+      gameState.players = gameState.players.filter(p => p !== player);
+      delete gameState.scores[player];
+      saveGame(); renderTable();
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function renderTable() {
+      const table = document.getElementById('scoreTable');
+      let html = '<thead><tr>';
+      html += '<th class="category-header">Categoría</th>';
+      gameState.players.forEach(player => {
+        html += `<th class="player-header">${player}<button class="delete-player-btn" onclick="removePlayerDuringGame('${player}')" title="Eliminar">×</button></th>`;
+      });
+      html += '</tr></thead><tbody>';
+      categories.forEach((cat, index) => {
+        const isDivider = index === 6;
+        html += `<tr${isDivider ? ' class="divider-row"' : ''}><td class="category-name">${cat.name}</td>`;
+        gameState.players.forEach(player => {
+          const value = gameState.scores[player][cat.id];
+          const displayValue = value === 0 ? 'X' : (value || '');
+          const inputClass = value === 0 ? 'crossed' : (value && value !== '' ? 'filled' : '');
+          html += `<td class="score-cell"><input type="text" inputmode="numeric" pattern="[0-9XxSs]*" value="${displayValue}" class="${inputClass}" onchange="updateScore('${player}', '${cat.id}', this.value)" /></td>`;
+        });
+        html += '</tr>';
+      });
+      html += '<tr class="total-row"><td class="category-name">TOTAL</td>';
+      gameState.players.forEach(player => { html += `<td>${calculateTotal(player)}</td>`; });
+      html += '</tr></tbody>';
+      table.innerHTML = html;
+    }
+
+    function updateScore(player, categoryId, value) {
+      value = value.trim().toUpperCase();
+      if (value === 'X' || value === 'S') gameState.scores[player][categoryId] = 0;
+      else if (value === '') gameState.scores[player][categoryId] = '';
+      else {
+        const numValue = value.replace(/[^0-9]/g, '');
+        if (numValue !== '') gameState.scores[player][categoryId] = parseInt(numValue);
+        else gameState.scores[player][categoryId] = '';
+      }
+      saveGame(); renderTable();
+    }
+
+    function calculateTotal(player) {
+      let total = 0; let hasValues = false;
+      categories.forEach(cat => {
+        const value = gameState.scores[player][cat.id];
+        if (value !== '' && !isNaN(value)) { total += parseInt(value); hasValues = true; }
+      });
+      return hasValues ? total : '';
+    }
+
+    function backToMenu() { showScreen('splashScreen'); updateHeader('Generala', false); checkForSavedGame(); }
+  </script>
+</body>
+</html>

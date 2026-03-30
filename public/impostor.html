@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>El Impostor · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <style>
+    .app { max-width: 480px; }
+
+    .instructions { font-size: 0.9rem; line-height: 1.6; color: #706c7e; }
+    .instructions h3 { font-size: 1rem; margin-top: 14px; margin-bottom: 8px; color: #055074; }
+    .instructions p { margin-bottom: 10px; }
+    .step-list { list-style: none; padding: 0; margin-bottom: 12px; }
+    .step-list li { display: flex; gap: 12px; margin-bottom: 10px; align-items: flex-start; }
+    .step-number { min-width: 24px; font-weight: 700; color: #055074; }
+
+    .number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .number-control button { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #2a2448; background: #110736; font-size: 1.3rem; font-weight: 600; color: #c1c1c6; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .number-control button:hover { background: #055074; border-color: #055074; }
+    .number-control button:active { transform: scale(0.95); }
+    .number-control .value { min-width: 60px; text-align: center; font-size: 1.6rem; font-weight: 700; color: #c1c1c6; }
+    .number-control .time-value { min-width: 80px; }
+
+    .toggle-group { display: flex; gap: 10px; }
+    .toggle-btn { flex: 1; padding: 11px 14px; border-radius: 8px; border: 1px solid #2a2448; background: #110736; font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; color: #706c7e; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .toggle-btn:hover { border-color: #055074; color: #c1c1c6; }
+    .toggle-btn.active { background: #055074; color: #c1c1c6; border-color: #055074; }
+
+    .category-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .category-btn { padding: 10px 12px; border-radius: 8px; border: 1px solid #2a2448; background: #110736; font-size: 0.85rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; color: #706c7e; cursor: pointer; transition: all 0.15s; text-align: center; }
+    .category-btn:hover { border-color: #055074; color: #c1c1c6; }
+    .category-btn.active { background: #055074; color: #c1c1c6; border-color: #055074; }
+    .category-btn.all-btn.active { background: #0b2659; border-color: #04447b; color: #c1c1c6; }
+
+    .players-list { display: flex; flex-direction: column; gap: 8px; }
+    .player-input-row { display: flex; gap: 8px; align-items: center; }
+    .player-input-row input { flex: 1; padding: 11px 14px; background: #c1c1c6 !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: none; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.95rem; font-weight: 500; outline: none; }
+    .player-input-row input:focus { outline: 2px solid #055074; }
+    .player-input-row .remove-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(248,113,113,0.3); background: transparent; color: #f87171; font-size: 1.2rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .player-input-row .remove-btn:hover { background: #2a0a0a; border-color: #f87171; }
+    .add-player-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed #2a2448; background: transparent; color: #055074; font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+    .add-player-btn:hover { border-color: #055074; }
+
+    .info-text.large { font-size: 1.3rem; font-weight: 700; color: #c1c1c6; }
+
+    .word-card { background: #110736; border-radius: 12px; padding: 28px 20px; text-align: center; border: 2px solid #055074; margin: 18px 0; }
+    .word-card.impostor { border-color: #d4537e; }
+    .category-label { font-size: 0.8rem; color: #706c7e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+    .category-name { font-size: 1rem; font-weight: 600; color: #055074; margin-bottom: 14px; }
+    .secret-word { font-size: 2rem; font-weight: 700; color: #c1c1c6; margin: 14px 0; }
+    .secret-word.impostor { color: #d4537e; }
+    .impostor-team { margin-top: 14px; padding: 10px; background: #2a0a1a; border-radius: 8px; border: 1px solid #d4537e; }
+    .impostor-team-label { font-size: 0.78rem; color: #706c7e; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+    .impostor-team-names { font-size: 0.95rem; font-weight: 600; color: #d4537e; }
+
+    .timer { font-size: 3rem; font-weight: 700; text-align: center; color: #d4537e; margin: 22px 0; font-variant-numeric: tabular-nums; }
+
+    .vote-grid { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 18px 0; }
+    .vote-btn { padding: 14px; background: #110736; border: 1px solid #2a2448; border-radius: 10px; font-size: 1rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; color: #c1c1c6; cursor: pointer; transition: all 0.2s; text-align: left; }
+    .vote-btn:hover { border-color: #055074; background: #0b2659; }
+    .vote-btn.selected { background: #055074; color: #c1c1c6; border-color: #055074; }
+
+    .result-box { background: #110736; border-radius: 12px; padding: 22px 18px; text-align: center; margin: 18px 0; border: 2px solid #055074; }
+    .result-box.impostor { border-color: #d4537e; }
+    .result-box h3 { font-size: 0.9rem; color: #706c7e; margin-bottom: 8px; }
+    .result-box .big-text { font-size: 1.5rem; font-weight: 700; color: #c1c1c6; margin: 8px 0; }
+    .result-box .role-text { font-size: 1.2rem; font-weight: 700; margin-top: 8px; }
+    .role-text.citizen { color: #055074; }
+    .role-text.impostor { color: #d4537e; }
+
+    .round-indicator { font-size: 0.8rem; color: #706c7e; text-align: center; margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">El Impostor</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div class="screen active" id="screen-home">
+        <div class="content">
+          <p class="intro-text">Usen un solo celular.<br>La app se ocupa de la palabra, los roles, el orden y la votación.</p>
+          <div class="btn-group">
+            <button class="btn btn-secondary" onclick="showScreen('screen-instructions')">Cómo se juega</button>
+            <button class="btn btn-primary" onclick="startNewGame()">Jugar</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Reanudar juego</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-instructions">
+        <div class="content">
+          <div class="instructions">
+            <p>Uno o más jugadores son impostores y no conocen la palabra secreta. Todos dan pistas en voz alta y luego votan quién creen que miente.</p>
+            <ul class="step-list">
+              <li><span class="step-number">1.</span><span>Configuran jugadores, impostores, categoría y opciones de votación.</span></li>
+              <li><span class="step-number">2.</span><span>El celular se pasa y cada uno ve su palabra (o descubre que es impostor).</span></li>
+              <li><span class="step-number">3.</span><span>Todos dan una pista en voz alta, en ronda.</span></li>
+              <li><span class="step-number">4.</span><span>Discusión con tiempo limitado.</span></li>
+              <li><span class="step-number">5.</span><span>Votación para eliminar jugador(es).</span></li>
+              <li><span class="step-number">6.</span><span>Se repite si quedan votaciones o se termina la partida.</span></li>
+            </ul>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScreen('screen-home')">Entendido</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-setup">
+        <div class="content">
+          <form id="setup-form" onsubmit="startGame(event)">
+            <div class="form-group">
+              <label>Jugadores</label>
+              <div class="players-list" id="players-list"></div>
+              <button type="button" class="add-player-btn" onclick="addPlayer()">+ Agregar jugador</button>
+            </div>
+            <div class="form-group">
+              <label>Impostores</label>
+              <div class="number-control">
+                <button type="button" onclick="changeImpostors(-1)">−</button>
+                <div class="value" id="impostor-count-display">1</div>
+                <button type="button" onclick="changeImpostors(1)">+</button>
+              </div>
+            </div>
+            <div class="form-group" id="impostors-know-group" style="display:none;">
+              <label>¿Los impostores se conocen?</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn" id="know-no" onclick="toggleImpostorsKnow(false)">No</button>
+                <button type="button" class="toggle-btn active" id="know-yes" onclick="toggleImpostorsKnow(true)">Sí</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Categorías</label>
+              <div class="category-grid" id="category-grid">
+                <button type="button" class="category-btn all-btn active" id="cat-all" onclick="toggleCategory('all')" style="grid-column: span 2;">🎲 Todas (aleatorio)</button>
+                <button type="button" class="category-btn" id="cat-deportes" onclick="toggleCategory('deportes')">⚽ Deportes</button>
+                <button type="button" class="category-btn" id="cat-peliculasSeries" onclick="toggleCategory('peliculasSeries')">🎬 Películas y Series</button>
+                <button type="button" class="category-btn" id="cat-objetos" onclick="toggleCategory('objetos')">📦 Objetos</button>
+                <button type="button" class="category-btn" id="cat-lugares" onclick="toggleCategory('lugares')">📍 Lugares</button>
+                <button type="button" class="category-btn" id="cat-personalidades" onclick="toggleCategory('personalidades')">🧑 Personalidades</button>
+                <button type="button" class="category-btn" id="cat-cocina" onclick="toggleCategory('cocina')">🍳 Cocina</button>
+                <button type="button" class="category-btn" id="cat-animales" onclick="toggleCategory('animales')">🐾 Animales</button>
+                <button type="button" class="category-btn" id="cat-musica" onclick="toggleCategory('musica')">🎵 Música</button>
+                <button type="button" class="category-btn" id="cat-tecnologia" onclick="toggleCategory('tecnologia')">💻 Tecnología</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Rondas de votación</label>
+              <div class="number-control">
+                <button type="button" onclick="changeVotingRounds(-1)">−</button>
+                <div class="value" id="voting-rounds-display">1</div>
+                <button type="button" onclick="changeVotingRounds(1)">+</button>
+              </div>
+            </div>
+            <div class="form-group" id="change-word-group" style="display:none;">
+              <label>Entre votaciones</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn active" id="word-same" onclick="toggleChangeWord(false)">Misma palabra</button>
+                <button type="button" class="toggle-btn" id="word-change" onclick="toggleChangeWord(true)">Cambiar palabra</button>
+              </div>
+            </div>
+            <div class="form-group" id="multiple-votes-group" style="display:none;">
+              <label>Votos por ronda</label>
+              <div class="toggle-group">
+                <button type="button" class="toggle-btn active" id="vote-single" onclick="toggleMultipleVotes(false)">1 persona</button>
+                <button type="button" class="toggle-btn" id="vote-multiple" onclick="toggleMultipleVotes(true)">Varios</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Tiempo de discusión</label>
+              <div class="number-control">
+                <button type="button" onclick="changeVoteTime(-30)">−</button>
+                <div class="value time-value" id="vote-time-display">01:00</div>
+                <button type="button" onclick="changeVoteTime(30)">+</button>
+              </div>
+            </div>
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary">Empezar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-pass-phone">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-pass"></p>
+          <p class="info-text large" id="pass-phone-text">Pasá el celular a [Jugador]</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showWord()">Mostrar palabra</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-show-word">
+        <div class="content">
+          <div class="word-card" id="word-card">
+            <div class="category-label">Categoría</div>
+            <div class="category-name" id="word-category-display"></div>
+            <div class="secret-word" id="word-display"></div>
+            <div class="impostor-team" id="impostor-team-info" style="display:none;">
+              <div class="impostor-team-label">Los otros impostores:</div>
+              <div class="impostor-team-names" id="impostor-team-names"></div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="nextPlayerWord()">Listo, siguiente jugador</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-start-clues">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-clues"></p>
+          <p class="info-text">Todos tienen la palabra o su rol de impostor.</p>
+          <p class="info-text" style="font-size:1.3rem;color:#055074;font-weight:700;margin-bottom:20px;">Categoría: <span id="category-display"></span></p>
+          <p class="info-text">Empieza <strong id="first-player-name" style="color:#055074;"></strong> dando una pista en voz alta.</p>
+          <p class="info-text" style="font-size:0.9rem;color:#706c7e;">El resto continúa en orden hacia la derecha.</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startDiscussion()">Iniciar discusión</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-vote-timer">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-discussion"></p>
+          <p class="info-text">Debatan quién es el/los impostor(es)</p>
+          <div class="timer" id="vote-timer">01:00</div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="skipToVote()">Ir a votación</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-vote">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-vote"></p>
+          <p class="info-text" id="vote-instruction-text">¿Quién fue el elegido por el grupo?</p>
+          <div class="vote-grid" id="vote-buttons"></div>
+          <div class="btn-group" id="vote-confirm-container" style="display:none;">
+            <button class="btn btn-primary" onclick="confirmVotes()">Confirmar votación</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-vote-result">
+        <div class="content">
+          <p class="round-indicator" id="round-indicator-result"></p>
+          <div id="eliminated-players-container"></div>
+          <p class="info-text" id="game-status-text" style="font-size:0.95rem;"></p>
+          <div class="btn-group" id="result-buttons"></div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-end-game">
+        <div class="content">
+          <div class="result-box" id="final-result-box">
+            <h3 id="game-winner-text">Ganaron los Ciudadanos</h3>
+            <p style="margin-top:10px;font-size:0.9rem;color:#706c7e;" id="game-summary"></p>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="changeConfig()">Cambiar configuración</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    const gameState = {
+      players: [], eliminated: [], impostorCount: 1, wordCategories: [],
+      currentCategory: '', word: '', roles: [], impostorIndexes: [],
+      currentPlayerIndex: 0, voteTime: 60, firstPlayerIndex: 0,
+      impostorsKnow: true, votingRounds: 1, currentVotingRound: 0,
+      changeWord: false, multipleVotes: false, selectedVotes: [],
+      currentScreen: 'screen-home', timerStartTime: null, timerPaused: false
+    };
+
+    const configState = { impostorCount: 1, votingRounds: 1, voteTime: 60, impostorsKnow: true, changeWord: false, multipleVotes: false, wordCategories: [] };
+
+    const wordBank = {
+      deportes: ['River Plate','Yoga','Boca Juniors','Selección Argentina','Lionel Messi','Diego Maradona','Racing Club','Independiente','San Lorenzo','Copa Libertadores','Champions League','Fútbol','Tenis','Basquet','Ping Pong','Golf','Franco Colapinto','F1','Lewis Hamilton','Max Verstappen','Arquero','Delantero','Cancha','Árbitro','Penal','Corner','Bicicleta','Natación','Boxeo','Rugby','Hockey','Atletismo','Maratón','Olimpiadas'],
+      peliculasSeries: ['El secreto de sus ojos','Relatos salvajes','Nueve Reinas','Casados con hijos','Los Simuladores','Okupas','El Marginal','La Casa de Papel','Breaking Bad','Game of Thrones','Friends','The Office','Stranger Things','Titanic','El Padrino','Star Wars','Harry Potter','Toy Story','Shrek','Los Simpsons','El chavo del 8','Matrix','Forrest Gump','El rey león','Volver al futuro','Avatar','Avengers','Jurassic Park','Coco','Joker','Narcos','Peaky Blinders','The Walking Dead','Prison Break','Black Mirror','Vikings','House','Grey\'s Anatomy','Gran Hermano','MasterChef'],
+      objetos: ['Celular','Computadora','Televisor','Auriculares','Libro','Lapicera','Llave','Mochila','Billetera','Reloj','Botella de agua','Paraguas','Silla','Mesa','Espejo','Pelota','Parrilla','Heladera','Cama','Semáforo','Micrófono','Radio','Zapatillas','Aspiradora','Lámpara','Ventilador','Aire acondicionado','Cortina','Almohada','Sábana','Toalla','Mate','Bombilla','Termo','Pava eléctrica','Tostadora','Licuadora','Cafetera','Cuchillo','Tijera'],
+      lugares: ['Buenos Aires','Obelisco','La Bombonera','El Monumental','Mar del Plata','Bariloche','Mendoza','Cataratas del Iguazú','La Patagonia','Córdoba','Rosario','Palermo','Recoleta','París','Roma','Madrid','Nueva York','Tokio','Playa','Montaña','Uruguay','Montevideo','Brasil','Rio de Janeiro','España','Portugal','Islas Malvinas','Antártida','Japón','China','EEUU','Miami','Canadá','México','Machu Pichu','Grecia','Qatar','La Plata','Ushuaia','Salta'],
+      personalidades: ['Lionel Messi','Diego Maradona','Ricardo Darín','Susana Giménez','Mirtha Legrand','Gustavo Cerati','Charly García','Fito Páez','Tini Stoessel','Bizarrap','Duki','Papa Francisco','Jorge Luis Borges','Shakira','Bad Bunny','Michael Jackson','Barack Obama','Cristina Fernández de Kirchner','Mauricio Macri','Javier Milei','Elon Musk','Donald Trump','Steve Jobs','Mahatma Gandhi','Freddie Mercury','Justin Bieber','LeBron James','Cristiano Ronaldo','Neymar','Kun Agüero','Franco Colapinto','Lionel Scaloni','Enzo Fernández','Julián Álvarez','Lautaro Martínez'],
+      cocina: ['Asado','Empanadas','Milanesa','Pizza','Fideos con tuco','Ñoquis','Locro','Choripán','Hamburguesa','Ensalada rusa','Helado','Torta','Dulce de leche','Mate','Café','Fernet con coca','Cerveza','Sushi','Olla','Parrilla','Lasagna','Huevo frito','Papa frita','Pollo','Pescado','Vermut','Sopa','Pan','Sándwich','Tostado','Leche','Naranja','Banana','Tomate','Lechuga','Cebolla','Azúcar','Harina','Mayonesa','Ketchup'],
+      animales: ['Perro','Gato','Carpincho','Loro','Caballo','Vaca','Oveja','Cerdo','Gallina','Pato','León','Tigre','Elefante','Jirafa','Mono','Pez','Delfín','Ballena','Tortuga','Ratón','Ardilla','Oso','Buitre','Koala','Hormiga','Langosta','Cangrejo','Puma','Águila','Cóndor','Cobra','Rinoceronte','Yacaré','Tiburón','Calamar','Camello','Llama','Murciélago','Pingüino','Colibrí'],
+      musica: ['Rock nacional','Cumbia','Cuarteto','Tango','Reggaetón','Trap','Pop','Soda Stereo','Los Redondos','La Renga','Los Auténticos Decadentes','Los Palmeras','Lali Espósito','Abel Pintos','Coldplay','Queen','The Beatles','Bad Bunny','Bizarrap','Rolling Stones','U2','Duki','Paulo Londra','Gustavo Cerati','Andrés Calamaro','Michael Jackson','Shakira','Madonna','Britney Spears','Carlos Gardel','Reggae','Ópera','Folclore','Rap','Jazz','Blues','Metal','Punk','Electronica','Lollapalooza'],
+      tecnologia: ['WhatsApp','Instagram','TikTok','Netflix','Spotify','YouTube','Google','WiFi','Bluetooth','Notebook','Tablet','Smart TV','PlayStation','Xbox','Mouse','Teclado','Pendrive','Bitcoin','Internet','Nintendo','Gameboy','Iphone','Android','Robot','ChatGPT','Radio','Televisor','Satélite','Wikipedia','Excel','Videojuego','Celular inteligente','Auriculares inalámbricos','Impresora','Router','Código QR','GPS','Streaming','Zoom','Inteligencia Artificial']
+    };
+
+    let voteTimer = null;
+    let playerCounter = 0;
+
+    function saveGame() {
+      try { gameState.currentScreen = getCurrentScreen(); localStorage.setItem('impostorGame', JSON.stringify(gameState)); } catch(e) {}
+    }
+
+    function loadGame() {
+      try { const saved = localStorage.getItem('impostorGame'); if (saved) { const loaded = JSON.parse(saved); Object.assign(gameState, loaded); return true; } } catch(e) {}
+      return false;
+    }
+
+    function checkForSavedGame() {
+      if (localStorage.getItem('impostorGame')) document.getElementById('resumeBtn').style.display = 'block';
+    }
+
+    function getCurrentScreen() {
+      const activeScreen = document.querySelector('.screen.active');
+      return activeScreen ? activeScreen.id : 'screen-home';
+    }
+
+    function resumeGame() {
+      if (loadGame()) {
+        showScreen(gameState.currentScreen);
+        if (gameState.currentScreen === 'screen-vote-timer' && gameState.timerStartTime && !gameState.timerPaused) {
+          const elapsed = Math.floor((Date.now() - gameState.timerStartTime) / 1000);
+          const remaining = gameState.voteTime - elapsed;
+          if (remaining > 0) startVoteTimer(remaining); else showVoteScreen();
+        }
+      }
+    }
+
+    function startNewGame() {
+      if (localStorage.getItem('impostorGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) return;
+      }
+      localStorage.removeItem('impostorGame');
+      gameState.players = []; gameState.eliminated = []; gameState.currentVotingRound = 0;
+      playerCounter = 0;
+      showScreen('screen-setup'); initializePlayers();
+    }
+
+    window.onload = function() { checkForSavedGame(); };
+
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      for (let i = 0; i < 5; i++) addPlayer();
+    }
+
+    function addPlayer() {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      const row = document.createElement('div');
+      row.className = 'player-input-row'; row.id = `player-row-${index}`;
+      row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayer(${index})">×</button>`;
+      container.appendChild(row); updateImpostorLimits();
+    }
+
+    function removePlayer(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) { row.remove(); updateImpostorLimits(); }
+    }
+
+    function updateImpostorLimits() {
+      const playerCount = document.querySelectorAll('.player-input-row').length;
+      const maxImpostors = Math.max(1, Math.floor(playerCount / 2));
+      if (configState.impostorCount > maxImpostors) { configState.impostorCount = maxImpostors; document.getElementById('impostor-count-display').textContent = configState.impostorCount; }
+      updateImpostorOptions();
+    }
+
+    function changeImpostors(delta) {
+      const playerCount = document.querySelectorAll('.player-input-row').length;
+      const maxImpostors = Math.max(1, Math.floor(playerCount / 2));
+      configState.impostorCount = Math.max(1, Math.min(maxImpostors, configState.impostorCount + delta));
+      document.getElementById('impostor-count-display').textContent = configState.impostorCount;
+      updateImpostorOptions();
+    }
+
+    function updateImpostorOptions() {
+      const knowGroup = document.getElementById('impostors-know-group');
+      const multiVoteGroup = document.getElementById('multiple-votes-group');
+      if (configState.impostorCount > 1) { knowGroup.style.display = 'block'; multiVoteGroup.style.display = 'block'; }
+      else { knowGroup.style.display = 'none'; multiVoteGroup.style.display = 'none'; }
+    }
+
+    function toggleImpostorsKnow(value) {
+      configState.impostorsKnow = value;
+      document.getElementById('know-no').classList.toggle('active', !value);
+      document.getElementById('know-yes').classList.toggle('active', value);
+    }
+
+    function changeVotingRounds(delta) {
+      configState.votingRounds = Math.max(1, Math.min(5, configState.votingRounds + delta));
+      document.getElementById('voting-rounds-display').textContent = configState.votingRounds;
+      updateVotingOptions();
+    }
+
+    function updateVotingOptions() {
+      document.getElementById('change-word-group').style.display = configState.votingRounds > 1 ? 'block' : 'none';
+    }
+
+    function toggleChangeWord(value) {
+      configState.changeWord = value;
+      document.getElementById('word-same').classList.toggle('active', !value);
+      document.getElementById('word-change').classList.toggle('active', value);
+    }
+
+    function toggleMultipleVotes(value) {
+      configState.multipleVotes = value;
+      document.getElementById('vote-single').classList.toggle('active', !value);
+      document.getElementById('vote-multiple').classList.toggle('active', value);
+    }
+
+    function toggleCategory(cat) {
+      const allBtn = document.getElementById('cat-all');
+      const allCategories = ['deportes','peliculasSeries','objetos','lugares','personalidades','cocina','animales','musica','tecnologia'];
+      if (cat === 'all') {
+        configState.wordCategories = [];
+        allCategories.forEach(c => document.getElementById('cat-' + c).classList.remove('active'));
+        allBtn.classList.add('active'); return;
+      }
+      const idx = configState.wordCategories.indexOf(cat);
+      if (idx > -1) { configState.wordCategories.splice(idx, 1); document.getElementById('cat-' + cat).classList.remove('active'); }
+      else { configState.wordCategories.push(cat); document.getElementById('cat-' + cat).classList.add('active'); }
+      if (configState.wordCategories.length > 0) allBtn.classList.remove('active');
+      else allBtn.classList.add('active');
+    }
+
+    function changeVoteTime(delta) {
+      configState.voteTime = Math.max(30, Math.min(300, configState.voteTime + delta));
+      const mins = Math.floor(configState.voteTime / 60);
+      const secs = configState.voteTime % 60;
+      document.getElementById('vote-time-display').textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+      gameState.currentScreen = screenId;
+    }
+
+    function updateRoundIndicators() {
+      const text = `Votación ${gameState.currentVotingRound + 1} de ${gameState.votingRounds}`;
+      ['pass','clues','discussion','vote','result'].forEach(id => {
+        const el = document.getElementById(`round-indicator-${id}`);
+        if (el) el.textContent = text;
+      });
+    }
+
+    function startGame(event) {
+      event.preventDefault();
+      gameState.players = [];
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        gameState.players.push(input.value.trim() || `Jugador ${i + 1}`);
+      });
+      if (gameState.players.length < 3) { alert('Necesitás al menos 3 jugadores'); return; }
+      gameState.impostorCount = configState.impostorCount;
+      gameState.wordCategories = [...configState.wordCategories];
+      gameState.voteTime = configState.voteTime;
+      gameState.impostorsKnow = configState.impostorsKnow;
+      gameState.votingRounds = configState.votingRounds;
+      gameState.changeWord = configState.changeWord;
+      gameState.multipleVotes = configState.multipleVotes;
+      gameState.eliminated = []; gameState.currentVotingRound = 0;
+      startNewRound();
+    }
+
+    function startNewRound() { updateRoundIndicators(); assignRoles(); gameState.currentPlayerIndex = 0; showPassPhoneScreen(); saveGame(); }
+
+    function assignRoles() {
+      let categoryToUse;
+      if (!gameState.wordCategories || gameState.wordCategories.length === 0) {
+        const categories = Object.keys(wordBank);
+        categoryToUse = categories[Math.floor(Math.random() * categories.length)];
+      } else if (gameState.wordCategories.length === 1) {
+        categoryToUse = gameState.wordCategories[0];
+      } else {
+        categoryToUse = gameState.wordCategories[Math.floor(Math.random() * gameState.wordCategories.length)];
+      }
+      gameState.currentCategory = categoryToUse;
+      const words = wordBank[categoryToUse];
+      gameState.word = words[Math.floor(Math.random() * words.length)];
+      const activeIndexes = gameState.players.map((p, i) => i).filter(i => !gameState.eliminated.includes(i));
+      gameState.roles = new Array(gameState.players.length).fill('citizen');
+      gameState.impostorIndexes = [];
+      const shuffled = [...activeIndexes].sort(() => Math.random() - 0.5);
+      const impostorCount = Math.min(gameState.impostorCount, activeIndexes.length - 1);
+      for (let i = 0; i < impostorCount; i++) { const idx = shuffled[i]; gameState.roles[idx] = 'impostor'; gameState.impostorIndexes.push(idx); }
+    }
+
+    function showPassPhoneScreen() {
+      if (gameState.currentPlayerIndex >= gameState.players.length) { showStartCluesScreen(); return; }
+      if (gameState.eliminated.includes(gameState.currentPlayerIndex)) { gameState.currentPlayerIndex++; showPassPhoneScreen(); return; }
+      document.getElementById('pass-phone-text').textContent = `Pasá el celular a ${gameState.players[gameState.currentPlayerIndex]}`;
+      showScreen('screen-pass-phone'); saveGame();
+    }
+
+    function showWord() {
+      const role = gameState.roles[gameState.currentPlayerIndex];
+      const wordCard = document.getElementById('word-card');
+      const wordDisplay = document.getElementById('word-display');
+      const categoryDisplay = document.getElementById('word-category-display');
+      const impostorTeamInfo = document.getElementById('impostor-team-info');
+      const categoryNames = { deportes:'Deportes', peliculasSeries:'Películas y Series', objetos:'Objetos', lugares:'Lugares', personalidades:'Personalidades', cocina:'Cocina', animales:'Animales', musica:'Música', tecnologia:'Tecnología' };
+      categoryDisplay.textContent = categoryNames[gameState.currentCategory] || gameState.currentCategory;
+      if (role === 'impostor') {
+        wordCard.classList.add('impostor'); wordDisplay.className = 'secret-word impostor'; wordDisplay.textContent = 'IMPOSTOR';
+        if (gameState.impostorsKnow && gameState.impostorIndexes.length > 1) {
+          const otherImpostors = gameState.impostorIndexes.filter(idx => idx !== gameState.currentPlayerIndex).map(idx => gameState.players[idx]).join(', ');
+          document.getElementById('impostor-team-names').textContent = otherImpostors;
+          impostorTeamInfo.style.display = 'block';
+        } else { impostorTeamInfo.style.display = 'none'; }
+      } else {
+        wordCard.classList.remove('impostor'); wordDisplay.className = 'secret-word'; wordDisplay.textContent = gameState.word; impostorTeamInfo.style.display = 'none';
+      }
+      showScreen('screen-show-word'); saveGame();
+    }
+
+    function nextPlayerWord() { gameState.currentPlayerIndex++; showPassPhoneScreen(); }
+
+    function showStartCluesScreen() {
+      const activePlayers = gameState.players.map((p, i) => i).filter(i => !gameState.eliminated.includes(i));
+      gameState.firstPlayerIndex = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+      const categoryNames = { deportes:'Deportes', peliculasSeries:'Películas y Series', objetos:'Objetos', lugares:'Lugares', personalidades:'Personalidades', cocina:'Cocina', animales:'Animales', musica:'Música', tecnologia:'Tecnología' };
+      document.getElementById('first-player-name').textContent = gameState.players[gameState.firstPlayerIndex];
+      document.getElementById('category-display').textContent = categoryNames[gameState.currentCategory] || gameState.currentCategory;
+      showScreen('screen-start-clues'); saveGame();
+    }
+
+    function startDiscussion() { startVoteTimer(); }
+
+    function startVoteTimer(startTime = null) {
+      let timeLeft = startTime !== null ? startTime : gameState.voteTime;
+      const timerEl = document.getElementById('vote-timer');
+      gameState.timerStartTime = Date.now(); gameState.timerPaused = false;
+      const mins = Math.floor(timeLeft / 60); const secs = timeLeft % 60;
+      timerEl.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+      showScreen('screen-vote-timer'); saveGame();
+      if (voteTimer) clearInterval(voteTimer);
+      voteTimer = setInterval(() => {
+        timeLeft--;
+        const m = Math.floor(timeLeft / 60); const s = timeLeft % 60;
+        timerEl.textContent = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        if (timeLeft <= 0) { clearInterval(voteTimer); gameState.timerPaused = true; saveGame(); showVoteScreen(); }
+      }, 1000);
+    }
+
+    function skipToVote() { if (voteTimer) clearInterval(voteTimer); gameState.timerPaused = true; saveGame(); showVoteScreen(); }
+
+    function showVoteScreen() {
+      gameState.selectedVotes = [];
+      const container = document.getElementById('vote-buttons');
+      container.innerHTML = '';
+      const activeImpostors = gameState.impostorIndexes.filter(i => !gameState.eliminated.includes(i));
+      const maxVotes = gameState.multipleVotes ? activeImpostors.length : 1;
+      if (gameState.multipleVotes && gameState.impostorCount > 1) {
+        document.getElementById('vote-instruction-text').textContent = `Seleccioná ${maxVotes} jugador${maxVotes > 1 ? 'es' : ''} para eliminar`;
+        document.getElementById('vote-confirm-container').style.display = 'block';
+      } else {
+        document.getElementById('vote-instruction-text').textContent = '¿Quién fue el elegido por el grupo?';
+        document.getElementById('vote-confirm-container').style.display = 'none';
+      }
+      gameState.players.forEach((player, idx) => {
+        if (gameState.eliminated.includes(idx)) return;
+        const btn = document.createElement('button');
+        btn.className = 'vote-btn'; btn.textContent = player;
+        btn.onclick = () => toggleVote(idx, btn, maxVotes);
+        container.appendChild(btn);
+      });
+      showScreen('screen-vote'); saveGame();
+    }
+
+    function toggleVote(idx, btn, maxVotes) {
+      if (gameState.multipleVotes && gameState.impostorCount > 1) {
+        const voteIndex = gameState.selectedVotes.indexOf(idx);
+        if (voteIndex > -1) { gameState.selectedVotes.splice(voteIndex, 1); btn.classList.remove('selected'); }
+        else if (gameState.selectedVotes.length < maxVotes) { gameState.selectedVotes.push(idx); btn.classList.add('selected'); }
+        saveGame();
+      } else { eliminatePlayers([idx]); }
+    }
+
+    function confirmVotes() {
+      if (gameState.selectedVotes.length === 0) { alert('Seleccioná al menos un jugador'); return; }
+      eliminatePlayers(gameState.selectedVotes);
+    }
+
+    function eliminatePlayers(indexes) {
+      const container = document.getElementById('eliminated-players-container');
+      container.innerHTML = '';
+      indexes.forEach(idx => {
+        gameState.eliminated.push(idx);
+        const role = gameState.roles[idx];
+        const playerName = gameState.players[idx];
+        const resultBox = document.createElement('div');
+        resultBox.className = 'result-box' + (role === 'impostor' ? ' impostor' : '');
+        resultBox.innerHTML = `<h3>Eliminado:</h3><div class="big-text">${playerName}</div><div class="role-text ${role === 'impostor' ? 'impostor' : 'citizen'}">${role === 'impostor' ? 'IMPOSTOR' : 'CIUDADANO'}</div>`;
+        container.appendChild(resultBox);
+      });
+      saveGame(); checkGameEnd();
+    }
+
+    function checkGameEnd() {
+      const activeImpostors = gameState.impostorIndexes.filter(i => !gameState.eliminated.includes(i));
+      const statusText = document.getElementById('game-status-text');
+      const buttons = document.getElementById('result-buttons');
+      buttons.innerHTML = '';
+      if (activeImpostors.length === 0) {
+        statusText.textContent = '¡Todos los impostores fueron eliminados!';
+        const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'Ver resultado final'; btn.onclick = () => endGame('citizens'); buttons.appendChild(btn);
+      } else {
+        gameState.currentVotingRound++;
+        if (gameState.currentVotingRound >= gameState.votingRounds) {
+          statusText.textContent = `Se acabaron las ${gameState.votingRounds} votaciones sin eliminar a todos los impostores.`;
+          const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'Ver resultado final'; btn.onclick = () => endGame('impostors'); buttons.appendChild(btn);
+        } else {
+          statusText.textContent = `Quedan ${activeImpostors.length} impostor${activeImpostors.length > 1 ? 'es' : ''} activo${activeImpostors.length > 1 ? 's' : ''}`;
+          const btn = document.createElement('button'); btn.className = 'btn btn-primary'; btn.textContent = 'Siguiente votación'; btn.onclick = continueToNextVoting; buttons.appendChild(btn);
+        }
+      }
+      showScreen('screen-vote-result'); saveGame();
+    }
+
+    function continueToNextVoting() { if (gameState.changeWord) startNewRound(); else { updateRoundIndicators(); startDiscussion(); } }
+
+    function endGame(winner) {
+      const winnerText = document.getElementById('game-winner-text');
+      const summaryText = document.getElementById('game-summary');
+      const finalBox = document.getElementById('final-result-box');
+      if (winner === 'citizens') { winnerText.textContent = '¡Ganaron los Ciudadanos!'; summaryText.textContent = 'Todos los impostores fueron eliminados.'; finalBox.classList.remove('impostor'); }
+      else { winnerText.textContent = '¡Ganaron los Impostores!'; summaryText.textContent = 'Los impostores lograron sobrevivir.'; finalBox.classList.add('impostor'); }
+      showScreen('screen-end-game');
+      localStorage.removeItem('impostorGame'); saveGame();
+    }
+
+    function playAgain() { gameState.eliminated = []; gameState.currentVotingRound = 0; startNewRound(); }
+    function changeConfig() { localStorage.removeItem('impostorGame'); showScreen('screen-setup'); }
+
+    document.addEventListener('DOMContentLoaded', () => { initializePlayers(); updateImpostorOptions(); updateVotingOptions(); });
+  </script>
+</body>
+</html>

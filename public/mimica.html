@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dígalo con Mímica · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <style>
+    .app { max-width: 480px; }
+
+    .inline-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .movie-card {
+      background: #110736;
+      border-radius: 14px;
+      padding: 36px 24px;
+      text-align: center;
+      border: 2px solid #055074;
+      margin: 20px 0;
+    }
+
+    .movie-title {
+      font-size: 1.9rem; font-weight: 700;
+      color: #c1c1c6;
+      line-height: 1.3;
+      margin: 16px 0;
+    }
+
+    .timer {
+      font-size: 4rem; font-weight: 700;
+      text-align: center;
+      color: #055074;
+      margin: 24px 0;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timer.warning { color: #f59e0b; animation: pulse 1s infinite; }
+    .timer.critical { color: #f87171; animation: pulse 0.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    .scoreboard { margin: 20px 0; }
+
+    .team-score {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: #110736;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #2a2448;
+    }
+
+    .team-score.active { border-color: #055074; background: #0b2659; }
+
+    .team-name { font-size: 1rem; font-weight: 700; color: #c1c1c6; }
+    .team-points { font-size: 1.8rem; font-weight: 700; color: #055074; font-variant-numeric: tabular-nums; }
+
+    .winner-box {
+      background: #0b2659;
+      border-radius: 14px;
+      padding: 32px 24px;
+      text-align: center;
+      border: 2px solid #055074;
+      margin: 20px 0;
+    }
+
+    .winner-box h2 { font-size: 1.6rem; color: #c1c1c6; margin-bottom: 12px; }
+    .winner-box .team-name { font-size: 2rem; color: #c1c1c6; }
+
+    .info-text.large { font-size: 1.3rem; font-weight: 700; color: #c1c1c6; }
+
+    @media (max-width: 480px) {
+      .movie-title { font-size: 1.5rem; }
+      .timer { font-size: 3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">Dígalo con Mímica</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div class="screen active" id="screen-home">
+        <div class="content">
+          <p class="intro-text">Actuá películas y series sin hablar.<br>¡Que tu equipo adivine antes de que se acabe el tiempo!</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScreen('screen-setup')">Jugar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-setup">
+        <div class="content">
+          <form id="setup-form" onsubmit="startGame(event)">
+            <div class="inline-group">
+              <div class="form-group">
+                <label>Equipos</label>
+                <select id="team-count">
+                  <option value="2" selected>2 equipos</option>
+                  <option value="3">3 equipos</option>
+                  <option value="4">4 equipos</option>
+                  <option value="5">5 equipos</option>
+                  <option value="6">6 equipos</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Tiempo por turno</label>
+                <select id="time-limit">
+                  <option value="30">30 seg</option>
+                  <option value="45">45 seg</option>
+                  <option value="60" selected>1 min</option>
+                  <option value="90">1:30 min</option>
+                  <option value="120">2 min</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Modo de juego</label>
+              <select id="game-mode" onchange="toggleGameMode()">
+                <option value="rounds" selected>Por rondas</option>
+                <option value="points">Hasta X puntos</option>
+              </select>
+            </div>
+            <div class="form-group" id="rounds-group">
+              <label>Número de rondas</label>
+              <input type="number" id="rounds-count" min="1" max="20" value="5" />
+            </div>
+            <div class="form-group" id="points-group" style="display:none;">
+              <label>Puntos para ganar</label>
+              <input type="number" id="points-goal" min="1" max="50" value="15" />
+            </div>
+            <div class="btn-group">
+              <button type="submit" class="btn btn-primary">Empezar Juego</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-prepare">
+        <div class="content">
+          <p class="info-text"><span id="prepare-info">Ronda 1 de 5</span></p>
+          <p class="info-text large">Turno del <span id="current-team-name">Equipo 1</span></p>
+          <p class="intro-text">Solo la persona que va a actuar debe tocar "Mostrar película".<br>Luego actuá sin hablar mientras tu equipo intenta adivinar.</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showMovie()">Mostrar película</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-movie">
+        <div class="content">
+          <div class="movie-card">
+            <div class="movie-title" id="movie-title">Título de Película</div>
+          </div>
+          <p class="intro-text">Memorizá el título y empezá a actuar cuando toques "Iniciar"</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startTimer()">Iniciar Cronómetro</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-playing">
+        <div class="content">
+          <p class="info-text large" id="playing-team-name">Equipo 1</p>
+          <div class="timer" id="timer">01:00</div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="stopTimer(true)">¡Adivinaron!</button>
+            <button class="btn btn-secondary" onclick="stopTimer(false)">No adivinaron</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-scoreboard">
+        <div class="content">
+          <p class="info-text" id="score-info">Ronda 1 de 5</p>
+          <div class="scoreboard" id="scoreboard-list"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="nextTurn()">Siguiente Turno</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-winner">
+        <div class="content">
+          <div class="winner-box">
+            <h2>🏆 Ganador</h2>
+            <div class="team-name" id="winner-name">Equipo 1</div>
+            <p style="margin-top:12px;font-size:1.1rem;color:#706c7e;"><span id="winner-points">10</span> puntos</p>
+          </div>
+          <div class="scoreboard" id="final-scoreboard"></div>
+          <div class="btn-group" style="margin-top:20px;">
+            <button class="btn btn-primary" onclick="playAgain()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    const gameState = {
+      teamCount: 2, teams: [], timeLimit: 60,
+      gameMode: 'rounds', roundsCount: 5, pointsGoal: 15,
+      currentRound: 1, currentTeam: 0, currentMovie: '', usedMovies: []
+    };
+
+    const movies = [
+      'El secreto de sus ojos','Relatos salvajes','Nueve Reinas','El hijo de la novia','La historia oficial',
+      'Casados con hijos','Los Simuladores','Okupas','El Marginal','Clave de sol',
+      'Star Wars','El Padrino','Rocky','Tiburón','Alien','Terminator','E.T.','Volver al futuro',
+      'Los Cazafantasmas','Indiana Jones','Top Gun','Rambo','Superman','Batman','Scarface',
+      'Titanic','Matrix','Forrest Gump','El rey león','Toy Story','Jurassic Park',
+      'Pulp Fiction','Jumanji','La máscara','Duro de matar','Speed','Misión imposible',
+      'El señor de los anillos','Harry Potter','Piratas del Caribe','Spider-Man',
+      'Shrek','Buscando a Nemo','Los increíbles','El caballero oscuro','Iron Man',
+      'Transformers','Avatar','Inception','Up','Wall-E','Ratatouille','Los vengadores',
+      'Frozen','Intensamente','Coco','Joker','Parasite','1917','Dunkerque',
+      'La La Land','Whiplash','Bohemian Rhapsody','Deadpool','Black Panther',
+      'Game of Thrones','Breaking Bad','Friends','The Office','Stranger Things',
+      'La casa de papel','Narcos','The Crown','Peaky Blinders','Sherlock',
+      'The Walking Dead','Lost','Prison Break','How I Met Your Mother',
+      'The Big Bang Theory','Modern Family','Grey\'s Anatomy','Suits',
+      'The Mandalorian','The Witcher','Vikings','Chernobyl','True Detective',
+      'The Boys','Succession','La vida es bella','El pianista','Amélie',
+      'Gran Torino','Cisne negro','El discurso del rey','La teoría del todo',
+      'Steve Jobs','La red social','Wolf of Wall Street','Gravity','Marte','Interstellar',
+      'Blade Runner 2049','Dune','Her','Fast and Furious','John Wick','Casino Royale',
+      'Skyfall','Kingsman','Baby Driver','Encanto','Moana','Zootopia'
+    ];
+
+    let timerInterval = null;
+    let timeLeft = 0;
+
+    function toggleGameMode() {
+      const mode = document.getElementById('game-mode').value;
+      document.getElementById('rounds-group').style.display = mode === 'rounds' ? 'block' : 'none';
+      document.getElementById('points-group').style.display = mode === 'points' ? 'block' : 'none';
+    }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function startGame(event) {
+      event.preventDefault();
+      gameState.teamCount = parseInt(document.getElementById('team-count').value);
+      gameState.timeLimit = parseInt(document.getElementById('time-limit').value);
+      gameState.gameMode = document.getElementById('game-mode').value;
+      gameState.roundsCount = parseInt(document.getElementById('rounds-count').value);
+      gameState.pointsGoal = parseInt(document.getElementById('points-goal').value);
+      gameState.teams = [];
+      for (let i = 0; i < gameState.teamCount; i++) {
+        gameState.teams.push({ name: `Equipo ${i + 1}`, points: 0 });
+      }
+      gameState.currentRound = 1; gameState.currentTeam = 0; gameState.usedMovies = [];
+      showPrepareTurn();
+    }
+
+    function showPrepareTurn() {
+      document.getElementById('current-team-name').textContent = gameState.teams[gameState.currentTeam].name;
+      if (gameState.gameMode === 'rounds') {
+        const totalTurns = gameState.roundsCount * gameState.teamCount;
+        const currentTurn = (gameState.currentRound - 1) * gameState.teamCount + gameState.currentTeam + 1;
+        document.getElementById('prepare-info').textContent = `Turno ${currentTurn} de ${totalTurns}`;
+      } else {
+        document.getElementById('prepare-info').textContent = `Jugando hasta ${gameState.pointsGoal} puntos`;
+      }
+      showScreen('screen-prepare');
+    }
+
+    function getRandomMovie() {
+      const availableMovies = movies.filter(m => !gameState.usedMovies.includes(m));
+      if (availableMovies.length === 0) { gameState.usedMovies = []; return movies[Math.floor(Math.random() * movies.length)]; }
+      const movie = availableMovies[Math.floor(Math.random() * availableMovies.length)];
+      gameState.usedMovies.push(movie);
+      return movie;
+    }
+
+    function showMovie() {
+      gameState.currentMovie = getRandomMovie();
+      document.getElementById('movie-title').textContent = gameState.currentMovie;
+      showScreen('screen-movie');
+    }
+
+    function startTimer() {
+      timeLeft = gameState.timeLimit;
+      updateTimerDisplay();
+      document.getElementById('playing-team-name').textContent = gameState.teams[gameState.currentTeam].name;
+      showScreen('screen-playing');
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        updateTimerDisplay();
+        if (timeLeft <= 0) { clearInterval(timerInterval); stopTimer(false); }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const timerEl = document.getElementById('timer');
+      const mins = Math.floor(timeLeft / 60);
+      const secs = timeLeft % 60;
+      timerEl.textContent = `${mins.toString().padStart(2,'0')}:${secs.toString().padStart(2,'0')}`;
+      timerEl.className = 'timer';
+      if (timeLeft <= 10 && timeLeft > 5) timerEl.classList.add('warning');
+      else if (timeLeft <= 5) timerEl.classList.add('critical');
+    }
+
+    function stopTimer(correct) {
+      if (timerInterval) clearInterval(timerInterval);
+      if (correct) gameState.teams[gameState.currentTeam].points++;
+      showScoreboard();
+    }
+
+    function showScoreboard() {
+      if (gameState.gameMode === 'rounds') {
+        const totalTurns = gameState.roundsCount * gameState.teamCount;
+        const currentTurn = (gameState.currentRound - 1) * gameState.teamCount + gameState.currentTeam + 1;
+        document.getElementById('score-info').textContent = `Turno ${currentTurn} de ${totalTurns}`;
+      } else {
+        document.getElementById('score-info').textContent = `Jugando hasta ${gameState.pointsGoal} puntos`;
+      }
+      const scoreboard = document.getElementById('scoreboard-list');
+      scoreboard.innerHTML = '';
+      gameState.teams.forEach((team, index) => {
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-score' + (index === gameState.currentTeam ? ' active' : '');
+        teamDiv.innerHTML = `<span class="team-name">${team.name}</span><span class="team-points">${team.points}</span>`;
+        scoreboard.appendChild(teamDiv);
+      });
+      showScreen('screen-scoreboard');
+    }
+
+    function nextTurn() {
+      if (gameState.gameMode === 'points') {
+        const winner = gameState.teams.find(t => t.points >= gameState.pointsGoal);
+        if (winner) { showWinner(); return; }
+      }
+      gameState.currentTeam++;
+      if (gameState.currentTeam >= gameState.teamCount) {
+        gameState.currentTeam = 0; gameState.currentRound++;
+        if (gameState.gameMode === 'rounds' && gameState.currentRound > gameState.roundsCount) { showWinner(); return; }
+      }
+      showPrepareTurn();
+    }
+
+    function showWinner() {
+      let winnerTeam = gameState.teams[0];
+      gameState.teams.forEach(team => { if (team.points > winnerTeam.points) winnerTeam = team; });
+      document.getElementById('winner-name').textContent = winnerTeam.name;
+      document.getElementById('winner-points').textContent = winnerTeam.points;
+      const finalScoreboard = document.getElementById('final-scoreboard');
+      finalScoreboard.innerHTML = '';
+      const sortedTeams = [...gameState.teams].sort((a, b) => b.points - a.points);
+      sortedTeams.forEach(team => {
+        const teamDiv = document.createElement('div');
+        teamDiv.className = 'team-score';
+        teamDiv.innerHTML = `<span class="team-name">${team.name}</span><span class="team-points">${team.points}</span>`;
+        finalScoreboard.appendChild(teamDiv);
+      });
+      showScreen('screen-winner');
+    }
+
+    function playAgain() { showScreen('screen-setup'); }
+    document.addEventListener('DOMContentLoaded', () => { toggleGameMode(); });
+  </script>
+</body>
+</html>

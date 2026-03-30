@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dividir Gastos · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <style>
+    .app { max-width: 480px; }
+
+    .add-expense-form { display: grid; gap: 10px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .participant-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+
+    .participant-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #110736;
+      border-radius: 8px;
+      border: 1px solid #2a2448;
+    }
+
+    .participant-name { font-weight: 600; color: #c1c1c6; font-size: 0.95rem; }
+
+    .btn-remove {
+      padding: 6px 8px;
+      background: transparent;
+      color: #f87171;
+      border: 1px solid rgba(248,113,113,0.3);
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px; min-height: 32px;
+    }
+
+    .btn-remove:hover { background: #2a0a0a; border-color: #f87171; }
+
+    .expense-item {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 14px;
+      background: #110736;
+      border-radius: 8px;
+      border: 1px solid #2a2448;
+      margin-bottom: 8px;
+    }
+
+    .expense-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    .expense-amount { font-size: 1.1rem; font-weight: 700; color: #4ade80; }
+    .expense-payer { font-size: 0.85rem; color: #706c7e; }
+    .expense-description { font-size: 0.82rem; color: #706c7e; font-style: italic; margin-top: 2px; }
+
+    .summary-card {
+      background: #110736;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border: 1px solid #2a2448;
+    }
+
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; }
+    .summary-label { font-size: 0.9rem; color: #c1c1c6; font-weight: 600; }
+    .summary-value { font-size: 1rem; font-weight: 700; color: #4ade80; }
+
+    .transfer-card {
+      background: #0a2a1a;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+      border: 1px solid #4ade80;
+    }
+
+    .transfer-text { font-size: 0.9rem; color: #c1c1c6; line-height: 1.5; }
+    .transfer-amount { font-weight: 700; color: #4ade80; font-size: 1rem; }
+
+    .info-box {
+      background: #1e1736;
+      border: 1px solid #2a2448;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      font-size: 0.82rem;
+      color: #706c7e;
+    }
+
+    h3 { font-size: 0.85rem; font-weight: 700; color: #706c7e; letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 10px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">Dividir Gastos</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div class="screen active" id="screen-home">
+        <div class="content">
+          <p class="intro-text">Dividí los gastos de tu juntada de forma simple. Agregá los nombres, cargá los gastos y calculá quién le debe a quién.</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScreen('screen-participants')">Empezar</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-participants">
+        <div class="content">
+          <div class="form-group">
+            <label>Nombre</label>
+            <input type="text" id="participant-name" placeholder="Ej: Juan" onkeypress="if(event.key==='Enter') addParticipant()" />
+          </div>
+          <button class="btn btn-primary" onclick="addParticipant()" style="margin-bottom:16px;">+ Agregar</button>
+          <div class="participant-list" id="participant-list"></div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToExpenses()">Continuar →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-expenses">
+        <div class="content">
+          <div class="add-expense-form">
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>¿Quién pagó?</label>
+                <select id="expense-payer"><option value="">Seleccioná...</option></select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Monto</label>
+                <input type="number" id="expense-amount" placeholder="0.00" step="0.01" />
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Descripción (opcional)</label>
+              <input type="text" id="expense-description" placeholder="Ej: Hielo" />
+            </div>
+            <button class="btn btn-primary" onclick="addExpense()">+ Agregar Gasto</button>
+          </div>
+          <div style="margin-top:20px;" id="expenses-list"></div>
+          <div class="btn-group" style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="calculateSettlement()">Calcular Cuentas</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen" id="screen-settlement">
+        <div class="content">
+          <div class="summary-card">
+            <div class="summary-row">
+              <span class="summary-label">Total gastado:</span>
+              <span class="summary-value" id="total-spent">$0</span>
+            </div>
+            <div class="summary-row">
+              <span class="summary-label">Por persona:</span>
+              <span class="summary-value" id="per-person">$0</span>
+            </div>
+          </div>
+          <h3>Lo que pagó cada uno:</h3>
+          <div id="individual-totals"></div>
+          <h3>Transferencias necesarias:</h3>
+          <div class="info-box">💡 Estas son las transferencias mínimas para saldar todas las cuentas</div>
+          <div id="transfers-list"></div>
+          <div class="btn-group" style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="resetApp()">Nueva Juntada</button>
+            <button class="btn btn-secondary" onclick="showScreen('screen-home')">Volver al Inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    const appState = { participants: [], expenses: [] };
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function addParticipant() {
+      const input = document.getElementById('participant-name');
+      const name = input.value.trim();
+      if (!name) { alert('Por favor ingresá un nombre'); return; }
+      if (appState.participants.includes(name)) { alert('Esta persona ya está en la lista'); return; }
+      appState.participants.push(name);
+      input.value = '';
+      renderParticipants();
+    }
+
+    function renderParticipants() {
+      const list = document.getElementById('participant-list');
+      list.innerHTML = '';
+      appState.participants.forEach((name, index) => {
+        const item = document.createElement('div');
+        item.className = 'participant-item';
+        item.innerHTML = `<span class="participant-name">${name}</span><button class="btn-remove" onclick="removeParticipant(${index})">🗑️</button>`;
+        list.appendChild(item);
+      });
+    }
+
+    function removeParticipant(index) { appState.participants.splice(index, 1); renderParticipants(); }
+
+    function goToExpenses() {
+      if (appState.participants.length < 2) { alert('Necesitás al menos 2 personas para dividir gastos'); return; }
+      const select = document.getElementById('expense-payer');
+      select.innerHTML = '<option value="">Seleccioná...</option>';
+      appState.participants.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name; option.textContent = name;
+        select.appendChild(option);
+      });
+      renderExpenses();
+      showScreen('screen-expenses');
+    }
+
+    function addExpense() {
+      const payer = document.getElementById('expense-payer').value;
+      const amount = parseFloat(document.getElementById('expense-amount').value);
+      const description = document.getElementById('expense-description').value.trim();
+      if (!payer) { alert('Seleccioná quién pagó'); return; }
+      if (!amount || amount <= 0) { alert('Ingresá un monto válido'); return; }
+      appState.expenses.push({ payer, amount, description: description || 'Sin descripción' });
+      document.getElementById('expense-amount').value = '';
+      document.getElementById('expense-description').value = '';
+      renderExpenses();
+    }
+
+    function renderExpenses() {
+      const list = document.getElementById('expenses-list');
+      if (appState.expenses.length === 0) {
+        list.innerHTML = '<p style="color:#706c7e;text-align:center;font-size:0.9rem;">No hay gastos registrados</p>';
+        return;
+      }
+      list.innerHTML = '';
+      appState.expenses.forEach((expense, index) => {
+        const item = document.createElement('div');
+        item.className = 'expense-item';
+        item.innerHTML = `<div class="expense-header"><span class="expense-amount">$${expense.amount.toFixed(2)}</span><button class="btn-remove" onclick="removeExpense(${index})">🗑️</button></div><div class="expense-payer">Pagó: ${expense.payer}</div>${expense.description !== 'Sin descripción' ? `<div class="expense-description">${expense.description}</div>` : ''}`;
+        list.appendChild(item);
+      });
+    }
+
+    function removeExpense(index) { appState.expenses.splice(index, 1); renderExpenses(); }
+
+    function calculateSettlement() {
+      if (appState.expenses.length === 0) { alert('No hay gastos registrados'); return; }
+      const total = appState.expenses.reduce((sum, exp) => sum + exp.amount, 0);
+      const perPerson = total / appState.participants.length;
+      const paid = {};
+      appState.participants.forEach(p => paid[p] = 0);
+      appState.expenses.forEach(exp => { paid[exp.payer] += exp.amount; });
+      const balance = {};
+      appState.participants.forEach(p => { balance[p] = paid[p] - perPerson; });
+      document.getElementById('total-spent').textContent = `$${total.toFixed(2)}`;
+      document.getElementById('per-person').textContent = `$${perPerson.toFixed(2)}`;
+      const individualsDiv = document.getElementById('individual-totals');
+      individualsDiv.innerHTML = '';
+      appState.participants.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        card.innerHTML = `<div class="summary-row"><span class="summary-label">${p}</span><span class="summary-value">$${paid[p].toFixed(2)}</span></div>`;
+        individualsDiv.appendChild(card);
+      });
+      const transfers = calculateMinimalTransfers(balance);
+      const transfersDiv = document.getElementById('transfers-list');
+      transfersDiv.innerHTML = '';
+      if (transfers.length === 0) {
+        transfersDiv.innerHTML = '<p style="color:#4ade80;text-align:center;font-size:0.9rem;">¡Las cuentas están saldadas! 🎉</p>';
+      } else {
+        transfers.forEach(t => {
+          const card = document.createElement('div');
+          card.className = 'transfer-card';
+          card.innerHTML = `<div class="transfer-text"><strong>${t.from}</strong> le paga <span class="transfer-amount">$${t.amount.toFixed(2)}</span> a <strong>${t.to}</strong></div>`;
+          transfersDiv.appendChild(card);
+        });
+      }
+      showScreen('screen-settlement');
+    }
+
+    function calculateMinimalTransfers(balance) {
+      const transfers = [];
+      const debtors = [];
+      const creditors = [];
+      for (const person in balance) {
+        const amount = balance[person];
+        if (amount < -0.01) debtors.push({ person, amount: -amount });
+        else if (amount > 0.01) creditors.push({ person, amount });
+      }
+      debtors.sort((a, b) => b.amount - a.amount);
+      creditors.sort((a, b) => b.amount - a.amount);
+      let i = 0, j = 0;
+      while (i < debtors.length && j < creditors.length) {
+        const debtor = debtors[i];
+        const creditor = creditors[j];
+        const transferAmount = Math.min(debtor.amount, creditor.amount);
+        transfers.push({ from: debtor.person, to: creditor.person, amount: transferAmount });
+        debtor.amount -= transferAmount;
+        creditor.amount -= transferAmount;
+        if (debtor.amount < 0.01) i++;
+        if (creditor.amount < 0.01) j++;
+      }
+      return transfers;
+    }
+
+    function resetApp() {
+      appState.participants = [];
+      appState.expenses = [];
+      renderParticipants();
+      renderExpenses();
+      showScreen('screen-participants');
+    }
+  </script>
+</body>
+</html>

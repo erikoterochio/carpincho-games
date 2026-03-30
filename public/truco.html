@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Truco · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <style>
+    .app { max-width: 480px; }
+
+    .scoreboard {
+      background: #1e1736;
+      border: 1px solid #2a2448;
+      border-radius: 16px;
+      padding: 24px 20px 20px;
+    }
+
+    .teams {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .team-column { display: flex; flex-direction: column; gap: 12px; }
+
+    .team-header { text-align: center; }
+
+    .team-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #706c7e;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .score-display {
+      background: #110736;
+      border-radius: 14px;
+      padding: 28px 16px;
+      border: 1px solid #2a2448;
+      text-align: center;
+    }
+
+    .score-number {
+      font-size: 5rem;
+      font-weight: 700;
+      color: #c1c1c6;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .score-label { font-size: 0.78rem; color: #706c7e; margin-top: 6px; }
+
+    .score-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .score-btn {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.4rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
+      border: 1px solid #2a2448;
+    }
+
+    .score-btn.plus { background: #055074; color: #c1c1c6; border-color: #055074; }
+    .score-btn.minus { background: #110736; color: #706c7e; }
+    .score-btn:hover { transform: scale(1.08); }
+    .score-btn:active { transform: scale(0.95); }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .controls button {
+      border-radius: 8px;
+      border: 1px solid #2a2448;
+      background: transparent;
+      padding: 8px 24px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: #706c7e;
+      font-family: 'Ubuntu', sans-serif;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .controls button:hover { border-color: #706c7e; color: #c1c1c6; }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">Truco</div>
+      <a href="index.html" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <section class="scoreboard">
+        <div class="teams">
+          <div class="team-column" data-team="A">
+            <div class="team-header">
+              <span class="team-name">Nosotros</span>
+            </div>
+            <div class="score-display">
+              <div class="score-number" id="scoreA">0</div>
+              <div class="score-label">puntos</div>
+            </div>
+            <div class="score-buttons">
+              <button class="score-btn minus" onclick="changeScore('A', -1)">−</button>
+              <button class="score-btn plus" onclick="changeScore('A', 1)">+</button>
+            </div>
+          </div>
+          <div class="team-column" data-team="B">
+            <div class="team-header">
+              <span class="team-name">Ellos</span>
+            </div>
+            <div class="score-display">
+              <div class="score-number" id="scoreB">0</div>
+              <div class="score-label">puntos</div>
+            </div>
+            <div class="score-buttons">
+              <button class="score-btn minus" onclick="changeScore('B', -1)">−</button>
+              <button class="score-btn plus" onclick="changeScore('B', 1)">+</button>
+            </div>
+          </div>
+        </div>
+        <div class="controls">
+          <button onclick="resetScores()">Reiniciar</button>
+        </div>
+      </section>
+      <footer>
+        <span>An app by CarpinchoGames ®</span>
+        <span>30 tantos</span>
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    const MAX_POINTS = 30;
+    let scoreA = 0;
+    let scoreB = 0;
+
+    function updateUI() {
+      document.getElementById("scoreA").textContent = scoreA;
+      document.getElementById("scoreB").textContent = scoreB;
+    }
+
+    function changeScore(team, delta) {
+      if (team === "A") {
+        scoreA = Math.max(0, Math.min(MAX_POINTS, scoreA + delta));
+      } else {
+        scoreB = Math.max(0, Math.min(MAX_POINTS, scoreB + delta));
+      }
+      updateUI();
+    }
+
+    function resetScores() {
+      scoreA = 0;
+      scoreB = 0;
+      updateUI();
+    }
+
+    updateUI();
+  </script>
+</body>
+</html>
