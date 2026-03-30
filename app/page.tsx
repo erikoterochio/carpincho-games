@@ -1,65 +1,217 @@
-import Image from "next/image";
+import Link from 'next/link'
 
-export default function Home() {
+const FEATURED = [
+  { name: 'El Impostor', href: '/(games)/impostor', color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',   href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
+]
+
+const MULTIPLAYER = [
+  { name: 'El Impostor',       href: '/(games)/impostor',  color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',         href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'Tabú',              href: '/(games)/tabu',      color: '#065c6c', img: '/images/tabu.png' },
+  { name: 'Dígalo con mímica', href: '/(games)/mimica',    color: '#055074', img: '/images/mimica.png' },
+  { name: 'Truco',             href: '/(tools)/truco',     color: '#110736', img: '/images/truco.png' },
+  { name: 'Generala',          href: '/(tools)/generala',  color: '#0b2659', img: '/images/generala.png' },
+]
+
+const TOOLS = [
+  { name: 'Divisor de gastos', href: '/(tools)/splitwise', color: '#04447b', img: '/images/splitwise.png' },
+]
+
+export default function HomePage() {
+  // TODO: reemplazar con sesión real de Supabase
+  const user = null
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        .wrap { max-width: 480px; margin: 0 auto; padding: 16px 18px; }
+
+        /* Card base con imagen de fondo */
+        .game-card {
+          position: relative;
+          border-radius: 14px;
+          overflow: hidden;
+          cursor: pointer;
+          border: 1px solid #2a2448;
+          background: #1e1736;
+          transition: border-color 0.2s;
+          aspect-ratio: 1 / 1;
+          display: block;
+          text-decoration: none;
+        }
+        .game-card:hover { border-color: #055074; }
+
+        .game-card-bg {
+          position: absolute;
+          inset: 0;
+          background-size: cover;
+          background-position: center;
+          opacity: 1;
+          transition: opacity 0.2s;
+        }
+        .game-card:hover .game-card-bg { opacity: 0.9; }
+
+        /* Gradiente solo abajo donde aparece el texto */
+        .game-card-gradient {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(1,5,15,0.9) 0%, rgba(1,5,15,0.4) 35%, transparent 60%);
+        }
+
+        .game-card-name {
+          position: absolute;
+          bottom: 12px;
+          left: 12px;
+          right: 12px;
+          font-family: 'Ubuntu', sans-serif;
+          font-size: 14px;
+          font-weight: 700;
+          color: #c1c1c6;
+          z-index: 1;
+        }
+        .game-card-name.large {
+          font-size: 17px;
+          bottom: 14px;
+          left: 14px;
+        }
+
+        .sep { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+        .sep-line { flex: 1; height: 1px; background: #1e1736; }
+        .sep-text { font-size: 10px; font-weight: 700; color: #706c7e; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; font-family: 'Ubuntu', sans-serif; }
+
+        .nav-inner { max-width: 480px; margin: 0 auto; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; }
+      `}</style>
+
+      <div style={{ background: '#01050F', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif" }}>
+
+        {/* Navbar */}
+        <nav style={{ background: '#01050F', borderBottom: '1px solid #1e1736', padding: '12px 0' }}>
+          <div className="nav-inner">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+              <div style={{ width: '28px', height: '28px', background: '#055074', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#c1c1c6" strokeWidth="2.2"/><path d="M4 15h24" stroke="#c1c1c6" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#c1c1c6"/><circle cx="16" cy="22" r="2" fill="#c1c1c6"/><circle cx="22" cy="22" r="2" fill="#c1c1c6"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#c1c1c6" strokeWidth="2.2" strokeLinecap="round"/></svg>
+              </div>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Ranchadapp</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {user ? (
+                <Link href="/dashboard">
+                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e1736', border: '1px solid #2a2448', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#c1c1c6', fontWeight: 700, cursor: 'pointer' }}>
+                    EO
+                  </div>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login">
+                    <button style={{ padding: '7px 14px', background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                      Iniciar sesión
+                    </button>
+                  </Link>
+                  <Link href="/login">
+                    <button style={{ padding: '7px 14px', background: '#055074', color: '#c1c1c6', border: 'none', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                      Registrarse
+                    </button>
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        <div className="wrap">
+
+          {/* Hero: Prode Mundial */}
+          <div style={{ border: '1px solid #04447b', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px' }}>
+            <div style={{ flex: '0 0 55%', background: '#0b2659', padding: '18px 16px 18px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 0, right: -20, width: 40, height: '100%', background: 'linear-gradient(to right, #0b2659, transparent)', zIndex: 1, pointerEvents: 'none' }} />
+              <div style={{ display: 'inline-block', background: '#055074', color: '#c1c1c6', fontSize: '9px', fontWeight: 700, letterSpacing: '1px', padding: '3px 9px', borderRadius: '20px', marginBottom: '10px', width: 'fit-content' }}>
+                MUNDIAL 2026
+              </div>
+              <div style={{ fontSize: '17px', fontWeight: 700, color: '#c1c1c6', marginBottom: '5px', lineHeight: 1.3 }}>Prode del Mundial con tus amigos</div>
+              <div style={{ fontSize: '11px', color: '#8aa8cc', marginBottom: '14px', lineHeight: 1.5 }}>Predecí resultados y ganá el ranking</div>
+              <button style={{ background: '#c1c1c6', color: '#01050F', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'not-allowed', opacity: 0.6, width: 'fit-content' }}>
+                Próximamente
+              </button>
+            </div>
+            <div style={{ flex: '0 0 45%', backgroundImage: 'url(/images/prode.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
+          </div>
+
+          {/* Destacados */}
+          <div className="sep"><div className="sep-line" /><span className="sep-text">Destacados</span><div className="sep-line" /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '22px' }}>
+            {FEATURED.map(game => (
+              <Link key={game.name} href={game.href} className="game-card">
+                <div className="game-card-bg" style={{ backgroundImage: `url(${game.img})`, backgroundColor: game.color }} />
+                <div className="game-card-gradient" />
+                <span className="game-card-name large">{game.name}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Tarjeta de ranchadas */}
+          <Link href="/login" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+            <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+              <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke={user ? '#c1c1c6' : '#706c7e'} strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke={user ? '#c1c1c6' : '#706c7e'} strokeWidth="1.8"/></svg>
+              </div>
+              {user ? (
+                <>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                      <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>24</span>
+                      <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver historial →</span>
+                </>
+              ) : (
+                <>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '13px', color: '#c1c1c6', fontWeight: 600, marginBottom: '2px' }}>¿Cuántas ranchadas llevás?</div>
+                    <div style={{ fontSize: '11px', color: '#706c7e' }}>Iniciá sesión o creá tu cuenta para llevar la cuenta</div>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/></svg>
+                </>
+              )}
+            </div>
+          </Link>
+
+          {/* Juegos multijugador */}
+          <div className="sep"><div className="sep-line" /><span className="sep-text">Juegos multijugador</span><div className="sep-line" /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '22px' }}>
+            {MULTIPLAYER.map(game => (
+              <Link key={game.name} href={game.href} className="game-card">
+                <div className="game-card-bg" style={{ backgroundImage: `url(${game.img})`, backgroundColor: game.color }} />
+                <div className="game-card-gradient" />
+                <span className="game-card-name">{game.name}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Herramientas */}
+          <div className="sep"><div className="sep-line" /><span className="sep-text">Herramientas</span><div className="sep-line" /></div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '22px' }}>
+            {TOOLS.map(tool => (
+              <Link key={tool.name} href={tool.href} className="game-card">
+                <div className="game-card-bg" style={{ backgroundImage: `url(${tool.img})`, backgroundColor: tool.color }} />
+                <div className="game-card-gradient" />
+                <span className="game-card-name">{tool.name}</span>
+              </Link>
+            ))}
+          </div>
+
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div style={{ padding: '16px', textAlign: 'center', borderTop: '1px solid #1e1736' }}>
+          <p style={{ fontSize: '11px', color: '#706c7e' }}>An app by CarpinchoGames ®</p>
         </div>
-      </main>
-    </div>
-  );
+
+      </div>
+    </>
+  )
 }
