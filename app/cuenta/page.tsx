@@ -123,6 +123,9 @@ export default function CuentaPage() {
         .msg-success { background: #0a2a1a; border: 1px solid #4ade80; border-radius: 8px; padding: 10px 13px; margin-top: 12px; font-size: 12px; color: #4ade80; line-height: 1.5; }
         .msg-error { background: #2a0a0a; border: 1px solid #f87171; border-radius: 8px; padding: 10px 13px; margin-top: 12px; font-size: 12px; color: #f87171; line-height: 1.5; }
         .warning-box { background: #2a0a0a; border: 1px solid rgba(248,113,113,0.4); border-radius: 8px; padding: 10px 13px; margin-bottom: 14px; font-size: 12px; color: #f87171; line-height: 1.5; }
+        input.inp { background: #c1c1c6 !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: none !important; }
+        input.inp::placeholder { color: #4a4a55 !important; -webkit-text-fill-color: #4a4a55 !important; }
+        input.inp:-webkit-autofill, input.inp:-webkit-autofill:hover, input.inp:-webkit-autofill:focus { -webkit-box-shadow: 0 0 0 1000px #c1c1c6 inset !important; -webkit-text-fill-color: #01050F !important; }
       `}</style>
 
       <div style={{ background: '#01050F', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' }}>
