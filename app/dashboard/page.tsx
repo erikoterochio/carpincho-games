@@ -12,7 +12,7 @@ export default function DashboardPage() {
           </div>
           <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', marginBottom: '10px' }}>En construcción</h1>
           <p style={{ fontSize: '14px', color: '#706c7e', lineHeight: 1.6, marginBottom: '28px' }}>
-            Tu perfil y estadísticas están en camino.</br>Pronto vas a poder ver tus ranchadas, historial de juegos y mucho más.
+            Tu perfil y estadísticas están en camino.<br />Pronto vas a poder ver tus ranchadas, historial de juegos y mucho más.
           </p>
           <a href="/" style={{ display: 'inline-block', background: '#055074', color: '#c1c1c6', fontSize: '14px', fontWeight: 700, padding: '12px 28px', borderRadius: '10px', textDecoration: 'none', fontFamily: "'Ubuntu', sans-serif" }}>
             Volver al inicio
