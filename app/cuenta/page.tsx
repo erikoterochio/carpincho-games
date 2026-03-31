@@ -46,6 +46,11 @@ const INP: React.CSSProperties = {
   fontFamily: "'Ubuntu', sans-serif", marginBottom: '12px', outline: 'none',
   boxSizing: 'border-box',
 }
+const NAV_BTN: React.CSSProperties = {
+  fontSize: '12px', color: '#c1c1c6', border: '1px solid rgba(255,255,255,0.25)',
+  borderRadius: '8px', padding: '6px 12px', background: 'transparent',
+  cursor: 'pointer', fontFamily: "'Ubuntu', sans-serif",
+}
 
 export default function CuentaPage() {
   const supabase = createClient()
@@ -104,6 +109,16 @@ export default function CuentaPage() {
     if (usernameStatus === 'taken' || usernameStatus === 'invalid') return
     setSaving(true); setSaveMsg(null)
     const { error } = await supabase.auth.updateUser({ data: { nombre, apellido, username } })
+    if (!error) {
+      await supabase.from('profiles').upsert({
+        id: userId,
+        username,
+        nombre,
+        apellido,
+        avatar_url: avatarUrl,
+        updated_at: new Date().toISOString(),
+      })
+    }
     setSaving(false)
     if (error) { setSaveMsgType('error'); setSaveMsg('Error al guardar. Intentá de nuevo.') }
     else { setSaveMsgType('success'); setSaveMsg('✓ Cambios guardados correctamente.'); setOriginalUsername(username); setUsernameStatus('idle') }
@@ -130,6 +145,7 @@ export default function CuentaPage() {
     if (uploadError) { setUploadMsg('Error al subir la imagen.'); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
     await supabase.auth.updateUser({ data: { avatar_url: publicUrl } })
+    await supabase.from('profiles').upsert({ id: userId, avatar_url: publicUrl, updated_at: new Date().toISOString() })
     setAvatarUrl(publicUrl)
     setUploadMsg('✓ Foto actualizada.')
     setTimeout(() => setUploadMsg(null), 3000)
@@ -160,7 +176,6 @@ export default function CuentaPage() {
         input.cuenta-inp:focus { border-color: #04447b !important; outline: 2px solid #04447b; outline-offset: 1px; }
         input.cuenta-inp::placeholder { color: #8aaccb !important; -webkit-text-fill-color: #8aaccb !important; }
         input.cuenta-inp:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #f3f6fa inset !important; -webkit-text-fill-color: #01050F !important; }
-        input.cuenta-inp-dark { background: #1e293b !important; color: #c1c1c6 !important; -webkit-text-fill-color: #c1c1c6 !important; border: 1px solid #334155 !important; }
       `}</style>
 
       <div style={{ background: '#0b2659', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' }}>
@@ -173,9 +188,10 @@ export default function CuentaPage() {
             </div>
             <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Mi cuenta</span>
           </div>
-          <button onClick={() => router.push('/')} style={{ fontSize: '12px', color: '#c1c1c6', border: '1px solid rgba(255,255,255,0.25)', borderRadius: '8px', padding: '6px 12px', background: 'transparent', cursor: 'pointer', fontFamily: "'Ubuntu', sans-serif" }}>
-            ← Inicio
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button style={NAV_BTN} onClick={() => router.push('/amigos')}>Amigos</button>
+            <button style={NAV_BTN} onClick={() => router.push('/')}>← Inicio</button>
+          </div>
         </nav>
 
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '20px 18px' }}>
@@ -275,7 +291,7 @@ export default function CuentaPage() {
                   </p>
                   <input
                     className="cuenta-inp"
-                    style={{ ...INP, background: '#fff8f8 !important' }}
+                    style={INP}
                     type="text"
                     placeholder="soy ortiva"
                     value={deleteInput}

@@ -23,10 +23,7 @@ export default async function HomePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Iniciales del usuario para el avatar
-  const initials = user?.email
-    ? user.email.substring(0, 2).toUpperCase()
-    : null
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : null
 
   return (
     <>
@@ -60,9 +57,16 @@ export default async function HomePage() {
               </div>
               <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Ranchadapp</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {user ? (
-                <Link href="/cuenta" className="avatar">{initials}</Link>
+                <>
+                  <Link href="/amigos">
+                    <button style={{ padding: '7px 12px', background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                      Amigos
+                    </button>
+                  </Link>
+                  <Link href="/cuenta" className="avatar">{initials}</Link>
+                </>
               ) : (
                 <>
                   <Link href="/login">
@@ -97,7 +101,7 @@ export default async function HomePage() {
                     <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver historial →</span>
+                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver perfil →</span>
               </div>
             </Link>
           ) : (
