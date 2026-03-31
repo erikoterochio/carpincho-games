@@ -5,6 +5,8 @@
   <title>Dividir Gastos · Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="common-styles-dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="friend-picker.js"></script>
   <style>
     .app { max-width: 480px; }
 
@@ -115,6 +117,7 @@
 
       <div class="screen" id="screen-participants">
         <div class="content">
+          <div id="fp-zone"></div>
           <div class="form-group">
             <label>Nombre</label>
             <input type="text" id="participant-name" placeholder="Ej: Juan" onkeypress="if(event.key==='Enter') addParticipant()" />
@@ -189,14 +192,21 @@
       document.getElementById(screenId).classList.add('active');
     }
 
-    function addParticipant() {
+    function addParticipant(prefilledName = '') {
       const input = document.getElementById('participant-name');
-      const name = input.value.trim();
+      const name = prefilledName || input.value.trim();
       if (!name) { alert('Por favor ingresá un nombre'); return; }
-      if (appState.participants.includes(name)) { alert('Esta persona ya está en la lista'); return; }
+      if (appState.participants.includes(name)) {
+        if (!prefilledName) alert('Esta persona ya está en la lista');
+        return;
+      }
       appState.participants.push(name);
-      input.value = '';
+      if (!prefilledName) input.value = '';
       renderParticipants();
+    }
+
+    function getPlayerNames() {
+      return [...appState.participants];
     }
 
     function renderParticipants() {
@@ -214,6 +224,8 @@
 
     function goToExpenses() {
       if (appState.participants.length < 2) { alert('Necesitás al menos 2 personas para dividir gastos'); return; }
+      // Guardar sesión en Supabase (fire & forget)
+      FriendPicker.saveSession('splitwise', [...appState.participants]);
       const select = document.getElementById('expense-payer');
       select.innerHTML = '<option value="">Seleccioná...</option>';
       appState.participants.forEach(name => {
@@ -319,8 +331,18 @@
       appState.expenses = [];
       renderParticipants();
       renderExpenses();
+      FriendPicker.reset();
       showScreen('screen-participants');
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      FriendPicker.init({
+        zoneId: 'fp-zone',
+        addPlayerFn: addParticipant,
+        getPlayerNames: getPlayerNames,
+        gameType: 'splitwise',
+      });
+    });
   </script>
 </body>
 </html>

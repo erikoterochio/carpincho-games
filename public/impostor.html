@@ -5,6 +5,8 @@
   <title>El Impostor · Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="common-styles-dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="friend-picker.js"></script>
   <style>
     .app { max-width: 480px; }
 
@@ -92,6 +94,7 @@
       <div class="screen" id="screen-setup">
         <div class="content">
           <form id="setup-form" onsubmit="startGame(event)">
+            <div id="fp-zone"></div>
             <div class="form-group">
               <label>Jugadores</label>
               <div class="players-list" id="players-list"></div>
@@ -326,13 +329,21 @@
       for (let i = 0; i < 5; i++) addPlayer();
     }
 
-    function addPlayer() {
+    function addPlayer(prefilledName = '') {
       const container = document.getElementById('players-list');
       const index = playerCounter++;
       const row = document.createElement('div');
       row.className = 'player-input-row'; row.id = `player-row-${index}`;
       row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayer(${index})">×</button>`;
-      container.appendChild(row); updateImpostorLimits();
+      container.appendChild(row);
+      if (prefilledName) row.querySelector('input').value = prefilledName;
+      updateImpostorLimits();
+    }
+
+    function getPlayerNames() {
+      return Array.from(document.querySelectorAll('.player-input-row input'))
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
     }
 
     function removePlayer(index) {
@@ -435,6 +446,8 @@
         gameState.players.push(input.value.trim() || `Jugador ${i + 1}`);
       });
       if (gameState.players.length < 3) { alert('Necesitás al menos 3 jugadores'); return; }
+      // Guardar sesión en Supabase (fire & forget)
+      FriendPicker.saveSession('impostor', [...gameState.players]);
       gameState.impostorCount = configState.impostorCount;
       gameState.wordCategories = [...configState.wordCategories];
       gameState.voteTime = configState.voteTime;
@@ -616,7 +629,15 @@
     function playAgain() { gameState.eliminated = []; gameState.currentVotingRound = 0; startNewRound(); }
     function changeConfig() { localStorage.removeItem('impostorGame'); showScreen('screen-setup'); }
 
-    document.addEventListener('DOMContentLoaded', () => { initializePlayers(); updateImpostorOptions(); updateVotingOptions(); });
+    document.addEventListener('DOMContentLoaded', () => {
+      initializePlayers(); updateImpostorOptions(); updateVotingOptions();
+      FriendPicker.init({
+        zoneId: 'fp-zone',
+        addPlayerFn: addPlayer,
+        getPlayerNames: getPlayerNames,
+        gameType: 'impostor',
+      });
+    });
   </script>
 </body>
 </html>

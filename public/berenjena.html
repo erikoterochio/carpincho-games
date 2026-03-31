@@ -5,6 +5,8 @@
   <title>Berenjenapp · Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="common-styles-dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="friend-picker.js"></script>
   <style>
     .app { max-width: 480px; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -113,6 +115,7 @@
 
       <div id="setupScreen" class="screen">
         <div class="content">
+          <div id="fp-zone"></div>
           <div class="form-group">
             <label>Jugadores</label>
             <div class="players-list" id="players-list"></div>
@@ -252,7 +255,15 @@
     let playerCounter = 0;
     let selectedPosition = 0;
 
-    window.onload = function() { checkForSavedGame(); };
+    window.onload = function() {
+      checkForSavedGame();
+      FriendPicker.init({
+        zoneId: 'fp-zone',
+        addPlayerFn: addPlayerSetup,
+        getPlayerNames: getPlayerNames,
+        gameType: 'berenjena',
+      });
+    };
 
     function checkForSavedGame() {
       if (localStorage.getItem('laBereGame')) document.getElementById('resumeBtn').style.display = 'block';
@@ -287,13 +298,21 @@
       for (let i = 0; i < 4; i++) addPlayerSetup();
     }
 
-    function addPlayerSetup() {
+    function addPlayerSetup(prefilledName = '') {
       const container = document.getElementById('players-list');
       const index = playerCounter++;
       const row = document.createElement('div');
       row.className = 'player-input-row'; row.id = `player-row-${index}`;
       row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>`;
-      container.appendChild(row); updateRoundsInfo();
+      container.appendChild(row);
+      if (prefilledName) row.querySelector('input').value = prefilledName;
+      updateRoundsInfo();
+    }
+
+    function getPlayerNames() {
+      return Array.from(document.querySelectorAll('.player-input-row input'))
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
     }
 
     function removePlayerSetup(index) {
@@ -334,6 +353,8 @@
         gameState.players.push({ name, score: 0, eliminated: false });
       });
       if (gameState.players.length < 2) { alert('Necesitás al menos 2 jugadores'); return; }
+      // Guardar sesión en Supabase (fire & forget)
+      FriendPicker.saveSession('berenjena', gameState.players.map(p => p.name));
       const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, gameState.players.length);
       if (rounds.length === 0) { alert('No hay suficientes cartas para jugar con esta cantidad de jugadores'); return; }
       gameState.roundTypes = rounds; gameState.roundMaxValues = maxValues;

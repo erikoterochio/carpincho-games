@@ -5,6 +5,8 @@
   <title>Generala · Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="stylesheet" href="common-styles-dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="friend-picker.js"></script>
   <style>
     .app { max-width: 900px; }
 
@@ -163,6 +165,7 @@
 
       <div id="setupScreen" class="screen">
         <div class="content">
+          <div id="fp-zone"></div>
           <div class="form-group">
             <label>Jugadores</label>
             <div class="players-list" id="players-list"></div>
@@ -197,7 +200,16 @@
       { id: 'poker', name: 'Póker' }, { id: 'generala', name: 'Generala' }, { id: 'doble', name: 'Doble' }
     ];
 
-    window.onload = function() { checkForSavedGame(); updateHeader('Generala', false); };
+    window.onload = function() {
+      checkForSavedGame();
+      updateHeader('Generala', false);
+      FriendPicker.init({
+        zoneId: 'fp-zone',
+        addPlayerFn: addPlayerSetup,
+        getPlayerNames: getPlayerNames,
+        gameType: 'generala',
+      });
+    };
 
     function updateHeader(title, showHome) {
       document.getElementById('pageTitle').textContent = title;
@@ -233,7 +245,7 @@
       for (let i = 0; i < 2; i++) addPlayerSetup();
     }
 
-    function addPlayerSetup() {
+    function addPlayerSetup(prefilledName = '') {
       const container = document.getElementById('players-list');
       const index = playerCounter++;
       const row = document.createElement('div');
@@ -241,6 +253,13 @@
       row.id = `player-row-${index}`;
       row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>`;
       container.appendChild(row);
+      if (prefilledName) row.querySelector('input').value = prefilledName;
+    }
+
+    function getPlayerNames() {
+      return Array.from(document.querySelectorAll('.player-input-row input'))
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
     }
 
     function removePlayerSetup(index) {
@@ -259,6 +278,8 @@
         categories.forEach(cat => { gameState.scores[name][cat.id] = ''; });
       });
       if (gameState.players.length < 1) { alert('Necesitás al menos 1 jugador'); return; }
+      // Guardar sesión en Supabase (fire & forget)
+      FriendPicker.saveSession('generala', [...gameState.players]);
       saveGame(); showScreen('gameScreen'); updateHeader('Anotador', true); renderTable();
     }
 

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import SessionBridge from '@/components/SessionBridge'
 
 const FEATURED = [
   { name: 'El Impostor', href: '/impostor.html', color: '#0b2659', img: '/images/impostor.png' },
@@ -178,6 +179,7 @@ export default async function HomePage() {
         </div>
 
       </div>
+      <SessionBridge />
     </>
   )
 }
