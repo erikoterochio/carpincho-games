@@ -2,25 +2,24 @@
 
 :root {
   --bg: #01050F;
-  --card: #c1c1c6;
-  --card-alt: #ffffff;
-  --sky: #055074;
-  --sky-hover: #04447b;
-  --indigo: #1e1736;
+  --card: #ffffff;
+  --card-alt: #f3f6fa;
+  --sky: #01050F;
+  --sky-hover: #1e1736;
   --text: #01050F;
-  --muted: #4a4a55;
-  --border: #9e9ea8;
-  --border-light: #c1c1c6;
-  --green: #166534;
-  --green-bg: #dcfce7;
-  --red: #991b1b;
-  --red-bg: #fee2e2;
-  --pink: #9d174d;
-  --orange: #92400e;
-  --blue: #04447b;
-  --input-bg: #ffffff;
+  --text-light: #ffffff;
+  --muted: #5a6a7a;
+  --border: #dde6f0;
+  --border-strong: #c8d8ec;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #86efac;
+  --red: #be123c;
+  --red-bg: #ffe4e6;
+  --red-border: #fda4af;
+  --input-bg: #f3f6fa;
   --input-text: #01050F;
-  --input-placeholder: #706c7e;
+  --input-placeholder: #8aaccb;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -42,8 +41,8 @@ body {
 .fixed-header {
   position: fixed;
   top: 0; left: 0; right: 0;
-  background: #1e1736;
-  border-bottom: 1px solid #2a2448;
+  background: #01050F;
+  border-bottom: 1px solid #1e1736;
   padding: 0 16px;
   height: 60px;
   display: flex;
@@ -51,8 +50,6 @@ body {
   justify-content: space-between;
   z-index: 1000;
 }
-
-.christmas-lights { display: none; }
 
 .header-content {
   display: flex;
@@ -64,22 +61,24 @@ body {
 .header-title {
   font-size: 1.05rem;
   font-weight: 700;
-  color: #c1c1c6;
+  color: #ffffff;
 }
 
 .home-btn {
   font-size: 0.78rem;
-  font-weight: 500;
-  color: #c1c1c6;
+  font-weight: 700;
+  color: #01050F;
   text-decoration: none;
-  border: 1px solid #2a2448;
+  border: none;
   border-radius: 8px;
   padding: 6px 14px;
-  background: transparent;
+  background: #c1c1c6;
   transition: all 0.15s ease;
+  font-family: 'Ubuntu', sans-serif;
+  cursor: pointer;
 }
 
-.home-btn:hover { color: #ffffff; border-color: #055074; }
+.home-btn:hover { background: #ffffff; }
 
 /* ─── Layout ──────────────────────────────── */
 .container {
@@ -98,7 +97,7 @@ body {
 
 /* ─── Content card ────────────────────────── */
 .content {
-  background: #c1c1c6;
+  background: #ffffff;
   border: none;
   border-radius: 16px;
   padding: 20px;
@@ -108,7 +107,7 @@ body {
 .intro-text {
   font-size: 0.95rem;
   line-height: 1.6;
-  color: #4a4a55;
+  color: var(--muted);
   margin-bottom: 20px;
   text-align: center;
 }
@@ -116,9 +115,22 @@ body {
 .info-text {
   font-size: 1rem;
   line-height: 1.6;
-  color: #01050F;
+  color: var(--text);
   margin-bottom: 12px;
   text-align: center;
+}
+
+/* ─── Labels ──────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
 
 /* ─── Buttons ─────────────────────────────── */
@@ -137,28 +149,18 @@ body {
 
 .btn:active { transform: scale(0.98); }
 
-.btn-primary { background: #055074; color: #ffffff; border: none; }
-.btn-primary:hover { background: #04447b; }
+.btn-primary { background: #01050F; color: #ffffff; }
+.btn-primary:hover { background: #1e1736; }
 
-.btn-secondary { background: #ffffff; color: #01050F; border: 1px solid #9e9ea8; }
-.btn-secondary:hover { border-color: #4a4a55; }
+.btn-secondary { background: #ffffff; color: #01050F; border: 1.5px solid #dde6f0; }
+.btn-secondary:hover { border-color: #01050F; }
+
+.btn-add { background: #f0fdf4; color: #16a34a; border: 1.5px solid #86efac; }
+.btn-add:hover { background: #dcfce7; }
 
 .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 
-/* ─── Form elements ───────────────────────── */
-.form-group { margin-bottom: 18px; }
-
-.form-group label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #1e1736;
-  letter-spacing: 0.6px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-
-/* ── Inputs: fondo blanco, borde visible ── */
+/* ─── Inputs ──────────────────────────────── */
 input[type="text"],
 input[type="number"],
 input[type="email"],
@@ -166,10 +168,10 @@ select,
 textarea {
   width: 100%;
   padding: 11px 14px;
-  background: #ffffff !important;
-  color: #01050F !important;
-  -webkit-text-fill-color: #01050F !important;
-  border: 1.5px solid #9e9ea8 !important;
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+  border: 1.5px solid var(--border-strong) !important;
   border-radius: 8px;
   font-family: 'Ubuntu', sans-serif;
   font-size: 0.95rem;
@@ -179,132 +181,161 @@ textarea {
   appearance: none;
 }
 
-input::placeholder { color: #706c7e !important; -webkit-text-fill-color: #706c7e !important; }
-input:focus { outline: 2px solid #055074; outline-offset: 1px; border-color: #055074 !important; }
+input::placeholder { color: var(--input-placeholder) !important; -webkit-text-fill-color: var(--input-placeholder) !important; }
+input:focus { outline: 2px solid #01050F; outline-offset: 1px; border-color: #01050F !important; }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
-  -webkit-text-fill-color: #01050F !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--input-text) !important;
 }
 
 select {
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%231e1736' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2301050F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 12px center !important;
-  background-color: #ffffff !important;
+  background-color: var(--input-bg) !important;
   padding-right: 36px;
   cursor: pointer;
 }
 
-/* ── Number controls ── */
-.number-control .value,
-.number-control .number-display {
+/* ─── Player rows ─────────────────────────── */
+.players-list { display: flex; flex-direction: column; gap: 8px; }
+
+.player-input-row { display: flex; gap: 8px; align-items: center; }
+
+.player-input-row input {
+  flex: 1;
+  background: #ffffff !important;
   color: #01050F !important;
+  -webkit-text-fill-color: #01050F !important;
+  border: 1.5px solid #dde6f0 !important;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.player-input-row input:focus { outline: 2px solid #01050F; border-color: #01050F !important; }
+
+.player-input-row .remove-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: #ffe4e6;
+  color: #be123c;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.player-input-row .remove-btn:hover { background: #fecdd3; }
+
+/* ─── Add player button ───────────────────── */
+.add-player-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: none;
+  background: #01050F;
+  color: #ffffff;
+  font-size: 0.9rem;
   font-weight: 700;
+  font-family: 'Ubuntu', sans-serif;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
 }
 
-/* ── Category buttons: blanco inactivo, celeste activo ── */
+.add-player-btn:hover { background: #1e1736; }
+
+/* ─── Number controls ─────────────────────── */
+.number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+.number-control button {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: #01050F;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.number-control button:hover { background: #1e1736; }
+.number-control button:active { transform: scale(0.95); }
+
+.number-control .value {
+  min-width: 60px;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #01050F;
+}
+
+/* ─── Category buttons ────────────────────── */
 .category-btn {
-  background: #ffffff !important;
-  color: #1e1736 !important;
-  border: 1.5px solid #9e9ea8 !important;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #dde6f0;
+  background: #f3f6fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Ubuntu', sans-serif;
+  color: #01050F;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
 }
 
-.category-btn:hover {
-  border-color: #055074 !important;
-  color: #055074 !important;
-}
+.category-btn:hover { border-color: #01050F; }
+.category-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
+.category-btn.all-btn { width: 100%; margin-bottom: 8px; }
+.category-btn.all-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
 
-.category-btn.active {
-  background: #055074 !important;
-  color: #ffffff !important;
-  border-color: #055074 !important;
-}
-
-.category-btn.all-btn.active {
-  background: #1e1736 !important;
-  color: #ffffff !important;
-  border-color: #1e1736 !important;
-}
-
-/* ── Toggle buttons ── */
+/* ─── Toggle buttons ──────────────────────── */
 .toggle-btn {
-  background: #ffffff !important;
-  color: #1e1736 !important;
-  border: 1.5px solid #9e9ea8 !important;
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #dde6f0;
+  background: #f3f6fa;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Ubuntu', sans-serif;
+  color: #5a6a7a;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
 }
 
-.toggle-btn.active {
-  background: #055074 !important;
-  color: #ffffff !important;
-  border-color: #055074 !important;
-}
+.toggle-btn:hover { border-color: #01050F; color: #01050F; }
+.toggle-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
+.toggle-group { display: flex; gap: 10px; }
 
-/* ── Number control buttons ── */
-.number-btn, .number-control button {
-  background: #1e1736 !important;
-  color: #ffffff !important;
-  border: 1px solid #2a2448 !important;
-}
-
-.number-btn:hover, .number-control button:hover {
-  background: #055074 !important;
+/* ─── Divider ─────────────────────────────── */
+.divider {
+  height: 1px;
+  background: #edf2f7;
+  margin: 14px 0;
 }
 
 /* ─── Footer ──────────────────────────────── */
 footer {
   margin-top: 16px;
   font-size: 0.75rem;
-  color: #9e9ea8;
+  color: #5a6a7a;
   text-align: center;
   padding-bottom: 8px;
-}
-
-/* ── Player input rows: fondo blanco con borde ── */
-.player-input-row input {
-  background: #ffffff !important;
-  color: #01050F !important;
-  -webkit-text-fill-color: #01050F !important;
-  border: 1.5px solid #9e9ea8 !important;
-  border-radius: 8px !important;
-}
-
-/* ── Botón agregar jugador: celeste ── */
-.add-player-btn {
-  background: #055074 !important;
-  color: #ffffff !important;
-  border: none !important;
-  border-radius: 8px !important;
-}
-
-.add-player-btn:hover {
-  background: #04447b !important;
-}
-
-/* ── Botones + y - : celeste con texto blanco ── */
-.number-control button,
-.number-btn {
-  background: #055074 !important;
-  color: #ffffff !important;
-  border: none !important;
-}
-
-.number-control button:hover,
-.number-btn:hover {
-  background: #04447b !important;
-}
-
-/* ── Botones eliminar jugador: rojo con x blanca ── */
-.player-input-row .remove-btn,
-.remove-btn {
-  background: #dc2626 !important;
-  color: #ffffff !important;
-  border: none !important;
-}
-
-.player-input-row .remove-btn:hover,
-.remove-btn:hover {
-  background: #b91c1c !important;
 }

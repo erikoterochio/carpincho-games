@@ -9,8 +9,7 @@
     .app { max-width: 480px; }
 
     .scoreboard {
-      background: #1e1736;
-      border: 1px solid #2a2448;
+      background: #ffffff;
       border-radius: 16px;
       padding: 24px 20px 20px;
     }
@@ -22,7 +21,6 @@
     }
 
     .team-column { display: flex; flex-direction: column; gap: 12px; }
-
     .team-header { text-align: center; }
 
     .team-name {
@@ -30,28 +28,28 @@
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
-      color: #706c7e;
+      color: #5a6a7a;
       display: block;
       margin-bottom: 8px;
     }
 
     .score-display {
-      background: #110736;
+      background: #f3f6fa;
       border-radius: 14px;
       padding: 28px 16px;
-      border: 1px solid #2a2448;
+      border: 1.5px solid #dde6f0;
       text-align: center;
     }
 
     .score-number {
       font-size: 5rem;
       font-weight: 700;
-      color: #c1c1c6;
+      color: #01050F;
       line-height: 1;
       font-variant-numeric: tabular-nums;
     }
 
-    .score-label { font-size: 0.78rem; color: #706c7e; margin-top: 6px; }
+    .score-label { font-size: 0.78rem; color: #5a6a7a; margin-top: 6px; }
 
     .score-buttons {
       display: flex;
@@ -70,11 +68,12 @@
       justify-content: center;
       transition: all 0.15s ease;
       touch-action: manipulation;
-      border: 1px solid #2a2448;
+      border: none;
+      font-family: 'Ubuntu', sans-serif;
     }
 
-    .score-btn.plus { background: #055074; color: #c1c1c6; border-color: #055074; }
-    .score-btn.minus { background: #110736; color: #706c7e; }
+    .score-btn.plus { background: #01050F; color: #ffffff; }
+    .score-btn.minus { background: #f3f6fa; color: #5a6a7a; border: 1.5px solid #dde6f0; }
     .score-btn:hover { transform: scale(1.08); }
     .score-btn:active { transform: scale(0.95); }
 
@@ -86,18 +85,18 @@
 
     .controls button {
       border-radius: 8px;
-      border: 1px solid #2a2448;
-      background: transparent;
+      border: 1.5px solid #dde6f0;
+      background: #ffffff;
       padding: 8px 24px;
       font-size: 0.85rem;
       cursor: pointer;
-      color: #706c7e;
+      color: #5a6a7a;
       font-family: 'Ubuntu', sans-serif;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.15s;
     }
 
-    .controls button:hover { border-color: #706c7e; color: #c1c1c6; }
+    .controls button:hover { border-color: #01050F; color: #01050F; }
 
     footer {
       display: flex;
@@ -158,8 +157,7 @@
 
   <script>
     const MAX_POINTS = 30;
-    let scoreA = 0;
-    let scoreB = 0;
+    let scoreA = 0, scoreB = 0;
 
     function updateUI() {
       document.getElementById("scoreA").textContent = scoreA;
@@ -167,20 +165,12 @@
     }
 
     function changeScore(team, delta) {
-      if (team === "A") {
-        scoreA = Math.max(0, Math.min(MAX_POINTS, scoreA + delta));
-      } else {
-        scoreB = Math.max(0, Math.min(MAX_POINTS, scoreB + delta));
-      }
+      if (team === "A") scoreA = Math.max(0, Math.min(MAX_POINTS, scoreA + delta));
+      else scoreB = Math.max(0, Math.min(MAX_POINTS, scoreB + delta));
       updateUI();
     }
 
-    function resetScores() {
-      scoreA = 0;
-      scoreB = 0;
-      updateUI();
-    }
-
+    function resetScores() { scoreA = 0; scoreB = 0; updateUI(); }
     updateUI();
   </script>
 </body>

@@ -4,97 +4,153 @@
   <meta charset="UTF-8" />
   <title>Generala · Ranchadapp</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
-    :root {
-      --bg: #01050F;
-      --card: #1e1736;
-      --card-alt: #110736;
-      --sky: #055074;
-      --text: #c1c1c6;
-      --muted: #706c7e;
-      --border: #2a2448;
-      --green: #4ade80;
-      --red: #f87171;
+    .app { max-width: 900px; }
+
+    .table-container { overflow-x: auto; margin-bottom: 16px; -webkit-overflow-scrolling: touch; }
+
+    .score-table {
+      border-collapse: collapse;
+      background: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1.5px solid #dde6f0;
+      margin: 0 auto;
+      width: 100%;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Ubuntu', sans-serif; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
-    body { min-height: 100vh; background: var(--bg); color: var(--text); padding-top: 60px; }
 
-    .fixed-header { position: fixed; top: 0; left: 0; right: 0; background: var(--card); border-bottom: 1px solid var(--border); padding: 0 16px; height: 60px; display: flex; align-items: center; justify-content: space-between; z-index: 1000; }
-    .header-title { font-size: 1.05rem; font-weight: 700; color: var(--text); }
-    .home-btn { font-size: 0.78rem; color: var(--muted); text-decoration: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; background: transparent; transition: all 0.15s; }
-    .home-btn:hover { color: var(--text); border-color: var(--sky); }
+    .score-table th {
+      background: #01050F;
+      color: #ffffff;
+      padding: 10px 12px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      min-width: 80px;
+      position: relative;
+    }
 
-    .container { display: flex; align-items: flex-start; justify-content: center; min-height: calc(100vh - 60px); padding: 16px; }
-    .app { width: 100%; max-width: 900px; }
+    .score-table th.category-header {
+      text-align: center;
+      min-width: 100px;
+      position: sticky;
+      left: 0;
+      z-index: 12;
+      background: #01050F;
+    }
 
-    .screen { display: none; }
-    .screen.active { display: block; }
+    .score-table td {
+      padding: 0;
+      border: 1px solid #dde6f0;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #01050F;
+    }
 
-    .content { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .score-table td.category-name {
+      text-align: center;
+      background: #f3f6fa;
+      font-weight: 600;
+      color: #01050F;
+      position: sticky;
+      left: 0;
+      z-index: 10;
+      box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+      padding: 8px 12px;
+    }
 
-    .intro-text { font-size: 0.9rem; line-height: 1.6; color: var(--muted); margin-bottom: 20px; text-align: center; }
-
-    .btn { width: 100%; padding: 13px 20px; border-radius: 10px; border: none; font-size: 0.95rem; font-weight: 700; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; display: block; }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--sky); color: var(--text); }
-    .btn-primary:hover { background: #04447b; }
-    .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-add { background: #0a2a1a; color: var(--green); border: 1px solid var(--green); }
-    .btn-add:hover { background: var(--green); color: var(--bg); }
-    .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--muted); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 8px; }
-
-    .players-list { display: flex; flex-direction: column; gap: 8px; }
-    .player-input-row { display: flex; gap: 8px; align-items: center; }
-    .player-input-row input { flex: 1; padding: 11px 14px; background: #c1c1c6 !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: none; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.95rem; font-weight: 500; outline: none; }
-    .player-input-row input:focus { outline: 2px solid var(--sky); }
-    .player-input-row .remove-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(248,113,113,0.3); background: transparent; color: #f87171; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-    .player-input-row .remove-btn:hover { background: #2a0a0a; border-color: #f87171; }
-
-    .add-player-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed var(--border); background: transparent; color: var(--sky); font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
-    .add-player-btn:hover { border-color: var(--sky); }
-
-    .table-container { overflow-x: auto; margin-bottom: 16px; }
-
-    .score-table { border-collapse: collapse; background: var(--card-alt); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); margin: 0 auto; }
-    .score-table th { background: var(--sky); color: var(--text); padding: 10px 12px; font-weight: 700; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.1); text-align: center; min-width: 70px; position: relative; }
-    .score-table th.category-header { text-align: center; min-width: 100px; position: sticky; left: 0; z-index: 12; background: var(--sky); }
-    .score-table td { padding: 8px 12px; border: 1px solid var(--border); text-align: center; font-size: 0.9rem; color: var(--text); }
-    .score-table td.category-name { text-align: center; background: #0b2659; font-weight: 600; color: var(--text); position: sticky; left: 0; z-index: 10; box-shadow: 2px 0 5px rgba(0,0,0,0.3); }
     .score-table td.score-cell { padding: 0; position: relative; }
-    .score-table input { width: 100%; height: 100%; border: none; background: transparent; text-align: center; font-size: 0.9rem; font-weight: 600; padding: 8px 4px; color: var(--text) !important; -webkit-text-fill-color: var(--text) !important; font-family: 'Ubuntu', sans-serif; }
-    .score-table input:focus { outline: none; background: #0b2659; }
-    .score-table input.filled { background: #0a2a1a; color: var(--green) !important; -webkit-text-fill-color: var(--green) !important; }
-    .score-table input.crossed { background: #2a0a0a; color: var(--red) !important; -webkit-text-fill-color: var(--red) !important; }
-    .score-table tr.total-row { background: #0b2659; font-weight: 700; }
-    .score-table tr.divider-row td { border-top: 2px solid var(--sky); }
-    .score-table tr.total-row td { border-top: 2px solid var(--sky); font-size: 0.95rem; color: var(--sky); padding: 10px 12px; }
-    .score-table tr.total-row td.category-name { background: #0b2659; }
+
+    .score-table input {
+      width: 100%;
+      height: 100%;
+      border: none !important;
+      background: transparent !important;
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 10px 4px;
+      color: #01050F !important;
+      -webkit-text-fill-color: #01050F !important;
+      font-family: 'Ubuntu', sans-serif;
+      outline: none !important;
+    }
+
+    .score-table input:focus { background: #eff6ff !important; }
+
+    .score-table input.filled {
+      background: #f0fdf4 !important;
+      color: #16a34a !important;
+      -webkit-text-fill-color: #16a34a !important;
+    }
+
+    .score-table input.crossed {
+      background: #fff1f2 !important;
+      color: #be123c !important;
+      -webkit-text-fill-color: #be123c !important;
+    }
+
+    .score-table tr.total-row td {
+      border-top: 2px solid #01050F;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #01050F;
+      padding: 10px 12px;
+      background: #f3f6fa;
+    }
+
+    .score-table tr.total-row td.category-name {
+      background: #f3f6fa;
+      color: #01050F;
+    }
+
+    .score-table tr.divider-row td { border-top: 2px solid #c8d8ec; }
+
+    .score-table tr:hover td:not(.category-name) { background: #f8fafc; }
+    .score-table tr.total-row:hover td { background: #f3f6fa; }
 
     .player-header { position: relative; }
-    .delete-player-btn { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%; background: rgba(248,113,113,0.8); color: white; border: none; font-size: 0.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; transition: all 0.15s; }
-    .delete-player-btn:hover { opacity: 1; transform: scale(1.1); }
 
-    footer { margin-top: 16px; font-size: 0.75rem; color: var(--border); text-align: center; padding-bottom: 8px; }
+    .delete-player-btn {
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #ffe4e6;
+      color: #be123c;
+      border: none;
+      font-size: 0.65rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      line-height: 1;
+      transition: all 0.15s;
+    }
+
+    .delete-player-btn:hover { background: #fecdd3; transform: scale(1.1); }
 
     @media (max-width: 768px) {
-      .score-table th, .score-table td { font-size: 0.8rem; padding: 6px 8px; }
+      .score-table th, .score-table td { font-size: 0.8rem; }
       .score-table th { min-width: 60px; }
-      .score-table th.category-header { min-width: 90px; }
+      .score-table th.category-header { min-width: 80px; }
     }
   </style>
 </head>
 <body>
   <div class="fixed-header">
-    <div class="header-title" id="pageTitle">Generala</div>
-    <a href="/" class="home-btn" id="homeBtn" style="display:none;">← Inicio</a>
+    <div class="header-content">
+      <div class="header-title" id="pageTitle">Generala</div>
+      <a href="/" class="home-btn" id="homeBtn" style="display:none;">← Inicio</a>
+    </div>
   </div>
 
   <div class="container">
     <main class="app">
+
       <div id="splashScreen" class="screen active">
         <div class="content">
           <p class="intro-text">Anotador para el clásico juego de dados argentino.</p>
