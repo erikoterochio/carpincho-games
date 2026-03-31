@@ -100,12 +100,14 @@ export default function LoginPage() {
 
             {view === 'login' && (
               <form action={handleLogin}>
-                <input className="inp" name="email" type="email" placeholder="Mail / Usuario" required />
+                <input className="inp" name="identifier" type="text" placeholder="Mail o usuario" required autoComplete="username" />
                 <input className="inp" name="password" type="password" placeholder="Contraseña" required style={{ marginBottom: '4px' }} />
                 <div style={{ textAlign: 'right', marginBottom: '20px' }}>
                   <button type="button" className="forgot-link" onClick={() => switchView('forgot')}>¿Olvidaste tu contraseña?</button>
                 </div>
-                <button type="submit" className="btn-primary" disabled={isPending}>{isPending ? 'Cargando...' : 'Iniciar sesión'}</button>
+                <button type="submit" className="btn-primary" disabled={isPending}>
+                  {isPending ? 'Cargando...' : 'Iniciar sesión'}
+                </button>
                 <button type="button" className="btn-secondary" onClick={() => switchView('register')}>Crear cuenta nueva</button>
                 <div className="divider"><div className="divider-line"/><span className="divider-text">o</span><div className="divider-line"/></div>
                 <a href="/" className="btn-outline">Continuar sin iniciar sesión</a>

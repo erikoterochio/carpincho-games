@@ -6,15 +6,28 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function login(formData: FormData) {
   const supabase = await createClient()
+  const identifier = (formData.get('identifier') as string).trim()
+  const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email: formData.get('email') as string,
-    password: formData.get('password') as string,
-  })
+  let email = identifier
 
-  if (error) {
-    return { error: 'Mail o contraseña incorrectos.' }
+  // Si no tiene @, es un username → buscar el email en profiles
+  if (!identifier.includes('@')) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('email')
+      .eq('username', identifier)
+      .single()
+
+    if (!profile?.email) {
+      return { error: 'Usuario o contraseña incorrectos.' }
+    }
+
+    email = profile.email
   }
+
+  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  if (error) return { error: 'Usuario o contraseña incorrectos.' }
 
   revalidatePath('/', 'layout')
   redirect('/')
@@ -25,23 +38,33 @@ export async function register(formData: FormData) {
 
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
+  const email = formData.get('email') as string
+  const username = formData.get('username') as string
 
   if (password !== confirmPassword) {
     return { error: 'Las contraseñas no coinciden.' }
   }
 
-  const { error } = await supabase.auth.signUp({
-    email: formData.get('email') as string,
+  const { data, error } = await supabase.auth.signUp({
+    email,
     password,
     options: {
       data: {
-        username: formData.get('username') as string,
+        username,
+        full_name: username, // ← esto puebla el "Display name" en el dashboard
       },
     },
   })
 
-  if (error) {
-    return { error: 'No se pudo crear la cuenta. Intentá de nuevo.' }
+  if (error) return { error: 'No se pudo crear la cuenta. Intentá de nuevo.' }
+
+  // Guardar email + username en profiles para poder hacer login por username
+  if (data.user) {
+    await supabase.from('profiles').upsert({
+      id: data.user.id,
+      username,
+      email,
+    })
   }
 
   return { success: 'Revisá tu mail para confirmar tu cuenta.' }
@@ -57,9 +80,7 @@ export async function forgotPassword(formData: FormData) {
     }
   )
 
-  if (error) {
-    return { error: 'No se pudo enviar el mail. Intentá de nuevo.' }
-  }
+  if (error) return { error: 'No se pudo enviar el mail. Intentá de nuevo.' }
 
   return { success: 'Si el mail existe, te enviamos el link de recuperación.' }
 }
