@@ -140,7 +140,7 @@ export default function CuentaPage() {
     if (file.size > 2 * 1024 * 1024) { setUploadMsg('La imagen no puede superar los 2MB.'); return }
     setUploadMsg('Subiendo...')
     const ext = file.name.split('.').pop()
-    const path = `avatars/${userId}.${ext}`
+    const path = `${userId}.${ext}`
     const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true })
     if (uploadError) { setUploadMsg('Error al subir la imagen.'); return }
     const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(path)
