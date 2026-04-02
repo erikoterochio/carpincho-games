@@ -442,7 +442,7 @@ function vsParText(diff: number): string {
 function getResultLabel(gross: number, par: number, strokes: number): string {
   const net  = gross - strokes
   const diff = net - par
-  if (diff <= -3) return 'Albatross 🦅🦅'
+  if (diff <= -3) return 'Albatross 🦤'
   if (diff === -2) return 'Eagle 🦅'
   if (diff === -1) return 'Birdie 🐦'
   if (diff === 0)  return 'Par'
