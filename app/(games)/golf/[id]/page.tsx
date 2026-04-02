@@ -17,25 +17,18 @@ type Tournament = {
 type Course    = { id: string; name: string; city: string | null; par: number | null; rating: number | null; slope: number | null }
 type Hole      = { hole_number: number; par: number; stroke_index: number }
 type Player    = { id: string; display_name: string; handicap_index: number; tee_color: string }
-type Format    = { id: string; format_type: string; display_name: string; handicap_allowance: number | null }
+type Format    = { id: string; format_type: string; display_name: string; handicap_allowance: number | null; max_hcp_diff: number | null }
 type Round     = { id: string; round_number: number; status: string; date: string | null }
 type HoleScore = { id: string; round_id: string; player_id: string; hole_number: number; gross: number | null; updated_at: string }
+type CompUnit  = { id: string; name: string; unit_type: string; format_id: string; golf_competition_unit_members: { player_id: string }[] }
 
 type PlayerCalc = {
-  player: Player
-  courseHcp: number
-  playingHcp: number
-  strokes: Record<number, number>
+  player: Player; courseHcp: number; playingHcp: number; strokes: Record<number, number>
 }
 
 type LeaderboardRow = {
   pos: number; player: Player; playingHcp: number
   value: number; holesPlayed: number; vsParDisplay: string; complete: boolean
-}
-
-type CompUnit = {
-  id: string; name: string; unit_type: string; format_id: string
-  golf_competition_unit_members: { player_id: string }[]
 }
 
 // ─────────────────────────────────────────────
@@ -52,7 +45,8 @@ const C = {
 
 const FORMAT_COLORS: Record<string, string> = {
   stroke: '#5b9bd5', stableford: '#4caf84', match: '#e07b4f',
-  fourball_clasico: '#9b72cf', fourball_americano: '#cf9e3a', laguneada: '#c15b8a',
+  fourball_clasico: '#9b72cf', fourball_americano: '#cf9e3a',
+  laguneada: '#c15b8a', '4_2_0': '#38bdf8',
 }
 
 const TEE_HEX: Record<string, string> = {
@@ -65,8 +59,8 @@ const TEE_HEX: Record<string, string> = {
 
 function hcpStrokes(playingHcp: number, strokeIndex: number): number {
   if (playingHcp <= 0) return 0
-  const base = Math.floor(Math.abs(playingHcp) / 18)
-  const rem  = Math.abs(playingHcp) % 18
+  const base  = Math.floor(Math.abs(playingHcp) / 18)
+  const rem   = Math.abs(playingHcp) % 18
   const extra = strokeIndex <= rem ? 1 : 0
   return playingHcp < 0 ? -(base + extra) : base + extra
 }
@@ -120,8 +114,7 @@ function buildStablefordLB(calcs: PlayerCalc[], holes: Hole[], scores: HoleScore
       const s = scores.find(x => x.player_id === player.id && x.hole_number === h.hole_number)
       if (!s?.gross) return
       pts += stablefordPts(s.gross, h.par, strokes[h.hole_number] ?? 0)
-      vsParAcc += s.gross - h.par
-      played++
+      vsParAcc += s.gross - h.par; played++
     })
     return { player, playingHcp, value: pts, holesPlayed: played, vsParAcc, complete: played >= totalHoles }
   }).sort((a, b) => b.value - a.value || a.vsParAcc - b.vsParAcc)
@@ -157,6 +150,77 @@ function buildStrokeLB(calcs: PlayerCalc[], holes: Hole[], scores: HoleScore[], 
 }
 
 // ─────────────────────────────────────────────
+// 4-2-0 BUILDER
+// 3 jugadores por grupo (scope individual pero 3 a la vez)
+// 85% de handicap, 6 puntos por hoyo: 4-2-0
+// Empates: todos→2-2-2 | top2→3-3-0 | bottom2→4-1-1
+// ─────────────────────────────────────────────
+
+function build420LB(calcs: PlayerCalc[], holes: Hole[], scores: HoleScore[]): (LeaderboardRow & { ptsDetail: string })[] {
+  // Acumular puntos por jugador
+  const totals = calcs.map(({ player, playingHcp, strokes }) => {
+    let pts = 0; let played = 0
+    holes.forEach(h => {
+      const s = scores.find(x => x.player_id === player.id && x.hole_number === h.hole_number)
+      if (s?.gross) played++
+    })
+    return { player, playingHcp, pts: 0, played }
+  })
+
+  // Por cada hoyo, calcular distribución de puntos
+  holes.forEach(h => {
+    const holeNetts = calcs.map(({ player, strokes }) => {
+      const s = scores.find(x => x.player_id === player.id && x.hole_number === h.hole_number)
+      if (!s?.gross) return null
+      return { playerId: player.id, nett: s.gross - (strokes[h.hole_number] ?? 0) }
+    }).filter(Boolean) as { playerId: string; nett: number }[]
+
+    if (holeNetts.length < 2) return
+
+    // Ordenar por nett (menor es mejor)
+    holeNetts.sort((a, b) => a.nett - b.nett)
+
+    // Distribuir 4-2-0 con empates
+    const pts: Record<string, number> = {}
+
+    if (holeNetts.length === 3) {
+      const [a, b, c] = holeNetts
+      if (a.nett === b.nett && b.nett === c.nett) {
+        // Todos iguales: 2-2-2
+        pts[a.playerId] = 2; pts[b.playerId] = 2; pts[c.playerId] = 2
+      } else if (a.nett === b.nett) {
+        // Los dos mejores empatan: 3-3-0
+        pts[a.playerId] = 3; pts[b.playerId] = 3; pts[c.playerId] = 0
+      } else if (b.nett === c.nett) {
+        // Los dos peores empatan: 4-1-1
+        pts[a.playerId] = 4; pts[b.playerId] = 1; pts[c.playerId] = 1
+      } else {
+        // Sin empate: 4-2-0
+        pts[a.playerId] = 4; pts[b.playerId] = 2; pts[c.playerId] = 0
+      }
+    } else if (holeNetts.length === 2) {
+      // Solo 2 jugadores cargaron en este hoyo
+      if (holeNetts[0].nett === holeNetts[1].nett) {
+        pts[holeNetts[0].playerId] = 3; pts[holeNetts[1].playerId] = 3
+      } else {
+        pts[holeNetts[0].playerId] = 4; pts[holeNetts[1].playerId] = 2
+      }
+    }
+
+    totals.forEach(t => {
+      if (pts[t.player.id] !== undefined) t.pts += pts[t.player.id]
+    })
+  })
+
+  const sorted = totals.sort((a, b) => b.pts - a.pts)
+  let pos = 1
+  return sorted.map((r, i) => {
+    if (i > 0 && r.pts < sorted[i - 1].pts) pos = i + 1
+    return { pos, player: r.player, playingHcp: r.playingHcp, value: r.pts, holesPlayed: r.played, vsParDisplay: `${r.pts}pts`, complete: false, ptsDetail: `${r.pts} pts` }
+  })
+}
+
+// ─────────────────────────────────────────────
 // MATCH PLAY — CÁLCULO
 // ─────────────────────────────────────────────
 
@@ -179,34 +243,59 @@ function matchDiffStrokes(diff: number, strokeIndex: number): number {
   return base + (strokeIndex <= rem ? 1 : 0)
 }
 
-function bestBallNett(unit: MatchUnit, holeNum: number, strokeIndex: number, scores: HoleScore[]): number | null {
+// Fourball Clásico: mejor pelota GROSS de la pareja, con HCP de pareja = 3/8 × (hcp_menor + min(hcp_mayor, hcp_menor + max_diff))
+function fourballClasicoPairHcp(hcpA: number, hcpB: number, maxDiff: number): number {
+  const lower  = Math.min(hcpA, hcpB)
+  const higher = Math.max(hcpA, hcpB)
+  const cappedHigher = Math.min(higher, lower + maxDiff)
+  return Math.round((3 / 8) * (lower + cappedHigher))
+}
+
+function bestBallGross(unit: MatchUnit, holeNum: number, scores: HoleScore[]): number | null {
+  // Para fourball_clasico: mejor GROSS de la pareja
   let best: number | null = null
-  unit.players.forEach((p, i) => {
-    const str = hcpStrokes(unit.playingHcps[i], strokeIndex)
-    const sc  = scores.find(s => s.player_id === p.id && s.hole_number === holeNum)
+  unit.players.forEach(p => {
+    const sc = scores.find(s => s.player_id === p.id && s.hole_number === holeNum)
     if (!sc?.gross) return
-    const nett = sc.gross - str
-    if (best === null || nett < best) best = nett
+    if (best === null || sc.gross < best) best = sc.gross
   })
   return best
 }
 
-function buildMatchState(unitA: MatchUnit, unitB: MatchUnit, holes: Hole[], scores: HoleScore[], isFourball: boolean): MatchState {
-  const diff         = Math.abs(unitA.teamPlayingHcp - unitB.teamPlayingHcp)
-  const higherIsA    = unitA.teamPlayingHcp >= unitB.teamPlayingHcp
+function buildMatchState(
+  unitA: MatchUnit, unitB: MatchUnit, holes: Hole[],
+  scores: HoleScore[], isFourball: boolean, maxDiff: number = 5
+): MatchState {
+  let hcpA: number; let hcpB: number
+
+  if (isFourball) {
+    // Fourball clásico: HCP de pareja calculado con 3/8 y cap
+    hcpA = fourballClasicoPairHcp(unitA.playingHcps[0] ?? 0, unitA.playingHcps[1] ?? 0, maxDiff)
+    hcpB = fourballClasicoPairHcp(unitB.playingHcps[0] ?? 0, unitB.playingHcps[1] ?? 0, maxDiff)
+  } else {
+    hcpA = unitA.teamPlayingHcp
+    hcpB = unitB.teamPlayingHcp
+  }
+
+  const diff       = Math.abs(hcpA - hcpB)
+  const higherIsA  = hcpA >= hcpB
   let upDown = 0
   const holeResults: MatchState['holeResults'] = {}
   let holesPlayed = 0
 
   holes.forEach(h => {
-    let nettA: number | null
-    let nettB: number | null
+    let nettA: number | null; let nettB: number | null
 
     if (isFourball) {
-      nettA = bestBallNett(unitA, h.hole_number, h.stroke_index, scores)
-      nettB = bestBallNett(unitB, h.hole_number, h.stroke_index, scores)
+      // Mejor bruto de la pareja, con HCP de pareja aplicado como diferencia
+      const grossA = bestBallGross(unitA, h.hole_number, scores)
+      const grossB = bestBallGross(unitB, h.hole_number, scores)
+      if (grossA === null || grossB === null) { holeResults[h.hole_number] = 'pending'; return }
+      const strDiff  = matchDiffStrokes(diff, h.stroke_index)
+      nettA = grossA - (higherIsA ? strDiff : 0)
+      nettB = grossB - (higherIsA ? 0 : strDiff)
     } else {
-      const pA = unitA.players[0]; const pB = unitB.players[0]
+      const pA  = unitA.players[0]; const pB = unitB.players[0]
       const scA = scores.find(s => s.player_id === pA.id && s.hole_number === h.hole_number)
       const scB = scores.find(s => s.player_id === pB.id && s.hole_number === h.hole_number)
       if (!scA?.gross || !scB?.gross) { holeResults[h.hole_number] = 'pending'; return }
@@ -215,7 +304,6 @@ function buildMatchState(unitA: MatchUnit, unitB: MatchUnit, holes: Hole[], scor
       nettB = scB.gross - (higherIsA ? 0 : strDiff)
     }
 
-    if (nettA === null || nettB === null) { holeResults[h.hole_number] = 'pending'; return }
     holesPlayed++
     if (nettA < nettB)      { holeResults[h.hole_number] = 'win';    upDown++ }
     else if (nettA > nettB) { holeResults[h.hole_number] = 'loss';   upDown-- }
@@ -250,11 +338,11 @@ export default function TournamentPage() {
   const { id }   = useParams<{ id: string }>()
   const supabase = createClient()
 
-  const [loading,    setLoading]    = useState(true)
-  const [tab,        setTab]        = useState<'leaderboard' | 'scorecard'>('leaderboard')
-  const [fmtTab,     setFmtTab]     = useState(0)
-  const [copied,     setCopied]     = useState(false)
-  const [showMenu,   setShowMenu]   = useState(false)
+  const [loading,   setLoading]   = useState(true)
+  const [tab,       setTab]       = useState<'leaderboard' | 'scorecard'>('leaderboard')
+  const [fmtTab,    setFmtTab]    = useState(0)
+  const [copied,    setCopied]    = useState(false)
+  const [showMenu,  setShowMenu]  = useState(false)
 
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [course,     setCourse]     = useState<Course | null>(null)
@@ -265,7 +353,6 @@ export default function TournamentPage() {
   const [scores,     setScores]     = useState<HoleScore[]>([])
   const [compUnits,  setCompUnits]  = useState<CompUnit[]>([])
 
-  // ── Carga inicial
   useEffect(() => {
     const load = async () => {
       const { data: t } = await supabase
@@ -275,18 +362,16 @@ export default function TournamentPage() {
       if (!t) { setLoading(false); return }
       setTournament(t)
 
-      const { data: c } = await supabase
-        .from('golf_courses').select('id,name,city,par,rating,slope').eq('id', t.course_id).single()
+      const { data: c } = await supabase.from('golf_courses').select('id,name,city,par,rating,slope').eq('id', t.course_id).single()
       setCourse(c ?? null)
 
       if (c) {
-        const { data: hs } = await supabase
-          .from('golf_holes').select('hole_number,par,stroke_index').eq('course_id', c.id).order('hole_number')
+        const { data: hs } = await supabase.from('golf_holes').select('hole_number,par,stroke_index').eq('course_id', c.id).order('hole_number')
         setHoles(hs ?? [])
       }
 
       const [fmtRes, plRes, rndRes, cuRes] = await Promise.all([
-        supabase.from('golf_formats').select('id,format_type,display_name,handicap_allowance').eq('tournament_id', id).order('sort_order'),
+        supabase.from('golf_formats').select('id,format_type,display_name,handicap_allowance,max_hcp_diff').eq('tournament_id', id).order('sort_order'),
         supabase.from('golf_players').select('id,display_name,handicap_index,tee_color').eq('tournament_id', id).order('sort_order'),
         supabase.from('golf_rounds').select('id,round_number,status,date').eq('tournament_id', id).order('round_number'),
         supabase.from('golf_competition_units').select('id,name,unit_type,format_id,golf_competition_unit_members(player_id)').eq('tournament_id', id),
@@ -300,8 +385,7 @@ export default function TournamentPage() {
       setRound(activeRound)
 
       if (activeRound) {
-        const { data: sc } = await supabase
-          .from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id)
+        const { data: sc } = await supabase.from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id)
         setScores(sc ?? [])
       }
 
@@ -310,7 +394,6 @@ export default function TournamentPage() {
     load()
   }, [id])
 
-  // ── Realtime
   useEffect(() => {
     if (!round) return
     const ch = supabase
@@ -328,7 +411,6 @@ export default function TournamentPage() {
     return () => { supabase.removeChannel(ch) }
   }, [round?.id])
 
-  // ── Hoyos según config
   const playedHoles = useMemo<Hole[]>(() => {
     if (!tournament || holes.length === 0) return []
     if (tournament.holes_config === 'front9') return holes.filter(h => h.hole_number <= 9)
@@ -338,24 +420,22 @@ export default function TournamentPage() {
 
   const totalHoles = playedHoles.length || (tournament?.holes_config === '18' ? 18 : 9)
 
-  // ── Player calcs
   const playerCalcs = useMemo<PlayerCalc[]>(() => {
     if (!tournament || !course || players.length === 0) return []
     const fmt = formats[fmtTab]
-    return computePlayerCalcs(players, playedHoles, course, tournament.handicap_allowance, fmt?.handicap_allowance ?? null)
+    // 4_2_0, fourball_americano, laguneada usan 85% fijo
+    const allowanceOverride = ['4_2_0','fourball_americano','laguneada'].includes(fmt?.format_type) ? 85 : null
+    return computePlayerCalcs(players, playedHoles, course, tournament.handicap_allowance, allowanceOverride ?? fmt?.handicap_allowance ?? null)
   }, [players, formats, fmtTab, playedHoles, course, tournament])
 
-  // ── Leaderboard (stroke / stableford / laguneada)
   const leaderboard = useMemo<LeaderboardRow[]>(() => {
     if (!tournament || !course || players.length === 0 || formats.length === 0) return []
     const fmt = formats[fmtTab]
     if (!fmt) return []
-    // Match y fourball se renderizan con componentes propios
-    if (['match', 'fourball_clasico', 'fourball_americano'].includes(fmt.format_type)) return []
+    if (['match','fourball_clasico','fourball_americano'].includes(fmt.format_type)) return []
+    if (fmt.format_type === '4_2_0') return [] // usa componente propio
     const calcs = computePlayerCalcs(players, playedHoles, course, tournament.handicap_allowance, fmt.handicap_allowance)
-    if (['stableford', 'laguneada'].includes(fmt.format_type)) {
-      return buildStablefordLB(calcs, playedHoles, scores, totalHoles)
-    }
+    if (['stableford','laguneada'].includes(fmt.format_type)) return buildStablefordLB(calcs, playedHoles, scores, totalHoles)
     return buildStrokeLB(calcs, playedHoles, scores, totalHoles)
   }, [players, formats, fmtTab, playedHoles, scores, course, tournament, totalHoles])
 
@@ -366,7 +446,6 @@ export default function TournamentPage() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // ─── LOADING ───────────────────────────────────────────────────
   if (loading) return (
     <div style={{ background: C.bg, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
       <p style={{ color: C.muted, fontSize: 14 }}>Cargando partida...</p>
@@ -386,8 +465,8 @@ export default function TournamentPage() {
   const fmt       = formats[fmtTab]
   const isMatch   = fmt?.format_type === 'match' || fmt?.format_type === 'fourball_clasico'
   const isAmeri   = fmt?.format_type === 'fourball_americano'
+  const is420     = fmt?.format_type === '4_2_0'
 
-  // ─── RENDER ────────────────────────────────────────────────────
   return (
     <>
       <style>{`
@@ -401,7 +480,7 @@ export default function TournamentPage() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 80 }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
-          {/* ── Navbar */}
+          {/* Navbar */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, background: C.bg, zIndex: 10 }}>
             <Link href="/golf" style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -417,7 +496,6 @@ export default function TournamentPage() {
                 <span style={{ fontSize: 10, fontWeight: 700, color: '#4ade80' }}>EN VIVO</span>
               </div>
             )}
-            {/* Menú de acciones */}
             <div style={{ position: 'relative' }}>
               <button onClick={() => setShowMenu(v => !v)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: '4px 6px', display: 'flex', alignItems: 'center' }}>
@@ -430,23 +508,22 @@ export default function TournamentPage() {
               {showMenu && (
                 <div style={{ position: 'absolute', right: 0, top: '100%', background: '#111124', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
                   onClick={() => setShowMenu(false)}>
-                  <MenuItem href={`/golf/${id}/scorear`}      icon="✏️" label="Scorear" />
-                  <MenuItem href={`/golf/${id}/concursos`}    icon="🏌️" label="Concursos" />
-                  <MenuItem href={`/golf/canchas`}            icon="⛳" label="Ver canchas" />
+                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Scorear" />
+                  <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
+                  <MenuItem href={`/golf/canchas`}               icon="⛳" label="Ver canchas" />
                   {isActive && <MenuItem href={`/golf/${id}/cerrar-ronda`} icon="🏁" label="Cerrar ronda" danger />}
                 </div>
               )}
             </div>
           </div>
 
-          {/* ── Info torneo */}
+          {/* Info torneo */}
           <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}>
             <div style={{ fontSize: 12, color: C.muted, marginBottom: 10 }}>
               {course ? `${course.name}${course.city ? ` · ${course.city}` : ''}` : '—'}
               {' · '}
               {tournament.holes_config === '18' ? '18 hoyos' : tournament.holes_config === 'front9' ? 'Primeros 9' : 'Segundos 9'}
             </div>
-
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
               {formats.map(f => (
                 <span key={f.id} style={{ fontSize: 10, fontWeight: 700, color: FORMAT_COLORS[f.format_type] ?? C.muted, background: (FORMAT_COLORS[f.format_type] ?? C.muted) + '18', border: `1px solid ${(FORMAT_COLORS[f.format_type] ?? C.muted)}40`, borderRadius: 5, padding: '2px 8px' }}>
@@ -454,20 +531,16 @@ export default function TournamentPage() {
                 </span>
               ))}
             </div>
-
             <button onClick={copyCode}
               style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, padding: '8px 14px', cursor: 'pointer', width: '100%' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-                <rect x="9" y="9" width="13" height="13" rx="2" stroke={C.muted} strokeWidth="1.8"/>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke={C.muted} strokeWidth="1.8"/>
-              </svg>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke={C.muted} strokeWidth="1.8"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke={C.muted} strokeWidth="1.8"/></svg>
               <span style={{ fontSize: 11, color: C.muted }}>Código:</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 2 }}>{tournament.invite_code}</span>
               <span style={{ marginLeft: 'auto', fontSize: 11, color: copied ? '#4ade80' : C.muted }}>{copied ? 'Copiado ✓' : 'Copiar'}</span>
             </button>
           </div>
 
-          {/* ── Tabs principales */}
+          {/* Tabs principales */}
           <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 53, background: C.bg, zIndex: 9 }}>
             {(['leaderboard', 'scorecard'] as const).map(t => (
               <button key={t} onClick={() => setTab(t)}
@@ -477,7 +550,7 @@ export default function TournamentPage() {
             ))}
           </div>
 
-          {/* ── Tabs de formato */}
+          {/* Tabs de formato */}
           {formats.length > 1 && (
             <div style={{ display: 'flex', gap: 6, padding: '10px 18px', overflowX: 'auto', borderBottom: `1px solid ${C.border}` }}>
               {formats.map((f, i) => (
@@ -489,7 +562,7 @@ export default function TournamentPage() {
             </div>
           )}
 
-          {/* ── LEADERBOARD */}
+          {/* LEADERBOARD */}
           {tab === 'leaderboard' && (
             <>
               {isMatch && (
@@ -500,7 +573,6 @@ export default function TournamentPage() {
                   isFourball={fmt?.format_type === 'fourball_clasico'}
                 />
               )}
-
               {isAmeri && (
                 <FourballAmericanoLB
                   players={players} holes={playedHoles}
@@ -508,8 +580,13 @@ export default function TournamentPage() {
                   units={compUnits.filter(u => u.format_id === fmt?.id)}
                 />
               )}
-
-              {!isMatch && !isAmeri && (
+              {is420 && (
+                <FourTwoZeroLB
+                  players={players} holes={playedHoles}
+                  scores={scores} playerCalcs={playerCalcs}
+                />
+              )}
+              {!isMatch && !isAmeri && !is420 && (
                 <div style={{ padding: '14px 18px' }}>
                   {leaderboard.length === 0 ? (
                     <div style={{ textAlign: 'center', padding: '40px 0', color: C.muted }}>
@@ -519,13 +596,13 @@ export default function TournamentPage() {
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '6px 12px' }}>
-                        {['#', 'JUGADOR', fmt?.format_type === 'stableford' ? 'PTS' : 'NETT', 'VS PAR', 'H'].map((h, i) => (
+                        {['#','JUGADOR', fmt?.format_type === 'stableford' ? 'PTS' : 'NETT','VS PAR','H'].map((h, i) => (
                           <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
                         ))}
                       </div>
                       {leaderboard.map((row, i) => {
-                        const isStbf    = fmt?.format_type === 'stableford'
-                        const vpColor   = row.vsParDisplay === 'E' ? C.par : row.vsParDisplay.startsWith('-') ? C.birdie : C.bogey
+                        const isStbf  = fmt?.format_type === 'stableford'
+                        const vpColor = row.vsParDisplay === 'E' ? C.par : row.vsParDisplay.startsWith('-') ? C.birdie : C.bogey
                         return (
                           <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
                             <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
@@ -537,9 +614,7 @@ export default function TournamentPage() {
                               <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
                             </div>
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : C.text }}>
-                                {row.holesPlayed === 0 ? '—' : row.value}
-                              </span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : C.text }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
                               {isStbf && row.holesPlayed > 0 && <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>}
                             </div>
                             <div style={{ textAlign: 'center' }}>
@@ -560,18 +635,14 @@ export default function TournamentPage() {
             </>
           )}
 
-          {/* ── SCORECARD */}
+          {/* SCORECARD */}
           {tab === 'scorecard' && (
-            <ScorecardView
-              players={players} holes={playedHoles} scores={scores}
-              playerCalcs={playerCalcs} format={fmt ?? null}
-            />
+            <ScorecardView players={players} holes={playedHoles} scores={scores} playerCalcs={playerCalcs} format={fmt ?? null} />
           )}
-
         </div>
       </div>
 
-      {/* ── FAB Scorear */}
+      {/* FAB Scorear */}
       {isActive && round && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 20 }}>
           <Link href={`/golf/${id}/scorear`}
@@ -589,14 +660,12 @@ export default function TournamentPage() {
 }
 
 // ─────────────────────────────────────────────
-// MATCH LEADERBOARD COMPONENT
+// MATCH LEADERBOARD
 // ─────────────────────────────────────────────
 
 function buildMatchUnits(units: CompUnit[], players: Player[], playerCalcs: PlayerCalc[]): MatchUnit[] {
   return units.map(u => {
-    const unitPlayers = u.golf_competition_unit_members
-      .map(m => players.find(p => p.id === m.player_id))
-      .filter(Boolean) as Player[]
+    const unitPlayers = u.golf_competition_unit_members.map(m => players.find(p => p.id === m.player_id)).filter(Boolean) as Player[]
     const playingHcps = unitPlayers.map(p => playerCalcs.find(c => c.player.id === p.id)?.playingHcp ?? 0)
     const teamPlayingHcp = Math.round(playingHcps.reduce((a, b) => a + b, 0) / Math.max(playingHcps.length, 1))
     return { id: u.id, name: u.name, players: unitPlayers, playingHcps, teamPlayingHcp }
@@ -609,6 +678,7 @@ function MatchLeaderboard({ format, players, holes, scores, playerCalcs, units, 
   units: CompUnit[]; isFourball: boolean
 }) {
   const matchUnits = buildMatchUnits(units, players, playerCalcs)
+  const maxDiff    = format?.max_hcp_diff ?? 5
   const pairs: [MatchUnit, MatchUnit][] = []
   for (let i = 0; i + 1 < matchUnits.length; i += 2) pairs.push([matchUnits[i], matchUnits[i + 1]])
 
@@ -621,8 +691,13 @@ function MatchLeaderboard({ format, players, holes, scores, playerCalcs, units, 
 
   return (
     <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {isFourball && (
+        <p style={{ fontSize: 11, color: C.muted }}>
+          HCP de pareja = 3/8 × (hcp_menor + mín(hcp_mayor, hcp_menor + {maxDiff}))
+        </p>
+      )}
       {pairs.map(([a, b], i) => (
-        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball)} holes={holes} />
+        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball, maxDiff)} holes={holes} />
       ))}
     </div>
   )
@@ -637,50 +712,39 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
     <div style={{ background: C.card, border: `1px solid ${isFinished ? '#166534' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
       <div style={{ padding: '14px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-          {/* Unidad A */}
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: upDown > 0 ? C.text : C.muted }}>{unitA.name}</div>
             <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name).join(' & ')}</div>
             <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitA.teamPlayingHcp}</div>
           </div>
-          {/* Status */}
           <div style={{ flexShrink: 0, textAlign: 'center', padding: '0 12px' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: statusColor }}>{status}</div>
             <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              {isFinished ? 'Finalizado' : `${state.holesRemaining} restantes`}
+              {isFinished ? 'Finalizado' : `${state.holesRemaining} rest.`}
             </div>
           </div>
-          {/* Unidad B */}
           <div style={{ flex: 1, textAlign: 'right' }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: upDown < 0 ? C.text : C.muted }}>{unitB.name}</div>
             <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name).join(' & ')}</div>
             <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitB.teamPlayingHcp}</div>
           </div>
         </div>
-
-        {/* Barra visual */}
+        {/* Barra */}
         <div style={{ position: 'relative', height: 6, background: '#111124', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
           <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, background: '#2a2a3a', transform: 'translateX(-50%)', zIndex: 1 }} />
           {upDown !== 0 && (() => {
             const played = holes.length - state.holesRemaining
             const pct    = played > 0 ? Math.min(0.5, Math.abs(upDown) / Math.max(played, 1) * 0.5) : 0
             return (
-              <div style={{
-                position: 'absolute', top: 0, bottom: 0, borderRadius: 3,
-                width: `${pct * 100}%`,
-                left:  upDown > 0 ? `${50 - pct * 100}%` : '50%',
-                background: upDown > 0 ? '#5b9bd5' : '#e07b4f',
-              }} />
+              <div style={{ position: 'absolute', top: 0, bottom: 0, borderRadius: 3, width: `${pct * 100}%`, left: upDown > 0 ? `${50 - pct * 100}%` : '50%', background: upDown > 0 ? '#5b9bd5' : '#e07b4f' }} />
             )
           })()}
         </div>
-
         <button onClick={() => setExpanded(!expanded)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.muted, fontFamily: FONT, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
           {expanded ? '▲' : '▼'} Hoyo a hoyo
         </button>
       </div>
-
       {expanded && (
         <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 16px', overflowX: 'auto' }}>
           <div style={{ display: 'flex', gap: 4, minWidth: 'fit-content' }}>
@@ -692,9 +756,7 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
               return (
                 <div key={h.hole_number} style={{ textAlign: 'center', minWidth: 26 }}>
                   <div style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>{h.hole_number}</div>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color }}>
-                    {label}
-                  </div>
+                  <div style={{ width: 26, height: 26, borderRadius: 6, background: bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color }}>{label}</div>
                 </div>
               )
             })}
@@ -706,7 +768,7 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
 }
 
 // ─────────────────────────────────────────────
-// FOURBALL AMERICANO LEADERBOARD
+// FOURBALL AMERICANO
 // ─────────────────────────────────────────────
 
 function FourballAmericanoLB({ players, holes, scores, playerCalcs, units }: {
@@ -744,49 +806,83 @@ function FourballAmericanoLB({ players, holes, scores, playerCalcs, units }: {
 
   return (
     <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-      {/* Parejas */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Ranking parejas</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {pairRows.map((r, i) => (
-            <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{i + 1}</span>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r.unit.name}</div>
-                <div style={{ fontSize: 11, color: C.muted }}>{r.players.map(p => p.display_name).join(' & ')}</div>
-              </div>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : C.text }}>{r.pts}</span>
-                <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>
-              </div>
-              <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{r.played}h</span>
+      <LBSection title="Ranking parejas">
+        {pairRows.map((r, i) => (
+          <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{i + 1}</span>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r.unit.name}</div>
+              <div style={{ fontSize: 11, color: C.muted }}>{r.players.map(p => p.display_name).join(' & ')}</div>
             </div>
-          ))}
-        </div>
-      </div>
-      {/* Individual */}
-      <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>Ranking individual</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
-          {indivRows.map((r, i) => (
-            <div key={r.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '10px 12px', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, alignItems: 'center' }}>
-              <span style={{ fontSize: 12, fontWeight: 700, color: C.muted, textAlign: 'center' }}>{i + 1}</span>
-              <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{r.player.display_name}</span>
-              <div style={{ textAlign: 'center' }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{r.pts}</span>
-                <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>
-              </div>
-              <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{r.played}h</span>
-            </div>
-          ))}
-        </div>
-      </div>
+            <PtsCell pts={r.pts} first={i === 0} />
+            <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{r.played}h</span>
+          </div>
+        ))}
+      </LBSection>
+      <LBSection title="Ranking individual">
+        {indivRows.map((r, i) => (
+          <div key={r.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '10px 12px', background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, alignItems: 'center' }}>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.muted, textAlign: 'center' }}>{i + 1}</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{r.player.display_name}</span>
+            <PtsCell pts={r.pts} first={false} />
+            <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{r.played}h</span>
+          </div>
+        ))}
+      </LBSection>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────
-// SCORECARD GRID
+// 4-2-0 LEADERBOARD
+// ─────────────────────────────────────────────
+
+function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
+  players: Player[]; holes: Hole[]; scores: HoleScore[]; playerCalcs: PlayerCalc[]
+}) {
+  const rows = build420LB(playerCalcs, holes, scores)
+
+  return (
+    <div style={{ padding: '14px 18px' }}>
+      <div style={{ background: '#0a0a14', border: '1px solid #1e1736', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+        <p style={{ fontSize: 11, color: C.muted, lineHeight: 1.5, margin: 0 }}>
+          6 puntos por hoyo · 4-2-0 · Empates: top2→3-3-0 · bottom2→4-1-1 · todos→2-2-2 · HCP al 85%
+        </p>
+      </div>
+      {rows.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 0', color: C.muted }}>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>⛳</div>
+          <p style={{ fontSize: 14 }}>No hay scores ingresados aún</p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '6px 12px' }}>
+            {['#', 'JUGADOR', 'PUNTOS', 'H'].map((h, i) => (
+              <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
+            ))}
+          </div>
+          {rows.map((row, i) => (
+            <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{row.player.display_name}</span>
+                </div>
+                <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
+              </div>
+              <PtsCell pts={row.value} first={i === 0} />
+              <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{row.holesPlayed}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// SCORECARD
 // ─────────────────────────────────────────────
 
 function ScorecardView({ players, holes, scores, playerCalcs, format }: {
@@ -794,7 +890,6 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
   playerCalcs: PlayerCalc[]; format: Format | null
 }) {
   const isStableford = format?.format_type === 'stableford'
-
   const getScore   = (pid: string, h: number) => scores.find(s => s.player_id === pid && s.hole_number === h)?.gross ?? null
   const getStrokes = (pid: string, h: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[h] ?? 0
   const subTotals  = (pid: string, holeSet: Hole[]) => {
@@ -808,7 +903,6 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     })
     return { gross: count > 0 ? gross : null, pts: count > 0 ? pts : null, par }
   }
-
   const show18 = holes.some(h => h.hole_number >= 10)
 
   return (
@@ -891,21 +985,29 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 function MenuItem({ href, icon, label, danger }: { href: string; icon: string; label: string; danger?: boolean }) {
   return (
     <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: danger ? '#f87171' : C.text, fontSize: 14, fontWeight: 500, fontFamily: FONT }}>
-      <span>{icon}</span>
-      <span>{label}</span>
+      <span>{icon}</span><span>{label}</span>
     </Link>
   )
 }
 
-const stickyCell: React.CSSProperties = {
-  position: 'sticky', left: 0, background: '#080812',
-  zIndex: 2, padding: '8px 12px', borderRight: `1px solid #1e1736`, minWidth: 110,
+function LBSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>{title}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>{children}</div>
+    </div>
+  )
 }
-const hdrCell: React.CSSProperties = {
-  textAlign: 'center', padding: '6px 4px', background: '#0a0a14', color: '#706c7e',
-  minWidth: 32, fontWeight: 700, borderRight: '1px solid #0d0d1a',
+
+function PtsCell({ pts, first }: { pts: number; first: boolean }) {
+  return (
+    <div style={{ textAlign: 'center' }}>
+      <span style={{ fontSize: 16, fontWeight: 700, color: first ? '#4ade80' : C.text }}>{pts}</span>
+      <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>
+    </div>
+  )
 }
-const scoreCell: React.CSSProperties = {
-  textAlign: 'center', padding: '6px 4px', background: '#0d0d1a',
-  minWidth: 32, borderRight: '1px solid #080812', borderBottom: '1px solid #080812',
-}
+
+const stickyCell: React.CSSProperties = { position: 'sticky', left: 0, background: '#080812', zIndex: 2, padding: '8px 12px', borderRight: `1px solid #1e1736`, minWidth: 110 }
+const hdrCell: React.CSSProperties   = { textAlign: 'center', padding: '6px 4px', background: '#0a0a14', color: '#706c7e', minWidth: 32, fontWeight: 700, borderRight: '1px solid #0d0d1a' }
+const scoreCell: React.CSSProperties = { textAlign: 'center', padding: '6px 4px', background: '#0d0d1a', minWidth: 32, borderRight: '1px solid #080812', borderBottom: '1px solid #080812' }
