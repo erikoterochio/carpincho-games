@@ -123,6 +123,7 @@ function makeDefaultHoles(): HoleInput[] {
 }
 
 const genId = () => Math.random().toString(36).slice(2, 10)
+const supabase = createClient()
 
 // ─────────────────────────────────────────────
 // PÁGINA PRINCIPAL
@@ -130,8 +131,7 @@ const genId = () => Math.random().toString(36).slice(2, 10)
 
 export default function NuevaPartidaPage() {
   const router   = useRouter()
-  const supabase = createClient()
-
+  
   const [step,       setStep]       = useState(0)
   const [user,       setUser]       = useState<{ id: string } | null>(null)
   const [authLoading,setAuthLoading]= useState(true)
@@ -168,8 +168,8 @@ export default function NuevaPartidaPage() {
   const [units,     setUnits]     = useState<UnitInput[]>([])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) setUser({ id: user.id })
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) setUser({ id: session.user.id })
       setAuthLoading(false)
     })
   }, [])
