@@ -17,7 +17,8 @@ const MULTIPLAYER = [
 ]
 
 const TOOLS = [
-  { name: 'Divisor de gastos', href: '/splitwise.html', color: '#04447b', img: '/images/splitwise.png' },
+  { name: 'Divisor de gastos', href: '/splitwise', color: '#04447b', img: '/images/splitwise.png' },
+  { name: 'Golf',              href: '/golf',      color: '#065c6c', img: '/images/golf.png'      },
 ]
 
 export default async function HomePage() {
