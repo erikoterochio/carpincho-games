@@ -14,7 +14,26 @@ type Tournament = {
   holes_config: string; handicap_allowance: number
   invite_code: string; num_rounds: number
 }
-type Course    = { id: string; name: string; city: string | null; par: number | null; rating: number | null; slope: number | null }
+type Course = {
+  id: string
+  name: string
+  city: string | null
+  par: number | null
+  // Fallback general (se usa si no hay dato por salida)
+  rating: number | null
+  slope:  number | null
+  // Por color de salida
+  rating_black:  number | null
+  slope_black:   number | null
+  rating_blue:   number | null
+  slope_blue:    number | null
+  rating_white:  number | null
+  slope_white:   number | null
+  rating_yellow: number | null
+  slope_yellow:  number | null
+  rating_red:    number | null
+  slope_red:     number | null
+}
 type Hole      = { hole_number: number; par: number; stroke_index: number }
 type Player    = { id: string; display_name: string; handicap_index: number; tee_color: string }
 type Format    = { id: string; format_type: string; display_name: string; handicap_allowance: number | null; max_hcp_diff: number | null }
@@ -70,18 +89,26 @@ function calcCourseHcp(hcpIndex: number, slope: number, rating: number, par: num
 }
 
 function computePlayerCalcs(
-  players: Player[], holes: Hole[], course: Course,
-  allowance: number, formatAllowance: number | null,
+  players: Player[],
+  holes: Hole[],
+  course: Course,
+  allowance: number,
+  formatAllowance: number | null,
 ): PlayerCalc[] {
-  const slope  = course.slope  ?? 113
-  const rating = course.rating ?? (course.par ?? 72)
-  const par    = course.par    ?? 72
-  const pct    = (formatAllowance ?? allowance) / 100
+  const par = course.par ?? 72
+  const pct = (formatAllowance ?? allowance) / 100
+ 
   return players.map(p => {
-    const courseHcp  = calcCourseHcp(p.handicap_index, slope, rating, par)
+    // Usa el rating y slope de la salida específica del jugador
+    const slope   = getCourseSlope(course, p.tee_color)
+    const rating  = getCourseRating(course, p.tee_color)
+ 
+    const courseHcp  = Math.round(p.handicap_index * (slope / 113) + (rating - par))
     const playingHcp = Math.round(courseHcp * pct)
+ 
     const strokes: Record<number, number> = {}
     holes.forEach(h => { strokes[h.hole_number] = hcpStrokes(playingHcp, h.stroke_index) })
+ 
     return { player: p, courseHcp, playingHcp, strokes }
   })
 }
@@ -101,6 +128,28 @@ function scoreColor(vspar: number): string {
   if (vspar === 0)  return C.par
   if (vspar === 1)  return C.bogey
   return C.double
+}
+
+function getCourseRating(course: Course, teeColor: string): number {
+  const map: Record<string, number | null> = {
+    black:  course.rating_black,
+    blue:   course.rating_blue,
+    white:  course.rating_white,
+    yellow: course.rating_yellow,
+    red:    course.rating_red,
+  }
+  return map[teeColor] ?? course.rating ?? (course.par ?? 72)
+}
+ 
+function getCourseSlope(course: Course, teeColor: string): number {
+  const map: Record<string, number | null> = {
+    black:  course.slope_black,
+    blue:   course.slope_blue,
+    white:  course.slope_white,
+    yellow: course.slope_yellow,
+    red:    course.slope_red,
+  }
+  return map[teeColor] ?? course.slope ?? 113
 }
 
 // ─────────────────────────────────────────────
@@ -362,7 +411,11 @@ export default function TournamentPage() {
       if (!t) { setLoading(false); return }
       setTournament(t)
 
-      const { data: c } = await supabase.from('golf_courses').select('id,name,city,par,rating,slope').eq('id', t.course_id).single()
+      const { data: c } = await supabase
+        .from('golf_courses')
+        .select('id,name,city,par,rating,slope,rating_black,slope_black,rating_blue,slope_blue,rating_white,slope_white,rating_yellow,slope_yellow,rating_red,slope_red')
+        .eq('id', t.course_id)
+        .single()
       setCourse(c ?? null)
 
       if (c) {

@@ -11,7 +11,26 @@ import { createClient } from '@/lib/supabase/client'
 
 type Player    = { id: string; display_name: string; handicap_index: number; tee_color: string }
 type Hole      = { hole_number: number; par: number; stroke_index: number }
-type Course    = { par: number | null; rating: number | null; slope: number | null }
+type Course = {
+  id: string
+  name: string
+  city: string | null
+  par: number | null
+  // Fallback general (se usa si no hay dato por salida)
+  rating: number | null
+  slope:  number | null
+  // Por color de salida
+  rating_black:  number | null
+  slope_black:   number | null
+  rating_blue:   number | null
+  slope_blue:    number | null
+  rating_white:  number | null
+  slope_white:   number | null
+  rating_yellow: number | null
+  slope_yellow:  number | null
+  rating_red:    number | null
+  slope_red:     number | null
+}
 type Tournament = { id: string; holes_config: string; handicap_allowance: number; name: string }
 type Round     = { id: string; status: string }
 type HoleScore = { player_id: string; hole_number: number; gross: number | null }
@@ -66,6 +85,28 @@ function scoreColor(gross: number, par: number, strokes: number): string {
   return C.double
 }
 
+function getCourseRating(course: Course, teeColor: string): number {
+  const map: Record<string, number | null> = {
+    black:  course.rating_black,
+    blue:   course.rating_blue,
+    white:  course.rating_white,
+    yellow: course.rating_yellow,
+    red:    course.rating_red,
+  }
+  return map[teeColor] ?? course.rating ?? (course.par ?? 72)
+}
+ 
+function getCourseSlope(course: Course, teeColor: string): number {
+  const map: Record<string, number | null> = {
+    black:  course.slope_black,
+    blue:   course.slope_blue,
+    white:  course.slope_white,
+    yellow: course.slope_yellow,
+    red:    course.slope_red,
+  }
+  return map[teeColor] ?? course.slope ?? 113
+}
+
 // ─────────────────────────────────────────────
 // COMPONENTE PRINCIPAL
 // ─────────────────────────────────────────────
@@ -99,7 +140,10 @@ export default function ScorearPage() {
       setTournament(t)
 
       const { data: c } = await supabase
-        .from('golf_courses').select('par,rating,slope').eq('id', t.course_id).single()
+        .from('golf_courses')
+        .select('id,name,city,par,rating,slope,rating_black,slope_black,rating_blue,slope_blue,rating_white,slope_white,rating_yellow,slope_yellow,rating_red,slope_red')
+        .eq('id', t.course_id)
+        .single()
       setCourse(c ?? null)
 
       const [hRes, pRes, fRes, rRes] = await Promise.all([
