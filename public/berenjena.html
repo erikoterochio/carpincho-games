@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Berenjenapp · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="friend-picker.js"></script>
+  <style>
+    .app { max-width: 480px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .screen.active { animation: fadeIn 0.25s ease; }
+
+    .number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .number-control button { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #dde6f0; background: #f3f6fa; font-size: 1.3rem; font-weight: 600; color: #01050F; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .number-control button:hover { background: #01050F; border-color: #01050F; }
+    .number-control button:active { transform: scale(0.95); }
+    .number-control .value { min-width: 60px; text-align: center; font-size: 1.6rem; font-weight: 700; color: #01050F; }
+
+    .players-list { display: flex; flex-direction: column; gap: 8px; }
+    .player-input-row { display: flex; gap: 8px; align-items: center; }
+    .player-input-row input { flex: 1; padding: 11px 14px; background: #ffffff !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: 1.5px solid #9e9ea8 !important; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.95rem; font-weight: 500; outline: none; }
+    .player-input-row input:focus { outline: 2px solid #01050F; }
+    .player-input-row .remove-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(248,113,113,0.3); background: transparent; color: #be123c; font-size: 1.2rem; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
+    .player-input-row .remove-btn:hover { background: #fff1f2; border-color: #be123c; }
+    .add-player-btn { width: 100%; padding: 10px; border-radius: 8px; border: 1px dashed #dde6f0; background: transparent; color: #01050F; font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; margin-top: 8px; }
+    .add-player-btn:hover { border-color: #01050F; }
+
+    .info-box { background: #f3f6fa; border: 1px solid #01050F; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.85rem; color: #8aa8cc; line-height: 1.5; }
+
+    .round-header { position: sticky; top: 0; background: #01050F; color: #01050F; padding: 14px 16px; border-radius: 12px; margin-bottom: 20px; z-index: 100; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .round-header-left { flex: 1; }
+    .round-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+    .starting-player { font-size: 0.8rem; opacity: 0.85; }
+    .prediction-counter-inline { background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 10px; text-align: center; min-width: 80px; border: 1px solid rgba(255,255,255,0.2); }
+    .prediction-counter-inline .prediction-counter-label { font-size: 0.7rem; opacity: 0.85; margin-bottom: 2px; }
+    .prediction-counter-inline .prediction-counter-value { font-size: 1.8rem; font-weight: 700; }
+
+    .player-selection { background: #f3f6fa; padding: 14px; border-radius: 12px; margin: 10px 0; border: 1px solid #dde6f0; }
+    .player-name { font-size: 0.95rem; font-weight: 600; color: #01050F; margin-bottom: 10px; }
+    .choice-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .choice-btn { padding: 12px; min-height: 44px; border: 1px solid #dde6f0; background: #ffffff; border-radius: 8px; font-size: 1.1rem; font-weight: 600; color: #01050F; cursor: pointer; transition: all 0.15s; }
+    .choice-btn:active { transform: scale(0.95); }
+    .choice-btn.selected { background: #01050F; color: #01050F; border-color: #01050F; }
+    .choice-btn:disabled { opacity: 0.25; cursor: not-allowed; }
+
+    .sum-display { text-align: center; padding: 24px; background: #f3f6fa; border-radius: 12px; margin: 20px 0; border: 1px solid #dde6f0; }
+    .sum-number { font-size: 3rem; font-weight: 700; color: #01050F; margin: 10px 0; }
+    .fiummm-message { font-size: 1.1rem; font-weight: 600; margin-top: 14px; padding: 12px; border-radius: 10px; }
+    .fiummm-yes { background: #2a1a00; color: #f59e0b; }
+    .fiummm-no { background: #f0fdf4; color: #16a34a; }
+
+    .score-input { background: #f3f6fa; padding: 14px; border-radius: 12px; margin: 10px 0; border: 1px solid #dde6f0; }
+    .score-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .score-btn { padding: 12px; border: none; border-radius: 8px; font-size: 0.9rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; transition: all 0.15s; background: #ffffff; color: #5a6a7a; border: 1px solid #dde6f0; }
+    .score-btn:active { transform: scale(0.95); }
+    .score-btn-yes.selected { background: #f0fdf4; color: #16a34a; border-color: #16a34a; box-shadow: 0 0 0 2px rgba(74,222,128,0.2); }
+    .score-btn-no.selected { background: #fff1f2; color: #be123c; border-color: #be123c; box-shadow: 0 0 0 2px rgba(248,113,113,0.2); }
+    .score-btn.unselected { opacity: 0.3; }
+
+    .score-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: #f3f6fa; border-radius: 10px; margin: 8px 0; border: 1px solid #dde6f0; }
+    .score-item.eliminated { opacity: 0.55; background: #fff1f2; border-color: #be123c; }
+    .player-name-score { font-weight: 600; color: #01050F; }
+    .player-score { font-weight: 700; color: #01050F; font-size: 1.3rem; }
+    .score-item.eliminated .player-score { color: #be123c; }
+    .eliminated-badge { background: #be123c; color: #01050F; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 8px; }
+    .dealer-badge { background: #ffffff; color: #5a6a7a; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 8px; border: 1px solid #dde6f0; }
+
+    .loser-announcement { text-align: center; padding: 22px; background: #fff1f2; border-radius: 12px; margin: 20px 0; border: 2px solid #be123c; }
+    .loser-announcement h2 { color: #be123c; font-size: 1.4rem; margin-bottom: 10px; }
+    .loser-name { font-size: 1.8rem; font-weight: 700; color: #be123c; }
+
+    .edit-controls { display: flex; gap: 6px; align-items: center; }
+    .adjust-btn { width: 34px; height: 34px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; background: #01050F; color: #01050F; }
+    .adjust-btn:active { transform: scale(0.9); }
+    .btn-edit { background: #ffffff; color: #01050F; border: 1px solid #dde6f0; padding: 8px 16px; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+    .btn-edit.active { background: #2a1a00; color: #f59e0b; border-color: #f59e0b; }
+    .btn-add-player { background: #f3f6fa; color: #01050F; border: 1px solid #01050F; padding: 8px 16px; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
+
+    .player-selection-btn { width: 100%; padding: 14px; background: #f3f6fa; border: 1px solid #dde6f0; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; color: #01050F; cursor: pointer; transition: all 0.2s; margin: 6px 0; }
+    .player-selection-btn:hover { background: #f3f6fa; border-color: #01050F; }
+
+    .history-table-wrapper { overflow-x: auto; background: #f3f6fa; border-radius: 10px; padding: 12px; border: 1px solid #dde6f0; margin-top: 14px; }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .history-table th { background: #01050F; color: #01050F; padding: 8px 6px; text-align: left; font-weight: 700; border-bottom: 1px solid #01050F; }
+    .history-table td { padding: 7px 6px; border-bottom: 1px solid #dde6f0; color: #5a6a7a; }
+    .history-table tr:nth-child(even) { background: #f3f6fa; }
+    .history-achieved-yes { color: #16a34a !important; font-weight: 600; }
+    .history-achieved-no { color: #5a6a7a !important; }
+    .history-points { font-weight: 600; color: #01050F !important; }
+
+    .btn-group-inline { display: flex; gap: 8px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">Berenjenapp</div>
+      <a href="/" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div id="splashScreen" class="screen active">
+        <div class="content">
+          <p class="intro-text">La berenjena, la podrida, las basas o como lo conozcas, es un juego donde predecís cuántas manos vas a ganar y la Garza siempre pierde.</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startNewGame()">Nuevo juego</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Reanudar juego</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="setupScreen" class="screen">
+        <div class="content">
+          <div id="fp-zone"></div>
+          <div class="form-group">
+            <label>Jugadores</label>
+            <div class="players-list" id="players-list"></div>
+            <button type="button" class="add-player-btn" onclick="addPlayerSetup()">+ Agregar jugador</button>
+          </div>
+          <div class="form-group">
+            <label>Cartas en el mazo</label>
+            <div class="number-control">
+              <button type="button" onclick="changeCardCount(-1)">−</button>
+              <div class="value" id="card-count-display">50</div>
+              <button type="button" onclick="changeCardCount(1)">+</button>
+            </div>
+          </div>
+          <div class="info-box" id="rounds-info">Rondas a jugar: 1, 3, 5, 7</div>
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+
+      <div id="dealerScreen" class="screen">
+        <div class="content">
+          <p class="intro-text">¿Quién va a repartir?</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="selectRandomDealer()">🎲 Al azar</button>
+            <button class="btn btn-secondary" onclick="showManualDealerSelection()">👆 Elegir manualmente</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="manualDealerScreen" class="screen">
+        <div class="content">
+          <p class="intro-text">Elegí quién va a repartir</p>
+          <div id="manualDealerList"></div>
+        </div>
+      </div>
+
+      <div id="dealerRepeatScreen" class="screen">
+        <div class="content">
+          <p class="intro-text" style="font-size:1.05rem;"><strong id="repeatDealerName" style="color:#c1c1c6;"></strong> ya repartió la de uno</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="dealerRepeatConfirm()">Repartir igual</button>
+            <button class="btn btn-secondary" onclick="skipDealerForUno()">Saltear</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="roundScreen" class="screen">
+        <div class="content">
+          <div class="round-header">
+            <div class="round-header-left">
+              <div class="round-name" id="roundName">RONDA</div>
+              <div class="starting-player" id="startingPlayer">Info</div>
+            </div>
+            <div class="prediction-counter-inline">
+              <div class="prediction-counter-label">Total</div>
+              <div class="prediction-counter-value" id="predictionCounterValue">0</div>
+            </div>
+          </div>
+          <div id="playerSelections"></div>
+          <button id="showSumBtn" class="btn btn-primary" onclick="showSum()" disabled>Mostrar Total</button>
+        </div>
+      </div>
+
+      <div id="sumScreen" class="screen">
+        <div class="content">
+          <div class="sum-display">
+            <div style="font-size:0.85rem;color:#706c7e;">Total predicho:</div>
+            <div class="sum-number" id="sumNumber">0</div>
+            <div class="fiummm-message" id="fiummmMessage"></div>
+          </div>
+          <button class="btn btn-primary" onclick="showScoreInput()">Cargar Puntajes</button>
+        </div>
+      </div>
+
+      <div id="scoreScreen" class="screen">
+        <div class="content">
+          <div id="scoreInputs"></div>
+          <button class="btn btn-primary" onclick="calculateScores()">Calcular Puntajes</button>
+        </div>
+      </div>
+
+      <div id="scoreboardScreen" class="screen">
+        <div class="content">
+          <div class="btn-group-inline">
+            <button id="editModeBtn" class="btn-edit" onclick="toggleEditMode()">Editar</button>
+            <button class="btn-add-player" onclick="showAddPlayerScreen()">+ Jugador</button>
+          </div>
+          <div id="scoreboard" style="margin-top:8px;"></div>
+          <div id="loserSection"></div>
+          <div style="margin-top:14px;">
+            <div class="btn-group">
+              <div style="display:flex;gap:8px;">
+                <button id="showHistoryBtn" class="btn btn-secondary" style="flex:1;" onclick="toggleHistory()">Ver historial</button>
+                <button id="nextRoundBtn" class="btn btn-primary" style="flex:1;" onclick="nextRound()">Próxima Ronda</button>
+              </div>
+              <button class="btn btn-secondary" onclick="backToMainMenu()">Menú</button>
+            </div>
+            <div id="historyContainer" style="display:none;">
+              <div class="history-table-wrapper">
+                <table class="history-table">
+                  <thead><tr><th>#</th><th>Tipo</th><th>Repartió</th><th>Jugador</th><th>Pidió</th><th>Ok</th><th>Pts</th></tr></thead>
+                  <tbody id="historyTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="addPlayerScreen" class="screen">
+        <div class="content">
+          <div class="form-group">
+            <label>Nombre del jugador</label>
+            <input type="text" id="newPlayerName" placeholder="Nombre">
+          </div>
+          <div class="form-group">
+            <label>¿En qué posición entra?</label>
+            <div id="positionSelection"></div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="confirmAddPlayer()">Agregar</button>
+            <button class="btn btn-secondary" onclick="cancelAddPlayer()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    let gameState = {
+      players: [], currentRound: 0, roundTypes: [], roundMaxValues: {},
+      currentRoundType: '', dealerIndex: null, startingPlayerIndex: 0,
+      currentSelections: [], currentScores: {}, editMode: false,
+      roundHistory: [], dealersWhoDealtUno: [], playerOrder: [], cardCount: 50
+    };
+    let playerCounter = 0;
+    let selectedPosition = 0;
+
+    window.onload = function() {
+      checkForSavedGame();
+      FriendPicker.init({
+        zoneId: 'fp-zone',
+        addPlayerFn: addPlayerSetup,
+        getPlayerNames: getPlayerNames,
+        gameType: 'berenjena',
+      });
+    };
+
+    function checkForSavedGame() {
+      if (localStorage.getItem('laBereGame')) document.getElementById('resumeBtn').style.display = 'block';
+    }
+
+    function saveGame() { localStorage.setItem('laBereGame', JSON.stringify(gameState)); }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('laBereGame');
+      if (saved) {
+        gameState = JSON.parse(saved);
+        if (!gameState.playerOrder || gameState.playerOrder.length !== gameState.players.length) {
+          gameState.playerOrder = gameState.players.map((_, idx) => idx);
+        }
+        showScreen('scoreboardScreen'); updateScoreboard();
+      }
+    }
+
+    function startNewGame() {
+      if (localStorage.getItem('laBereGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) return;
+      }
+      localStorage.removeItem('laBereGame');
+      gameState = { players: [], currentRound: 0, roundTypes: [], roundMaxValues: {}, currentRoundType: '', dealerIndex: null, startingPlayerIndex: 0, currentSelections: [], currentScores: {}, editMode: false, roundHistory: [], dealersWhoDealtUno: [], playerOrder: [], cardCount: 50 };
+      playerCounter = 0;
+      showScreen('setupScreen'); initializePlayers(); updateRoundsInfo();
+    }
+
+    function initializePlayers() {
+      const container = document.getElementById('players-list');
+      container.innerHTML = '';
+      for (let i = 0; i < 4; i++) addPlayerSetup();
+    }
+
+    function addPlayerSetup(prefilledName = '') {
+      const container = document.getElementById('players-list');
+      const index = playerCounter++;
+      const row = document.createElement('div');
+      row.className = 'player-input-row'; row.id = `player-row-${index}`;
+      row.innerHTML = `<input type="text" placeholder="Jugador ${index + 1}" id="player-${index}" /><button type="button" class="remove-btn" onclick="removePlayerSetup(${index})">×</button>`;
+      container.appendChild(row);
+      if (prefilledName) row.querySelector('input').value = prefilledName;
+      updateRoundsInfo();
+    }
+
+    function getPlayerNames() {
+      return Array.from(document.querySelectorAll('.player-input-row input'))
+        .map(inp => inp.value.trim())
+        .filter(Boolean);
+    }
+
+    function removePlayerSetup(index) {
+      const row = document.getElementById(`player-row-${index}`);
+      if (row) { row.remove(); updateRoundsInfo(); }
+    }
+
+    function changeCardCount(delta) {
+      gameState.cardCount = Math.max(20, Math.min(100, gameState.cardCount + delta));
+      document.getElementById('card-count-display').textContent = gameState.cardCount;
+      updateRoundsInfo();
+    }
+
+    function calculateAvailableRounds(cardCount, playerCount) {
+      const rounds = []; const maxValues = {};
+      const possibleRounds = [{ name: 'Uno', value: 1 }, { name: 'Tres', value: 3 }, { name: 'Cinco', value: 5 }, { name: 'Siete', value: 7 }];
+      possibleRounds.forEach(round => {
+        if (round.value * playerCount <= cardCount) { rounds.push(round.name); maxValues[round.name] = round.value; }
+      });
+      if (!rounds.includes('Siete') && 6 * playerCount <= cardCount) { rounds.push('Seis'); maxValues['Seis'] = 6; }
+      return { rounds, maxValues };
+    }
+
+    function updateRoundsInfo() {
+      const playerCount = document.querySelectorAll('.player-input-row').length;
+      const { rounds } = calculateAvailableRounds(gameState.cardCount, playerCount);
+      const infoBox = document.getElementById('rounds-info');
+      if (rounds.length > 0) { infoBox.textContent = `Rondas a jugar: ${rounds.join(', ')}`; infoBox.style.background = '#0b2659'; infoBox.style.borderColor = '#04447b'; }
+      else { infoBox.textContent = '⚠️ No hay suficientes cartas para jugar'; infoBox.style.background = '#2a0a0a'; infoBox.style.borderColor = '#f87171'; }
+    }
+
+    function startGame() {
+      gameState.players = [];
+      const playerRows = document.querySelectorAll('.player-input-row');
+      playerRows.forEach((row, i) => {
+        const input = row.querySelector('input');
+        const name = input.value.trim() || `Jugador ${i + 1}`;
+        gameState.players.push({ name, score: 0, eliminated: false });
+      });
+      if (gameState.players.length < 2) { alert('Necesitás al menos 2 jugadores'); return; }
+      // Guardar sesión en Supabase (fire & forget)
+      FriendPicker.saveSession('berenjena', gameState.players.map(p => p.name));
+      const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, gameState.players.length);
+      if (rounds.length === 0) { alert('No hay suficientes cartas para jugar con esta cantidad de jugadores'); return; }
+      gameState.roundTypes = rounds; gameState.roundMaxValues = maxValues;
+      gameState.currentRound = 0; gameState.playerOrder = gameState.players.map((_, idx) => idx);
+      showScreen('dealerScreen');
+    }
+
+    function startRound() {
+      const activePlayers = gameState.players.filter(p => !p.eliminated);
+      const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, activePlayers.length);
+      gameState.roundTypes = rounds; gameState.roundMaxValues = maxValues;
+      const roundIndex = gameState.currentRound % gameState.roundTypes.length;
+      gameState.currentRoundType = gameState.roundTypes[roundIndex];
+      gameState.currentSelections = Array(gameState.players.length).fill(null);
+      gameState.currentScores = {};
+      if (gameState.currentRoundType === 'Uno' && gameState.dealersWhoDealtUno.includes(gameState.dealerIndex)) {
+        document.getElementById('repeatDealerName').textContent = gameState.players[gameState.dealerIndex].name;
+        showScreen('dealerRepeatScreen'); return;
+      }
+      if (gameState.currentRoundType === 'Uno' && !gameState.dealersWhoDealtUno.includes(gameState.dealerIndex)) {
+        gameState.dealersWhoDealtUno.push(gameState.dealerIndex);
+      }
+      showScreen('roundScreen'); updateRoundScreen(); document.getElementById('showSumBtn').disabled = true; saveGame();
+    }
+
+    function updateRoundScreen() {
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      const startingPlayer = gameState.players[gameState.startingPlayerIndex];
+      const dealer = gameState.players[gameState.dealerIndex];
+      document.getElementById('roundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
+      document.getElementById('startingPlayer').textContent = `Reparte: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+      const container = document.getElementById('playerSelections');
+      container.innerHTML = '';
+      const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) ? gameState.playerOrder : gameState.players.map((_, idx) => idx);
+      let startingPosition = orderToUse.indexOf(gameState.startingPlayerIndex);
+      if (startingPosition === -1) startingPosition = 0;
+      const activePlayers = [];
+      for (let i = 0; i < orderToUse.length; i++) {
+        const orderIndex = (startingPosition + i) % orderToUse.length;
+        const playerIndex = orderToUse[orderIndex];
+        if (!gameState.players[playerIndex].eliminated) activePlayers.push({...gameState.players[playerIndex], originalIndex: playerIndex});
+      }
+      activePlayers.forEach((player, orderIndex) => {
+        const div = document.createElement('div');
+        div.className = 'player-selection';
+        const dealerBadge = player.originalIndex === gameState.dealerIndex ? '<span class="dealer-badge">🫴🃏</span>' : '';
+        div.innerHTML = `<div class="player-name">${player.name}${dealerBadge}</div><div class="choice-buttons" id="choices${player.originalIndex}"></div>`;
+        container.appendChild(div);
+        createChoiceButtons(player.originalIndex, maxValue, orderIndex === activePlayers.length - 1, activePlayers.length);
+      });
+      updatePredictionCounter();
+    }
+
+    function createChoiceButtons(playerIndex, maxValue, isLastPlayer, activePlayerCount) {
+      const container = document.getElementById(`choices${playerIndex}`);
+      container.innerHTML = '';
+      for (let i = 0; i <= maxValue; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn'; btn.textContent = i;
+        btn.onclick = () => selectChoice(playerIndex, i);
+        if (gameState.currentSelections[playerIndex] === i) btn.classList.add('selected');
+        if (isLastPlayer && activePlayerCount > 1) {
+          const currentSum = gameState.currentSelections.reduce((sum, val, idx) => idx !== playerIndex && val !== null ? sum + val : sum, 0);
+          if (currentSum + i === maxValue) btn.disabled = true;
+        }
+        container.appendChild(btn);
+      }
+    }
+
+    function updatePredictionCounter() {
+      const counterValue = document.getElementById('predictionCounterValue');
+      if (!counterValue) return;
+      const sum = gameState.currentSelections.reduce((total, val) => total + (val !== null ? val : 0), 0);
+      counterValue.textContent = sum;
+    }
+
+    function selectChoice(playerIndex, value) {
+      gameState.currentSelections[playerIndex] = value;
+      updateRoundScreen(); updatePredictionCounter();
+      const allSelected = gameState.players.every((player, idx) => player.eliminated || gameState.currentSelections[idx] !== null);
+      document.getElementById('showSumBtn').disabled = !allSelected;
+    }
+
+    function showSum() {
+      const sum = gameState.currentSelections.reduce((total, val) => total + (val !== null ? val : 0), 0);
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      document.getElementById('sumNumber').textContent = sum;
+      const messageDiv = document.getElementById('fiummmMessage');
+      if (sum < maxValue) { messageDiv.textContent = '🏎️ Habemus fium 🏎️'; messageDiv.className = 'fiummm-message fiummm-yes'; }
+      else { messageDiv.textContent = '🛑 No habemus fium 🛑'; messageDiv.className = 'fiummm-message fiummm-no'; }
+      showScreen('sumScreen');
+    }
+
+    function showScoreInput() {
+      const container = document.getElementById('scoreInputs');
+      container.innerHTML = '';
+      if (Object.keys(gameState.currentScores).length === 0) gameState.currentScores = {};
+      const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) ? gameState.playerOrder : gameState.players.map((_, idx) => idx);
+      let startingPosition = orderToUse.indexOf(gameState.startingPlayerIndex);
+      if (startingPosition === -1) startingPosition = 0;
+      const activePlayers = [];
+      for (let i = 0; i < orderToUse.length; i++) {
+        const orderIndex = (startingPosition + i) % orderToUse.length;
+        const playerIndex = orderToUse[orderIndex];
+        if (!gameState.players[playerIndex].eliminated) activePlayers.push(playerIndex);
+      }
+      activePlayers.forEach(idx => {
+        const player = gameState.players[idx];
+        const div = document.createElement('div');
+        div.className = 'score-input';
+        div.innerHTML = `<div class="player-name">${player.name} - Pidió: ${gameState.currentSelections[idx]}</div><div class="score-buttons"><button class="score-btn score-btn-yes" id="scoreYes${idx}" onclick="setScore(${idx}, true)">✅</button><button class="score-btn score-btn-no" id="scoreNo${idx}" onclick="setScore(${idx}, false)">🅾️</button></div>`;
+        container.appendChild(div);
+        if (gameState.currentScores[idx] !== undefined) setScore(idx, gameState.currentScores[idx]);
+      });
+      showScreen('scoreScreen');
+    }
+
+    function setScore(playerIndex, accomplished) {
+      gameState.currentScores[playerIndex] = accomplished;
+      const yesBtn = document.getElementById(`scoreYes${playerIndex}`);
+      const noBtn = document.getElementById(`scoreNo${playerIndex}`);
+      if (yesBtn && noBtn) {
+        yesBtn.classList.remove('selected', 'unselected'); noBtn.classList.remove('selected', 'unselected');
+        if (accomplished) { yesBtn.classList.add('selected'); noBtn.classList.add('unselected'); }
+        else { noBtn.classList.add('selected'); yesBtn.classList.add('unselected'); }
+      }
+    }
+
+    function calculateScores() {
+      const activePlayerCount = gameState.players.filter(p => !p.eliminated).length;
+      if (Object.keys(gameState.currentScores).length !== activePlayerCount) { alert('Ingresá el resultado para todos los jugadores'); return; }
+      const allWon = Object.values(gameState.currentScores).every(score => score === true);
+      if (allWon) { alert('No pueden ganar todos, revisá bien'); return; }
+      const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
+      let sumOfWinners = 0;
+      gameState.players.forEach((player, idx) => {
+        if (!player.eliminated && gameState.currentScores[idx] === true) sumOfWinners += gameState.currentSelections[idx];
+      });
+      if (sumOfWinners > maxValue) { alert(`La suma de los que ganaron (${sumOfWinners}) no puede ser mayor que el máximo de la ronda (${maxValue})`); return; }
+      const roundData = { round: gameState.currentRound + 1, type: gameState.currentRoundType, dealer: gameState.players[gameState.dealerIndex].name, results: [] };
+      gameState.players.forEach((player, idx) => {
+        if (!player.eliminated && gameState.currentScores[idx] !== undefined) {
+          const pointsEarned = gameState.currentScores[idx] ? (5 + gameState.currentSelections[idx]) : 0;
+          roundData.results.push({ player: player.name, predicted: gameState.currentSelections[idx], achieved: gameState.currentScores[idx], points: pointsEarned });
+          if (gameState.currentScores[idx]) player.score += pointsEarned;
+          if (player.score >= 50) player.eliminated = true;
+        }
+      });
+      gameState.roundHistory.push(roundData);
+      let attempts = 0;
+      do { gameState.dealerIndex = (gameState.dealerIndex + 1) % gameState.players.length; attempts++; } while (gameState.players[gameState.dealerIndex].eliminated && attempts < gameState.players.length);
+      attempts = 0;
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      while (gameState.players[gameState.startingPlayerIndex].eliminated && attempts < gameState.players.length) { gameState.startingPlayerIndex = (gameState.startingPlayerIndex + 1) % gameState.players.length; attempts++; }
+      gameState.currentRound++;
+      saveGame(); showScoreboard();
+    }
+
+    function showScoreboard() {
+      showScreen('scoreboardScreen');
+      const editBtn = document.getElementById('editModeBtn');
+      editBtn.textContent = gameState.editMode ? 'Listo' : 'Editar';
+      editBtn.classList.toggle('active', gameState.editMode);
+      updateScoreboard();
+    }
+
+    function updateScoreboard() {
+      const container = document.getElementById('scoreboard');
+      container.innerHTML = '';
+      const sortedPlayers = [...gameState.players].sort((a, b) => {
+        if (a.eliminated && !b.eliminated) return 1;
+        if (!a.eliminated && b.eliminated) return -1;
+        return a.score - b.score;
+      });
+      sortedPlayers.forEach(player => {
+        const playerIndex = gameState.players.findIndex(p => p.name === player.name);
+        const div = document.createElement('div');
+        div.className = 'score-item' + (player.eliminated ? ' eliminated' : '');
+        if (gameState.editMode) {
+          div.innerHTML = `<span class="player-name-score" style="flex:1;">${player.name}${player.eliminated ? '<span class="eliminated-badge">SALIÓ</span>' : ''}</span><div class="edit-controls"><button class="adjust-btn" onclick="adjustScore(${playerIndex}, -1)">-1</button><span class="player-score">${player.score}</span><button class="adjust-btn" onclick="adjustScore(${playerIndex}, 1)">+1</button></div>`;
+        } else {
+          div.innerHTML = `<span class="player-name-score">${player.name}${player.eliminated ? '<span class="eliminated-badge">SALIÓ</span>' : ''}</span><span class="player-score">${player.score}</span>`;
+        }
+        container.appendChild(div);
+      });
+      const activePlayers = gameState.players.filter(p => !p.eliminated);
+      const loserSection = document.getElementById('loserSection');
+      if (activePlayers.length === 1) {
+        loserSection.innerHTML = `<div class="loser-announcement"><h2>💀⚰️ PERDEDOR ⚰️💀</h2><div class="loser-name">${activePlayers[0].name}</div><p style="margin-top:10px;color:#f87171;font-size:0.9rem;">¡Todos los demás llegaron a 50+ puntos!</p></div>`;
+        document.getElementById('nextRoundBtn').style.display = 'none';
+      } else { loserSection.innerHTML = ''; document.getElementById('nextRoundBtn').style.display = 'block'; }
+    }
+
+    function showAddPlayerScreen() {
+      document.getElementById('newPlayerName').value = '';
+      const container = document.getElementById('positionSelection');
+      container.innerHTML = ''; selectedPosition = 0;
+      gameState.players.forEach((player, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'player-selection-btn'; btn.textContent = `Después de ${player.name}`;
+        btn.onclick = () => { selectedPosition = idx + 1; document.querySelectorAll('#positionSelection .player-selection-btn').forEach(b => { b.style.background = '#110736'; b.style.borderColor = '#2a2448'; }); btn.style.background = '#0b2659'; btn.style.borderColor = '#055074'; };
+        container.appendChild(btn);
+      });
+      const btnLast = document.createElement('button');
+      btnLast.className = 'player-selection-btn'; btnLast.textContent = 'Al final';
+      btnLast.onclick = () => { selectedPosition = gameState.players.length; document.querySelectorAll('#positionSelection .player-selection-btn').forEach(b => { b.style.background = '#110736'; b.style.borderColor = '#2a2448'; }); btnLast.style.background = '#0b2659'; btnLast.style.borderColor = '#055074'; };
+      container.appendChild(btnLast);
+      showScreen('addPlayerScreen');
+    }
+
+    function confirmAddPlayer() {
+      const name = document.getElementById('newPlayerName').value.trim();
+      if (!name) { alert('Ingresá un nombre para el jugador'); return; }
+      const minScore = Math.min(...gameState.players.map(p => p.score));
+      const newPlayer = { name, score: minScore, eliminated: false };
+      gameState.players.splice(selectedPosition, 0, newPlayer);
+      gameState.playerOrder = gameState.players.map((_, idx) => idx);
+      if (selectedPosition <= gameState.dealerIndex) gameState.dealerIndex++;
+      if (selectedPosition <= gameState.startingPlayerIndex) gameState.startingPlayerIndex++;
+      saveGame(); showScreen('scoreboardScreen'); updateScoreboard();
+    }
+
+    function cancelAddPlayer() { showScreen('scoreboardScreen'); }
+    function nextRound() { gameState.editMode = false; startRound(); }
+    function backToMainMenu() { gameState.editMode = false; showScreen('splashScreen'); checkForSavedGame(); }
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function toggleEditMode() { gameState.editMode = !gameState.editMode; updateScoreboard(); saveGame(); }
+
+    function adjustScore(playerIndex, amount) {
+      gameState.players[playerIndex].score += amount;
+      if (gameState.players[playerIndex].score < 0) gameState.players[playerIndex].score = 0;
+      if (gameState.players[playerIndex].score >= 50) gameState.players[playerIndex].eliminated = true;
+      else if (gameState.players[playerIndex].score < 50 && gameState.players[playerIndex].eliminated) gameState.players[playerIndex].eliminated = false;
+      updateScoreboard(); saveGame();
+    }
+
+    function selectRandomDealer() {
+      gameState.dealerIndex = Math.floor(Math.random() * gameState.players.length);
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      startRound();
+    }
+
+    function showManualDealerSelection() {
+      showScreen('manualDealerScreen');
+      const container = document.getElementById('manualDealerList');
+      container.innerHTML = '';
+      gameState.players.forEach((player, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'player-selection-btn'; btn.textContent = player.name;
+        btn.onclick = () => selectDealer(index);
+        container.appendChild(btn);
+      });
+    }
+
+    function selectDealer(index) { gameState.dealerIndex = index; gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length; startRound(); }
+    function dealerRepeatConfirm() { showScreen('roundScreen'); updateRoundScreen(); document.getElementById('showSumBtn').disabled = true; saveGame(); }
+
+    function skipDealerForUno() {
+      let attempts = 0;
+      do { gameState.dealerIndex = (gameState.dealerIndex + 1) % gameState.players.length; attempts++; } while (gameState.players[gameState.dealerIndex].eliminated && attempts < gameState.players.length);
+      gameState.startingPlayerIndex = (gameState.dealerIndex + 1) % gameState.players.length;
+      startRound();
+    }
+
+    function toggleHistory() {
+      const container = document.getElementById('historyContainer');
+      const btn = document.getElementById('showHistoryBtn');
+      if (container.style.display === 'none') { container.style.display = 'block'; btn.textContent = 'Ocultar historial'; updateHistoryTable(); }
+      else { container.style.display = 'none'; btn.textContent = 'Ver historial'; }
+    }
+
+    function updateHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      tbody.innerHTML = '';
+      if (gameState.roundHistory.length === 0) {
+        const row = tbody.insertRow(); const cell = row.insertCell(0);
+        cell.colSpan = 7; cell.textContent = 'No hay rondas jugadas';
+        cell.style.textAlign = 'center'; cell.style.padding = '16px'; cell.style.color = '#706c7e';
+        return;
+      }
+      gameState.roundHistory.forEach(round => {
+        round.results.forEach((result, index) => {
+          const row = tbody.insertRow();
+          if (index === 0) {
+            const roundCell = row.insertCell(0); roundCell.textContent = round.round; roundCell.rowSpan = round.results.length; roundCell.style.fontWeight = 'bold'; roundCell.style.verticalAlign = 'middle';
+            const typeCell = row.insertCell(1); typeCell.textContent = round.type; typeCell.rowSpan = round.results.length; typeCell.style.verticalAlign = 'middle';
+            const dealerCell = row.insertCell(2); dealerCell.textContent = round.dealer; dealerCell.rowSpan = round.results.length; dealerCell.style.verticalAlign = 'middle';
+          }
+          const playerCell = row.insertCell(index === 0 ? 3 : 0); playerCell.textContent = result.player;
+          const predictedCell = row.insertCell(index === 0 ? 4 : 1); predictedCell.textContent = result.predicted; predictedCell.style.textAlign = 'center';
+          const resultCell = row.insertCell(index === 0 ? 5 : 2); resultCell.textContent = result.achieved ? '✓' : '✗'; resultCell.className = result.achieved ? 'history-achieved-yes' : 'history-achieved-no'; resultCell.style.textAlign = 'center';
+          const pointsCell = row.insertCell(index === 0 ? 6 : 3); pointsCell.textContent = result.points; pointsCell.className = 'history-points'; pointsCell.style.textAlign = 'center';
+        });
+      });
+    }
+  </script>
+</body>
+</html>

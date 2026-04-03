@@ -1,0 +1,341 @@
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+
+:root {
+  --bg: #01050F;
+  --card: #ffffff;
+  --card-alt: #f3f6fa;
+  --sky: #01050F;
+  --sky-hover: #1e1736;
+  --text: #01050F;
+  --text-light: #ffffff;
+  --muted: #5a6a7a;
+  --border: #dde6f0;
+  --border-strong: #c8d8ec;
+  --green: #16a34a;
+  --green-bg: #f0fdf4;
+  --green-border: #86efac;
+  --red: #be123c;
+  --red-bg: #ffe4e6;
+  --red-border: #fda4af;
+  --input-bg: #f3f6fa;
+  --input-text: #01050F;
+  --input-placeholder: #8aaccb;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Ubuntu', sans-serif;
+  padding-top: 60px;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ─── Header ─────────────────────────────── */
+.fixed-header {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  background: #01050F;
+  border-bottom: 1px solid #1e1736;
+  padding: 0 16px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.header-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.home-btn {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #01050F;
+  text-decoration: none;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 14px;
+  background: #c1c1c6;
+  transition: all 0.15s ease;
+  font-family: 'Ubuntu', sans-serif;
+  cursor: pointer;
+}
+
+.home-btn:hover { background: #ffffff; }
+
+/* ─── Layout ──────────────────────────────── */
+.container {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  padding: 16px;
+}
+
+.app { width: 100%; max-width: 480px; }
+
+/* ─── Screens ─────────────────────────────── */
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ─── Content card ────────────────────────── */
+.content {
+  background: #ffffff;
+  border: none;
+  border-radius: 16px;
+  padding: 20px;
+}
+
+/* ─── Typography ──────────────────────────── */
+.intro-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.info-text {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+/* ─── Labels ──────────────────────────────── */
+.form-group { margin-bottom: 18px; }
+
+.form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* ─── Buttons ─────────────────────────────── */
+.btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-family: 'Ubuntu', sans-serif;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: block;
+}
+
+.btn:active { transform: scale(0.98); }
+
+.btn-primary { background: #01050F; color: #ffffff; }
+.btn-primary:hover { background: #1e1736; }
+
+.btn-secondary { background: #ffffff; color: #01050F; border: 1.5px solid #dde6f0; }
+.btn-secondary:hover { border-color: #01050F; }
+
+.btn-add { background: #f0fdf4; color: #16a34a; border: 1.5px solid #86efac; }
+.btn-add:hover { background: #dcfce7; }
+
+.btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+/* ─── Inputs ──────────────────────────────── */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+  border: 1.5px solid var(--border-strong) !important;
+  border-radius: 8px;
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 500;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input::placeholder { color: var(--input-placeholder) !important; -webkit-text-fill-color: var(--input-placeholder) !important; }
+input:focus { outline: 2px solid #01050F; outline-offset: 1px; border-color: #01050F !important; }
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--input-bg) inset !important;
+  -webkit-text-fill-color: var(--input-text) !important;
+}
+
+select {
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%2301050F' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-color: var(--input-bg) !important;
+  padding-right: 36px;
+  cursor: pointer;
+}
+
+/* ─── Player rows ─────────────────────────── */
+.players-list { display: flex; flex-direction: column; gap: 8px; }
+
+.player-input-row { display: flex; gap: 8px; align-items: center; }
+
+.player-input-row input {
+  flex: 1;
+  background: #ffffff !important;
+  color: #01050F !important;
+  -webkit-text-fill-color: #01050F !important;
+  border: 1.5px solid #dde6f0 !important;
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: 'Ubuntu', sans-serif;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.player-input-row input:focus { outline: 2px solid #01050F; border-color: #01050F !important; }
+
+.player-input-row .remove-btn {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: none;
+  background: #ffe4e6;
+  color: #be123c;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.player-input-row .remove-btn:hover { background: #fecdd3; }
+
+/* ─── Add player button ───────────────────── */
+.add-player-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  border: none;
+  background: #01050F;
+  color: #ffffff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'Ubuntu', sans-serif;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.15s;
+}
+
+.add-player-btn:hover { background: #1e1736; }
+
+/* ─── Number controls ─────────────────────── */
+.number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+.number-control button {
+  width: 44px; height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: #01050F;
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.number-control button:hover { background: #1e1736; }
+.number-control button:active { transform: scale(0.95); }
+
+.number-control .value {
+  min-width: 60px;
+  text-align: center;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #01050F;
+}
+
+/* ─── Category buttons ────────────────────── */
+.category-btn {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #dde6f0;
+  background: #f3f6fa;
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: 'Ubuntu', sans-serif;
+  color: #01050F;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.category-btn:hover { border-color: #01050F; }
+.category-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
+.category-btn.all-btn { width: 100%; margin-bottom: 8px; }
+.category-btn.all-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
+
+/* ─── Toggle buttons ──────────────────────── */
+.toggle-btn {
+  flex: 1;
+  padding: 11px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #dde6f0;
+  background: #f3f6fa;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: 'Ubuntu', sans-serif;
+  color: #5a6a7a;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.toggle-btn:hover { border-color: #01050F; color: #01050F; }
+.toggle-btn.active { background: #01050F; color: #ffffff; border-color: #01050F; }
+.toggle-group { display: flex; gap: 10px; }
+
+/* ─── Divider ─────────────────────────────── */
+.divider {
+  height: 1px;
+  background: #edf2f7;
+  margin: 14px 0;
+}
+
+/* ─── Footer ──────────────────────────────── */
+footer {
+  margin-top: 16px;
+  font-size: 0.75rem;
+  color: #5a6a7a;
+  text-align: center;
+  padding-bottom: 8px;
+}

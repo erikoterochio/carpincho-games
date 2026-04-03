@@ -1,89 +1,51 @@
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/server'
+import SessionBridge from '@/components/SessionBridge'
 
 const FEATURED = [
-  { name: 'El Impostor', href: '/(games)/impostor', color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',   href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'El Impostor', href: '/impostor.html', color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',   href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
 ]
 
 const MULTIPLAYER = [
-  { name: 'El Impostor',       href: '/(games)/impostor',  color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',         href: '/(games)/berenjena', color: '#110736', img: '/images/berenjena.png' },
-  { name: 'Tabú',              href: '/(games)/tabu',      color: '#065c6c', img: '/images/tabu.png' },
-  { name: 'Dígalo con mímica', href: '/(games)/mimica',    color: '#055074', img: '/images/mimica.png' },
-  { name: 'Truco',             href: '/(tools)/truco',     color: '#110736', img: '/images/truco.png' },
-  { name: 'Generala',          href: '/(tools)/generala',  color: '#0b2659', img: '/images/generala.png' },
+  { name: 'El Impostor',       href: '/impostor.html',  color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',         href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'Tabú',              href: '/tabu.html',      color: '#065c6c', img: '/images/tabu.png' },
+  { name: 'Dígalo con mímica', href: '/mimica.html',    color: '#055074', img: '/images/mimica.png' },
+  { name: 'Truco',             href: '/truco.html',     color: '#110736', img: '/images/truco.png' },
+  { name: 'Generala',          href: '/generala.html',  color: '#0b2659', img: '/images/generala.png' },
 ]
 
 const TOOLS = [
-  { name: 'Divisor de gastos', href: '/(tools)/splitwise', color: '#04447b', img: '/images/splitwise.png' },
+  { name: 'Divisor de gastos', href: '/splitwise', color: '#04447b', img: '/images/splitwise.png' },
+  { name: 'Golf',              href: '/golf',      color: '#065c6c', img: '/images/golf.png'      },
 ]
 
-export default function HomePage() {
-  // TODO: reemplazar con sesión real de Supabase
-  const user = null
+export default async function HomePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : null
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-
         .wrap { max-width: 480px; margin: 0 auto; padding: 16px 18px; }
-
-        /* Card base con imagen de fondo */
-        .game-card {
-          position: relative;
-          border-radius: 14px;
-          overflow: hidden;
-          cursor: pointer;
-          border: 1px solid #2a2448;
-          background: #1e1736;
-          transition: border-color 0.2s;
-          aspect-ratio: 1 / 1;
-          display: block;
-          text-decoration: none;
-        }
+        .game-card { position: relative; border-radius: 14px; overflow: hidden; cursor: pointer; border: 1px solid #2a2448; background: #1e1736; transition: border-color 0.2s; aspect-ratio: 1 / 1; display: block; text-decoration: none; }
         .game-card:hover { border-color: #055074; }
-
-        .game-card-bg {
-          position: absolute;
-          inset: 0;
-          background-size: cover;
-          background-position: center;
-          opacity: 1;
-          transition: opacity 0.2s;
-        }
+        .game-card-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 1; transition: opacity 0.2s; }
         .game-card:hover .game-card-bg { opacity: 0.9; }
-
-        /* Gradiente solo abajo donde aparece el texto */
-        .game-card-gradient {
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(to top, rgba(1,5,15,0.9) 0%, rgba(1,5,15,0.4) 35%, transparent 60%);
-        }
-
-        .game-card-name {
-          position: absolute;
-          bottom: 12px;
-          left: 12px;
-          right: 12px;
-          font-family: 'Ubuntu', sans-serif;
-          font-size: 14px;
-          font-weight: 700;
-          color: #c1c1c6;
-          z-index: 1;
-        }
-        .game-card-name.large {
-          font-size: 17px;
-          bottom: 14px;
-          left: 14px;
-        }
-
+        .game-card-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(1,5,15,0.9) 0%, rgba(1,5,15,0.4) 35%, transparent 60%); }
+        .game-card-name { position: absolute; bottom: 12px; left: 12px; right: 12px; font-family: 'Ubuntu', sans-serif; font-size: 14px; font-weight: 700; color: #c1c1c6; z-index: 1; }
+        .game-card-name.large { font-size: 17px; bottom: 14px; left: 14px; }
         .sep { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
         .sep-line { flex: 1; height: 1px; background: #1e1736; }
         .sep-text { font-size: 10px; font-weight: 700; color: #706c7e; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; font-family: 'Ubuntu', sans-serif; }
-
         .nav-inner { max-width: 480px; margin: 0 auto; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #055074; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #c1c1c6; font-weight: 700; font-family: 'Ubuntu', sans-serif; text-decoration: none; border: 1px solid #04447b; transition: opacity 0.2s; }
+        .avatar:hover { opacity: 0.85; }
       `}</style>
 
       <div style={{ background: '#01050F', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif" }}>
@@ -97,13 +59,16 @@ export default function HomePage() {
               </div>
               <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Ranchadapp</span>
             </div>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               {user ? (
-                <Link href="/dashboard">
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#1e1736', border: '1px solid #2a2448', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', color: '#c1c1c6', fontWeight: 700, cursor: 'pointer' }}>
-                    EO
-                  </div>
-                </Link>
+                <>
+                  <Link href="/amigos">
+                    <button style={{ padding: '7px 12px', background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                      Amigos
+                    </button>
+                  </Link>
+                  <Link href="/cuenta" className="avatar">{initials}</Link>
+                </>
               ) : (
                 <>
                   <Link href="/login">
@@ -123,6 +88,38 @@ export default function HomePage() {
         </nav>
 
         <div className="wrap">
+
+          {/* Tarjeta de ranchadas */}
+          {user ? (
+            <Link href="/cuenta" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+              <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#c1c1c6" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#c1c1c6" strokeWidth="1.8"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>0</span>
+                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver perfil →</span>
+              </div>
+            </Link>
+          ) : (
+            <Link href="/login" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+              <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#706c7e" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#706c7e" strokeWidth="1.8"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13px', color: '#c1c1c6', fontWeight: 600, marginBottom: '2px' }}>¿Cuántas ranchadas llevás?</div>
+                  <div style={{ fontSize: '11px', color: '#706c7e' }}>Iniciá sesión o creá tu cuenta para llevar la cuenta</div>
+                </div>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/></svg>
+              </div>
+            </Link>
+          )}
 
           {/* Hero: Prode Mundial */}
           <div style={{ border: '1px solid #04447b', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px' }}>
@@ -151,35 +148,6 @@ export default function HomePage() {
               </Link>
             ))}
           </div>
-
-          {/* Tarjeta de ranchadas */}
-          <Link href="/login" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
-            <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-              <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke={user ? '#c1c1c6' : '#706c7e'} strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke={user ? '#c1c1c6' : '#706c7e'} strokeWidth="1.8"/></svg>
-              </div>
-              {user ? (
-                <>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                      <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>24</span>
-                      <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver historial →</span>
-                </>
-              ) : (
-                <>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '13px', color: '#c1c1c6', fontWeight: 600, marginBottom: '2px' }}>¿Cuántas ranchadas llevás?</div>
-                    <div style={{ fontSize: '11px', color: '#706c7e' }}>Iniciá sesión o creá tu cuenta para llevar la cuenta</div>
-                  </div>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/></svg>
-                </>
-              )}
-            </div>
-          </Link>
 
           {/* Juegos multijugador */}
           <div className="sep"><div className="sep-line" /><span className="sep-text">Juegos multijugador</span><div className="sep-line" /></div>
@@ -212,6 +180,7 @@ export default function HomePage() {
         </div>
 
       </div>
+      <SessionBridge />
     </>
   )
 }

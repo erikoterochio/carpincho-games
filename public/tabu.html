@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tabú · Ranchadapp</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <link rel="stylesheet" href="common-styles-dark.css">
+  <style>
+    .app { max-width: 500px; }
+
+    .number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
+
+    .number-btn {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: #01050F;
+      color: #ffffff;
+      font-size: 1.3rem; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .number-btn:hover { background: #1e1736; }
+
+    .number-display {
+      font-size: 1.6rem; font-weight: 700;
+      color: #01050F;
+      min-width: 80px; text-align: center;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .current-team-info {
+      flex: 1;
+      background: #f3f6fa;
+      border-radius: 12px;
+      padding: 12px 16px;
+      border: 1.5px solid #dde6f0;
+    }
+
+    .team-name { font-size: 0.8rem; font-weight: 700; color: #5a6a7a; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .team-points { font-size: 2rem; font-weight: 700; color: #01050F; line-height: 1; }
+
+    .timer {
+      background: #01050F;
+      color: #ffffff;
+      font-size: 2rem; font-weight: 700;
+      text-align: center;
+      padding: 16px 20px;
+      border-radius: 12px;
+      min-width: 100px;
+    }
+
+    .timer.warning { background: #ffffff; border: 2px solid #f59e0b; color: #f59e0b; animation: pulse 1s infinite; }
+
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.02); } }
+
+    .word-card {
+      background: #f3f6fa;
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 12px;
+      border: 1.5px solid #dde6f0;
+      text-align: center;
+    }
+
+    .word-to-guess {
+      font-size: 2rem; font-weight: 700;
+      color: #01050F;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .forbidden-words { display: flex; flex-direction: column; gap: 6px; }
+
+    .forbidden-word {
+      font-size: 0.95rem; font-weight: 600;
+      color: #be123c;
+      padding: 6px 10px;
+      background: #fff1f2;
+      border-radius: 8px;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .action-btn {
+      padding: 16px;
+      border-radius: 12px;
+      border: none;
+      font-size: 1.4rem; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .action-btn:active { transform: scale(0.95); }
+    .btn-correct { background: #f0fdf4; color: #16a34a; border: 1.5px solid #86efac; }
+    .btn-correct:hover { background: #dcfce7; color: #16a34a; }
+    .btn-skip { background: #f3f6fa; color: #5a6a7a; border: 1.5px solid #dde6f0; }
+    .btn-skip:hover { color: #01050F; border-color: #01050F; }
+    .btn-wrong { background: #fff1f2; color: #be123c; border: 1.5px solid #fda4af; }
+    .btn-wrong:hover { background: #ffe4e6; }
+
+    .control-buttons { display: flex; gap: 10px; }
+    .btn-half { flex: 1; }
+
+    .winner-card { text-align: center; padding: 20px; }
+    .winner-emoji { font-size: 4rem; margin-bottom: 16px; }
+    .winner-title { font-size: 1.6rem; font-weight: 700; color: #01050F; margin-bottom: 8px; }
+    .winner-subtitle { font-size: 1rem; color: #5a6a7a; margin-bottom: 24px; }
+
+    .final-scores {
+      background: #f3f6fa;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      border: 1.5px solid #dde6f0;
+    }
+
+    .final-score-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; }
+    .final-score-row:not(:last-child) { border-bottom: 1px solid #dde6f0; }
+    .final-score-team { font-size: 1rem; font-weight: 600; color: #01050F; }
+    .final-score-points { font-size: 1.3rem; font-weight: 700; color: #01050F; }
+
+    .round-indicator { font-size: 0.8rem; color: #5a6a7a; text-align: center; margin-bottom: 12px; }
+
+    @media (max-width: 600px) {
+      .word-to-guess { font-size: 1.7rem; }
+      .action-btn { padding: 14px; font-size: 1.2rem; }
+      .timer { font-size: 1.8rem; padding: 12px 16px; min-width: 90px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="fixed-header">
+    <div class="header-content">
+      <div class="header-title">Tabú</div>
+      <a href="/" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <main class="app">
+      <div id="splashScreen" class="screen active">
+        <div class="content">
+          <p class="intro-text">¡Hacé que tu equipo adivine la palabra sin usar las palabras prohibidas!</p>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToSetup()">Nuevo juego</button>
+            <button id="resumeBtn" class="btn btn-secondary" onclick="resumeGame()" style="display:none;">Reanudar juego</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="setupScreen" class="screen">
+        <div class="content">
+          <div class="form-group">
+            <label>Nombre Equipo 1</label>
+            <input type="text" id="team1Name" placeholder="Los Carpinchos" />
+          </div>
+          <div class="form-group">
+            <label>Nombre Equipo 2</label>
+            <input type="text" id="team2Name" placeholder="Los Ñandúes" />
+          </div>
+          <div class="form-group">
+            <label>Tiempo por ronda (segundos)</label>
+            <div class="number-control">
+              <button class="number-btn" onclick="changeTime(-15)">−</button>
+              <div class="number-display" id="timeDisplay">60</div>
+              <button class="number-btn" onclick="changeTime(15)">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Puntos para ganar</label>
+            <div class="number-control">
+              <button class="number-btn" onclick="changePoints(-5)">−</button>
+              <div class="number-display" id="pointsDisplay">30</div>
+              <button class="number-btn" onclick="changePoints(5)">+</button>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="startGame()">Empezar</button>
+        </div>
+      </div>
+
+      <div id="turnStartScreen" class="screen">
+        <div class="content">
+          <div class="winner-card">
+            <div class="winner-emoji">🎯</div>
+            <div class="winner-title" id="turnStartTeamName">Turno del Equipo 1</div>
+            <div class="winner-subtitle">¿Listos para empezar?</div>
+          </div>
+          <div class="final-scores">
+            <div class="final-score-row">
+              <span class="final-score-team" id="scoreTeam1Name">Equipo 1</span>
+              <span class="final-score-points" id="scoreTeam1Points">0</span>
+            </div>
+            <div class="final-score-row">
+              <span class="final-score-team" id="scoreTeam2Name">Equipo 2</span>
+              <span class="final-score-points" id="scoreTeam2Points">0</span>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="startTurnFromScreen()">Empezar turno</button>
+            <button class="btn btn-secondary" onclick="goToHome()">Volver al inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="gameScreen" class="screen">
+        <div class="game-header">
+          <div class="current-team-info">
+            <div class="team-name" id="currentTeamName">Equipo 1</div>
+            <div class="team-points" id="currentTeamPoints">0</div>
+          </div>
+          <div class="timer" id="timer">60</div>
+        </div>
+        <div class="word-card">
+          <div class="word-to-guess" id="wordToGuess">CARPINCHO</div>
+          <div class="forbidden-words" id="forbiddenWords"></div>
+        </div>
+        <div class="action-buttons">
+          <button class="action-btn btn-wrong" onclick="penalize()">−1</button>
+          <button class="action-btn btn-skip" onclick="skip()">PASO</button>
+          <button class="action-btn btn-correct" onclick="correct()">+1</button>
+        </div>
+        <div class="control-buttons">
+          <button class="btn btn-secondary btn-half" id="pauseBtn" onclick="togglePause()">⏸ Pausar</button>
+          <button class="btn btn-secondary btn-half" onclick="endTurnManually()">Terminar turno</button>
+        </div>
+      </div>
+
+      <div id="winnerScreen" class="screen">
+        <div class="content">
+          <div class="winner-card">
+            <div class="winner-emoji">🏆</div>
+            <div class="winner-title" id="winnerName">¡Equipo Ganador!</div>
+            <div class="winner-subtitle">¡Felicitaciones!</div>
+          </div>
+          <div class="final-scores">
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam1Name">Equipo 1</span>
+              <span class="final-score-points" id="finalTeam1Points">0</span>
+            </div>
+            <div class="final-score-row">
+              <span class="final-score-team" id="finalTeam2Name">Equipo 2</span>
+              <span class="final-score-points" id="finalTeam2Points">0</span>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="goToSetup()">Jugar de nuevo</button>
+            <button class="btn btn-secondary" onclick="goToHome()">Volver al inicio</button>
+          </div>
+        </div>
+      </div>
+
+      <footer>An app by CarpinchoGames ®</footer>
+    </main>
+  </div>
+
+  <script>
+    const wordDatabase = [
+      { word: "MATE", forbidden: ["YERBA", "BOMBILLA", "CALABAZA", "AMARGO", "ARGENTINO"] },
+      { word: "ASADO", forbidden: ["CARNE", "PARRILLA", "FUEGO", "CARBÓN", "DOMINGO"] },
+      { word: "TANGO", forbidden: ["BAILE", "ARGENTINA", "GARDEL", "MÚSICA", "BANDONEÓN"] },
+      { word: "FÚTBOL", forbidden: ["PELOTA", "GOL", "CANCHA", "DEPORTE", "EQUIPO"] },
+      { word: "PIZZA", forbidden: ["MASA", "QUESO", "HORNO", "SALSA", "ITALIANA"] },
+      { word: "CELULAR", forbidden: ["TELÉFONO", "WHATSAPP", "PANTALLA", "LLAMAR", "MÓVIL"] },
+      { word: "PERRO", forbidden: ["ANIMAL", "MASCOTA", "LADRAR", "CACHORRO", "CUATRO"] },
+      { word: "PELÍCULA", forbidden: ["CINE", "ACTOR", "DIRECTOR", "NETFLIX", "VER"] },
+      { word: "PLAYA", forbidden: ["MAR", "ARENA", "SOL", "VERANO", "AGUA"] },
+      { word: "CAMA", forbidden: ["DORMIR", "COLCHÓN", "SÁBANAS", "ALMOHADA", "MUEBLE"] },
+      { word: "MILANESA", forbidden: ["CARNE", "EMPANADA", "FRITA", "NAPOLITANA", "REBOZADA"] },
+      { word: "CHORIPÁN", forbidden: ["CHORIZO", "PAN", "ASADO", "CHIMICHURRI", "SÁNDWICH"] },
+      { word: "EMPANADA", forbidden: ["MASA", "RELLENO", "HORNO", "CARNE", "FRITA"] },
+      { word: "DULCE DE LECHE", forbidden: ["LECHE", "POSTRE", "CARAMELO", "AZÚCAR", "ARGENTINO"] },
+      { word: "ALFAJOR", forbidden: ["CHOCOLATE", "DULCE", "POSTRE", "MAICENA", "GOLOSINA"] },
+      { word: "BONDI", forbidden: ["COLECTIVO", "TRANSPORTE", "PARAR", "BOLETO", "SUBIR"] },
+      { word: "SUBTE", forbidden: ["METRO", "TREN", "SUBTERRÁNEO", "TRANSPORTE", "BAJO"] },
+      { word: "COMPUTADORA", forbidden: ["PANTALLA", "TECLADO", "MOUSE", "ESCRITORIO", "PC"] },
+      { word: "HELADERA", forbidden: ["FRÍO", "COMIDA", "FREEZER", "COCINA", "GUARDAR"] },
+      { word: "MÉDICO", forbidden: ["DOCTOR", "HOSPITAL", "ENFERMO", "CURAR", "CONSULTA"] },
+      { word: "MAESTRO", forbidden: ["PROFESOR", "ESCUELA", "ENSEÑAR", "ALUMNO", "CLASE"] },
+      { word: "PRIMAVERA", forbidden: ["ESTACIÓN", "FLORES", "SEPTIEMBRE", "CLIMA", "JARDÍN"] },
+      { word: "VERANO", forbidden: ["CALOR", "ESTACIÓN", "PLAYA", "DICIEMBRE", "ENERO"] },
+      { word: "CUMPLEAÑOS", forbidden: ["TORTA", "VELAS", "REGALO", "FESTEJAR", "EDAD"] },
+      { word: "GUITARRA", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "TOCAR", "SONIDO"] },
+      { word: "BANANA", forbidden: ["FRUTA", "AMARILLO", "MONO", "COMER", "CÁSCARA"] },
+      { word: "TOMATE", forbidden: ["VERDURA", "ROJO", "SALSA", "ENSALADA", "REDONDO"] },
+      { word: "CAFÉ", forbidden: ["BEBIDA", "NEGRO", "CAFEÍNA", "TAZA", "MAÑANA"] },
+      { word: "CERVEZA", forbidden: ["BEBIDA", "ALCOHOL", "ESPUMA", "BAR", "LATA"] },
+      { word: "PANTALÓN", forbidden: ["ROPA", "PIERNAS", "JEAN", "VESTIR", "LARGO"] },
+      { word: "ZAPATILLAS", forbidden: ["CALZADO", "PIES", "CORRER", "DEPORTIVO", "CORDONES"] },
+      { word: "LIBRO", forbidden: ["LEER", "PÁGINAS", "HISTORIA", "TEXTO", "AUTOR"] },
+      { word: "RELOJ", forbidden: ["HORA", "TIEMPO", "MUÑECA", "AGUJAS", "PULSERA"] },
+      { word: "SILLA", forbidden: ["SENTARSE", "MUEBLE", "PATAS", "RESPALDO", "ASIENTO"] },
+      { word: "AVIÓN", forbidden: ["VOLAR", "CIELO", "AEROPUERTO", "PASAJEROS", "ALAS"] },
+      { word: "HOSPITAL", forbidden: ["MÉDICO", "ENFERMO", "CURAR", "SALUD", "PACIENTE"] },
+      { word: "SOL", forbidden: ["ASTRO", "LUZ", "DÍA", "CALOR", "AMARILLO"] },
+      { word: "LUNA", forbidden: ["SATÉLITE", "NOCHE", "BRILLA", "CIELO", "REDONDA"] },
+      { word: "MONTAÑA", forbidden: ["ALTO", "ESCALADA", "NIEVE", "PICO", "CORDILLERA"] },
+      { word: "LEÓN", forbidden: ["ANIMAL", "MELENA", "RUGIR", "ÁFRICA", "REY"] },
+      { word: "GATO", forbidden: ["ANIMAL", "MASCOTA", "MAULLAR", "BIGOTES", "PELUDO"] },
+      { word: "FLOR", forbidden: ["PLANTA", "PÉTALOS", "ROSA", "JARDÍN", "OLOR"] },
+      { word: "MARTILLO", forbidden: ["HERRAMIENTA", "CLAVO", "GOLPEAR", "MADERA", "METAL"] },
+      { word: "GUITARRA", forbidden: ["INSTRUMENTO", "CUERDAS", "MÚSICA", "TOCAR", "SONIDO"] },
+      { word: "BOXEO", forbidden: ["DEPORTE", "PELEA", "GUANTES", "RING", "GOLPEAR"] },
+      { word: "RISA", forbidden: ["REÍR", "ALEGRE", "BOCA", "GRACIA", "CARCAJADA"] },
+      { word: "DORMIR", forbidden: ["SUEÑO", "CAMA", "NOCHE", "DESCANSAR", "OJOS"] },
+      { word: "HABLAR", forbidden: ["DECIR", "PALABRA", "BOCA", "CONVERSAR", "VOZ"] },
+      { word: "ROJO", forbidden: ["COLOR", "SANGRE", "FUEGO", "TOMATE", "VERDE"] },
+      { word: "DOMINGO", forbidden: ["DÍA", "SEMANA", "DESCANSO", "FIN", "ASADO"] },
+      { word: "PAPA NOEL", forbidden: ["NAVIDAD", "REGALOS", "BARBA", "ROJO", "DICIEMBRE"] },
+      { word: "DINOSAURIO", forbidden: ["EXTINTO", "ENORME", "ANTIGUO", "REPTIL", "TIRANOSAURIO"] },
+      { word: "COCINAR", forbidden: ["COMIDA", "COCINA", "CHEF", "PREPARAR", "HORNO"] },
+      { word: "JUGAR", forbidden: ["DIVERSIÓN", "JUEGO", "ENTRETENIMIENTO", "NIÑO", "PELOTA"] }
+    ];
+
+    let gameState = {
+      team1Name: "Equipo 1", team2Name: "Equipo 2",
+      team1Points: 0, team2Points: 0,
+      currentTeam: 1, timePerRound: 60, pointsToWin: 30,
+      currentWord: null, usedWords: [],
+      timerInterval: null, timeRemaining: 60, isPaused: false
+    };
+
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    function goToSetup() {
+      if (localStorage.getItem('tabuGame')) {
+        if (!confirm('Esto va a borrar tu partida guardada. ¿Continuar?')) return;
+        clearSavedGame();
+      }
+      showScreen('setupScreen');
+    }
+
+    function goToHome() {
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      showScreen('splashScreen');
+      checkForSavedGame();
+    }
+
+    function changeTime(delta) {
+      gameState.timePerRound = Math.max(15, Math.min(180, gameState.timePerRound + delta));
+      document.getElementById('timeDisplay').textContent = gameState.timePerRound;
+    }
+
+    function changePoints(delta) {
+      gameState.pointsToWin = Math.max(10, Math.min(100, gameState.pointsToWin + delta));
+      document.getElementById('pointsDisplay').textContent = gameState.pointsToWin;
+    }
+
+    function startGame() {
+      const team1Input = document.getElementById('team1Name').value.trim();
+      const team2Input = document.getElementById('team2Name').value.trim();
+      gameState.team1Name = team1Input || "Equipo 1";
+      gameState.team2Name = team2Input || "Equipo 2";
+      gameState.team1Points = 0; gameState.team2Points = 0;
+      gameState.currentTeam = 1; gameState.usedWords = [];
+      saveGame();
+      showTurnStartScreen();
+    }
+
+    function showTurnStartScreen() {
+      const teamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      document.getElementById('turnStartTeamName').textContent = `Turno de ${teamName}`;
+      document.getElementById('scoreTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('scoreTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('scoreTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('scoreTeam2Points').textContent = gameState.team2Points;
+      saveGame();
+      showScreen('turnStartScreen');
+    }
+
+    function startTurnFromScreen() { updateGameScreen(); showScreen('gameScreen'); startNewTurn(); }
+
+    function updateGameScreen() {
+      const currentTeamName = gameState.currentTeam === 1 ? gameState.team1Name : gameState.team2Name;
+      const currentTeamPoints = gameState.currentTeam === 1 ? gameState.team1Points : gameState.team2Points;
+      document.getElementById('currentTeamName').textContent = currentTeamName;
+      document.getElementById('currentTeamPoints').textContent = currentTeamPoints;
+    }
+
+    function startNewTurn() {
+      gameState.timeRemaining = gameState.timePerRound;
+      gameState.isPaused = false;
+      document.getElementById('pauseBtn').textContent = '⏸ Pausar';
+      updateTimer();
+      pickNewWord();
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      gameState.timerInterval = setInterval(() => {
+        if (!gameState.isPaused) {
+          gameState.timeRemaining--;
+          updateTimer();
+          if (gameState.timeRemaining <= 10) document.getElementById('timer').classList.add('warning');
+          if (gameState.timeRemaining <= 0) endTurn();
+        }
+      }, 1000);
+    }
+
+    function updateTimer() { document.getElementById('timer').textContent = gameState.timeRemaining; }
+
+    function pickNewWord() {
+      let availableWords = wordDatabase.filter(w => !gameState.usedWords.includes(w.word));
+      if (availableWords.length === 0) { gameState.usedWords = []; availableWords = wordDatabase; }
+      const randomWord = availableWords[Math.floor(Math.random() * availableWords.length)];
+      gameState.currentWord = randomWord;
+      gameState.usedWords.push(randomWord.word);
+      saveGame();
+      document.getElementById('wordToGuess').textContent = randomWord.word;
+      const forbiddenContainer = document.getElementById('forbiddenWords');
+      forbiddenContainer.innerHTML = '';
+      randomWord.forbidden.forEach(word => {
+        const div = document.createElement('div');
+        div.className = 'forbidden-word';
+        div.textContent = word;
+        forbiddenContainer.appendChild(div);
+      });
+    }
+
+    function correct() {
+      if (gameState.currentTeam === 1) gameState.team1Points++;
+      else gameState.team2Points++;
+      updateGameScreen();
+      saveGame();
+      if (checkWinner()) return;
+      pickNewWord();
+    }
+
+    function skip() { pickNewWord(); }
+
+    function penalize() {
+      if (gameState.currentTeam === 1) gameState.team1Points = Math.max(0, gameState.team1Points - 1);
+      else gameState.team2Points = Math.max(0, gameState.team2Points - 1);
+      updateGameScreen();
+      saveGame();
+      pickNewWord();
+    }
+
+    function togglePause() {
+      gameState.isPaused = !gameState.isPaused;
+      document.getElementById('pauseBtn').textContent = gameState.isPaused ? '▶ Reanudar' : '⏸ Pausar';
+    }
+
+    function endTurnManually() { endTurn(); }
+
+    function endTurn() {
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      document.getElementById('timer').classList.remove('warning');
+      gameState.currentTeam = gameState.currentTeam === 1 ? 2 : 1;
+      saveGame();
+      showTurnStartScreen();
+    }
+
+    function checkWinner() {
+      if (gameState.team1Points >= gameState.pointsToWin) { showWinner(); return true; }
+      if (gameState.team2Points >= gameState.pointsToWin) { showWinner(); return true; }
+      return false;
+    }
+
+    function showWinner() {
+      if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+      clearSavedGame();
+      const winnerName = gameState.team1Points >= gameState.pointsToWin ? gameState.team1Name : gameState.team2Name;
+      document.getElementById('winnerName').textContent = `¡${winnerName} ganó!`;
+      document.getElementById('finalTeam1Name').textContent = gameState.team1Name;
+      document.getElementById('finalTeam2Name').textContent = gameState.team2Name;
+      document.getElementById('finalTeam1Points').textContent = gameState.team1Points;
+      document.getElementById('finalTeam2Points').textContent = gameState.team2Points;
+      showScreen('winnerScreen');
+    }
+
+    window.onload = function() { checkForSavedGame(); };
+
+    function checkForSavedGame() {
+      if (localStorage.getItem('tabuGame')) document.getElementById('resumeBtn').style.display = 'block';
+    }
+
+    function saveGame() { localStorage.setItem('tabuGame', JSON.stringify(gameState)); }
+
+    function resumeGame() {
+      const saved = localStorage.getItem('tabuGame');
+      if (saved) { gameState = JSON.parse(saved); showTurnStartScreen(); }
+    }
+
+    function clearSavedGame() {
+      localStorage.removeItem('tabuGame');
+      document.getElementById('resumeBtn').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
