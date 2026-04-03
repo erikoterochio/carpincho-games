@@ -14,7 +14,7 @@
 
     .number-control { display: flex; align-items: center; justify-content: center; gap: 16px; }
     .number-control button { width: 44px; height: 44px; border-radius: 10px; border: 1px solid #dde6f0; background: #f3f6fa; font-size: 1.3rem; font-weight: 600; color: #01050F; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
-    .number-control button:hover { background: #01050F; border-color: #01050F; }
+    .number-control button:hover { background: #01050F; border-color: #01050F; color: #ffffff; }
     .number-control button:active { transform: scale(0.95); }
     .number-control .value { min-width: 60px; text-align: center; font-size: 1.6rem; font-weight: 700; color: #01050F; }
 
@@ -29,20 +29,26 @@
 
     .info-box { background: #f3f6fa; border: 1px solid #01050F; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; font-size: 0.85rem; color: #8aa8cc; line-height: 1.5; }
 
-    .round-header { position: sticky; top: 0; background: #01050F; color: #01050F; padding: 14px 16px; border-radius: 12px; margin-bottom: 20px; z-index: 100; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    /* ── ROUND HEADER: fondo negro, texto blanco ── */
+    .round-header { position: sticky; top: 0; background: #01050F; color: #ffffff; padding: 14px 16px; border-radius: 12px; margin-bottom: 20px; z-index: 100; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
     .round-header-left { flex: 1; }
-    .round-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
-    .starting-player { font-size: 0.8rem; opacity: 0.85; }
-    .prediction-counter-inline { background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 10px; text-align: center; min-width: 80px; border: 1px solid rgba(255,255,255,0.2); }
-    .prediction-counter-inline .prediction-counter-label { font-size: 0.7rem; opacity: 0.85; margin-bottom: 2px; }
-    .prediction-counter-inline .prediction-counter-value { font-size: 1.8rem; font-weight: 700; }
+    .round-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; color: #ffffff; }
+    .starting-player { font-size: 0.8rem; opacity: 0.85; color: #ffffff; }
+    .prediction-counter-inline { background: rgba(255,255,255,0.12); padding: 8px 14px; border-radius: 10px; text-align: center; min-width: 80px; border: 1px solid rgba(255,255,255,0.2); }
+    .prediction-counter-inline .prediction-counter-label { font-size: 0.7rem; opacity: 0.85; color: #ffffff; margin-bottom: 2px; }
+    .prediction-counter-inline .prediction-counter-value { font-size: 1.8rem; font-weight: 700; color: #ffffff; }
+
+    /* Botón "Ver puntos" dentro del header */
+    .scoreboard-peek-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #ffffff; border-radius: 8px; padding: 7px 11px; font-size: 0.78rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+    .scoreboard-peek-btn:active { background: rgba(255,255,255,0.3); }
 
     .player-selection { background: #f3f6fa; padding: 14px; border-radius: 12px; margin: 10px 0; border: 1px solid #dde6f0; }
     .player-name { font-size: 0.95rem; font-weight: 600; color: #01050F; margin-bottom: 10px; }
     .choice-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .choice-btn { padding: 12px; min-height: 44px; border: 1px solid #dde6f0; background: #ffffff; border-radius: 8px; font-size: 1.1rem; font-weight: 600; color: #01050F; cursor: pointer; transition: all 0.15s; }
     .choice-btn:active { transform: scale(0.95); }
-    .choice-btn.selected { background: #01050F; color: #01050F; border-color: #01050F; }
+    /* FIX: texto blanco cuando está seleccionado (antes era negro sobre negro) */
+    .choice-btn.selected { background: #01050F; color: #ffffff; border-color: #01050F; }
     .choice-btn:disabled { opacity: 0.25; cursor: not-allowed; }
 
     .sum-display { text-align: center; padding: 24px; background: #f3f6fa; border-radius: 12px; margin: 20px 0; border: 1px solid #dde6f0; }
@@ -64,7 +70,8 @@
     .player-name-score { font-weight: 600; color: #01050F; }
     .player-score { font-weight: 700; color: #01050F; font-size: 1.3rem; }
     .score-item.eliminated .player-score { color: #be123c; }
-    .eliminated-badge { background: #be123c; color: #01050F; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 8px; }
+    /* FIX: texto blanco sobre rojo */
+    .eliminated-badge { background: #be123c; color: #ffffff; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 8px; }
     .dealer-badge { background: #ffffff; color: #5a6a7a; padding: 3px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; margin-left: 8px; border: 1px solid #dde6f0; }
 
     .loser-announcement { text-align: center; padding: 22px; background: #fff1f2; border-radius: 12px; margin: 20px 0; border: 2px solid #be123c; }
@@ -72,7 +79,8 @@
     .loser-name { font-size: 1.8rem; font-weight: 700; color: #be123c; }
 
     .edit-controls { display: flex; gap: 6px; align-items: center; }
-    .adjust-btn { width: 34px; height: 34px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; background: #01050F; color: #01050F; }
+    /* FIX: texto blanco en botones de ajuste */
+    .adjust-btn { width: 34px; height: 34px; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.15s; background: #01050F; color: #ffffff; }
     .adjust-btn:active { transform: scale(0.9); }
     .btn-edit { background: #ffffff; color: #01050F; border: 1px solid #dde6f0; padding: 8px 16px; border-radius: 8px; font-family: 'Ubuntu', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; }
     .btn-edit.active { background: #2a1a00; color: #f59e0b; border-color: #f59e0b; }
@@ -81,9 +89,10 @@
     .player-selection-btn { width: 100%; padding: 14px; background: #f3f6fa; border: 1px solid #dde6f0; border-radius: 10px; font-size: 0.95rem; font-weight: 600; font-family: 'Ubuntu', sans-serif; color: #01050F; cursor: pointer; transition: all 0.2s; margin: 6px 0; }
     .player-selection-btn:hover { background: #f3f6fa; border-color: #01050F; }
 
+    /* FIX: texto blanco en encabezados de tabla */
     .history-table-wrapper { overflow-x: auto; background: #f3f6fa; border-radius: 10px; padding: 12px; border: 1px solid #dde6f0; margin-top: 14px; }
     .history-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-    .history-table th { background: #01050F; color: #01050F; padding: 8px 6px; text-align: left; font-weight: 700; border-bottom: 1px solid #01050F; }
+    .history-table th { background: #01050F; color: #ffffff; padding: 8px 6px; text-align: left; font-weight: 700; border-bottom: 1px solid #01050F; }
     .history-table td { padding: 7px 6px; border-bottom: 1px solid #dde6f0; color: #5a6a7a; }
     .history-table tr:nth-child(even) { background: #f3f6fa; }
     .history-achieved-yes { color: #16a34a !important; font-weight: 600; }
@@ -91,6 +100,21 @@
     .history-points { font-weight: 600; color: #01050F !important; }
 
     .btn-group-inline { display: flex; gap: 8px; margin-bottom: 14px; }
+
+    /* ── MODAL DE TANTEADOR ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.65); z-index: 999; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal-box { background: #ffffff; border-radius: 16px; padding: 20px; width: 100%; max-width: 380px; max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .modal-title { font-size: 1.1rem; font-weight: 700; color: #01050F; }
+    .modal-close-btn { background: #f3f6fa; border: 1px solid #dde6f0; border-radius: 8px; color: #01050F; font-size: 0.9rem; font-weight: 600; padding: 7px 14px; cursor: pointer; font-family: 'Ubuntu', sans-serif; }
+    .modal-close-btn:active { background: #dde6f0; }
+    .modal-round-info { background: #01050F; color: #ffffff; border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 0.85rem; text-align: center; }
+    .modal-score-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f3f6fa; border-radius: 10px; margin: 6px 0; border: 1px solid #dde6f0; }
+    .modal-score-item.eliminated { background: #fff1f2; border-color: #fca5a5; opacity: 0.6; }
+    .modal-player-name { font-weight: 600; color: #01050F; font-size: 0.9rem; }
+    .modal-player-score { font-weight: 700; color: #01050F; font-size: 1.2rem; }
+    .modal-score-item.eliminated .modal-player-score { color: #be123c; }
   </style>
 </head>
 <body>
@@ -98,6 +122,18 @@
     <div class="header-content">
       <div class="header-title">Berenjenapp</div>
       <a href="/" class="home-btn">← Inicio</a>
+    </div>
+  </div>
+
+  <!-- Modal tanteador mid-game -->
+  <div class="modal-overlay" id="scoreboardModal" onclick="closeScoreboardModal(event)">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">📊 Tanteador</div>
+        <button class="modal-close-btn" onclick="closeScoreboardModalDirect()">Cerrar</button>
+      </div>
+      <div class="modal-round-info" id="modalRoundInfo"></div>
+      <div id="modalScoreList"></div>
     </div>
   </div>
 
@@ -168,9 +204,12 @@
               <div class="round-name" id="roundName">RONDA</div>
               <div class="starting-player" id="startingPlayer">Info</div>
             </div>
-            <div class="prediction-counter-inline">
-              <div class="prediction-counter-label">Total</div>
-              <div class="prediction-counter-value" id="predictionCounterValue">0</div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+              <button class="scoreboard-peek-btn" onclick="openScoreboardModal()">📊 Ver puntos</button>
+              <div class="prediction-counter-inline">
+                <div class="prediction-counter-label">Total</div>
+                <div class="prediction-counter-value" id="predictionCounterValue">0</div>
+              </div>
             </div>
           </div>
           <div id="playerSelections"></div>
@@ -180,19 +219,41 @@
 
       <div id="sumScreen" class="screen">
         <div class="content">
+          <!-- Header de ronda también visible aquí -->
+          <div class="round-header">
+            <div class="round-header-left">
+              <div class="round-name" id="sumRoundName">RONDA</div>
+              <div class="starting-player" id="sumRoundInfo">Info</div>
+            </div>
+            <button class="scoreboard-peek-btn" onclick="openScoreboardModal()">📊 Ver puntos</button>
+          </div>
           <div class="sum-display">
             <div style="font-size:0.85rem;color:#706c7e;">Total predicho:</div>
             <div class="sum-number" id="sumNumber">0</div>
             <div class="fiummm-message" id="fiummmMessage"></div>
           </div>
-          <button class="btn btn-primary" onclick="showScoreInput()">Cargar Puntajes</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="showScoreInput()">Cargar Puntajes</button>
+            <button class="btn btn-secondary" onclick="backToRound()">← Volver a predicciones</button>
+          </div>
         </div>
       </div>
 
       <div id="scoreScreen" class="screen">
         <div class="content">
+          <!-- Header de ronda también visible aquí -->
+          <div class="round-header">
+            <div class="round-header-left">
+              <div class="round-name" id="scoreRoundName">RONDA</div>
+              <div class="starting-player" id="scoreRoundInfo">Cargá los resultados</div>
+            </div>
+            <button class="scoreboard-peek-btn" onclick="openScoreboardModal()">📊 Ver puntos</button>
+          </div>
           <div id="scoreInputs"></div>
-          <button class="btn btn-primary" onclick="calculateScores()">Calcular Puntajes</button>
+          <div class="btn-group">
+            <button class="btn btn-primary" onclick="calculateScores()">Calcular Puntajes</button>
+            <button class="btn btn-secondary" onclick="showSum()">← Volver al total</button>
+          </div>
         </div>
       </div>
 
@@ -340,8 +401,8 @@
       const playerCount = document.querySelectorAll('.player-input-row').length;
       const { rounds } = calculateAvailableRounds(gameState.cardCount, playerCount);
       const infoBox = document.getElementById('rounds-info');
-      if (rounds.length > 0) { infoBox.textContent = `Rondas a jugar: ${rounds.join(', ')}`; infoBox.style.background = '#0b2659'; infoBox.style.borderColor = '#04447b'; }
-      else { infoBox.textContent = '⚠️ No hay suficientes cartas para jugar'; infoBox.style.background = '#2a0a0a'; infoBox.style.borderColor = '#f87171'; }
+      if (rounds.length > 0) { infoBox.textContent = `Rondas a jugar: ${rounds.join(', ')}`; infoBox.style.background = '#0b2659'; infoBox.style.borderColor = '#04447b'; infoBox.style.color = '#c1c1c6'; }
+      else { infoBox.textContent = '⚠️ No hay suficientes cartas para jugar'; infoBox.style.background = '#2a0a0a'; infoBox.style.borderColor = '#f87171'; infoBox.style.color = '#f87171'; }
     }
 
     function startGame() {
@@ -353,7 +414,6 @@
         gameState.players.push({ name, score: 0, eliminated: false });
       });
       if (gameState.players.length < 2) { alert('Necesitás al menos 2 jugadores'); return; }
-      // Guardar sesión en Supabase (fire & forget)
       FriendPicker.saveSession('berenjena', gameState.players.map(p => p.name));
       const { rounds, maxValues } = calculateAvailableRounds(gameState.cardCount, gameState.players.length);
       if (rounds.length === 0) { alert('No hay suficientes cartas para jugar con esta cantidad de jugadores'); return; }
@@ -384,8 +444,16 @@
       const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
       const startingPlayer = gameState.players[gameState.startingPlayerIndex];
       const dealer = gameState.players[gameState.dealerIndex];
-      document.getElementById('roundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
-      document.getElementById('startingPlayer').textContent = `Reparte: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+      const roundLabel = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
+      const infoLabel = `Reparte: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+
+      document.getElementById('roundName').textContent = roundLabel;
+      document.getElementById('startingPlayer').textContent = infoLabel;
+      // Sincronizar headers de sumScreen y scoreScreen
+      if (document.getElementById('sumRoundName')) document.getElementById('sumRoundName').textContent = roundLabel;
+      if (document.getElementById('sumRoundInfo')) document.getElementById('sumRoundInfo').textContent = infoLabel;
+      if (document.getElementById('scoreRoundName')) document.getElementById('scoreRoundName').textContent = roundLabel;
+
       const container = document.getElementById('playerSelections');
       container.innerHTML = '';
       const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) ? gameState.playerOrder : gameState.players.map((_, idx) => idx);
@@ -442,16 +510,29 @@
       const sum = gameState.currentSelections.reduce((total, val) => total + (val !== null ? val : 0), 0);
       const maxValue = gameState.roundMaxValues[gameState.currentRoundType];
       document.getElementById('sumNumber').textContent = sum;
+      // Sincronizar header
+      if (document.getElementById('sumRoundName')) document.getElementById('sumRoundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
+      if (document.getElementById('sumRoundInfo')) {
+        const dealer = gameState.players[gameState.dealerIndex];
+        const startingPlayer = gameState.players[gameState.startingPlayerIndex];
+        document.getElementById('sumRoundInfo').textContent = `Reparte: ${dealer.name} | Empieza: ${startingPlayer.name}`;
+      }
       const messageDiv = document.getElementById('fiummmMessage');
       if (sum < maxValue) { messageDiv.textContent = '🏎️ Habemus fium 🏎️'; messageDiv.className = 'fiummm-message fiummm-yes'; }
       else { messageDiv.textContent = '🛑 No habemus fium 🛑'; messageDiv.className = 'fiummm-message fiummm-no'; }
       showScreen('sumScreen');
     }
 
+    function backToRound() {
+      showScreen('roundScreen');
+    }
+
     function showScoreInput() {
       const container = document.getElementById('scoreInputs');
       container.innerHTML = '';
       if (Object.keys(gameState.currentScores).length === 0) gameState.currentScores = {};
+      // Sincronizar header
+      if (document.getElementById('scoreRoundName')) document.getElementById('scoreRoundName').textContent = `RONDA: ${gameState.currentRoundType.toUpperCase()}`;
       const orderToUse = (gameState.playerOrder && gameState.playerOrder.length === gameState.players.length) ? gameState.playerOrder : gameState.players.map((_, idx) => idx);
       let startingPosition = orderToUse.indexOf(gameState.startingPlayerIndex);
       if (startingPosition === -1) startingPosition = 0;
@@ -546,6 +627,45 @@
         loserSection.innerHTML = `<div class="loser-announcement"><h2>💀⚰️ PERDEDOR ⚰️💀</h2><div class="loser-name">${activePlayers[0].name}</div><p style="margin-top:10px;color:#f87171;font-size:0.9rem;">¡Todos los demás llegaron a 50+ puntos!</p></div>`;
         document.getElementById('nextRoundBtn').style.display = 'none';
       } else { loserSection.innerHTML = ''; document.getElementById('nextRoundBtn').style.display = 'block'; }
+    }
+
+    // ── MODAL TANTEADOR ──
+    function openScoreboardModal() {
+      const modal = document.getElementById('scoreboardModal');
+      // Info de ronda actual
+      const roundInfoEl = document.getElementById('modalRoundInfo');
+      if (gameState.currentRoundType) {
+        const dealer = gameState.players[gameState.dealerIndex];
+        roundInfoEl.textContent = `Ronda ${gameState.currentRound + 1} · ${gameState.currentRoundType} · Reparte: ${dealer ? dealer.name : '-'}`;
+      } else {
+        roundInfoEl.textContent = `Partida en curso`;
+      }
+      // Lista de jugadores ordenada por puntaje
+      const listEl = document.getElementById('modalScoreList');
+      listEl.innerHTML = '';
+      const sorted = [...gameState.players].sort((a, b) => {
+        if (a.eliminated && !b.eliminated) return 1;
+        if (!a.eliminated && b.eliminated) return -1;
+        return a.score - b.score;
+      });
+      sorted.forEach(player => {
+        const div = document.createElement('div');
+        div.className = 'modal-score-item' + (player.eliminated ? ' eliminated' : '');
+        div.innerHTML = `<span class="modal-player-name">${player.name}${player.eliminated ? ' <span style="color:#be123c;font-size:0.75rem;">(SALIÓ)</span>' : ''}</span><span class="modal-player-score">${player.score}</span>`;
+        listEl.appendChild(div);
+      });
+      modal.classList.add('open');
+    }
+
+    function closeScoreboardModal(event) {
+      // Cierra solo si se hizo click en el overlay (fuera del box)
+      if (event.target === document.getElementById('scoreboardModal')) {
+        document.getElementById('scoreboardModal').classList.remove('open');
+      }
+    }
+
+    function closeScoreboardModalDirect() {
+      document.getElementById('scoreboardModal').classList.remove('open');
     }
 
     function showAddPlayerScreen() {
