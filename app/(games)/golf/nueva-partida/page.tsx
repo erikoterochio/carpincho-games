@@ -41,15 +41,15 @@ type UnitInput = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
-  borderActive: '#04447b', primary: '#04447b',
-  text: '#0b2659', muted: '#5a7898',
+  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
+  borderActive: '#166534', primary: '#166534',
+  text: '#1a3a28', muted: '#4d7a5e',
   success: '#15803d', error: '#be123c',
 } as const
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px',
-  background: '#e8f0fa', border: `1px solid ${C.border}`,
+  background: '#e0f5e8', border: `1px solid ${C.border}`,
   borderRadius: 9, color: C.text, fontSize: 14, fontFamily: FONT,
 }
 
@@ -97,7 +97,7 @@ const TEE_COLORS: { key: TeeColor; label: string; hex: string }[] = [
   { key: 'blue',   label: 'Azul',     hex: '#1d4ed8' },
   { key: 'white',  label: 'Blanca',   hex: '#d1d5db' },
   { key: 'yellow', label: 'Amarilla', hex: '#d97706' },
-  { key: 'red',    label: 'Roja',     hex: '#dc2626' },
+  { key: 'red',    label: 'Roja',     hex: '#b91c1c' },
 ]
 
 const HCP_OPTIONS = [
@@ -348,7 +348,7 @@ export default function NuevaPartidaPage() {
         input:focus, select:focus { outline: none; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #c8d8ec; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #bdd5c5; border-radius: 3px; }
       `}</style>
 
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text }}>
@@ -426,7 +426,7 @@ export default function NuevaPartidaPage() {
           </div>
 
           {/* Botón flotante */}
-          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #f0f6ff 75%, transparent)' }}>
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #f2faf5 75%, transparent)' }}>
             {step < 4 ? (
               <button disabled={!canNext()} onClick={() => setStep(s => s + 1)}
                 style={{ width: '100%', padding: '15px', background: canNext() ? C.primary : '#e0ebf8', color: canNext() ? '#ffffff' : C.muted, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
@@ -548,7 +548,7 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
             <p style={{ fontSize: 11, color: C.muted, marginBottom: 10, lineHeight: 1.5 }}>SI = dificultad del hoyo. SI 1 = más difícil. Debe ser único del 1 al 18.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {newCourse.holes.map((h: HoleInput, i: number) => (
-                <div key={i} style={{ background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div key={i} style={{ background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 10, color: C.muted, width: 22, flexShrink: 0, textAlign: 'right' }}>H{h.hole_number}</span>
                   <div style={{ display: 'flex', gap: 2 }}>
                     {([3,4,5] as const).map(p => (
@@ -562,7 +562,7 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
                     <span style={{ fontSize: 9, color: C.muted }}>SI</span>
                     <input type="number" min={1} max={18} value={h.stroke_index}
                       onChange={e => updateHole(i, 'stroke_index', Math.min(18, Math.max(1, parseInt(e.target.value) || 1)))}
-                      style={{ width: 32, padding: '2px 3px', background: '#f0f6ff', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
+                      style={{ width: 32, padding: '2px 3px', background: '#f2faf5', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
                   </div>
                 </div>
               ))}
@@ -705,7 +705,7 @@ function StepFormatos({ formats, onFormats, formatConfig, onFormatConfig }: {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: active ? def.color : C.text }}>{def.label}</span>
-                    <span style={{ fontSize: 10, color: C.muted, background: '#e8f0fa', borderRadius: 5, padding: '2px 7px' }}>
+                    <span style={{ fontSize: 10, color: C.muted, background: '#e0f5e8', borderRadius: 5, padding: '2px 7px' }}>
                       {def.scope === 'individual' ? 'Individual' : def.scope === 'pair' ? 'Parejas' : 'Grupos de 4'}
                     </span>
                   </div>
@@ -719,12 +719,12 @@ function StepFormatos({ formats, onFormats, formatConfig, onFormatConfig }: {
                   <span style={{ fontSize: 12, color: C.muted }}>Diferencia máxima de HCP entre los dos de la pareja:</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <button onClick={() => onFormatConfig(p => ({ ...p, fourball_clasico: { max_hcp_diff: Math.max(0, (p.fourball_clasico?.max_hcp_diff ?? 5) - 1) } }))}
-                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                     <span style={{ fontSize: 16, fontWeight: 700, color: def.color, minWidth: 28, textAlign: 'center' }}>
                       {formatConfig.fourball_clasico?.max_hcp_diff ?? 5}
                     </span>
                     <button onClick={() => onFormatConfig(p => ({ ...p, fourball_clasico: { max_hcp_diff: Math.min(36, (p.fourball_clasico?.max_hcp_diff ?? 5) + 1) } }))}
-                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                   </div>
                 </div>
               )}
@@ -823,7 +823,7 @@ function StepJugadores({ players, onPlayers, addName, onAddName, addHcp, onAddHc
                 <div key={p.tempId} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 12, height: 12, borderRadius: 6, background: tee?.hex ?? '#888', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: C.text }}>{p.display_name}</span>
-                  <span style={{ fontSize: 12, color: C.muted, background: '#e8f0fa', borderRadius: 6, padding: '2px 8px' }}>
+                  <span style={{ fontSize: 12, color: C.muted, background: '#e0f5e8', borderRadius: 6, padding: '2px 8px' }}>
                     {p.handicap_index === 0 ? 'Scratch' : `HCP ${p.handicap_index}`}
                   </span>
                   <button onClick={() => removePlayer(p.tempId)}
@@ -882,7 +882,7 @@ function StepJugadores({ players, onPlayers, addName, onAddName, addHcp, onAddHc
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', paddingTop: 6, borderTop: `1px solid ${C.border}` }}>
                           {unassigned.map((p: PlayerInput) => (
                             <button key={p.tempId} onClick={() => assignPlayer(absIdx, p.tempId)}
-                              style={{ fontSize: 11, color: C.text, background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}>
+                              style={{ fontSize: 11, color: C.text, background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}>
                               + {p.display_name}
                             </button>
                           ))}
@@ -1005,7 +1005,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function SummaryCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ padding: '7px 14px', background: '#e8f0fa', borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: '7px 14px', background: '#e0f5e8', borderBottom: `1px solid ${C.border}` }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
       </div>
       <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>

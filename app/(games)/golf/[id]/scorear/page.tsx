@@ -31,14 +31,14 @@ type Format    = { format_type: string; handicap_allowance: number | null }
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
-  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
-  eagle: '#b45309', birdie: '#15803d', par: '#374151',
-  bogey: '#ea580c', double: '#dc2626',
+  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
+  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
 } as const
 
 const TEE_HEX: Record<string, string> = {
-  black: '#222', blue: '#1d4ed8', white: '#b0b8c8', yellow: '#d97706', red: '#dc2626',
+  black: '#222', blue: '#1d4ed8', white: '#9ca3af', yellow: '#d97706', red: '#dc2626',
 }
 
 // ─────────────────────────────────────────────
@@ -277,7 +277,7 @@ export default function ScorearPage() {
     </div>
   )
 
-  const colW = { hole: 36, par: 28, hcp: 28, player: 52 }
+  const colW = { hole: 38, par: 30, hcp: 30, player: 56 }
   const tableW = colW.hole + colW.par + colW.hcp + players.length * colW.player
 
   // ─── RENDER ────────────────────────────────────────────────────
@@ -345,28 +345,32 @@ export default function ScorearPage() {
           {/* ── Scorecard Table */}
           <div style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ borderCollapse: 'collapse', width: tableW, tableLayout: 'fixed' }}>
+              <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW }}>
 
                 {/* Cabecera */}
                 <thead>
                   <tr style={{ background: C.primary }}>
                     <th style={{
                       position: 'sticky', left: 0, zIndex: 2, background: C.primary,
-                      width: colW.hole, padding: '8px 4px', fontSize: 11, color: '#fff',
+                      width: colW.hole, padding: '9px 4px', fontSize: 12, color: '#fff',
                       textAlign: 'center', fontWeight: 700,
                     }}>H</th>
-                    <th style={{ width: colW.par, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
-                    <th style={{ width: colW.hcp, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontWeight: 400 }}>Hcp</th>
-                    {players.map(p => (
-                      <th key={p.id} style={{ width: colW.player, padding: '6px 2px', textAlign: 'center' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[p.tee_color] ?? '#888', border: '1px solid rgba(255,255,255,0.3)' }} />
-                          <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
-                            {p.display_name.split(' ')[0]}
-                          </span>
-                        </div>
-                      </th>
-                    ))}
+                    <th style={{ width: colW.par, padding: '9px 4px', fontSize: 12, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
+                    <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 11, color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontWeight: 400 }}>Hcp</th>
+                    {players.map(p => {
+                      const phcp = getPlayingHcp(p)
+                      return (
+                        <th key={p.id} style={{ width: colW.player, padding: '7px 2px', textAlign: 'center' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                            <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[p.tee_color] ?? '#888', border: '1.5px solid rgba(255,255,255,0.4)' }} />
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
+                              {p.display_name.split(' ')[0]}
+                            </span>
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>H: {phcp}</span>
+                          </div>
+                        </th>
+                      )
+                    })}
                   </tr>
                 </thead>
 
@@ -468,7 +472,7 @@ export default function ScorearPage() {
             {/* Stepper */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, justifyContent: 'center', marginBottom: 14 }}>
               <button onClick={() => adjustEditScore(-1)}
-                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
                 −
               </button>
 
@@ -484,7 +488,7 @@ export default function ScorearPage() {
               </div>
 
               <button onClick={() => adjustEditScore(+1)}
-                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
                 +
               </button>
             </div>
@@ -506,7 +510,7 @@ export default function ScorearPage() {
             <div style={{ display: 'flex', gap: 10 }}>
               {editGross !== null && (
                 <button onClick={() => { saveScore(editCell.playerId, editCell.holeNumber, null); setEditCell(null) }}
-                  style={{ flex: 1, padding: '13px', background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 14, color: C.muted, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '13px', background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 14, color: C.muted, cursor: 'pointer', fontFamily: FONT }}>
                   Borrar
                 </button>
               )}
@@ -533,7 +537,7 @@ function HoleRow({ hole, players, scores, getPlayingHcp, onTap, even, saving, co
   getPlayingHcp: (p: Player) => number; onTap: (pid: string) => void
   even: boolean; saving: string | null; colW: ColW
 }) {
-  const rowBg = even ? C.card : '#f5f9ff'
+  const rowBg = even ? C.card : '#f0faf3'
   return (
     <tr style={{ background: rowBg }}>
       <td style={{
@@ -541,11 +545,11 @@ function HoleRow({ hole, players, scores, getPlayingHcp, onTap, even, saving, co
         width: colW.hole, textAlign: 'center',
         borderRight: `1px solid ${C.border}`,
       }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: C.text, padding: '10px 4px' }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: C.text, padding: '11px 4px' }}>
           {hole.hole_number}
         </div>
       </td>
-      <td style={{ width: colW.par, textAlign: 'center', fontSize: 13, color: C.muted, borderRight: `1px solid ${C.border}` }}>
+      <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: C.muted, borderRight: `1px solid ${C.border}` }}>
         {hole.par}
       </td>
       <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: C.border, borderRight: `1px solid ${C.border}` }}>
@@ -562,19 +566,19 @@ function HoleRow({ hole, players, scores, getPlayingHcp, onTap, even, saving, co
           <td key={p.id} onClick={() => onTap(p.id)}
             style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', cursor: 'pointer' }}>
             <div style={{
-              width: 40, height: 36, borderRadius: 8, margin: '0 auto',
-              background: gross !== null ? color! + '1a' : 'transparent',
+              width: 46, height: 42, borderRadius: 9, margin: '0 auto',
+              background: gross !== null ? color! + '1c' : 'transparent',
               border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               position: 'relative', transition: 'all 0.1s',
             }}>
               {isSaving && (
-                <div style={{ position: 'absolute', top: 3, right: 3, width: 4, height: 4, borderRadius: 2, background: C.primary, animation: 'pulse 1s infinite' }} />
+                <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary, animation: 'pulse 1s infinite' }} />
               )}
               {strokes > 0 && !isSaving && (
-                <div style={{ position: 'absolute', top: 3, right: 3, width: 4, height: 4, borderRadius: 2, background: C.primary + '50' }} />
+                <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '50' }} />
               )}
-              <span style={{ fontSize: 16, fontWeight: 700, color: gross !== null ? color! : C.border, lineHeight: 1 }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: gross !== null ? color! : C.border, lineHeight: 1 }}>
                 {gross ?? '·'}
               </span>
             </div>
@@ -591,9 +595,9 @@ function SubtotalRow({ label, players, subtotal, holeNumbers, parTotal, colW }: 
   holeNumbers: number[]; parTotal: number; colW: ColW
 }) {
   return (
-    <tr style={{ background: '#dbeafe' }}>
+    <tr style={{ background: '#dcfce7' }}>
       <td style={{
-        position: 'sticky', left: 0, zIndex: 1, background: '#dbeafe',
+        position: 'sticky', left: 0, zIndex: 1, background: '#dcfce7',
         width: colW.hole, padding: '7px 8px', fontSize: 11, fontWeight: 700, color: C.primary,
         borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}`,
       }}>{label}</td>

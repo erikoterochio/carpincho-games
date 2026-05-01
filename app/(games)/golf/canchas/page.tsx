@@ -29,15 +29,16 @@ type Hole = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
-  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
-  success: '#15803d',
+  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
+  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
 } as const
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px',
-  background: '#e8f0fa', border: `1px solid #c8d8ec`,
-  borderRadius: 9, color: '#0b2659', fontSize: 14, fontFamily: FONT,
+  background: '#e0f5e8', border: `1px solid #bdd5c5`,
+  borderRadius: 9, color: '#1a3a28', fontSize: 14, fontFamily: FONT,
 }
 
 const DEFAULT_PARS: (3|4|5)[] = [4,4,3,4,4,5,3,4,4, 4,3,4,5,4,4,3,4,5]
@@ -159,7 +160,7 @@ export default function CanchasPage() {
         input:focus, select:focus { outline: none; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #c8d8ec; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #bdd5c5; border-radius: 3px; }
       `}</style>
 
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 40 }}>
@@ -175,7 +176,7 @@ export default function CanchasPage() {
             <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1 }}>Canchas</span>
             {userId && (
               <button onClick={() => setShowCreate(!showCreate)}
-                style={{ padding: '7px 14px', background: showCreate ? '#e8f0fa' : C.primary, border: `1px solid ${showCreate ? C.border : 'transparent'}`, borderRadius: 9, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: showCreate ? C.muted : '#ffffff', cursor: 'pointer' }}>
+                style={{ padding: '7px 14px', background: showCreate ? '#e0f5e8' : C.primary, border: `1px solid ${showCreate ? C.border : 'transparent'}`, borderRadius: 9, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: showCreate ? C.muted : '#ffffff', cursor: 'pointer' }}>
                 {showCreate ? 'Cancelar' : '+ Nueva'}
               </button>
             )}
@@ -220,7 +221,7 @@ export default function CanchasPage() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
                     {form.holes.map((h, i) => (
-                      <div key={i} style={{ background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 7, padding: '6px 9px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div key={i} style={{ background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 7, padding: '6px 9px', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <span style={{ fontSize: 9, color: C.muted, width: 20, textAlign: 'right', flexShrink: 0 }}>H{h.hole_number}</span>
                         {([3,4,5] as const).map(p => (
                           <button key={p} onClick={() => updateHole(i, 'par', p)}
@@ -232,7 +233,7 @@ export default function CanchasPage() {
                           <span style={{ fontSize: 9, color: C.muted }}>SI</span>
                           <input type="number" min={1} max={18} value={h.stroke_index}
                             onChange={e => updateHole(i, 'stroke_index', Math.min(18, Math.max(1, parseInt(e.target.value) || 1)))}
-                            style={{ width: 30, padding: '1px 2px', background: '#f0f6ff', border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 10, textAlign: 'center' }} />
+                            style={{ width: 30, padding: '1px 2px', background: '#f2faf5', border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 10, textAlign: 'center' }} />
                         </div>
                       </div>
                     ))}
@@ -295,62 +296,62 @@ function CourseCard({ course, holes, expanded, onToggle, isOwner }: {
   expanded: boolean; onToggle: () => void; isOwner: boolean
 }) {
   return (
-    <div style={{ background: '#ffffff', border: `1px solid ${expanded ? '#04447b' : '#c8d8ec'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+    <div style={{ background: '#ffffff', border: `1px solid ${expanded ? '#166534' : '#bdd5c5'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
       {/* Header clickeable */}
       <button onClick={onToggle}
         style={{ width: '100%', padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#0b2659', marginBottom: 3 }}>{course.name}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1a3a28', marginBottom: 3 }}>{course.name}</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {course.city && <span style={{ fontSize: 11, color: '#5a7898' }}>{course.city}</span>}
-            <span style={{ fontSize: 11, color: '#5a7898' }}>{course.total_holes} hoyos</span>
-            {course.par && <span style={{ fontSize: 11, color: '#5a7898' }}>Par {course.par}</span>}
-            {course.rating && <span style={{ fontSize: 11, color: '#5a7898' }}>Rating {course.rating}</span>}
-            {course.slope && course.slope !== 113 && <span style={{ fontSize: 11, color: '#5a7898' }}>Slope {course.slope}</span>}
+            {course.city && <span style={{ fontSize: 11, color: '#4d7a5e' }}>{course.city}</span>}
+            <span style={{ fontSize: 11, color: '#4d7a5e' }}>{course.total_holes} hoyos</span>
+            {course.par && <span style={{ fontSize: 11, color: '#4d7a5e' }}>Par {course.par}</span>}
+            {course.rating && <span style={{ fontSize: 11, color: '#4d7a5e' }}>Rating {course.rating}</span>}
+            {course.slope && course.slope !== 113 && <span style={{ fontSize: 11, color: '#4d7a5e' }}>Slope {course.slope}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          {isOwner && <span style={{ fontSize: 9, fontWeight: 700, color: '#04447b', letterSpacing: 0.8 }}>TUYA</span>}
+          {isOwner && <span style={{ fontSize: 9, fontWeight: 700, color: '#166534', letterSpacing: 0.8 }}>TUYA</span>}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-            <path d="M6 9l6 6 6-6" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M6 9l6 6 6-6" stroke="#4d7a5e" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
       </button>
 
       {/* Detalle de hoyos */}
       {expanded && (
-        <div style={{ borderTop: '1px solid #c8d8ec', padding: '12px 16px', overflowX: 'auto' }}>
+        <div style={{ borderTop: '1px solid #bdd5c5', padding: '12px 16px', overflowX: 'auto' }}>
           {holes === null ? (
-            <p style={{ fontSize: 12, color: '#5a7898', textAlign: 'center', padding: '10px 0' }}>Cargando hoyos...</p>
+            <p style={{ fontSize: 12, color: '#4d7a5e', textAlign: 'center', padding: '10px 0' }}>Cargando hoyos...</p>
           ) : holes.length === 0 ? (
-            <p style={{ fontSize: 12, color: '#5a7898', textAlign: 'center', padding: '10px 0' }}>Sin hoyos cargados</p>
+            <p style={{ fontSize: 12, color: '#4d7a5e', textAlign: 'center', padding: '10px 0' }}>Sin hoyos cargados</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: FONT, minWidth: 380 }}>
               <thead>
                 <tr>
                   {['H', 'Par', 'Hcp', '⬛', '🔵', '⬜', '🟡', '🔴'].map(h => (
-                    <th key={h} style={{ padding: '4px 6px', color: '#5a7898', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #c8d8ec', fontSize: 10 }}>{h}</th>
+                    <th key={h} style={{ padding: '4px 6px', color: '#4d7a5e', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #bdd5c5', fontSize: 10 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {holes.map(h => (
                   <tr key={h.hole_number}>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#5a7898', fontWeight: 700 }}>{h.hole_number}</td>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#0b2659', fontWeight: 700 }}>{h.par}</td>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#5a7898' }}>{h.stroke_index}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#4d7a5e', fontWeight: 700 }}>{h.hole_number}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#1a3a28', fontWeight: 700 }}>{h.par}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#4d7a5e' }}>{h.stroke_index}</td>
                     {['distance_black','distance_blue','distance_white','distance_yellow','distance_red'].map(key => (
-                      <td key={key} style={{ padding: '5px 6px', textAlign: 'center', color: '#5a7898' }}>
+                      <td key={key} style={{ padding: '5px 6px', textAlign: 'center', color: '#4d7a5e' }}>
                         {(h as any)[key] ?? '—'}
                       </td>
                     ))}
                   </tr>
                 ))}
                 {/* Totales */}
-                <tr style={{ borderTop: '1px solid #c8d8ec' }}>
-                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#5a7898', fontWeight: 700 }}>Σ</td>
-                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#0b2659', fontWeight: 700 }}>
+                <tr style={{ borderTop: '1px solid #bdd5c5' }}>
+                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#4d7a5e', fontWeight: 700 }}>Σ</td>
+                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#1a3a28', fontWeight: 700 }}>
                     {holes.reduce((s, h) => s + h.par, 0)}
                   </td>
                   <td colSpan={6} />
@@ -371,7 +372,7 @@ function CourseCard({ course, holes, expanded, onToggle, isOwner }: {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#5a7898', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#4d7a5e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
       {children}
     </div>
   )

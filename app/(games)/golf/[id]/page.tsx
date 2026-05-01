@@ -56,10 +56,10 @@ type LeaderboardRow = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
-  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
-  eagle: '#b45309', birdie: '#15803d', par: '#374151',
-  bogey: '#ea580c', double: '#dc2626',
+  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
+  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
 } as const
 
 const FORMAT_COLORS: Record<string, string> = {
@@ -69,7 +69,7 @@ const FORMAT_COLORS: Record<string, string> = {
 }
 
 const TEE_HEX: Record<string, string> = {
-  black: '#222', blue: '#1d4ed8', white: '#d1d5db', yellow: '#d97706', red: '#dc2626',
+  black: '#222', blue: '#1d4ed8', white: '#9ca3af', yellow: '#d97706', red: '#dc2626',
 }
 
 // ─────────────────────────────────────────────
@@ -699,10 +699,10 @@ export default function TournamentPage() {
       {isActive && round && (
         <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 20 }}>
           <Link href={`/golf/${id}/scorear`}
-            style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.primary, color: C.text, borderRadius: 28, padding: '14px 22px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT, boxShadow: '0 4px 24px rgba(5,80,116,0.5)' }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.primary, color: '#ffffff', borderRadius: 28, padding: '14px 22px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT, boxShadow: '0 6px 24px rgba(22,101,52,0.45)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 20h9" stroke={C.text} strokeWidth="2" strokeLinecap="round"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke={C.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 20h9" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             Anotar
           </Link>
@@ -961,18 +961,18 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
   const front9   = holes.filter(h => h.hole_number <= 9)
   const back9    = holes.filter(h => h.hole_number >= 10)
-  const colW     = { hole: 32, par: 26, hcp: 26, player: 52 }
+  const colW     = { hole: 38, par: 30, hcp: 30, player: 56 }
   const tableW   = colW.hole + colW.par + colW.hcp + players.length * colW.player
   const totalPar = holes.reduce((a, h) => a + h.par, 0)
 
   const renderHoleRow = (h: Hole, even: boolean) => {
-    const rowBg = even ? C.card : '#f5f9ff'
+    const rowBg = even ? C.card : '#f0faf3'
     return (
       <tr key={h.hole_number} style={{ background: rowBg }}>
         <td style={{ position: 'sticky', left: 0, zIndex: 1, background: rowBg, width: colW.hole, textAlign: 'center', borderRight: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, padding: '10px 4px' }}>{h.hole_number}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, padding: '11px 4px' }}>{h.hole_number}</div>
         </td>
-        <td style={{ width: colW.par, textAlign: 'center', fontSize: 13, color: C.muted, borderRight: `1px solid ${C.border}` }}>{h.par}</td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: C.muted, borderRight: `1px solid ${C.border}` }}>{h.par}</td>
         <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: C.border, borderRight: `1px solid ${C.border}` }}>{h.stroke_index}</td>
         {players.map(p => {
           const strokes = getStrokes(p.id, h.hole_number)
@@ -990,23 +990,23 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
           return (
             <td key={p.id} style={{ width: colW.player, textAlign: 'center', padding: '5px 4px' }}>
               <div style={{
-                width: 40, height: 36, borderRadius: 8, margin: '0 auto',
-                background: gross !== null ? color! + '1a' : 'transparent',
+                width: 46, height: 42, borderRadius: 9, margin: '0 auto',
+                background: gross !== null ? color! + '1c' : 'transparent',
                 border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`,
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 position: 'relative',
               }}>
                 {strokes > 0 && (
-                  <div style={{ position: 'absolute', top: 3, right: 3, width: 4, height: 4, borderRadius: 2, background: C.primary + '70' }} />
+                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '70' }} />
                 )}
                 {gross !== null ? (
                   <>
-                    <span style={{ fontSize: 15, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
+                    <span style={{ fontSize: 18, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
                     {strokes > 0 && nett !== null && (
-                      <span style={{ fontSize: 9, color: C.muted, lineHeight: 1 }}>/{nett}</span>
+                      <span style={{ fontSize: 10, color: C.muted, lineHeight: 1.2 }}>/{nett}</span>
                     )}
                   </>
-                ) : <span style={{ fontSize: 14, color: C.border }}>·</span>}
+                ) : <span style={{ fontSize: 16, color: C.border }}>·</span>}
               </div>
             </td>
           )
@@ -1018,9 +1018,9 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
   const renderSubtotalRow = (label: string, holeSet: Hole[]) => {
     const parTotal = holeSet.reduce((a, h) => a + h.par, 0)
     return (
-      <tr key={label} style={{ background: '#dbeafe' }}>
+      <tr key={label} style={{ background: '#dcfce7' }}>
         <td colSpan={3} style={{
-          position: 'sticky', left: 0, zIndex: 1, background: '#dbeafe',
+          position: 'sticky', left: 0, zIndex: 1, background: '#dcfce7',
           padding: '7px 8px', fontSize: 11, fontWeight: 700, color: C.primary,
           borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}`,
         }}>
@@ -1034,9 +1034,9 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
             <td key={p.id} style={{ textAlign: 'center', padding: '4px 2px', borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}` }}>
               {val != null ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{val}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{val}</span>
                   {!isStableford && vsPar != null && (
-                    <span style={{ fontSize: 9, color: vsPar > 0 ? C.bogey : vsPar < 0 ? C.birdie : C.muted }}>
+                    <span style={{ fontSize: 10, color: vsPar > 0 ? C.bogey : vsPar < 0 ? C.birdie : C.muted }}>
                       {vsParStr(vsPar)}
                     </span>
                   )}
@@ -1051,22 +1051,22 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
   return (
     <div style={{ overflowX: 'auto', paddingBottom: 16 }}>
-      <table style={{ borderCollapse: 'collapse', width: tableW, tableLayout: 'fixed', fontFamily: FONT }}>
+      <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
         <thead>
           <tr style={{ background: C.primary }}>
-            <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.hole, padding: '8px 4px', fontSize: 11, color: '#fff', textAlign: 'center', fontWeight: 700 }}>H</th>
-            <th style={{ width: colW.par, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
-            <th style={{ width: colW.hcp, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontWeight: 400 }}>Hcp</th>
+            <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.hole, padding: '9px 4px', fontSize: 12, color: '#fff', textAlign: 'center', fontWeight: 700 }}>H</th>
+            <th style={{ width: colW.par, padding: '9px 4px', fontSize: 12, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
+            <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 11, color: 'rgba(255,255,255,0.45)', textAlign: 'center', fontWeight: 400 }}>Hcp</th>
             {players.map(p => {
               const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
               return (
-                <th key={p.id} style={{ width: colW.player, padding: '6px 2px', textAlign: 'center' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[p.tee_color] ?? '#888', border: '1px solid rgba(255,255,255,0.3)' }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
+                <th key={p.id} style={{ width: colW.player, padding: '7px 2px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                    <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[p.tee_color] ?? '#888', border: '1.5px solid rgba(255,255,255,0.4)' }} />
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
                       {p.display_name.split(' ')[0]}
                     </span>
-                    {phcp != null && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>h{phcp}</span>}
+                    {phcp != null && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>H: {phcp}</span>}
                   </div>
                 </th>
               )

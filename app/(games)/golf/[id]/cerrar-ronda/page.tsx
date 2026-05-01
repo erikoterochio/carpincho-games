@@ -42,15 +42,15 @@ type Format    = { format_type: string; display_name: string; handicap_allowance
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
-  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
-  success: '#15803d', error: '#be123c',
-  eagle: '#b45309', birdie: '#15803d', par: '#374151',
-  bogey: '#ea580c', double: '#dc2626',
+  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
+  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
+  success: '#15803d', error: '#b91c1c',
 } as const
 
 const TEE_HEX: Record<string, string> = {
-  black: '#222', blue: '#1d4ed8', white: '#d1d5db', yellow: '#d97706', red: '#dc2626',
+  black: '#222', blue: '#1d4ed8', white: '#9ca3af', yellow: '#d97706', red: '#b91c1c',
 }
 
 // ─────────────────────────────────────────────
@@ -350,7 +350,7 @@ export default function CerrarRondaPage() {
               {/* Tabla resumen */}
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#e8f0fa', borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#e0f5e8', borderBottom: `1px solid ${C.border}` }}>
                   {['Jugador', 'Gross', 'Neto', 'Pts', '+/−'].map(h => (
                     <span key={h} style={{ fontSize: 10, fontWeight: 700, color: C.muted, textAlign: h === 'Jugador' ? 'left' : 'center' }}>{h}</span>
                   ))}
