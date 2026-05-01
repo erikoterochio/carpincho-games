@@ -156,9 +156,12 @@ DO $$ BEGIN
   -- golf_courses
   DROP POLICY IF EXISTS "golf_courses_select" ON golf_courses;
   DROP POLICY IF EXISTS "golf_courses_insert" ON golf_courses;
+  DROP POLICY IF EXISTS "golf_courses_update" ON golf_courses;
+  DROP POLICY IF EXISTS "golf_courses_delete" ON golf_courses;
   CREATE POLICY "golf_courses_select" ON golf_courses FOR SELECT USING (auth.uid() IS NOT NULL);
   CREATE POLICY "golf_courses_insert" ON golf_courses FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
   CREATE POLICY "golf_courses_update" ON golf_courses FOR UPDATE USING (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_courses_delete" ON golf_courses FOR DELETE USING (auth.uid() IS NOT NULL);
 
   -- Resto de tablas golf: acceso total a usuarios autenticados
   DROP POLICY IF EXISTS "golf_players_all" ON golf_players;
