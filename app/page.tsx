@@ -27,6 +27,14 @@ export default async function HomePage() {
 
   const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : null
 
+  let ranchadaCount = 0
+  if (user) {
+    const { count } = await supabase
+      .from('ranchadas')
+      .select('id', { count: 'exact', head: true })
+    ranchadaCount = count ?? 0
+  }
+
   return (
     <>
       <style>{`
@@ -91,7 +99,7 @@ export default async function HomePage() {
 
           {/* Tarjeta de ranchadas */}
           {user ? (
-            <Link href="/cuenta" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+            <Link href="/ranchadas" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
               <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#c1c1c6" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#c1c1c6" strokeWidth="1.8"/></svg>
@@ -99,11 +107,11 @@ export default async function HomePage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>0</span>
-                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>{ranchadaCount}</span>
+                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntada{ranchadaCount !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver perfil →</span>
+                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver todas →</span>
               </div>
             </Link>
           ) : (
