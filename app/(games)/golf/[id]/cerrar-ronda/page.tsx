@@ -42,11 +42,11 @@ type Format    = { format_type: string; display_name: string; handicap_allowance
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  success: '#4ade80', error: '#f87171',
-  eagle: '#fbbf24', birdie: '#22c55e', par: '#c1c1c6',
-  bogey: '#f97316', double: '#ef4444',
+  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
+  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
+  success: '#15803d', error: '#be123c',
+  eagle: '#b45309', birdie: '#15803d', par: '#374151',
+  bogey: '#ea580c', double: '#dc2626',
 } as const
 
 const TEE_HEX: Record<string, string> = {
@@ -308,7 +308,7 @@ export default function CerrarRondaPage() {
           <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
             {/* Progreso de scores */}
-            <div style={{ background: C.card, border: `1px solid ${completePct === 100 ? '#166534' : C.border}`, borderRadius: 14, padding: '16px' }}>
+            <div style={{ background: C.card, border: `1px solid ${completePct === 100 ? '#86efac' : C.border}`, borderRadius: 14, padding: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                 <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Completitud de scores</span>
                 <span style={{ fontSize: 18, fontWeight: 700, color: completePct === 100 ? C.success : C.muted }}>
@@ -316,7 +316,7 @@ export default function CerrarRondaPage() {
                 </span>
               </div>
               {/* Barra */}
-              <div style={{ height: 8, background: '#111124', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ height: 8, background: '#e0ebf8', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
                 <div style={{ height: '100%', width: `${completePct}%`, background: completePct === 100 ? C.success : C.primary, borderRadius: 4, transition: 'width 0.3s' }} />
               </div>
               <div style={{ fontSize: 12, color: C.muted }}>{totalEntered} de {totalExpected} scores ingresados</div>
@@ -329,7 +329,7 @@ export default function CerrarRondaPage() {
                   </div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                     {missingScores.slice(0, 12).map((m, i) => (
-                      <span key={i} style={{ fontSize: 11, color: C.muted, background: '#1a0505', border: '1px solid #3a1515', borderRadius: 5, padding: '2px 8px' }}>
+                      <span key={i} style={{ fontSize: 11, color: C.muted, background: '#fff0f3', border: '1px solid #fca5a5', borderRadius: 5, padding: '2px 8px' }}>
                         {m.player} H{m.hole}
                       </span>
                     ))}
@@ -350,7 +350,7 @@ export default function CerrarRondaPage() {
               {/* Tabla resumen */}
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#111124', borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#e8f0fa', borderBottom: `1px solid ${C.border}` }}>
                   {['Jugador', 'Gross', 'Nett', 'Pts', '+/−'].map(h => (
                     <span key={h} style={{ fontSize: 10, fontWeight: 700, color: C.muted, textAlign: h === 'Jugador' ? 'left' : 'center' }}>{h}</span>
                   ))}
@@ -361,7 +361,7 @@ export default function CerrarRondaPage() {
                     const vsN = s.vsParNett
                     const vsColor = vsN < 0 ? C.birdie : vsN === 0 ? C.par : C.bogey
                     return (
-                      <div key={s.player.id} style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '11px 14px', borderBottom: i < playerStats.length - 1 ? `1px solid ${C.border}` : 'none', background: i === 0 ? '#0d1a0d' : 'transparent' }}>
+                      <div key={s.player.id} style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '11px 14px', borderBottom: i < playerStats.length - 1 ? `1px solid ${C.border}` : 'none', background: i === 0 ? '#dcfce7' : 'transparent' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                             <div style={{ width: 7, height: 7, borderRadius: 4, background: TEE_HEX[s.player.tee_color] ?? '#888' }} />
@@ -410,7 +410,7 @@ export default function CerrarRondaPage() {
             </div>
 
             {/* Confirmar cierre */}
-            <div style={{ background: '#0d0d1a', border: `1px solid ${confirmed ? '#166534' : '#2a1a0a'}`, borderRadius: 14, padding: '16px' }}>
+            <div style={{ background: C.card, border: `1px solid ${confirmed ? '#86efac' : C.border}`, borderRadius: 14, padding: '16px' }}>
               <p style={{ fontSize: 14, fontWeight: 700, color: C.text, marginBottom: 6 }}>
                 ¿Cerrar la ronda {round.round_number}?
               </p>
@@ -430,7 +430,7 @@ export default function CerrarRondaPage() {
               {error && <p style={{ fontSize: 12, color: C.error, marginBottom: 12 }}>⚠️ {error}</p>}
 
               <button onClick={handleClose} disabled={!confirmed || closing}
-                style={{ width: '100%', padding: '14px', background: confirmed && !closing ? '#0a2a1a' : '#111124', border: `1px solid ${confirmed && !closing ? '#166534' : C.border}`, borderRadius: 11, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: confirmed && !closing ? C.success : C.muted, cursor: confirmed && !closing ? 'pointer' : 'not-allowed' }}>
+                style={{ width: '100%', padding: '14px', background: confirmed && !closing ? '#dcfce7' : '#e0ebf8', border: `1px solid ${confirmed && !closing ? '#86efac' : C.border}`, borderRadius: 11, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: confirmed && !closing ? C.success : C.muted, cursor: confirmed && !closing ? 'pointer' : 'not-allowed' }}>
                 {closing ? 'Cerrando...' : '🏁 Cerrar ronda y ver resultados finales'}
               </button>
             </div>

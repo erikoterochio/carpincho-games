@@ -36,9 +36,9 @@ type HoleDistance = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  success: '#4ade80', error: '#f87171',
+  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
+  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
+  success: '#15803d', error: '#be123c',
 } as const
 
 const TEES: TeeInfo[] = [
@@ -53,8 +53,8 @@ const TEE_HEX: Record<string, string> = Object.fromEntries(TEES.map(t => [t.key,
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px',
-  background: '#080812', border: `1px solid #1e1736`,
-  borderRadius: 9, color: '#c1c1c6', fontSize: 14, fontFamily: FONT,
+  background: '#e8f0fa', border: `1px solid #c8d8ec`,
+  borderRadius: 9, color: '#0b2659', fontSize: 14, fontFamily: FONT,
 }
 
 // ─────────────────────────────────────────────
@@ -287,8 +287,8 @@ export default function ConcursosPage() {
 function ContestInfo({ contest }: { contest: Contest }) {
   const isLD = contest.contest_type === 'long_drive'
   return (
-    <div style={{ background: '#0a0a14', border: `1px solid #1e1736`, borderRadius: 11, padding: '12px 14px', marginBottom: 18 }}>
-      <p style={{ fontSize: 13, color: '#c1c1c6', lineHeight: 1.6, margin: 0 }}>
+    <div style={{ background: '#e8f0fa', border: `1px solid #c8d8ec`, borderRadius: 11, padding: '12px 14px', marginBottom: 18 }}>
+      <p style={{ fontSize: 13, color: '#0b2659', lineHeight: 1.6, margin: 0 }}>
         {isLD
           ? <>🏌️ <strong>Long Drive — Hoyo {contest.hole_number}:</strong> Ingresá la distancia de tu salida al hoyo y dónde quedó tu pelota. La app calcula cuánto recorriste. Solo aplica si entró al fairway.</>
           : <>📍 <strong>Más cerca — Hoyo {contest.hole_number}:</strong> Ingresá cuántos metros quedó tu pelota del hoyo. Gana el que quede más cerca. Solo aplica si entró al green.</>
@@ -305,39 +305,39 @@ function ContestInfo({ contest }: { contest: Contest }) {
 function RankingSection({ contest, ranking }: { contest: Contest; ranking: any[] }) {
   const isLD = contest.contest_type === 'long_drive'
   if (ranking.length === 0) return (
-    <div style={{ textAlign: 'center', padding: '20px 0', color: '#706c7e', fontSize: 13 }}>
+    <div style={{ textAlign: 'center', padding: '20px 0', color: '#5a7898', fontSize: 13 }}>
       Sin resultados válidos aún
     </div>
   )
 
   return (
-    <div style={{ background: '#0d0d1a', border: '1px solid #1e1736', borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ padding: '8px 14px', background: '#111124', borderBottom: '1px solid #1e1736' }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#706c7e', letterSpacing: 1, textTransform: 'uppercase' }}>
+    <div style={{ background: '#ffffff', border: '1px solid #c8d8ec', borderRadius: 12, overflow: 'hidden' }}>
+      <div style={{ padding: '8px 14px', background: '#e8f0fa', borderBottom: '1px solid #c8d8ec' }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#5a7898', letterSpacing: 1, textTransform: 'uppercase' }}>
           Ranking
         </span>
       </div>
       {ranking.map((r, i) => (
-        <div key={r.player_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: i < ranking.length - 1 ? '1px solid #1e1736' : 'none', background: i === 0 ? '#0d1a0d' : 'transparent' }}>
-          <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : '#706c7e', width: 24, textAlign: 'center' }}>
+        <div key={r.player_id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 14px', borderBottom: i < ranking.length - 1 ? '1px solid #c8d8ec' : 'none', background: i === 0 ? '#dcfce7' : 'transparent' }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#15803d' : '#5a7898', width: 24, textAlign: 'center' }}>
             {r.rank}
           </span>
           <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[r.player.tee_color] ?? '#888', flexShrink: 0 }} />
-          <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#c1c1c6' }}>{r.player.display_name}</span>
+          <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: '#0b2659' }}>{r.player.display_name}</span>
           <div style={{ textAlign: 'right' }}>
             {isLD ? (
               <>
-                <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : '#c1c1c6' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#15803d' : '#0b2659' }}>
                   {r.drove}m
                 </span>
-                <span style={{ fontSize: 10, color: '#706c7e', display: 'block' }}>recorrido</span>
+                <span style={{ fontSize: 10, color: '#5a7898', display: 'block' }}>recorrido</span>
               </>
             ) : (
               <>
-                <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : '#c1c1c6' }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#15803d' : '#0b2659' }}>
                   {r.distance_to_pin_m}m
                 </span>
-                <span style={{ fontSize: 10, color: '#706c7e', display: 'block' }}>del hoyo</span>
+                <span style={{ fontSize: 10, color: '#5a7898', display: 'block' }}>del hoyo</span>
               </>
             )}
           </div>
@@ -383,14 +383,14 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
   const hasData = entry !== null
 
   return (
-    <div style={{ background: '#0d0d1a', border: `1px solid ${hasData ? (qualifies ? '#1e4a2a' : '#3a1a1a') : '#1e1736'}`, borderRadius: 14, overflow: 'hidden' }}>
+    <div style={{ background: '#ffffff', border: `1px solid ${hasData ? (qualifies ? '#86efac' : '#fca5a5') : '#c8d8ec'}`, borderRadius: 14, overflow: 'hidden' }}>
       {/* Header jugador */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid #1e1736', background: '#0a0a14' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderBottom: '1px solid #c8d8ec', background: '#f0f6ff' }}>
         <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[player.tee_color] ?? '#888' }} />
-        <span style={{ fontSize: 14, fontWeight: 700, color: '#c1c1c6', flex: 1 }}>{player.display_name}</span>
-        {saving && <span style={{ fontSize: 11, color: '#706c7e' }}>Guardando...</span>}
+        <span style={{ fontSize: 14, fontWeight: 700, color: '#0b2659', flex: 1 }}>{player.display_name}</span>
+        {saving && <span style={{ fontSize: 11, color: '#5a7898' }}>Guardando...</span>}
         {hasData && !saving && (
-          <span style={{ fontSize: 11, color: qualifies ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+          <span style={{ fontSize: 11, color: qualifies ? '#15803d' : '#be123c', fontWeight: 600 }}>
             {qualifies ? '✓ Válido' : '✕ No aplica'}
           </span>
         )}
@@ -400,11 +400,11 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
         {/* Aplica / no aplica */}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
           <button onClick={() => setQualifies(true)}
-            style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${qualifies ? '#166534' : '#1e1736'}`, background: qualifies ? '#0a2a1a' : 'transparent', color: qualifies ? '#4ade80' : '#706c7e', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${qualifies ? '#86efac' : '#c8d8ec'}`, background: qualifies ? '#dcfce7' : 'transparent', color: qualifies ? '#15803d' : '#5a7898', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             {isLD ? '✓ Entró al fairway' : '✓ Entró al green'}
           </button>
           <button onClick={() => setQualifies(false)}
-            style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${!qualifies ? '#7f1d1d' : '#1e1736'}`, background: !qualifies ? '#1a0505' : 'transparent', color: !qualifies ? '#f87171' : '#706c7e', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+            style={{ flex: 1, padding: '9px', borderRadius: 9, border: `1px solid ${!qualifies ? '#fca5a5' : '#c8d8ec'}`, background: !qualifies ? '#fff0f3' : 'transparent', color: !qualifies ? '#be123c' : '#5a7898', fontFamily: FONT, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
             {isLD ? '✕ No entró fairway' : '✕ No entró green'}
           </button>
         </div>
@@ -413,16 +413,16 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
           <>
             {/* Salida */}
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: '#706c7e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>Salida usada</div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#5a7898', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>Salida usada</div>
               <div style={{ display: 'flex', gap: 7 }}>
                 {TEES.map(t => (
                   <button key={t.key} onClick={() => {
                     setTeeColor(t.key)
                     // Auto-fill distancia si la cancha la tiene
                   }}
-                    style={{ flex: 1, padding: '7px 4px', borderRadius: 8, border: `2px solid ${teeColor === t.key ? t.hex : '#1e1736'}`, background: teeColor === t.key ? t.hex + '22' : 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                    style={{ flex: 1, padding: '7px 4px', borderRadius: 8, border: `2px solid ${teeColor === t.key ? t.hex : '#c8d8ec'}`, background: teeColor === t.key ? t.hex + '22' : 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
                     <div style={{ width: 12, height: 12, borderRadius: 6, background: t.hex }} />
-                    <span style={{ fontSize: 9, color: teeColor === t.key ? '#c1c1c6' : '#706c7e', fontFamily: FONT }}>{t.label.slice(0, 3)}</span>
+                    <span style={{ fontSize: 9, color: teeColor === t.key ? '#0b2659' : '#5a7898', fontFamily: FONT }}>{t.label.slice(0, 3)}</span>
                   </button>
                 ))}
               </div>
@@ -431,7 +431,7 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
             {/* Distancias */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 12 }}>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#706c7e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#5a7898', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
                   {isLD ? 'Dist. salida → hoyo (m)' : 'Dist. salida → hoyo (m)'}
                 </div>
                 <input style={inputStyle} type="number" min="0" step="1"
@@ -439,7 +439,7 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
                   value={teeDist} onChange={e => setTeeDist(e.target.value)} />
               </div>
               <div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#706c7e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: '#5a7898', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
                   {isLD ? 'Dist. pelota → hoyo (m)' : 'Dist. pelota → hoyo (m)'}
                 </div>
                 <input style={inputStyle} type="number" min="0" step="0.1"
@@ -450,15 +450,15 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
 
             {/* Resultado calculado */}
             {isLD && teeDistN > 0 && pinDistN > 0 && (
-              <div style={{ background: '#055074' + '18', border: '1px solid #055074' + '40', borderRadius: 9, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, color: '#706c7e' }}>Recorrido calculado:</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#c1c1c6' }}>{drove}m</span>
+              <div style={{ background: '#04447b' + '18', border: '1px solid #04447b' + '40', borderRadius: 9, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#5a7898' }}>Recorrido calculado:</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#0b2659' }}>{drove}m</span>
               </div>
             )}
             {!isLD && pinDistN > 0 && (
-              <div style={{ background: '#055074' + '18', border: '1px solid #055074' + '40', borderRadius: 9, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 12, color: '#706c7e' }}>Distancia al hoyo:</span>
-                <span style={{ fontSize: 18, fontWeight: 700, color: '#c1c1c6' }}>{pinDistN}m</span>
+              <div style={{ background: '#04447b' + '18', border: '1px solid #04447b' + '40', borderRadius: 9, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 12, color: '#5a7898' }}>Distancia al hoyo:</span>
+                <span style={{ fontSize: 18, fontWeight: 700, color: '#0b2659' }}>{pinDistN}m</span>
               </div>
             )}
           </>
@@ -472,7 +472,7 @@ function PlayerEntryCard({ player, contest, entry, holeDistance, saving, onSave 
 
         {/* Guardar */}
         <button onClick={handleSave} disabled={saving || (qualifies && (teeDistN <= 0 || pinDistN <= 0))}
-          style={{ width: '100%', padding: '11px', background: (saving || (qualifies && (teeDistN <= 0 || pinDistN <= 0))) ? '#111124' : '#055074', border: 'none', borderRadius: 9, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: (saving || (qualifies && (teeDistN <= 0 || pinDistN <= 0))) ? '#706c7e' : '#c1c1c6', cursor: 'pointer' }}>
+          style={{ width: '100%', padding: '11px', background: (saving || (qualifies && (teeDistN <= 0 || pinDistN <= 0))) ? '#e0ebf8' : '#04447b', border: 'none', borderRadius: 9, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: (saving || (qualifies && (teeDistN <= 0 || pinDistN <= 0))) ? '#5a7898' : '#ffffff', cursor: 'pointer' }}>
           {saving ? 'Guardando...' : 'Guardar'}
         </button>
       </div>

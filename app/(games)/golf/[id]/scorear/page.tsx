@@ -42,10 +42,10 @@ type Format    = { format_type: string; handicap_allowance: number | null }
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  eagle: '#fbbf24', birdie: '#22c55e', par: '#c1c1c6',
-  bogey: '#f97316', double: '#ef4444',
+  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
+  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
+  eagle: '#b45309', birdie: '#15803d', par: '#374151',
+  bogey: '#ea580c', double: '#dc2626',
 } as const
 
 const TEE_HEX: Record<string, string> = {
@@ -292,7 +292,7 @@ export default function ScorearPage() {
           </div>
 
           {/* ── Header del hoyo actual */}
-          <div style={{ padding: '20px 18px 16px', textAlign: 'center', borderBottom: `1px solid ${C.border}`, background: '#080812', flexShrink: 0 }}>
+          <div style={{ padding: '20px 18px 16px', textAlign: 'center', borderBottom: `1px solid ${C.border}`, background: '#e8f0fa', flexShrink: 0 }}>
             {/* Número de hoyo grande */}
             <div style={{ fontSize: 56, fontWeight: 700, color: C.text, lineHeight: 1, marginBottom: 6 }}>
               {currentHole}
@@ -318,7 +318,7 @@ export default function ScorearPage() {
                 return (
                   <button key={h.hole_number}
                     onClick={() => setCurrentHole(h.hole_number)}
-                    style={{ width: isCurrent ? 16 : 8, height: 8, borderRadius: 4, background: isCurrent ? C.primary : isComplete ? '#22c55e' : C.border, border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.2s' }} />
+                    style={{ width: isCurrent ? 16 : 8, height: 8, borderRadius: 4, background: isCurrent ? C.primary : isComplete ? '#15803d' : C.border, border: 'none', cursor: 'pointer', padding: 0, transition: 'width 0.2s' }} />
                 )
               })}
             </div>
@@ -385,12 +385,12 @@ export default function ScorearPage() {
                       <button
                         onClick={() => adjustScore(p.id, -1)}
                         disabled={gross !== null && gross <= 1}
-                        style={{ width: 52, height: 52, borderRadius: '12px 0 0 12px', border: `1px solid ${C.border}`, background: '#080812', color: C.muted, fontSize: 24, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' }}>
+                        style={{ width: 52, height: 52, borderRadius: '12px 0 0 12px', border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.muted, fontSize: 24, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' }}>
                         −
                       </button>
 
                       {/* Score display */}
-                      <div style={{ flex: 1, height: 52, border: `1px solid ${gross !== null ? color + '60' : C.border}`, borderLeft: 'none', borderRight: 'none', background: gross !== null ? color + '10' : '#0a0a14', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', transition: 'all 0.15s', position: 'relative' }}>
+                      <div style={{ flex: 1, height: 52, border: `1px solid ${gross !== null ? color + '60' : C.border}`, borderLeft: 'none', borderRight: 'none', background: gross !== null ? color + '10' : '#f0f6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', transition: 'all 0.15s', position: 'relative' }}>
                         {isSaving && (
                           <div style={{ position: 'absolute', top: 4, right: 6, width: 5, height: 5, borderRadius: 3, background: C.primary, animation: 'pulse 1s infinite' }} />
                         )}
@@ -411,7 +411,7 @@ export default function ScorearPage() {
                       {/* Botón + */}
                       <button
                         onClick={() => adjustScore(p.id, +1)}
-                        style={{ width: 52, height: 52, borderRadius: '0 12px 12px 0', border: `1px solid ${C.border}`, background: '#080812', color: C.muted, fontSize: 24, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' }}>
+                        style={{ width: 52, height: 52, borderRadius: '0 12px 12px 0', border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.muted, fontSize: 24, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background 0.1s' }}>
                         +
                       </button>
                     </div>
@@ -440,14 +440,14 @@ export default function ScorearPage() {
               <button
                 onClick={() => { if (currentIndex > 0) setCurrentHole(playedHoles[currentIndex - 1].hole_number) }}
                 disabled={currentIndex === 0}
-                style={{ flex: 1, padding: '14px', background: currentIndex === 0 ? '#0a0a14' : C.card, border: `1px solid ${C.border}`, borderRadius: 12, fontFamily: FONT, fontSize: 14, fontWeight: 600, color: currentIndex === 0 ? C.muted : C.text, cursor: currentIndex === 0 ? 'not-allowed' : 'pointer' }}>
+                style={{ flex: 1, padding: '14px', background: currentIndex === 0 ? '#e8f0fa' : C.card, border: `1px solid ${C.border}`, borderRadius: 12, fontFamily: FONT, fontSize: 14, fontWeight: 600, color: currentIndex === 0 ? C.muted : C.text, cursor: currentIndex === 0 ? 'not-allowed' : 'pointer' }}>
                 ← Hoyo {currentIndex > 0 ? playedHoles[currentIndex - 1].hole_number : '–'}
               </button>
 
               <button
                 onClick={() => { if (currentIndex < totalHoles - 1) setCurrentHole(playedHoles[currentIndex + 1].hole_number) }}
                 disabled={currentIndex >= totalHoles - 1}
-                style={{ flex: 1, padding: '14px', background: currentIndex >= totalHoles - 1 ? '#0a0a14' : C.primary, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: currentIndex >= totalHoles - 1 ? C.muted : C.text, cursor: currentIndex >= totalHoles - 1 ? 'not-allowed' : 'pointer' }}>
+                style={{ flex: 1, padding: '14px', background: currentIndex >= totalHoles - 1 ? '#e8f0fa' : C.primary, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: currentIndex >= totalHoles - 1 ? C.muted : '#ffffff', cursor: currentIndex >= totalHoles - 1 ? 'not-allowed' : 'pointer' }}>
                 Hoyo {currentIndex < totalHoles - 1 ? playedHoles[currentIndex + 1].hole_number : '–'} →
               </button>
             </div>
@@ -456,7 +456,7 @@ export default function ScorearPage() {
             {holesCompleted === totalHoles && (
               <div style={{ marginTop: 10, textAlign: 'center' }}>
                 <Link href={`/golf/${id}`}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: '#0a2a1a', border: '1px solid #166534', borderRadius: 12, color: '#4ade80', textDecoration: 'none', fontFamily: FONT, fontSize: 14, fontWeight: 700 }}>
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: 12, color: '#15803d', textDecoration: 'none', fontFamily: FONT, fontSize: 14, fontWeight: 700 }}>
                   ✓ Todos los scores cargados — Ver resultados
                 </Link>
               </div>

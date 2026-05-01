@@ -56,10 +56,10 @@ type LeaderboardRow = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  eagle: '#fbbf24', birdie: '#22c55e', par: '#c1c1c6',
-  bogey: '#f97316', double: '#ef4444',
+  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
+  primary: '#04447b', text: '#0b2659', muted: '#5a7898',
+  eagle: '#b45309', birdie: '#15803d', par: '#374151',
+  bogey: '#ea580c', double: '#dc2626',
 } as const
 
 const FORMAT_COLORS: Record<string, string> = {
@@ -526,7 +526,7 @@ export default function TournamentPage() {
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { height: 3px; width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #1e1736; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #c8d8ec; border-radius: 3px; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
       `}</style>
 
@@ -544,9 +544,9 @@ export default function TournamentPage() {
               {tournament.name}
             </span>
             {isActive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0a2a1a', border: '1px solid #14532d', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: 3, background: '#4ade80', animation: 'pulse 2s infinite' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#4ade80' }}>EN VIVO</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 3, background: '#15803d', animation: 'pulse 2s infinite' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d' }}>EN VIVO</span>
               </div>
             )}
             <div style={{ position: 'relative' }}>
@@ -559,7 +559,7 @@ export default function TournamentPage() {
                 </svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#111124', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#ffffff', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
                   onClick={() => setShowMenu(false)}>
                   <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Scorear" />
                   <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
@@ -589,7 +589,7 @@ export default function TournamentPage() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke={C.muted} strokeWidth="1.8"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke={C.muted} strokeWidth="1.8"/></svg>
               <span style={{ fontSize: 11, color: C.muted }}>Código:</span>
               <span style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 2 }}>{tournament.invite_code}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: copied ? '#4ade80' : C.muted }}>{copied ? 'Copiado ✓' : 'Copiar'}</span>
+              <span style={{ marginLeft: 'auto', fontSize: 11, color: copied ? '#15803d' : C.muted }}>{copied ? 'Copiado ✓' : 'Copiar'}</span>
             </button>
           </div>
 
@@ -657,8 +657,8 @@ export default function TournamentPage() {
                         const isStbf  = fmt?.format_type === 'stableford'
                         const vpColor = row.vsParDisplay === 'E' ? C.par : row.vsParDisplay.startsWith('-') ? C.birdie : C.bogey
                         return (
-                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
+                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{row.pos}</div>
                             <div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                                 <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
@@ -667,7 +667,7 @@ export default function TournamentPage() {
                               <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
                             </div>
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : C.text }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#15803d' : C.text }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
                               {isStbf && row.holesPlayed > 0 && <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>}
                             </div>
                             <div style={{ textAlign: 'center' }}>
@@ -759,7 +759,7 @@ function MatchLeaderboard({ format, players, holes, scores, playerCalcs, units, 
 function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
   const [expanded, setExpanded] = useState(false)
   const { unitA, unitB, status, upDown, isFinished } = state
-  const statusColor = isFinished ? '#4ade80' : upDown === 0 ? C.muted : upDown > 0 ? '#5b9bd5' : '#e07b4f'
+  const statusColor = isFinished ? '#15803d' : upDown === 0 ? C.muted : upDown > 0 ? '#5b9bd5' : '#e07b4f'
 
   return (
     <div style={{ background: C.card, border: `1px solid ${isFinished ? '#166534' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
@@ -768,7 +768,7 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: upDown > 0 ? C.text : C.muted }}>{unitA.name}</div>
             <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitA.teamPlayingHcp}</div>
+            <div style={{ fontSize: 10, color: '#5a7898' }}>HCP {unitA.teamPlayingHcp}</div>
           </div>
           <div style={{ flexShrink: 0, textAlign: 'center', padding: '0 12px' }}>
             <div style={{ fontSize: 20, fontWeight: 700, color: statusColor }}>{status}</div>
@@ -779,12 +779,12 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
           <div style={{ flex: 1, textAlign: 'right' }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: upDown < 0 ? C.text : C.muted }}>{unitB.name}</div>
             <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitB.teamPlayingHcp}</div>
+            <div style={{ fontSize: 10, color: '#5a7898' }}>HCP {unitB.teamPlayingHcp}</div>
           </div>
         </div>
         {/* Barra */}
-        <div style={{ position: 'relative', height: 6, background: '#111124', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, background: '#2a2a3a', transform: 'translateX(-50%)', zIndex: 1 }} />
+        <div style={{ position: 'relative', height: 6, background: '#e0ebf8', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
+          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, background: '#c8d8ec', transform: 'translateX(-50%)', zIndex: 1 }} />
           {upDown !== 0 && (() => {
             const played = holes.length - state.holesRemaining
             const pct    = played > 0 ? Math.min(0.5, Math.abs(upDown) / Math.max(played, 1) * 0.5) : 0
@@ -803,7 +803,7 @@ function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
           <div style={{ display: 'flex', gap: 4, minWidth: 'fit-content' }}>
             {holes.map(h => {
               const res   = state.holeResults[h.hole_number] ?? 'pending'
-              const bg    = res === 'win' ? '#0a2040' : res === 'loss' ? '#2a0a0a' : res === 'halved' ? '#111124' : '#0a0a14'
+              const bg    = res === 'win' ? '#dbeafe' : res === 'loss' ? '#fee2e2' : res === 'halved' ? '#e8f0fa' : '#f0f6ff'
               const color = res === 'win' ? '#5b9bd5' : res === 'loss' ? '#e07b4f' : res === 'halved' ? C.muted : '#2a2a3a'
               const label = res === 'win' ? 'A' : res === 'loss' ? 'B' : res === 'halved' ? '—' : '·'
               return (
@@ -861,8 +861,8 @@ function FourballAmericanoLB({ players, holes, scores, playerCalcs, units }: {
     <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
       <LBSection title="Ranking parejas">
         {pairRows.map((r, i) => (
-          <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{i + 1}</span>
+          <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{i + 1}</span>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r.unit.name}</div>
               <div style={{ fontSize: 11, color: C.muted }}>{r.players.map(p => p.display_name).join(' & ')}</div>
@@ -897,7 +897,7 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
 
   return (
     <div style={{ padding: '14px 18px' }}>
-      <div style={{ background: '#0a0a14', border: '1px solid #1e1736', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+      <div style={{ background: '#e8f0fa', border: '1px solid #c8d8ec', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
         <p style={{ fontSize: 11, color: C.muted, lineHeight: 1.5, margin: 0 }}>
           6 puntos por hoyo · 4-2-0 · Empates: top2→3-3-0 · bottom2→4-1-1 · todos→2-2-2 · HCP al 85%
         </p>
@@ -915,8 +915,8 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
             ))}
           </div>
           {rows.map((row, i) => (
-            <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
+            <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{row.pos}</div>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
@@ -1013,7 +1013,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
                   )
                 })}
                 {show18 && (
-                  <td style={{ ...scoreCell, background: '#111124', minWidth: 36 }}>
+                  <td style={{ ...scoreCell, background: '#e8f0fa', minWidth: 36 }}>
                     {totAll.gross !== null ? (
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{isStableford ? totAll.pts : totAll.gross}</div>
@@ -1037,7 +1037,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
 function MenuItem({ href, icon, label, danger }: { href: string; icon: string; label: string; danger?: boolean }) {
   return (
-    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: danger ? '#f87171' : C.text, fontSize: 14, fontWeight: 500, fontFamily: FONT }}>
+    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: danger ? '#be123c' : C.text, fontSize: 14, fontWeight: 500, fontFamily: FONT }}>
       <span>{icon}</span><span>{label}</span>
     </Link>
   )
@@ -1055,12 +1055,12 @@ function LBSection({ title, children }: { title: string; children: React.ReactNo
 function PtsCell({ pts, first }: { pts: number; first: boolean }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <span style={{ fontSize: 16, fontWeight: 700, color: first ? '#4ade80' : C.text }}>{pts}</span>
+      <span style={{ fontSize: 16, fontWeight: 700, color: first ? '#15803d' : C.text }}>{pts}</span>
       <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>
     </div>
   )
 }
 
-const stickyCell: React.CSSProperties = { position: 'sticky', left: 0, background: '#080812', zIndex: 2, padding: '8px 12px', borderRight: `1px solid #1e1736`, minWidth: 110 }
-const hdrCell: React.CSSProperties   = { textAlign: 'center', padding: '6px 4px', background: '#0a0a14', color: '#706c7e', minWidth: 32, fontWeight: 700, borderRight: '1px solid #0d0d1a' }
-const scoreCell: React.CSSProperties = { textAlign: 'center', padding: '6px 4px', background: '#0d0d1a', minWidth: 32, borderRight: '1px solid #080812', borderBottom: '1px solid #080812' }
+const stickyCell: React.CSSProperties = { position: 'sticky', left: 0, background: '#f0f6ff', zIndex: 2, padding: '8px 12px', borderRight: `1px solid #c8d8ec`, minWidth: 110 }
+const hdrCell: React.CSSProperties   = { textAlign: 'center', padding: '6px 4px', background: '#e8f0fa', color: '#5a7898', minWidth: 32, fontWeight: 700, borderRight: '1px solid #ffffff' }
+const scoreCell: React.CSSProperties = { textAlign: 'center', padding: '6px 4px', background: '#ffffff', minWidth: 32, borderRight: '1px solid #f0f6ff', borderBottom: '1px solid #f0f6ff' }

@@ -41,15 +41,15 @@ type UnitInput = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  borderActive: '#055074', primary: '#055074',
-  text: '#c1c1c6', muted: '#706c7e',
-  success: '#4ade80', error: '#f87171',
+  bg: '#f0f6ff', card: '#ffffff', border: '#c8d8ec',
+  borderActive: '#04447b', primary: '#04447b',
+  text: '#0b2659', muted: '#5a7898',
+  success: '#15803d', error: '#be123c',
 } as const
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px',
-  background: '#080812', border: `1px solid ${C.border}`,
+  background: '#e8f0fa', border: `1px solid ${C.border}`,
   borderRadius: 9, color: C.text, fontSize: 14, fontFamily: FONT,
 }
 
@@ -328,7 +328,7 @@ export default function NuevaPartidaPage() {
             <div style={{ fontSize: 40, marginBottom: 16 }}>⛳</div>
             <p style={{ fontSize: 17, fontWeight: 700, color: C.text, marginBottom: 8, fontFamily: FONT }}>Necesitás una cuenta</p>
             <p style={{ fontSize: 13, color: C.muted, marginBottom: 24, fontFamily: FONT }}>Para crear y guardar partidas necesitás iniciar sesión.</p>
-            <Link href="/login" style={{ display: 'inline-block', padding: '12px 28px', background: C.primary, color: C.text, borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
+            <Link href="/login" style={{ display: 'inline-block', padding: '12px 28px', background: C.primary, color: '#ffffff', borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>
               Iniciar sesión
             </Link>
           </div>
@@ -347,7 +347,7 @@ export default function NuevaPartidaPage() {
         input:focus, select:focus { outline: none; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #1e1736; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #c8d8ec; border-radius: 3px; }
       `}</style>
 
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text }}>
@@ -425,15 +425,15 @@ export default function NuevaPartidaPage() {
           </div>
 
           {/* Botón flotante */}
-          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #01050F 75%, transparent)' }}>
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #f0f6ff 75%, transparent)' }}>
             {step < 4 ? (
               <button disabled={!canNext()} onClick={() => setStep(s => s + 1)}
-                style={{ width: '100%', padding: '15px', background: canNext() ? C.primary : '#111124', color: canNext() ? C.text : C.muted, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
+                style={{ width: '100%', padding: '15px', background: canNext() ? C.primary : '#e0ebf8', color: canNext() ? '#ffffff' : C.muted, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
                 {step === 3 ? 'Ver resumen →' : 'Continuar →'}
               </button>
             ) : (
               <button disabled={creating} onClick={handleCreate}
-                style={{ width: '100%', padding: '15px', background: creating ? '#111124' : C.primary, color: creating ? C.muted : C.text, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: creating ? 'not-allowed' : 'pointer' }}>
+                style={{ width: '100%', padding: '15px', background: creating ? '#e0ebf8' : C.primary, color: creating ? C.muted : '#ffffff', border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: creating ? 'not-allowed' : 'pointer' }}>
                 {creating ? 'Creando partida...' : '⛳ Crear partida'}
               </button>
             )}
@@ -463,11 +463,11 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
       {!showNew && (
         <>
           {selected ? (
-            <div style={{ background: '#0a1f0f', border: '1px solid #166534', borderRadius: 11, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ background: '#dcfce7', border: '1px solid #86efac', borderRadius: 11, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12 }}>
               <span style={{ fontSize: 20 }}>✓</span>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 15, fontWeight: 700, color: C.success }}>{selected.name}</div>
-                <div style={{ fontSize: 12, color: '#86efac' }}>{selected.city ?? ''}{selected.city ? ' · ' : ''}{selected.total_holes} hoyos · Par {selected.par ?? '–'}</div>
+                <div style={{ fontSize: 12, color: '#15803d' }}>{selected.city ?? ''}{selected.city ? ' · ' : ''}{selected.total_holes} hoyos · Par {selected.par ?? '–'}</div>
               </div>
               <button onClick={() => { onSelect(null); onQuery('') }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, fontSize: 18, padding: '0 4px' }}>×</button>
             </div>
@@ -547,7 +547,7 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
             <p style={{ fontSize: 11, color: C.muted, marginBottom: 10, lineHeight: 1.5 }}>SI = dificultad del hoyo. SI 1 = más difícil. Debe ser único del 1 al 18.</p>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {newCourse.holes.map((h: HoleInput, i: number) => (
-                <div key={i} style={{ background: '#080812', border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <div key={i} style={{ background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 8, padding: '7px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontSize: 10, color: C.muted, width: 22, flexShrink: 0, textAlign: 'right' }}>H{h.hole_number}</span>
                   <div style={{ display: 'flex', gap: 2 }}>
                     {([3,4,5] as const).map(p => (
@@ -561,7 +561,7 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
                     <span style={{ fontSize: 9, color: C.muted }}>SI</span>
                     <input type="number" min={1} max={18} value={h.stroke_index}
                       onChange={e => updateHole(i, 'stroke_index', Math.min(18, Math.max(1, parseInt(e.target.value) || 1)))}
-                      style={{ width: 32, padding: '2px 3px', background: '#01050F', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
+                      style={{ width: 32, padding: '2px 3px', background: '#f0f6ff', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
                   </div>
                 </div>
               ))}
@@ -653,7 +653,7 @@ function StepConfig({ name, onName, holesConfig, onHolesConfig, hcpAllowance, on
                       <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 5 }}>Hoyo</div>
                       <select value={active.hole} onChange={(e: any) => updateContest(type, 'hole', parseInt(e.target.value))}
                         style={{ ...inputStyle, padding: '8px 10px', width: '100%' }}>
-                        {holeNumbers.map((h: number) => <option key={h} value={h} style={{ background: '#0d0d1a' }}>Hoyo {h}</option>)}
+                        {holeNumbers.map((h: number) => <option key={h} value={h} style={{ background: '#ffffff' }}>Hoyo {h}</option>)}
                       </select>
                     </div>
                     <div style={{ flex: 2 }}>
@@ -704,7 +704,7 @@ function StepFormatos({ formats, onFormats, formatConfig, onFormatConfig }: {
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 15, fontWeight: 700, color: active ? def.color : C.text }}>{def.label}</span>
-                    <span style={{ fontSize: 10, color: C.muted, background: '#1a1a2e', borderRadius: 5, padding: '2px 7px' }}>
+                    <span style={{ fontSize: 10, color: C.muted, background: '#e8f0fa', borderRadius: 5, padding: '2px 7px' }}>
                       {def.scope === 'individual' ? 'Individual' : def.scope === 'pair' ? 'Parejas' : 'Grupos de 4'}
                     </span>
                   </div>
@@ -718,12 +718,12 @@ function StepFormatos({ formats, onFormats, formatConfig, onFormatConfig }: {
                   <span style={{ fontSize: 12, color: C.muted }}>Diferencia máxima de HCP entre los dos de la pareja:</span>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <button onClick={() => onFormatConfig(p => ({ ...p, fourball_clasico: { max_hcp_diff: Math.max(0, (p.fourball_clasico?.max_hcp_diff ?? 5) - 1) } }))}
-                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#080812', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
                     <span style={{ fontSize: 16, fontWeight: 700, color: def.color, minWidth: 28, textAlign: 'center' }}>
                       {formatConfig.fourball_clasico?.max_hcp_diff ?? 5}
                     </span>
                     <button onClick={() => onFormatConfig(p => ({ ...p, fourball_clasico: { max_hcp_diff: Math.min(36, (p.fourball_clasico?.max_hcp_diff ?? 5) + 1) } }))}
-                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#080812', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      style={{ width: 28, height: 28, borderRadius: 6, border: `1px solid ${C.border}`, background: '#e8f0fa', color: C.text, fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
                   </div>
                 </div>
               )}
@@ -822,7 +822,7 @@ function StepJugadores({ players, onPlayers, addName, onAddName, addHcp, onAddHc
                 <div key={p.tempId} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 10, padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
                   <div style={{ width: 12, height: 12, borderRadius: 6, background: tee?.hex ?? '#888', border: '1px solid rgba(255,255,255,0.2)', flexShrink: 0 }} />
                   <span style={{ flex: 1, fontSize: 14, fontWeight: 600, color: C.text }}>{p.display_name}</span>
-                  <span style={{ fontSize: 12, color: C.muted, background: '#111124', borderRadius: 6, padding: '2px 8px' }}>
+                  <span style={{ fontSize: 12, color: C.muted, background: '#e8f0fa', borderRadius: 6, padding: '2px 8px' }}>
                     {p.handicap_index === 0 ? 'Scratch' : `HCP ${p.handicap_index}`}
                   </span>
                   <button onClick={() => removePlayer(p.tempId)}
@@ -881,7 +881,7 @@ function StepJugadores({ players, onPlayers, addName, onAddName, addHcp, onAddHc
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', paddingTop: 6, borderTop: `1px solid ${C.border}` }}>
                           {unassigned.map((p: PlayerInput) => (
                             <button key={p.tempId} onClick={() => assignPlayer(absIdx, p.tempId)}
-                              style={{ fontSize: 11, color: C.text, background: '#111124', border: `1px solid ${C.border}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}>
+                              style={{ fontSize: 11, color: C.text, background: '#e8f0fa', border: `1px solid ${C.border}`, borderRadius: 6, padding: '4px 9px', cursor: 'pointer' }}>
                               + {p.display_name}
                             </button>
                           ))}
@@ -980,7 +980,7 @@ function StepConfirmar({ courseName, courseCity, matchName, holesConfig, hcpAllo
       )}
 
       {error && (
-        <div style={{ background: '#1a0505', border: '1px solid #7f1d1d', borderRadius: 10, padding: '12px 14px' }}>
+        <div style={{ background: '#fff0f3', border: '1px solid #fca5a5', borderRadius: 10, padding: '12px 14px' }}>
           <p style={{ fontSize: 13, color: C.error, margin: 0 }}>⚠️ {error}</p>
         </div>
       )}
@@ -1004,7 +1004,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function SummaryCard({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
-      <div style={{ padding: '7px 14px', background: '#111124', borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ padding: '7px 14px', background: '#e8f0fa', borderBottom: `1px solid ${C.border}` }}>
         <span style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
       </div>
       <div style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 4 }}>{children}</div>

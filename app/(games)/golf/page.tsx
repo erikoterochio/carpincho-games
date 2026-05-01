@@ -34,10 +34,10 @@ const FONT = "'Ubuntu', sans-serif"
 
 const S = {
   page: {
-    background: '#01050F',
+    background: '#f0f6ff',
     minHeight: '100vh',
     fontFamily: FONT,
-    color: '#c1c1c6',
+    color: '#0b2659',
   } as React.CSSProperties,
 
   wrap: {
@@ -52,7 +52,8 @@ const S = {
     alignItems: 'center',
     gap: 12,
     padding: '14px 18px',
-    borderBottom: '1px solid #1e1736',
+    borderBottom: '1px solid #c8d8ec',
+    background: '#ffffff',
   } as React.CSSProperties,
 
   navBack: {
@@ -60,7 +61,7 @@ const S = {
     border: 'none',
     cursor: 'pointer',
     padding: '4px 6px 4px 0',
-    color: '#706c7e',
+    color: '#5a7898',
     display: 'flex',
     alignItems: 'center',
   } as React.CSSProperties,
@@ -68,7 +69,7 @@ const S = {
   navTitle: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#c1c1c6',
+    color: '#0b2659',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -86,8 +87,8 @@ const S = {
   btnPrimary: {
     width: '100%',
     padding: '14px 18px',
-    background: '#055074',
-    color: '#c1c1c6',
+    background: '#04447b',
+    color: '#ffffff',
     border: 'none',
     borderRadius: 12,
     fontFamily: FONT,
@@ -109,9 +110,9 @@ const S = {
 
   btnSecondary: {
     padding: '12px 14px',
-    background: '#0d0d1a',
-    color: '#c1c1c6',
-    border: '1px solid #1e1736',
+    background: '#ffffff',
+    color: '#0b2659',
+    border: '1px solid #c8d8ec',
     borderRadius: 12,
     fontFamily: FONT,
     fontSize: 14,
@@ -127,8 +128,8 @@ const S = {
 
   // Invite input
   inviteBox: {
-    background: '#0d0d1a',
-    border: '1px solid #1e1736',
+    background: '#ffffff',
+    border: '1px solid #c8d8ec',
     borderRadius: 12,
     padding: '12px 14px',
     display: 'flex',
@@ -144,15 +145,15 @@ const S = {
     fontFamily: FONT,
     fontSize: 15,
     fontWeight: 700,
-    color: '#c1c1c6',
+    color: '#0b2659',
     letterSpacing: 3,
     textTransform: 'uppercase' as const,
   } as React.CSSProperties,
 
   inviteBtn: {
     padding: '8px 14px',
-    background: '#055074',
-    color: '#c1c1c6',
+    background: '#04447b',
+    color: '#ffffff',
     border: 'none',
     borderRadius: 8,
     fontFamily: FONT,
@@ -172,13 +173,13 @@ const S = {
   sepLine: {
     flex: 1,
     height: 1,
-    background: '#1e1736',
+    background: '#c8d8ec',
   } as React.CSSProperties,
 
   sepText: {
     fontSize: 10,
     fontWeight: 700,
-    color: '#706c7e',
+    color: '#5a7898',
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
     fontFamily: FONT,
@@ -189,7 +190,7 @@ const S = {
   tabs: {
     display: 'flex',
     padding: '0 18px',
-    borderBottom: '1px solid #1e1736',
+    borderBottom: '1px solid #c8d8ec',
     marginBottom: 4,
   } as React.CSSProperties,
 
@@ -198,10 +199,10 @@ const S = {
     fontFamily: FONT,
     fontSize: 14,
     fontWeight: active ? 700 : 500,
-    color: active ? '#c1c1c6' : '#706c7e',
+    color: active ? '#0b2659' : '#5a7898',
     background: 'none',
     border: 'none',
-    borderBottom: active ? '2px solid #055074' : '2px solid transparent',
+    borderBottom: active ? '2px solid #04447b' : '2px solid transparent',
     cursor: 'pointer',
     marginBottom: -1,
     display: 'flex',
@@ -213,8 +214,8 @@ const S = {
     display: n > 0 ? 'flex' : 'none',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#055074',
-    color: '#c1c1c6',
+    background: '#04447b',
+    color: '#ffffff',
     fontSize: 10,
     fontWeight: 700,
     width: 17,
@@ -225,8 +226,8 @@ const S = {
   // Tarjeta de torneo
   card: (active: boolean): React.CSSProperties => ({
     margin: '0 18px 10px',
-    background: '#0d0d1a',
-    border: `1px solid ${active ? '#055074' : '#1e1736'}`,
+    background: '#ffffff',
+    border: `1px solid ${active ? '#04447b' : '#c8d8ec'}`,
     borderRadius: 14,
     padding: '14px 16px',
     cursor: 'pointer',
@@ -244,7 +245,7 @@ const S = {
   cardName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#c1c1c6',
+    color: '#0b2659',
     fontFamily: FONT,
     lineHeight: 1.3,
     flex: 1,
@@ -253,7 +254,7 @@ const S = {
 
   cardCourse: {
     fontSize: 12,
-    color: '#706c7e',
+    color: '#5a7898',
     fontFamily: FONT,
     marginBottom: 10,
   } as React.CSSProperties,
@@ -279,7 +280,7 @@ const S = {
 
   metaGrey: {
     fontSize: 11,
-    color: '#706c7e',
+    color: '#5a7898',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -306,7 +307,7 @@ const S = {
   empty: {
     textAlign: 'center' as const,
     padding: '40px 24px',
-    color: '#706c7e',
+    color: '#5a7898',
     fontFamily: FONT,
   } as React.CSSProperties,
 }
@@ -319,7 +320,7 @@ const FORMAT_MAP: Record<string, { label: string; color: string; desc: string }>
   stroke: {
     label: 'Medal',
     color: '#5b9bd5',
-    desc: 'Stroke play. Suma golpes totales, resta tu playing handicap. Gana el menor nett.',
+    desc: 'Stroke play. Suma golpes totales, resta tu playing handicap. Gana el menor neto.',
   },
   stableford: {
     label: 'Stableford',
@@ -334,7 +335,7 @@ const FORMAT_MAP: Record<string, { label: string; color: string; desc: string }>
   fourball_classic: {
     label: 'Fourball',
     color: '#9b72cf',
-    desc: 'Clásico. 2v2. Se cuenta el mejor score (nett) de la pareja por hoyo. Se juega como match entre las dos parejas.',
+    desc: 'Clásico. 2v2. Se cuenta el mejor score (neto) de la pareja por hoyo. Se juega como match entre las dos parejas.',
   },
   fourball_american: {
     label: 'Americano',
@@ -349,9 +350,9 @@ const FORMAT_MAP: Record<string, { label: string; color: string; desc: string }>
 }
 
 const STATUS_MAP = {
-  setup:    { label: 'Configurando', color: '#706c7e', bg: '#1a1a2e' },
-  active:   { label: 'En curso',     color: '#4ade80', bg: '#0a2a1a' },
-  finished: { label: 'Finalizado',   color: '#706c7e', bg: '#111111' },
+  setup:    { label: 'Configurando', color: '#5a7898', bg: '#e8f0fa' },
+  active:   { label: 'En curso',     color: '#15803d', bg: '#dcfce7' },
+  finished: { label: 'Finalizado',   color: '#5a7898', bg: '#f0f6ff' },
 }
 
 const HOLES_LABEL: Record<string, string> = {
@@ -478,17 +479,17 @@ export default function GolfPage() {
           <div style={S.nav}>
             <Link href="/" style={S.navBack}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 18l-6-6 6-6" stroke="#5a7898" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </Link>
             <div style={S.navTitle}>
               {/* Ícono bandera de golf */}
-              <div style={{ width: 30, height: 30, background: '#055074', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 30, height: 30, background: '#04447b', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                  <line x1="6" y1="3" x2="6" y2="21" stroke="#c1c1c6" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M6 3l12 4.5L6 12" fill="#c1c1c6"/>
-                  <circle cx="6" cy="21" r="1.5" fill="#706c7e"/>
-                  <line x1="4" y1="21" x2="20" y2="21" stroke="#1e1736" strokeWidth="1.5"/>
+                  <line x1="6" y1="3" x2="6" y2="21" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M6 3l12 4.5L6 12" fill="#ffffff"/>
+                  <circle cx="6" cy="21" r="1.5" fill="#c8d8ec"/>
+                  <line x1="4" y1="21" x2="20" y2="21" stroke="#c8d8ec" strokeWidth="1.5"/>
                 </svg>
               </div>
               Golf
@@ -501,9 +502,9 @@ export default function GolfPage() {
             {/* Nueva partida — rápida, 1 ronda */}
             <Link href="/golf/nueva-partida" style={S.btnPrimary}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="9" stroke="#c1c1c6" strokeWidth="2"/>
-                <circle cx="12" cy="12" r="3" fill="#c1c1c6"/>
-                <path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="#c1c1c6" strokeWidth="1.8" strokeLinecap="round"/>
+                <circle cx="12" cy="12" r="9" stroke="#ffffff" strokeWidth="2"/>
+                <circle cx="12" cy="12" r="3" fill="#ffffff"/>
+                <path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke="#ffffff" strokeWidth="1.8" strokeLinecap="round"/>
               </svg>
               Nueva partida
             </Link>
@@ -512,22 +513,22 @@ export default function GolfPage() {
               {/* Nuevo torneo — múltiples rondas */}
               <Link href="/golf/nuevo-torneo" style={S.btnSecondary}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <path d="M8 21V3M16 21v-8" stroke="#c1c1c6" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M4 21h16" stroke="#706c7e" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M8 3l8 5-8 5" stroke="#706c7e" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M8 21V3M16 21v-8" stroke="#0b2659" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 21h16" stroke="#5a7898" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 3l8 5-8 5" stroke="#5a7898" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
                 Nuevo torneo
               </Link>
 
               {/* Unirse con código */}
               <button
-                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #055074' : '1px solid #1e1736' }}
+                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #04447b' : '1px solid #c8d8ec' }}
                 onClick={() => { setShowInvite(!showInvite); setInviteCode(''); setInviteError('') }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="#c1c1c6" strokeWidth="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="12" cy="16" r="1.5" fill="#c1c1c6"/>
+                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="#0b2659" strokeWidth="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="16" r="1.5" fill="#0b2659"/>
                 </svg>
                 Unirme
               </button>
@@ -538,8 +539,8 @@ export default function GolfPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={S.inviteBox}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <rect x="3" y="11" width="18" height="11" rx="2" stroke="#706c7e" strokeWidth="1.8"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#706c7e" strokeWidth="1.8" strokeLinecap="round"/>
+                    <rect x="3" y="11" width="18" height="11" rx="2" stroke="#5a7898" strokeWidth="1.8"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                   <input
                     style={S.inviteInput}
@@ -555,7 +556,7 @@ export default function GolfPage() {
                   </button>
                 </div>
                 {inviteError && (
-                  <p style={{ fontFamily: FONT, fontSize: 12, color: '#f87171', margin: '0 2px' }}>
+                  <p style={{ fontFamily: FONT, fontSize: 12, color: '#be123c', margin: '0 2px' }}>
                     {inviteError}
                   </p>
                 )}
@@ -598,7 +599,7 @@ export default function GolfPage() {
                     {shown.length === 0 ? (
                       <div style={S.empty}>
                         <div style={{ fontSize: 36, marginBottom: 12 }}>⛳</div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#c1c1c6', marginBottom: 6 }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#0b2659', marginBottom: 6 }}>
                           {tab === 'active' ? 'No hay partidas activas' : 'No hay partidas finalizadas'}
                         </p>
                         <p style={{ fontSize: 12 }}>
@@ -614,11 +615,11 @@ export default function GolfPage() {
             </>
           ) : (
             // Usuario no logueado
-            <div style={{ margin: '24px 18px 0', background: '#0d0d1a', border: '1px solid #1e1736', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
-              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#c1c1c6', marginBottom: 8 }}>
+            <div style={{ margin: '24px 18px 0', background: '#ffffff', border: '1px solid #c8d8ec', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#0b2659', marginBottom: 8 }}>
                 Iniciá sesión para guardar tus partidas
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#706c7e', marginBottom: 16 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#5a7898', marginBottom: 16 }}>
                 Sin cuenta podés jugar, pero los resultados no se guardan
               </p>
               <Link href="/login" style={{ ...S.btnPrimary, display: 'inline-flex', width: 'auto', padding: '10px 24px', fontSize: 14 }}>
@@ -673,8 +674,8 @@ function TournamentCard({ t }: { t: Tournament }) {
       <div style={S.cardMeta}>
         <span style={S.metaGrey}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" stroke="#706c7e" strokeWidth="1.8"/>
-            <circle cx="12" cy="12" r="2.5" fill="#706c7e"/>
+            <circle cx="12" cy="12" r="9" stroke="#5a7898" strokeWidth="1.8"/>
+            <circle cx="12" cy="12" r="2.5" fill="#5a7898"/>
           </svg>
           {HOLES_LABEL[t.holes_config] ?? t.holes_config}
         </span>
@@ -682,7 +683,7 @@ function TournamentCard({ t }: { t: Tournament }) {
         {t.num_rounds > 1 && (
           <span style={S.metaGrey}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-              <path d="M8 21V3M16 21v-8" stroke="#706c7e" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M8 21V3M16 21v-8" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
             {t.num_rounds} rondas
           </span>
@@ -690,13 +691,13 @@ function TournamentCard({ t }: { t: Tournament }) {
 
         <span style={S.metaGrey}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#706c7e" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="9" cy="7" r="4" stroke="#706c7e" strokeWidth="1.8"/>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="9" cy="7" r="4" stroke="#5a7898" strokeWidth="1.8"/>
           </svg>
           {t.golf_players.length} jugadores
         </span>
 
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#4a4a55', fontFamily: FONT }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#5a7898', fontFamily: FONT }}>
           {formatDate(t.created_at)}
         </span>
       </div>
@@ -712,7 +713,7 @@ function FormatsInfo() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div style={{ margin: '16px 18px 0', background: '#0d0d1a', border: '1px solid #1e1736', borderRadius: 12 }}>
+    <div style={{ margin: '16px 18px 0', background: '#ffffff', border: '1px solid #c8d8ec', borderRadius: 12 }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
@@ -727,10 +728,10 @@ function FormatsInfo() {
           fontFamily: FONT,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#c1c1c6', display: 'flex', alignItems: 'center', gap: 7 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#0b2659', display: 'flex', alignItems: 'center', gap: 7 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#706c7e" strokeWidth="1.8"/>
-            <path d="M12 8v5M12 16h.01" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="12" cy="12" r="10" stroke="#5a7898" strokeWidth="1.8"/>
+            <path d="M12 8v5M12 16h.01" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           ¿Cómo se juegan las modalidades?
         </span>
@@ -738,12 +739,12 @@ function FormatsInfo() {
           width="14" height="14" viewBox="0 0 24 24" fill="none"
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
         >
-          <path d="M6 9l6 6 6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M6 9l6 6 6-6" stroke="#5a7898" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       {open && (
-        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #1e1736', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #c8d8ec', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {Object.entries(FORMAT_MAP).map(([key, fmt]) => (
             <div key={key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{
@@ -753,7 +754,7 @@ function FormatsInfo() {
               }}>
                 {fmt.label}
               </span>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#706c7e', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#5a7898', margin: 0, lineHeight: 1.5 }}>
                 {fmt.desc}
               </p>
             </div>

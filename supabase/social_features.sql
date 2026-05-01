@@ -126,3 +126,57 @@ CREATE POLICY "game_session_players_select" ON game_session_players FOR SELECT
   );
 CREATE POLICY "game_session_players_all" ON game_session_players FOR ALL
   USING (session_id IN (SELECT id FROM game_sessions WHERE created_by = auth.uid()));
+
+-- ============================================================
+-- FIX RLS GOLF (correr si falla al crear torneos/canchas)
+-- ============================================================
+
+ALTER TABLE golf_tournaments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_formats ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_rounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_hole_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_competition_units ENABLE ROW LEVEL SECURITY;
+ALTER TABLE golf_competition_unit_members ENABLE ROW LEVEL SECURITY;
+
+-- Políticas permisivas para usuarios autenticados (golf es colaborativo por invite_code)
+DO $$ BEGIN
+
+  -- golf_tournaments
+  DROP POLICY IF EXISTS "golf_tournaments_select" ON golf_tournaments;
+  DROP POLICY IF EXISTS "golf_tournaments_insert" ON golf_tournaments;
+  DROP POLICY IF EXISTS "golf_tournaments_update" ON golf_tournaments;
+  DROP POLICY IF EXISTS "golf_tournaments_delete" ON golf_tournaments;
+  CREATE POLICY "golf_tournaments_select" ON golf_tournaments FOR SELECT USING (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_tournaments_insert" ON golf_tournaments FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_tournaments_update" ON golf_tournaments FOR UPDATE USING (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_tournaments_delete" ON golf_tournaments FOR DELETE USING (created_by = auth.uid());
+
+  -- golf_courses
+  DROP POLICY IF EXISTS "golf_courses_select" ON golf_courses;
+  DROP POLICY IF EXISTS "golf_courses_insert" ON golf_courses;
+  CREATE POLICY "golf_courses_select" ON golf_courses FOR SELECT USING (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_courses_insert" ON golf_courses FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+  CREATE POLICY "golf_courses_update" ON golf_courses FOR UPDATE USING (auth.uid() IS NOT NULL);
+
+  -- Resto de tablas golf: acceso total a usuarios autenticados
+  DROP POLICY IF EXISTS "golf_players_all" ON golf_players;
+  CREATE POLICY "golf_players_all" ON golf_players FOR ALL USING (auth.uid() IS NOT NULL);
+
+  DROP POLICY IF EXISTS "golf_formats_all" ON golf_formats;
+  CREATE POLICY "golf_formats_all" ON golf_formats FOR ALL USING (auth.uid() IS NOT NULL);
+
+  DROP POLICY IF EXISTS "golf_rounds_all" ON golf_rounds;
+  CREATE POLICY "golf_rounds_all" ON golf_rounds FOR ALL USING (auth.uid() IS NOT NULL);
+
+  DROP POLICY IF EXISTS "golf_hole_scores_all" ON golf_hole_scores;
+  CREATE POLICY "golf_hole_scores_all" ON golf_hole_scores FOR ALL USING (auth.uid() IS NOT NULL);
+
+  DROP POLICY IF EXISTS "golf_competition_units_all" ON golf_competition_units;
+  CREATE POLICY "golf_competition_units_all" ON golf_competition_units FOR ALL USING (auth.uid() IS NOT NULL);
+
+  DROP POLICY IF EXISTS "golf_competition_unit_members_all" ON golf_competition_unit_members;
+  CREATE POLICY "golf_competition_unit_members_all" ON golf_competition_unit_members FOR ALL USING (auth.uid() IS NOT NULL);
+
+END $$;
