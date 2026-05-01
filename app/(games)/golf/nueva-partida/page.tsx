@@ -175,16 +175,17 @@ export default function NuevaPartidaPage() {
   }, [])
 
   useEffect(() => {
-    if (courseQuery.length < 2) { setCourseResults([]); return }
     const t = setTimeout(async () => {
-      const { data } = await supabase
+      const query = supabase
         .from('golf_courses')
         .select('id,name,city,par,total_holes')
-        .ilike('name', `%${courseQuery}%`)
         .eq('is_public', true)
-        .limit(8)
+        .order('name')
+        .limit(20)
+      if (courseQuery.length >= 2) query.ilike('name', `%${courseQuery}%`)
+      const { data } = await query
       setCourseResults(data ?? [])
-    }, 300)
+    }, courseQuery.length >= 2 ? 300 : 0)
     return () => clearTimeout(t)
   }, [courseQuery])
 
@@ -280,7 +281,7 @@ export default function NuevaPartidaPage() {
           .insert(players.map((p, i) => ({
             tournament_id: t.id, display_name: p.display_name,
             handicap_index: p.handicap_index, tee_color: p.tee_color,
-            user_id: null, sort_order: i,
+            sort_order: i,
           })))
           .select('id')
         if (pErr) throw pErr
@@ -797,7 +798,7 @@ function StepJugadores({ players, onPlayers, addName, onAddName, addHcp, onAddHc
           </Field>
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button onClick={addPlayer}
-              style={{ width: '100%', height: 40, background: C.primary, color: C.text, border: 'none', borderRadius: 9, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+              style={{ width: '100%', height: 40, background: C.primary, color: '#ffffff', border: 'none', borderRadius: 9, fontSize: 20, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

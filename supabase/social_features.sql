@@ -128,6 +128,17 @@ CREATE POLICY "game_session_players_all" ON game_session_players FOR ALL
   USING (session_id IN (SELECT id FROM game_sessions WHERE created_by = auth.uid()));
 
 -- ============================================================
+-- FIX COLUMNAS FALTANTES EN GOLF_PLAYERS
+-- Correr si aparece error "sort_order column not found in schema cache"
+-- ============================================================
+ALTER TABLE golf_players
+  ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS user_id    UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+
+-- Forzar recarga del schema cache de PostgREST
+NOTIFY pgrst, 'reload schema';
+
+-- ============================================================
 -- FIX RLS GOLF (correr si falla al crear torneos/canchas)
 -- ============================================================
 
