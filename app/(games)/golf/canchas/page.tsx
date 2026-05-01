@@ -329,7 +329,7 @@ function CourseCard({ course, holes, expanded, onToggle, isOwner }: {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: FONT, minWidth: 380 }}>
               <thead>
                 <tr>
-                  {['H', 'Par', 'SI', '⬛', '🔵', '⬜', '🟡', '🔴'].map(h => (
+                  {['H', 'Par', 'Hcp', '⬛', '🔵', '⬜', '🟡', '🔴'].map(h => (
                     <th key={h} style={{ padding: '4px 6px', color: '#5a7898', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #c8d8ec', fontSize: 10 }}>{h}</th>
                   ))}
                 </tr>

@@ -305,7 +305,7 @@ export default function ScorearPage() {
               </div>
               <div style={{ width: 1, background: C.border }} />
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 11, color: C.muted, letterSpacing: 1, textTransform: 'uppercase' }}>SI</div>
+                <div style={{ fontSize: 11, color: C.muted, letterSpacing: 1, textTransform: 'uppercase' }}>Hcp</div>
                 <div style={{ fontSize: 22, fontWeight: 700, color: C.muted }}>{currentHoleData.stroke_index}</div>
               </div>
             </div>

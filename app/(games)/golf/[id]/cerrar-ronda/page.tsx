@@ -351,7 +351,7 @@ export default function CerrarRondaPage() {
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#e8f0fa', borderBottom: `1px solid ${C.border}` }}>
-                  {['Jugador', 'Gross', 'Nett', 'Pts', '+/−'].map(h => (
+                  {['Jugador', 'Gross', 'Neto', 'Pts', '+/−'].map(h => (
                     <span key={h} style={{ fontSize: 10, fontWeight: 700, color: C.muted, textAlign: h === 'Jugador' ? 'left' : 'center' }}>{h}</span>
                   ))}
                 </div>

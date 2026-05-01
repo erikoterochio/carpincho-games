@@ -561,7 +561,7 @@ export default function TournamentPage() {
               {showMenu && (
                 <div style={{ position: 'absolute', right: 0, top: '100%', background: '#ffffff', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
                   onClick={() => setShowMenu(false)}>
-                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Scorear" />
+                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Anotar" />
                   <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
                   <MenuItem href={`/golf/canchas`}               icon="⛳" label="Ver canchas" />
                   {isActive && <MenuItem href={`/golf/${id}/cerrar-ronda`} icon="🏁" label="Cerrar ronda" danger />}
@@ -704,7 +704,7 @@ export default function TournamentPage() {
               <path d="M12 20h9" stroke={C.text} strokeWidth="2" strokeLinecap="round"/>
               <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke={C.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Scorear
+            Anotar
           </Link>
         </div>
       )}
