@@ -935,7 +935,7 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
 }
 
 // ─────────────────────────────────────────────
-// SCORECARD
+// SCORECARD  (hoyos = filas, jugadores = columnas)
 // ─────────────────────────────────────────────
 
 function ScorecardView({ players, holes, scores, playerCalcs, format }: {
@@ -943,11 +943,13 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
   playerCalcs: PlayerCalc[]; format: Format | null
 }) {
   const isStableford = format?.format_type === 'stableford'
-  const getScore   = (pid: string, h: number) => scores.find(s => s.player_id === pid && s.hole_number === h)?.gross ?? null
-  const getStrokes = (pid: string, h: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[h] ?? 0
-  const subTotals  = (pid: string, holeSet: Hole[]) => {
-    let gross = 0; let pts = 0; let par = 0; let count = 0
+
+  const getScore   = (pid: string, hn: number) => scores.find(s => s.player_id === pid && s.hole_number === hn)?.gross ?? null
+  const getStrokes = (pid: string, hn: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[hn] ?? 0
+
+  const subTotal = (pid: string, holeSet: Hole[]) => {
     const calc = playerCalcs.find(c => c.player.id === pid)
+    let gross = 0, pts = 0, par = 0, count = 0
     holeSet.forEach(h => {
       const g = getScore(pid, h.hole_number)
       if (!g) return
@@ -956,75 +958,152 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     })
     return { gross: count > 0 ? gross : null, pts: count > 0 ? pts : null, par }
   }
-  const show18 = holes.some(h => h.hole_number >= 10)
+
+  const front9   = holes.filter(h => h.hole_number <= 9)
+  const back9    = holes.filter(h => h.hole_number >= 10)
+  const colW     = { hole: 32, par: 26, hcp: 26, player: 52 }
+  const tableW   = colW.hole + colW.par + colW.hcp + players.length * colW.player
+  const totalPar = holes.reduce((a, h) => a + h.par, 0)
+
+  const renderHoleRow = (h: Hole, even: boolean) => {
+    const rowBg = even ? C.card : '#f5f9ff'
+    return (
+      <tr key={h.hole_number} style={{ background: rowBg }}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: rowBg, width: colW.hole, textAlign: 'center', borderRight: `1px solid ${C.border}` }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text, padding: '10px 4px' }}>{h.hole_number}</div>
+        </td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 13, color: C.muted, borderRight: `1px solid ${C.border}` }}>{h.par}</td>
+        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: C.border, borderRight: `1px solid ${C.border}` }}>{h.stroke_index}</td>
+        {players.map(p => {
+          const strokes = getStrokes(p.id, h.hole_number)
+          const gross   = getScore(p.id, h.hole_number)
+          const nett    = gross !== null ? gross - strokes : null
+          let color: string | null = null
+          if (gross !== null) {
+            if (isStableford) {
+              const pts = stablefordPts(gross, h.par, strokes)
+              color = pts >= 3 ? C.birdie : pts === 2 ? C.par : pts === 1 ? C.bogey : C.double
+            } else {
+              color = scoreColor((gross - strokes) - h.par)
+            }
+          }
+          return (
+            <td key={p.id} style={{ width: colW.player, textAlign: 'center', padding: '5px 4px' }}>
+              <div style={{
+                width: 40, height: 36, borderRadius: 8, margin: '0 auto',
+                background: gross !== null ? color! + '1a' : 'transparent',
+                border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                position: 'relative',
+              }}>
+                {strokes > 0 && (
+                  <div style={{ position: 'absolute', top: 3, right: 3, width: 4, height: 4, borderRadius: 2, background: C.primary + '70' }} />
+                )}
+                {gross !== null ? (
+                  <>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
+                    {strokes > 0 && nett !== null && (
+                      <span style={{ fontSize: 9, color: C.muted, lineHeight: 1 }}>/{nett}</span>
+                    )}
+                  </>
+                ) : <span style={{ fontSize: 14, color: C.border }}>·</span>}
+              </div>
+            </td>
+          )
+        })}
+      </tr>
+    )
+  }
+
+  const renderSubtotalRow = (label: string, holeSet: Hole[]) => {
+    const parTotal = holeSet.reduce((a, h) => a + h.par, 0)
+    return (
+      <tr key={label} style={{ background: '#dbeafe' }}>
+        <td colSpan={3} style={{
+          position: 'sticky', left: 0, zIndex: 1, background: '#dbeafe',
+          padding: '7px 8px', fontSize: 11, fontWeight: 700, color: C.primary,
+          borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}`,
+        }}>
+          {label} <span style={{ fontWeight: 400, color: C.muted, fontSize: 10 }}>{parTotal}</span>
+        </td>
+        {players.map(p => {
+          const sub   = subTotal(p.id, holeSet)
+          const val   = isStableford ? sub.pts : sub.gross
+          const vsPar = sub.gross != null ? sub.gross - parTotal : null
+          return (
+            <td key={p.id} style={{ textAlign: 'center', padding: '4px 2px', borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}` }}>
+              {val != null ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{val}</span>
+                  {!isStableford && vsPar != null && (
+                    <span style={{ fontSize: 9, color: vsPar > 0 ? C.bogey : vsPar < 0 ? C.birdie : C.muted }}>
+                      {vsParStr(vsPar)}
+                    </span>
+                  )}
+                </div>
+              ) : <span style={{ fontSize: 12, color: C.border }}>—</span>}
+            </td>
+          )
+        })}
+      </tr>
+    )
+  }
 
   return (
     <div style={{ overflowX: 'auto', paddingBottom: 16 }}>
-      <table style={{ borderCollapse: 'collapse', minWidth: '100%', fontSize: 12, fontFamily: FONT }}>
+      <table style={{ borderCollapse: 'collapse', width: tableW, tableLayout: 'fixed', fontFamily: FONT }}>
         <thead>
-          <tr>
-            <td style={stickyCell}>—</td>
-            {holes.map(h => <td key={h.hole_number} style={{ ...hdrCell, fontSize: 10 }}>{h.hole_number}</td>)}
-            {show18 && <td style={{ ...hdrCell, fontSize: 10, minWidth: 36 }}>TOT</td>}
-          </tr>
-          <tr>
-            <td style={{ ...stickyCell, fontSize: 10, color: C.muted }}>PAR</td>
-            {holes.map(h => <td key={h.hole_number} style={{ ...hdrCell, fontSize: 10 }}>{h.par}</td>)}
-            {show18 && <td style={hdrCell}>{holes.reduce((s, h) => s + h.par, 0)}</td>}
+          <tr style={{ background: C.primary }}>
+            <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.hole, padding: '8px 4px', fontSize: 11, color: '#fff', textAlign: 'center', fontWeight: 700 }}>H</th>
+            <th style={{ width: colW.par, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
+            <th style={{ width: colW.hcp, padding: '8px 4px', fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontWeight: 400 }}>Hcp</th>
+            {players.map(p => {
+              const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
+              return (
+                <th key={p.id} style={{ width: colW.player, padding: '6px 2px', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[p.tee_color] ?? '#888', border: '1px solid rgba(255,255,255,0.3)' }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
+                      {p.display_name.split(' ')[0]}
+                    </span>
+                    {phcp != null && <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)' }}>h{phcp}</span>}
+                  </div>
+                </th>
+              )
+            })}
           </tr>
         </thead>
         <tbody>
-          {players.map(p => {
-            const calc   = playerCalcs.find(c => c.player.id === p.id)
-            const totAll = subTotals(p.id, holes)
-            return (
-              <tr key={p.id}>
-                <td style={{ ...stickyCell, whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: 4, background: TEE_HEX[p.tee_color] ?? '#888', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{p.display_name}</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: C.muted, paddingLeft: 12 }}>{calc ? `hcp ${calc.playingHcp}` : ''}</span>
-                </td>
-                {holes.map(h => {
-                  const gross   = getScore(p.id, h.hole_number)
-                  const strokes = getStrokes(p.id, h.hole_number)
-                  const nett    = gross !== null ? gross - strokes : null
-                  const vspar   = gross !== null ? (isStableford ? stablefordPts(gross, h.par, strokes) : gross - h.par) : null
-                  const color   = vspar !== null
-                    ? (isStableford ? vspar >= 3 ? C.birdie : vspar === 2 ? C.par : vspar === 1 ? C.bogey : C.double : scoreColor(vspar))
-                    : C.muted
-                  return (
-                    <td key={h.hole_number} style={{ ...scoreCell, position: 'relative' }}>
-                      {strokes > 0 && (
-                        <div style={{ position: 'absolute', top: 3, right: 3, display: 'flex', gap: 1 }}>
-                          {Array.from({ length: Math.min(strokes, 2) }).map((_, i) => (
-                            <div key={i} style={{ width: 4, height: 4, borderRadius: 2, background: C.primary }} />
-                          ))}
-                        </div>
-                      )}
-                      {gross !== null ? (
-                        <div style={{ lineHeight: 1.1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color }}>{gross}</div>
-                          {strokes > 0 && nett !== null && <div style={{ fontSize: 9, color: C.muted }}>/{nett}</div>}
-                        </div>
-                      ) : <span style={{ color: C.border, fontSize: 11 }}>·</span>}
-                    </td>
-                  )
-                })}
-                {show18 && (
-                  <td style={{ ...scoreCell, background: '#e8f0fa', minWidth: 36 }}>
-                    {totAll.gross !== null ? (
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{isStableford ? totAll.pts : totAll.gross}</div>
-                        {!isStableford && calc && <div style={{ fontSize: 9, color: C.muted }}>/{totAll.gross! - calc.playingHcp}</div>}
+          {front9.map((h, i) => renderHoleRow(h, i % 2 === 0))}
+          {front9.length > 0 && renderSubtotalRow('OUT', front9)}
+          {back9.map((h, i)  => renderHoleRow(h, i % 2 === 0))}
+          {back9.length > 0  && renderSubtotalRow('IN', back9)}
+          {front9.length > 0 && back9.length > 0 && (
+            <tr style={{ background: C.primary }}>
+              <td colSpan={3} style={{ position: 'sticky', left: 0, zIndex: 1, background: C.primary, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#fff' }}>
+                TOT <span style={{ fontWeight: 400, fontSize: 10, opacity: 0.7 }}>{totalPar}</span>
+              </td>
+              {players.map(p => {
+                const tots  = subTotal(p.id, holes)
+                const val   = isStableford ? tots.pts : tots.gross
+                const vsPar = tots.gross != null ? tots.gross - totalPar : null
+                return (
+                  <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px' }}>
+                    {val != null ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>
+                        {!isStableford && vsPar != null && (
+                          <span style={{ fontSize: 9, color: vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.5)' }}>
+                            {vsParStr(vsPar)}
+                          </span>
+                        )}
                       </div>
-                    ) : <span style={{ color: C.border }}>·</span>}
+                    ) : <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>—</span>}
                   </td>
-                )}
-              </tr>
-            )
-          })}
+                )
+              })}
+            </tr>
+          )}
         </tbody>
       </table>
     </div>
@@ -1061,6 +1140,3 @@ function PtsCell({ pts, first }: { pts: number; first: boolean }) {
   )
 }
 
-const stickyCell: React.CSSProperties = { position: 'sticky', left: 0, background: '#f0f6ff', zIndex: 2, padding: '8px 12px', borderRight: `1px solid #c8d8ec`, minWidth: 110 }
-const hdrCell: React.CSSProperties   = { textAlign: 'center', padding: '6px 4px', background: '#e8f0fa', color: '#5a7898', minWidth: 32, fontWeight: 700, borderRight: '1px solid #ffffff' }
-const scoreCell: React.CSSProperties = { textAlign: 'center', padding: '6px 4px', background: '#ffffff', minWidth: 32, borderRight: '1px solid #f0f6ff', borderBottom: '1px solid #f0f6ff' }
