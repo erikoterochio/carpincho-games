@@ -40,6 +40,8 @@ type Format    = { id: string; format_type: string; display_name: string; handic
 type Round     = { id: string; round_number: number; status: string; date: string | null }
 type HoleScore = { id: string; round_id: string; player_id: string; hole_number: number; gross: number | null; updated_at: string }
 type CompUnit  = { id: string; name: string; unit_type: string; format_id: string; golf_competition_unit_members: { player_id: string }[] }
+type Contest   = { id: string; contest_type: 'long_drive' | 'best_approach'; hole_number: number; display_name: string }
+type ContestEntry = { contest_id: string; player_id: string; tee_distance_m: number; distance_to_pin_m: number; qualifies: boolean }
 
 type PlayerCalc = {
   player: Player; courseHcp: number; playingHcp: number; strokes: Record<number, number>
@@ -401,6 +403,8 @@ export default function TournamentPage() {
   const [round,      setRound]      = useState<Round | null>(null)
   const [scores,     setScores]     = useState<HoleScore[]>([])
   const [compUnits,  setCompUnits]  = useState<CompUnit[]>([])
+  const [contests,   setContests]   = useState<Contest[]>([])
+  const [contestEntries, setContestEntries] = useState<ContestEntry[]>([])
 
   useEffect(() => {
     const load = async () => {
@@ -437,9 +441,19 @@ export default function TournamentPage() {
       const activeRound = (rndRes.data ?? []).find(r => r.status === 'active') ?? (rndRes.data ?? [])[0] ?? null
       setRound(activeRound)
 
+      const { data: ctRes } = await supabase.from('golf_contests').select('id,contest_type,hole_number,display_name').eq('tournament_id', id).order('hole_number')
+      const contestList = ctRes ?? []
+      setContests(contestList)
+
       if (activeRound) {
-        const { data: sc } = await supabase.from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id)
-        setScores(sc ?? [])
+        const [scRes, ceRes] = await Promise.all([
+          supabase.from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id),
+          contestList.length > 0
+            ? supabase.from('golf_contest_entries').select('contest_id,player_id,tee_distance_m,distance_to_pin_m,qualifies').in('contest_id', contestList.map((c: Contest) => c.id)).eq('round_id', activeRound.id)
+            : Promise.resolve({ data: [] }),
+        ])
+        setScores(scRes.data ?? [])
+        setContestEntries((ceRes as any).data ?? [])
       }
 
       setLoading(false)
@@ -685,6 +699,10 @@ export default function TournamentPage() {
                   )}
                 </div>
               )}
+
+              {contests.length > 0 && (
+                <ContestsSection contests={contests} entries={contestEntries} players={players} />
+              )}
             </>
           )}
 
@@ -928,6 +946,93 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
               <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{row.holesPlayed}</span>
             </div>
           ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// CONCURSOS — Tarjetas desplegables
+// ─────────────────────────────────────────────
+
+function ContestsSection({ contests, entries, players }: {
+  contests: Contest[]; entries: ContestEntry[]; players: Player[]
+}) {
+  return (
+    <div style={{ padding: '0 18px 4px' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: 'uppercase', padding: '14px 0 8px' }}>
+        Concursos
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {contests.map(c => (
+          <ContestCard key={c.id} contest={c} entries={entries.filter(e => e.contest_id === c.id)} players={players} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ContestCard({ contest, entries, players }: {
+  contest: Contest; entries: ContestEntry[]; players: Player[]
+}) {
+  const [open, setOpen] = useState(false)
+  const isLD = contest.contest_type === 'long_drive'
+  const icon = isLD ? '🏌️' : '📍'
+
+  const ranking = entries
+    .filter(e => e.qualifies)
+    .map(e => {
+      const player = players.find(p => p.id === e.player_id)
+      const metric = isLD ? e.tee_distance_m - e.distance_to_pin_m : e.distance_to_pin_m
+      return { player, metric, e }
+    })
+    .filter(r => r.player)
+    .sort((a, b) => isLD ? b.metric - a.metric : a.metric - b.metric)
+
+  const leader = ranking[0]
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+      <button onClick={() => setOpen(v => !v)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FONT }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{contest.display_name}</div>
+          <div style={{ fontSize: 11, color: C.muted }}>
+            {leader
+              ? `${leader.player!.display_name} · ${isLD ? `${leader.metric}m` : `${leader.metric}m al pin`}`
+              : 'Sin datos aún'}
+          </div>
+        </div>
+        {leader && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>
+            {isLD ? `${leader.metric}m` : `${leader.metric}m`}
+          </span>
+        )}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <path d="M6 9l6 6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 16px 14px' }}>
+          {ranking.length === 0 ? (
+            <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '8px 0' }}>Sin datos aún</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ranking.map((r, i) => (
+                <div key={r.e.player_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, width: 18, textAlign: 'center' }}>{i + 1}</span>
+                  <div style={{ width: 7, height: 7, borderRadius: 4, background: TEE_HEX[(r.player as Player).tee_color] ?? '#888', flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, color: C.text, fontWeight: i === 0 ? 700 : 500 }}>{(r.player as Player).display_name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? C.primary : C.muted }}>
+                    {isLD ? `${r.metric}m` : `${r.metric}m`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -496,6 +496,24 @@ export default function GolfPage() {
             </div>
           </div>
 
+          {/* ── Hero */}
+          <div style={{
+            background: 'linear-gradient(135deg, #14532d 0%, #166534 55%, #16a34a 100%)',
+            padding: '26px 20px 30px',
+            position: 'relative',
+            overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
+            <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontSize: 50 }}>⛳</span>
+            </div>
+            <div style={{ maxWidth: '58%' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8, fontFamily: FONT }}>Carpincho Games</div>
+              <div style={{ fontSize: 32, fontWeight: 700, color: '#ffffff', lineHeight: 1, marginBottom: 10, fontFamily: FONT }}>Golf</div>
+              <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.72)', lineHeight: 1.5, fontFamily: FONT }}>Rondas, torneos y puntajes con amigos.</div>
+            </div>
+          </div>
+
           {/* ── CTAs */}
           <div style={S.ctaSection}>
 
