@@ -608,21 +608,24 @@ export default function TournamentPage() {
           </div>
 
           {/* Tabs principales */}
-          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 53, background: C.bg, zIndex: 9 }}>
-            {(['leaderboard', 'scorecard'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                style={{ flex: 1, padding: '11px', background: 'none', border: 'none', borderBottom: `2px solid ${tab === t ? C.primary : 'transparent'}`, cursor: 'pointer', fontSize: 13, fontWeight: tab === t ? 700 : 500, color: tab === t ? C.text : C.muted, marginBottom: -1, fontFamily: FONT }}>
-                {t === 'leaderboard' ? 'Leaderboard' : 'Scorecard'}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 18px', position: 'sticky', top: 53, background: C.bg, zIndex: 9, borderBottom: `1px solid ${C.border}` }}>
+            {(['leaderboard', 'scorecard'] as const).map(t => {
+              const active = tab === t
+              return (
+                <button key={t} onClick={() => setTab(t)}
+                  style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${active ? C.primary : C.border}`, background: active ? C.primary : 'transparent', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: active ? '#ffffff' : C.muted, fontFamily: FONT, transition: 'all 0.15s' }}>
+                  {t === 'leaderboard' ? 'Posiciones' : 'Tarjetas'}
+                </button>
+              )
+            })}
           </div>
 
           {/* Tabs de formato */}
           {formats.length > 1 && (
-            <div style={{ display: 'flex', gap: 6, padding: '10px 18px', overflowX: 'auto', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', gap: 8, padding: '10px 18px', overflowX: 'auto', borderBottom: `1px solid ${C.border}` }}>
               {formats.map((f, i) => (
                 <button key={f.id} onClick={() => setFmtTab(i)}
-                  style={{ padding: '5px 12px', borderRadius: 20, border: `1px solid ${fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : C.border}`, background: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) + '20' : 'transparent', color: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.text) : C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: FONT }}>
+                  style={{ padding: '8px 18px', borderRadius: 20, border: `1.5px solid ${fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : C.border}`, background: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : 'transparent', color: fmtTab === i ? '#ffffff' : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: FONT }}>
                   {f.display_name}
                 </button>
               ))}
