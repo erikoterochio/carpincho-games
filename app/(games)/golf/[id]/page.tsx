@@ -508,9 +508,23 @@ export default function TournamentPage() {
 
   const copyCode = () => {
     if (!tournament?.invite_code) return
-    navigator.clipboard.writeText(tournament.invite_code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const shareData = { title: tournament.name, text: `Unite con el código: ${tournament.invite_code}` }
+    if (typeof navigator.share !== 'undefined') {
+      navigator.share(shareData).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(tournament.invite_code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleScoreChange = (pid: string, hn: number, gross: number | null) => {
+    setScores(prev => {
+      if (gross === null) return prev.filter(s => !(s.player_id === pid && s.hole_number === hn))
+      const existing = prev.find(s => s.player_id === pid && s.hole_number === hn)
+      if (existing) return prev.map(s => s.player_id === pid && s.hole_number === hn ? { ...s, gross, updated_at: new Date().toISOString() } : s)
+      return [...prev, { id: `local-${pid}-${hn}`, round_id: round?.id ?? '', player_id: pid, hole_number: hn, gross, updated_at: new Date().toISOString() }]
+    })
   }
 
   if (loading) return (
@@ -598,20 +612,21 @@ export default function TournamentPage() {
               {' · '}
               {tournament.holes_config === '18' ? '18 hoyos' : tournament.holes_config === 'front9' ? 'Primeros 9' : 'Segundos 9'}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 5 }}>
               {formats.map(f => (
                 <span key={f.id} style={{ fontSize: 10, fontWeight: 700, color: FORMAT_COLORS[f.format_type] ?? C.muted, background: (FORMAT_COLORS[f.format_type] ?? C.muted) + '18', border: `1px solid ${(FORMAT_COLORS[f.format_type] ?? C.muted)}40`, borderRadius: 5, padding: '2px 8px' }}>
                   {f.display_name}
                 </span>
               ))}
+              <button onClick={copyCode} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', border: `1px solid ${C.border}`, borderRadius: 20, background: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 11, fontWeight: 600, color: copied ? C.primary : C.muted }}>
+                {copied ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke={C.primary} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/><polyline points="16 6 12 2 8 6" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/></svg>
+                )}
+                {copied ? 'Copiado' : tournament.invite_code}
+              </button>
             </div>
-            <button onClick={copyCode}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, padding: '8px 14px', cursor: 'pointer', width: '100%' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke={C.muted} strokeWidth="1.8"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke={C.muted} strokeWidth="1.8"/></svg>
-              <span style={{ fontSize: 11, color: C.muted }}>Código:</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 2 }}>{tournament.invite_code}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: copied ? '#15803d' : C.muted }}>{copied ? 'Copiado ✓' : 'Copiar'}</span>
-            </button>
           </div>
 
           {/* Tabs principales */}
@@ -728,24 +743,11 @@ export default function TournamentPage() {
 
           {/* SCORECARD */}
           {tab === 'scorecard' && (
-            <ScorecardView players={players} holes={playedHoles} scores={scores} playerCalcs={playerCalcs} format={fmt ?? null} />
+            <ScorecardView players={players} holes={playedHoles} scores={scores} playerCalcs={playerCalcs} format={fmt ?? null} roundId={round?.id ?? null} isActive={isActive} onScoreChange={handleScoreChange} />
           )}
         </div>
       </div>
 
-      {/* FAB Scorear */}
-      {isActive && round && (
-        <div style={{ position: 'fixed', bottom: 'calc(24px + env(safe-area-inset-bottom))', right: 24, zIndex: 20 }}>
-          <Link href={`/golf/${id}/scorear`}
-            style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.primary, color: '#ffffff', borderRadius: 28, padding: '14px 22px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT, boxShadow: '0 6px 24px rgba(22,101,52,0.45)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 20h9" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Anotar
-          </Link>
-        </div>
-      )}
     </>
   )
 }
@@ -1172,11 +1174,18 @@ function ContestCard({ contest, entries, players }: {
 // SCORECARD  (hoyos = filas, jugadores = columnas)
 // ─────────────────────────────────────────────
 
-function ScorecardView({ players, holes, scores, playerCalcs, format }: {
+function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, isActive, onScoreChange }: {
   players: Player[]; holes: Hole[]; scores: HoleScore[]
   playerCalcs: PlayerCalc[]; format: Format | null
+  roundId: string | null; isActive: boolean
+  onScoreChange: (pid: string, hn: number, gross: number | null) => void
 }) {
   const isStableford = format?.format_type === 'stableford'
+  const [front9Open, setFront9Open] = useState(true)
+  const [back9Open,  setBack9Open]  = useState(true)
+  const [editing, setEditing] = useState<{ playerId: string; playerName: string; teeColor: string; holeNumber: number; holePar: number; strokes: number; value: number } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const supabase = createClient()
 
   const getScore   = (pid: string, hn: number) => scores.find(s => s.player_id === pid && s.hole_number === hn)?.gross ?? null
   const getStrokes = (pid: string, hn: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[hn] ?? 0
@@ -1193,15 +1202,34 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     return { gross: count > 0 ? gross : null, pts: count > 0 ? pts : null, par }
   }
 
-  const front9   = holes.filter(h => h.hole_number <= 9)
-  const back9    = holes.filter(h => h.hole_number >= 10)
+  const saveScore = async (gross: number | null) => {
+    if (!editing || !roundId || saving) return
+    setSaving(true)
+    const { playerId, holeNumber } = editing
+    if (gross === null) {
+      await supabase.from('golf_hole_scores').delete()
+        .eq('round_id', roundId).eq('player_id', playerId).eq('hole_number', holeNumber)
+    } else {
+      await supabase.from('golf_hole_scores')
+        .upsert({ round_id: roundId, player_id: playerId, hole_number: holeNumber, gross },
+                 { onConflict: 'round_id,player_id,hole_number' })
+    }
+    onScoreChange(playerId, holeNumber, gross)
+    setSaving(false)
+    setEditing(null)
+  }
+
+  const front9 = holes.filter(h => h.hole_number <= 9)
+  const back9  = holes.filter(h => h.hole_number >= 10)
   const playerColW = players.length <= 2 ? 80 : players.length === 3 ? 68 : players.length === 4 ? 60 : 54
-  const colW     = { hole: 38, par: 30, hcp: 28, player: playerColW }
-  const tableW   = colW.hole + colW.par + colW.hcp + players.length * colW.player
-  const totalPar = holes.reduce((a, h) => a + h.par, 0)
+  const colW   = { hole: 38, par: 30, hcp: 28, player: playerColW }
+  const tableW = colW.hole + colW.par + colW.hcp + players.length * colW.player
+  const RB     = '#021B1A'
+  const div    = `1px solid ${C.border}`
+  const rbt    = `1px solid rgba(255,255,255,0.12)`
 
   const renderHoleRow = (h: Hole) => {
-    const div = `1px solid ${C.border}`
+    const canEdit = isActive && !!roundId
     return (
       <tr key={h.hole_number}>
         <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderRight: div, borderBottom: div }}>
@@ -1222,17 +1250,11 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
             }
           }
           return (
-            <td key={p.id} style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', borderBottom: div, background: C.card }}>
-              <div style={{
-                width: 46, height: 42, borderRadius: 9, margin: '0 auto',
-                background: gross !== null ? color! + '1c' : 'transparent',
-                border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                position: 'relative',
-              }}>
-                {strokes > 0 && (
-                  <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '70' }} />
-                )}
+            <td key={p.id}
+              onClick={canEdit ? () => setEditing({ playerId: p.id, playerName: p.display_name, teeColor: p.tee_color, holeNumber: h.hole_number, holePar: h.par, strokes, value: gross ?? h.par }) : undefined}
+              style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', borderBottom: div, background: C.card, cursor: canEdit ? 'pointer' : 'default' }}>
+              <div style={{ width: 46, height: 42, borderRadius: 9, margin: '0 auto', background: gross !== null ? color! + '1c' : 'transparent', border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                {strokes > 0 && <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '70' }} />}
                 {gross !== null
                   ? <span style={{ fontSize: 18, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
                   : <span style={{ fontSize: 16, color: C.border }}>·</span>}
@@ -1244,38 +1266,35 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     )
   }
 
-  const renderSubtotalRow = (label: string, holeSet: Hole[]) => {
-    const parTotal = holeSet.reduce((a, h) => a + h.par, 0)
-    const bt = `1.5px solid ${C.border}`
+  const renderSectionRow = (label: string, holeSet: Hole[], open: boolean, toggle: () => void) => {
     return (
-      <tr key={label}>
-        <td style={{
-          position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E',
-          padding: '7px 8px', fontSize: 11, fontWeight: 700, color: '#fff',
-          borderTop: bt, borderBottom: bt, borderRight: `1px solid rgba(255,255,255,0.15)`,
-        }}>
-          {label}
+      <tr key={label} onClick={toggle} style={{ cursor: 'pointer' }}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, borderTop: rbt, borderBottom: rbt, borderRight: rbt }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '11px 8px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+              <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.5)" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{label}</span>
+          </div>
         </td>
-        <td style={{ background: '#3FAF7C', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#021B1A', borderTop: bt, borderBottom: bt, borderRight: `1px solid rgba(255,255,255,0.25)` }}>
-          {parTotal}
+        <td style={{ background: RB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.55)', borderTop: rbt, borderBottom: rbt, borderRight: rbt }}>
+          {holeSet.reduce((a, h) => a + h.par, 0)}
         </td>
-        <td style={{ background: '#C2E5CE', borderTop: bt, borderBottom: bt, borderRight: `1px solid ${C.border}` }} />
+        <td style={{ background: RB, borderTop: rbt, borderBottom: rbt, borderRight: div }} />
         {players.map(p => {
           const sub   = subTotal(p.id, holeSet)
           const val   = isStableford ? sub.pts : sub.gross
-          const vsPar = sub.gross != null ? sub.gross - parTotal : null
+          const vsPar = sub.gross != null ? sub.gross - sub.par : null
+          const vpc   = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.55)') : null
           return (
-            <td key={p.id} style={{ textAlign: 'center', padding: '4px 2px', borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}` }}>
+            <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px', background: RB, borderTop: rbt, borderBottom: rbt }}>
               {val != null ? (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>{val}</span>
-                  {!isStableford && vsPar != null && (
-                    <span style={{ fontSize: 10, color: vsPar > 0 ? C.bogey : vsPar < 0 ? C.birdie : C.muted }}>
-                      {vsParStr(vsPar)}
-                    </span>
-                  )}
+                  {!isStableford && vsPar != null
+                    ? <><span style={{ fontSize: 14, fontWeight: 700, color: vpc!, lineHeight: 1 }}>{vsParStr(vsPar)}</span><span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>{val}</span></>
+                    : <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>}
                 </div>
-              ) : <span style={{ fontSize: 12, color: C.border }}>—</span>}
+              ) : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>—</span>}
             </td>
           )
         })}
@@ -1283,67 +1302,110 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     )
   }
 
+  const renderTotalRow = () => (
+    <tr key="total">
+      <td colSpan={3} style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, padding: '11px 10px', fontSize: 13, fontWeight: 700, color: '#fff', borderBottom: rbt }}>
+        TOT <span style={{ fontWeight: 400, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{holes.reduce((a, h) => a + h.par, 0)}</span>
+      </td>
+      {players.map(p => {
+        const tots  = subTotal(p.id, holes)
+        const val   = isStableford ? tots.pts : tots.gross
+        const vsPar = tots.gross != null ? tots.gross - tots.par : null
+        const vpc   = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.65)') : null
+        return (
+          <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px', background: RB, borderBottom: rbt }}>
+            {val != null ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {!isStableford && vsPar != null
+                  ? <><span style={{ fontSize: 15, fontWeight: 700, color: vpc!, lineHeight: 1 }}>{vsParStr(vsPar)}</span><span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>{val}</span></>
+                  : <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>}
+              </div>
+            ) : <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>—</span>}
+          </td>
+        )
+      })}
+    </tr>
+  )
+
   return (
-    <div style={{ overflow: 'auto', margin: '0 10px 16px' }}>
-      <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
-        <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-          <tr>
-            <th style={{ position: 'sticky', left: 0, zIndex: 2, background: '#1B4D2E', width: colW.hole, padding: '9px 4px', fontSize: 11, color: '#fff', textAlign: 'center', fontWeight: 700, borderRight: '1px solid rgba(255,255,255,0.15)' }}>Hoyo</th>
-            <th style={{ width: colW.par, padding: '9px 4px', fontSize: 11, color: '#021B1A', background: '#3FAF7C', textAlign: 'center', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.25)' }}>Par</th>
-            <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 10, color: '#021B1A', background: '#C2E5CE', textAlign: 'center', fontWeight: 500, borderRight: `1px solid ${C.border}` }}>Hcp</th>
-            {players.map(p => {
-              const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
-              return (
-                <th key={p.id} style={{ width: colW.player, padding: '7px 2px', textAlign: 'center', background: C.primary }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                    <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[p.tee_color] ?? '#888', border: '1.5px solid rgba(255,255,255,0.4)' }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
-                      {p.display_name.split(' ')[0]}
-                    </span>
-                    {phcp != null && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>H: {phcp}</span>}
-                  </div>
-                </th>
-              )
-            })}
-          </tr>
-        </thead>
-        <tbody>
-          {front9.length > 0 && back9.length > 0 && (
-            <tr style={{ background: C.primary }}>
-              <td colSpan={3} style={{ position: 'sticky', left: 0, zIndex: 1, background: C.primary, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#fff' }}>
-                TOT <span style={{ fontWeight: 400, fontSize: 10, opacity: 0.7 }}>{totalPar}</span>
-              </td>
+    <>
+      <div style={{ overflow: 'auto', margin: '0 10px 16px' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+            <tr>
+              <th style={{ position: 'sticky', left: 0, zIndex: 2, background: '#1B4D2E', width: colW.hole, padding: '9px 4px', fontSize: 11, color: '#fff', textAlign: 'center', fontWeight: 700, borderRight: '1px solid rgba(255,255,255,0.15)' }}>Hoyo</th>
+              <th style={{ width: colW.par, padding: '9px 4px', fontSize: 11, color: '#021B1A', background: '#3FAF7C', textAlign: 'center', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.25)' }}>Par</th>
+              <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 10, color: '#021B1A', background: '#C2E5CE', textAlign: 'center', fontWeight: 500, borderRight: div }}>Hcp</th>
               {players.map(p => {
-                const tots  = subTotal(p.id, holes)
-                const val   = isStableford ? tots.pts : tots.gross
-                const vsPar = tots.gross != null ? tots.gross - tots.par : null
-                const vpColor = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.65)') : null
+                const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
                 return (
-                  <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px' }}>
-                    {val != null ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        {!isStableford && vsPar != null ? (
-                          <>
-                            <span style={{ fontSize: 15, fontWeight: 700, color: vpColor!, lineHeight: 1 }}>{vsParStr(vsPar)}</span>
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', lineHeight: 1.3 }}>{val}</span>
-                          </>
-                        ) : (
-                          <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>
-                        )}
-                      </div>
-                    ) : <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>—</span>}
-                  </td>
+                  <th key={p.id} style={{ width: colW.player, padding: '7px 2px', textAlign: 'center', background: C.primary }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                      <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[p.tee_color] ?? '#888', border: '1.5px solid rgba(255,255,255,0.4)' }} />
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
+                        {p.display_name.split(' ')[0]}
+                      </span>
+                      {phcp != null && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>H: {phcp}</span>}
+                    </div>
+                  </th>
                 )
               })}
             </tr>
-          )}
-          {front9.map(h => renderHoleRow(h))}
-          {front9.length > 0 && renderSubtotalRow('IDA', front9)}
-          {back9.map(h  => renderHoleRow(h))}
-          {back9.length > 0  && renderSubtotalRow('VTA', back9)}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {front9.length > 0 && back9.length > 0 && renderTotalRow()}
+            {front9.length > 0 && renderSectionRow('IDA', front9, front9Open, () => setFront9Open(v => !v))}
+            {front9Open && front9.map(h => renderHoleRow(h))}
+            {back9.length > 0  && renderSectionRow('VTA', back9,  back9Open,  () => setBack9Open(v => !v))}
+            {back9Open  && back9.map(h  => renderHoleRow(h))}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => !saving && setEditing(null)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,27,26,0.5)' }} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 24px calc(32px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 480, fontFamily: FONT }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: C.border, margin: '0 auto 18px' }} />
+            <div style={{ textAlign: 'center', marginBottom: 22 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 14, background: TEE_HEX[editing.teeColor] ?? '#888', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{editing.playerName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}</span>
+                </div>
+                <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{editing.playerName}</span>
+              </div>
+              <div style={{ fontSize: 12, color: C.muted }}>
+                Hoyo {editing.holeNumber} · Par {editing.holePar}
+                {editing.strokes > 0 ? ` · ${editing.strokes} golpe${editing.strokes > 1 ? 's' : ''} de ventaja` : ''}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, marginBottom: 28 }}>
+              <button onClick={() => setEditing(e => e && e.value > 1 ? { ...e, value: e.value - 1 } : e)}
+                style={{ width: 52, height: 52, borderRadius: 26, border: `1.5px solid ${C.border}`, background: 'none', fontSize: 28, cursor: 'pointer', color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                −
+              </button>
+              <span style={{ fontSize: 52, fontWeight: 700, color: C.text, minWidth: 70, textAlign: 'center', lineHeight: 1 }}>{editing.value}</span>
+              <button onClick={() => setEditing(e => e ? { ...e, value: e.value + 1 } : e)}
+                style={{ width: 52, height: 52, borderRadius: 26, border: `1.5px solid ${C.border}`, background: 'none', fontSize: 28, cursor: 'pointer', color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                +
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => saveScore(null)} disabled={saving}
+                style={{ flex: 1, padding: '13px', border: `1.5px solid ${C.border}`, borderRadius: 11, background: 'none', color: C.muted, fontFamily: FONT, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Borrar
+              </button>
+              <button onClick={() => saveScore(editing.value)} disabled={saving}
+                style={{ flex: 2, padding: '13px', border: 'none', borderRadius: 11, background: C.primary, color: '#fff', fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
