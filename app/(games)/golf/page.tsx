@@ -34,10 +34,10 @@ const FONT = "'Ubuntu', sans-serif"
 
 const S = {
   page: {
-    background: '#f2faf5',
+    background: '#F1F7F6',
     minHeight: '100vh',
     fontFamily: FONT,
-    color: '#1a3a28',
+    color: '#021B1A',
   } as React.CSSProperties,
 
   wrap: {
@@ -52,7 +52,7 @@ const S = {
     alignItems: 'center',
     gap: 12,
     padding: '14px 18px',
-    borderBottom: '1px solid #c8d8ec',
+    borderBottom: '1px solid #AACBC4',
     background: '#ffffff',
   } as React.CSSProperties,
 
@@ -61,7 +61,7 @@ const S = {
     border: 'none',
     cursor: 'pointer',
     padding: '4px 6px 4px 0',
-    color: '#4d7a5e',
+    color: '#707D7D',
     display: 'flex',
     alignItems: 'center',
   } as React.CSSProperties,
@@ -69,7 +69,7 @@ const S = {
   navTitle: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#1a3a28',
+    color: '#021B1A',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -87,7 +87,7 @@ const S = {
   btnPrimary: {
     width: '100%',
     padding: '14px 18px',
-    background: '#166534',
+    background: '#03624C',
     color: '#ffffff',
     border: 'none',
     borderRadius: 12,
@@ -111,8 +111,8 @@ const S = {
   btnSecondary: {
     padding: '12px 14px',
     background: '#ffffff',
-    color: '#1a3a28',
-    border: '1px solid #c8d8ec',
+    color: '#021B1A',
+    border: '1px solid #AACBC4',
     borderRadius: 12,
     fontFamily: FONT,
     fontSize: 14,
@@ -129,7 +129,7 @@ const S = {
   // Invite input
   inviteBox: {
     background: '#ffffff',
-    border: '1px solid #c8d8ec',
+    border: '1px solid #AACBC4',
     borderRadius: 12,
     padding: '12px 14px',
     display: 'flex',
@@ -145,14 +145,14 @@ const S = {
     fontFamily: FONT,
     fontSize: 15,
     fontWeight: 700,
-    color: '#1a3a28',
+    color: '#021B1A',
     letterSpacing: 3,
     textTransform: 'uppercase' as const,
   } as React.CSSProperties,
 
   inviteBtn: {
     padding: '8px 14px',
-    background: '#166534',
+    background: '#03624C',
     color: '#ffffff',
     border: 'none',
     borderRadius: 8,
@@ -173,13 +173,13 @@ const S = {
   sepLine: {
     flex: 1,
     height: 1,
-    background: '#bdd5c5',
+    background: '#AACBC4',
   } as React.CSSProperties,
 
   sepText: {
     fontSize: 10,
     fontWeight: 700,
-    color: '#4d7a5e',
+    color: '#707D7D',
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
     fontFamily: FONT,
@@ -190,7 +190,7 @@ const S = {
   tabs: {
     display: 'flex',
     padding: '0 18px',
-    borderBottom: '1px solid #c8d8ec',
+    borderBottom: '1px solid #AACBC4',
     marginBottom: 4,
   } as React.CSSProperties,
 
@@ -199,7 +199,7 @@ const S = {
     fontFamily: FONT,
     fontSize: 14,
     fontWeight: active ? 700 : 500,
-    color: active ? '#1a3a28' : '#4d7a5e',
+    color: active ? '#021B1A' : '#707D7D',
     background: 'none',
     border: 'none',
     borderBottom: active ? '2px solid #04447b' : '2px solid transparent',
@@ -214,7 +214,7 @@ const S = {
     display: n > 0 ? 'flex' : 'none',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#166534',
+    background: '#03624C',
     color: '#ffffff',
     fontSize: 10,
     fontWeight: 700,
@@ -227,7 +227,7 @@ const S = {
   card: (active: boolean): React.CSSProperties => ({
     margin: '0 18px 10px',
     background: '#ffffff',
-    border: `1px solid ${active ? '#166534' : '#bdd5c5'}`,
+    border: `1px solid ${active ? '#03624C' : '#AACBC4'}`,
     borderRadius: 14,
     padding: '14px 16px',
     cursor: 'pointer',
@@ -245,7 +245,7 @@ const S = {
   cardName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#1a3a28',
+    color: '#021B1A',
     fontFamily: FONT,
     lineHeight: 1.3,
     flex: 1,
@@ -254,7 +254,7 @@ const S = {
 
   cardCourse: {
     fontSize: 12,
-    color: '#4d7a5e',
+    color: '#707D7D',
     fontFamily: FONT,
     marginBottom: 10,
   } as React.CSSProperties,
@@ -280,7 +280,7 @@ const S = {
 
   metaGrey: {
     fontSize: 11,
-    color: '#4d7a5e',
+    color: '#707D7D',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -307,7 +307,7 @@ const S = {
   empty: {
     textAlign: 'center' as const,
     padding: '40px 24px',
-    color: '#4d7a5e',
+    color: '#707D7D',
     fontFamily: FONT,
   } as React.CSSProperties,
 }
@@ -350,9 +350,9 @@ const FORMAT_MAP: Record<string, { label: string; color: string; desc: string }>
 }
 
 const STATUS_MAP = {
-  setup:    { label: 'Configurando', color: '#4d7a5e', bg: '#e8f0fa' },
+  setup:    { label: 'Configurando', color: '#707D7D', bg: '#e8f0fa' },
   active:   { label: 'En curso',     color: '#15803d', bg: '#dcfce7' },
-  finished: { label: 'Finalizado',   color: '#4d7a5e', bg: '#f2faf5' },
+  finished: { label: 'Finalizado',   color: '#707D7D', bg: '#f2faf5' },
 }
 
 const HOLES_LABEL: Record<string, string> = {
@@ -484,12 +484,12 @@ export default function GolfPage() {
             </Link>
             <div style={S.navTitle}>
               {/* Ícono bandera de golf */}
-              <div style={{ width: 30, height: 30, background: '#166534', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 30, height: 30, background: '#03624C', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                   <line x1="6" y1="3" x2="6" y2="21" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
                   <path d="M6 3l12 4.5L6 12" fill="#ffffff"/>
-                  <circle cx="6" cy="21" r="1.5" fill="#c8d8ec"/>
-                  <line x1="4" y1="21" x2="20" y2="21" stroke="#c8d8ec" strokeWidth="1.5"/>
+                  <circle cx="6" cy="21" r="1.5" fill="#AACBC4"/>
+                  <line x1="4" y1="21" x2="20" y2="21" stroke="#AACBC4" strokeWidth="1.5"/>
                 </svg>
               </div>
               Golf
@@ -498,7 +498,7 @@ export default function GolfPage() {
 
           {/* ── Hero */}
           <div style={{
-            background: 'linear-gradient(135deg, #14532d 0%, #166534 55%, #16a34a 100%)',
+            background: 'linear-gradient(135deg, #14532d 0%, #03624C 55%, #16a34a 100%)',
             padding: '26px 20px 30px',
             position: 'relative',
             overflow: 'hidden',
@@ -540,7 +540,7 @@ export default function GolfPage() {
 
               {/* Unirse con código */}
               <button
-                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #04447b' : '1px solid #c8d8ec' }}
+                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #04447b' : '1px solid #AACBC4' }}
                 onClick={() => { setShowInvite(!showInvite); setInviteCode(''); setInviteError('') }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
@@ -617,7 +617,7 @@ export default function GolfPage() {
                     {shown.length === 0 ? (
                       <div style={S.empty}>
                         <div style={{ fontSize: 36, marginBottom: 12 }}>⛳</div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#1a3a28', marginBottom: 6 }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: '#021B1A', marginBottom: 6 }}>
                           {tab === 'active' ? 'No hay partidas activas' : 'No hay partidas finalizadas'}
                         </p>
                         <p style={{ fontSize: 12 }}>
@@ -633,11 +633,11 @@ export default function GolfPage() {
             </>
           ) : (
             // Usuario no logueado
-            <div style={{ margin: '24px 18px 0', background: '#ffffff', border: '1px solid #c8d8ec', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
-              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#1a3a28', marginBottom: 8 }}>
+            <div style={{ margin: '24px 18px 0', background: '#ffffff', border: '1px solid #AACBC4', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#021B1A', marginBottom: 8 }}>
                 Iniciá sesión para guardar tus partidas
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#4d7a5e', marginBottom: 16 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#707D7D', marginBottom: 16 }}>
                 Sin cuenta podés jugar, pero los resultados no se guardan
               </p>
               <Link href="/login" style={{ ...S.btnPrimary, display: 'inline-flex', width: 'auto', padding: '10px 24px', fontSize: 14 }}>
@@ -715,7 +715,7 @@ function TournamentCard({ t }: { t: Tournament }) {
           {t.golf_players.length} jugadores
         </span>
 
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#4d7a5e', fontFamily: FONT }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#707D7D', fontFamily: FONT }}>
           {formatDate(t.created_at)}
         </span>
       </div>
@@ -731,7 +731,7 @@ function FormatsInfo() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div style={{ margin: '16px 18px 0', background: '#ffffff', border: '1px solid #c8d8ec', borderRadius: 12 }}>
+    <div style={{ margin: '16px 18px 0', background: '#ffffff', border: '1px solid #AACBC4', borderRadius: 12 }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
@@ -746,7 +746,7 @@ function FormatsInfo() {
           fontFamily: FONT,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#1a3a28', display: 'flex', alignItems: 'center', gap: 7 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#021B1A', display: 'flex', alignItems: 'center', gap: 7 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <circle cx="12" cy="12" r="10" stroke="#5a7898" strokeWidth="1.8"/>
             <path d="M12 8v5M12 16h.01" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
@@ -762,7 +762,7 @@ function FormatsInfo() {
       </button>
 
       {open && (
-        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #c8d8ec', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #AACBC4', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {Object.entries(FORMAT_MAP).map(([key, fmt]) => (
             <div key={key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{
@@ -772,7 +772,7 @@ function FormatsInfo() {
               }}>
                 {fmt.label}
               </span>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#4d7a5e', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: '#707D7D', margin: 0, lineHeight: 1.5 }}>
                 {fmt.desc}
               </p>
             </div>

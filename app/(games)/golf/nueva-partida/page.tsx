@@ -41,9 +41,9 @@ type UnitInput = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
-  borderActive: '#166534', primary: '#166534',
-  text: '#1a3a28', muted: '#4d7a5e',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  borderActive: '#03624C', primary: '#03624C',
+  text: '#021B1A', muted: '#707D7D',
   success: '#15803d', error: '#be123c',
 } as const
 
@@ -348,7 +348,7 @@ export default function NuevaPartidaPage() {
         input:focus, select:focus { outline: none; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #bdd5c5; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #AACBC4; border-radius: 3px; }
       `}</style>
 
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text }}>
@@ -426,7 +426,7 @@ export default function NuevaPartidaPage() {
           </div>
 
           {/* Botón flotante */}
-          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #f2faf5 75%, transparent)' }}>
+          <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: 480, padding: '12px 18px 30px', background: 'linear-gradient(to top, #F1F7F6 75%, transparent)' }}>
             {step < 4 ? (
               <button disabled={!canNext()} onClick={() => setStep(s => s + 1)}
                 style={{ width: '100%', padding: '15px', background: canNext() ? C.primary : '#e0ebf8', color: canNext() ? '#ffffff' : C.muted, border: 'none', borderRadius: 12, fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: canNext() ? 'pointer' : 'not-allowed', transition: 'all 0.2s' }}>
@@ -562,7 +562,7 @@ function StepCancha({ query, onQuery, results, selected, onSelect, showNew, onTo
                     <span style={{ fontSize: 9, color: C.muted }}>SI</span>
                     <input type="number" min={1} max={18} value={h.stroke_index}
                       onChange={e => updateHole(i, 'stroke_index', Math.min(18, Math.max(1, parseInt(e.target.value) || 1)))}
-                      style={{ width: 32, padding: '2px 3px', background: '#f2faf5', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
+                      style={{ width: 32, padding: '2px 3px', background: '#F1F7F6', border: `1px solid ${C.border}`, borderRadius: 5, color: C.text, fontSize: 11, textAlign: 'center' }} />
                   </div>
                 </div>
               ))}

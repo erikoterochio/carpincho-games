@@ -31,8 +31,8 @@ type Format    = { format_type: string; handicap_allowance: number | null }
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
-  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
 } as const
@@ -295,14 +295,14 @@ export default function ScorearPage() {
         <div style={{ maxWidth: 480, margin: '0 auto', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
 
           {/* ── Navbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, background: C.card, flexShrink: 0 }}>
-            <Link href={`/golf/${id}`} style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', background: '#032221', flexShrink: 0 }}>
+            <Link href={`/golf/${id}`} style={{ color: 'rgba(255,255,255,0.55)', display: 'flex', alignItems: 'center' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+                <path d="M15 18l-6-6 6-6" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </Link>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.text, flex: 1 }}>Scorecard</span>
-            <span style={{ fontSize: 12, color: C.muted }}>{holesCompleted}/{playedHoles.length} hoyos</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', flex: 1 }}>Scorecard</span>
+            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{holesCompleted}/{playedHoles.length} hoyos</span>
           </div>
 
           {/* ── Leaderboard strip (medal) */}
@@ -344,12 +344,11 @@ export default function ScorearPage() {
           </div>
 
           {/* ── Scorecard Table */}
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ overflowX: 'auto' }}>
+          <div style={{ flex: 1, overflow: 'auto', margin: '0 10px' }}>
               <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW }}>
 
-                {/* Cabecera */}
-                <thead>
+                {/* Cabecera sticky */}
+                <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
                   <tr style={{ background: C.primary }}>
                     <th style={{
                       position: 'sticky', left: 0, zIndex: 2, background: C.primary,
@@ -376,37 +375,11 @@ export default function ScorearPage() {
                 </thead>
 
                 <tbody>
-                  {/* Front 9 */}
-                  {front9.map((h, i) => (
-                    <HoleRow key={h.hole_number} hole={h} players={players} scores={scores}
-                      getPlayingHcp={getPlayingHcp} onTap={pid => setEditCell({ playerId: pid, holeNumber: h.hole_number })}
-                      even={i % 2 === 0} saving={saving} colW={colW} />
-                  ))}
-
-                  {front9.length > 0 && (
-                    <SubtotalRow label="OUT" players={players} subtotal={subtotal}
-                      holeNumbers={front9.map(h => h.hole_number)}
-                      parTotal={front9.reduce((a, h) => a + h.par, 0)} colW={colW} />
-                  )}
-
-                  {/* Back 9 */}
-                  {back9.map((h, i) => (
-                    <HoleRow key={h.hole_number} hole={h} players={players} scores={scores}
-                      getPlayingHcp={getPlayingHcp} onTap={pid => setEditCell({ playerId: pid, holeNumber: h.hole_number })}
-                      even={i % 2 === 0} saving={saving} colW={colW} />
-                  ))}
-
-                  {back9.length > 0 && (
-                    <SubtotalRow label="IN" players={players} subtotal={subtotal}
-                      holeNumbers={back9.map(h => h.hole_number)}
-                      parTotal={back9.reduce((a, h) => a + h.par, 0)} colW={colW} />
-                  )}
-
-                  {/* TOTAL (solo si hay front + back) */}
+                  {/* TOTAL arriba (solo si 18 hoyos) */}
                   {front9.length > 0 && back9.length > 0 && (
-                    <tr style={{ background: C.primary }}>
+                    <tr style={{ background: '#032221' }}>
                       <td colSpan={3} style={{
-                        position: 'sticky', left: 0, zIndex: 1, background: C.primary,
+                        position: 'sticky', left: 0, zIndex: 1, background: '#032221',
                         padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#fff',
                       }}>TOT</td>
                       {players.map(p => {
@@ -428,12 +401,37 @@ export default function ScorearPage() {
                       })}
                     </tr>
                   )}
+
+                  {/* Front 9 */}
+                  {front9.map((h, i) => (
+                    <HoleRow key={h.hole_number} hole={h} players={players} scores={scores}
+                      getPlayingHcp={getPlayingHcp} onTap={pid => setEditCell({ playerId: pid, holeNumber: h.hole_number })}
+                      even={i % 2 === 0} saving={saving} colW={colW} />
+                  ))}
+
+                  {front9.length > 0 && (
+                    <SubtotalRow label="IDA" players={players} subtotal={subtotal}
+                      holeNumbers={front9.map(h => h.hole_number)}
+                      parTotal={front9.reduce((a, h) => a + h.par, 0)} colW={colW} />
+                  )}
+
+                  {/* Back 9 */}
+                  {back9.map((h, i) => (
+                    <HoleRow key={h.hole_number} hole={h} players={players} scores={scores}
+                      getPlayingHcp={getPlayingHcp} onTap={pid => setEditCell({ playerId: pid, holeNumber: h.hole_number })}
+                      even={i % 2 === 0} saving={saving} colW={colW} />
+                  ))}
+
+                  {back9.length > 0 && (
+                    <SubtotalRow label="VTA" players={players} subtotal={subtotal}
+                      holeNumbers={back9.map(h => h.hole_number)}
+                      parTotal={back9.reduce((a, h) => a + h.par, 0)} colW={colW} />
+                  )}
                 </tbody>
               </table>
-            </div>
 
             {isRoundComplete && (
-              <div style={{ padding: '16px 18px', textAlign: 'center' }}>
+              <div style={{ padding: '16px 4px', textAlign: 'center' }}>
                 <Link href={`/golf/${id}`}
                   style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: '#dcfce7', border: '1px solid #86efac', borderRadius: 12, color: '#15803d', textDecoration: 'none', fontFamily: FONT, fontSize: 14, fontWeight: 700 }}>
                   ✓ Todos los scores cargados — Ver resultados

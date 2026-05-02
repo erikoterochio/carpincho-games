@@ -42,8 +42,8 @@ type Format    = { format_type: string; display_name: string; handicap_allowance
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
-  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
   success: '#15803d', error: '#b91c1c',

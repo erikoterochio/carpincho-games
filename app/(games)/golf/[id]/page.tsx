@@ -58,8 +58,8 @@ type LeaderboardRow = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#f2faf5', card: '#ffffff', border: '#bdd5c5',
-  primary: '#166534', text: '#1a3a28', muted: '#4d7a5e',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
 } as const
@@ -768,73 +768,176 @@ function MatchLeaderboard({ format, players, holes, scores, playerCalcs, units, 
         </p>
       )}
       {pairs.map(([a, b], i) => (
-        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball, maxDiff)} holes={holes} />
+        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball, maxDiff)} holes={holes} scores={scores} />
       ))}
     </div>
   )
 }
 
-function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
+function MatchCard({ state, holes, scores }: { state: MatchState; holes: Hole[]; scores: HoleScore[] }) {
   const [expanded, setExpanded] = useState(false)
-  const { unitA, unitB, status, upDown, isFinished } = state
-  const statusColor = isFinished ? '#15803d' : upDown === 0 ? C.muted : upDown > 0 ? '#5b9bd5' : '#e07b4f'
+  const { unitA, unitB, status, upDown, isFinished, holeResults } = state
+  const aLeads = upDown > 0; const bLeads = upDown < 0
+  const statusColor = isFinished ? C.primary : upDown === 0 ? C.muted : upDown > 0 ? C.primary : C.bogey
+
+  // Posición acumulada por hoyo
+  let running = 0
+  const runByHole: Record<number, number> = {}
+  holes.forEach(h => {
+    const r = holeResults[h.hole_number]
+    if (r === 'win') running++; else if (r === 'loss') running--
+    runByHole[h.hole_number] = running
+  })
+
+  const colW = { label: 60, hole: 34 }
+  const tableW = colW.label + holes.length * colW.hole
 
   return (
-    <div style={{ background: C.card, border: `1px solid ${isFinished ? '#166534' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '14px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: upDown > 0 ? C.text : C.muted }}>{unitA.name}</div>
-            <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#5a7898' }}>HCP {unitA.teamPlayingHcp}</div>
+    <div style={{ background: C.card, border: `1px solid ${isFinished ? C.primary : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+
+      {/* ── Cabecera equipos */}
+      <div style={{ padding: '14px 16px 10px' }}>
+        {/* Equipo A */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 16, background: aLeads ? C.primary : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{unitA.name.charAt(0)}</span>
           </div>
-          <div style={{ flexShrink: 0, textAlign: 'center', padding: '0 12px' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: statusColor }}>{status}</div>
-            <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              {isFinished ? 'Finalizado' : `${state.holesRemaining} rest.`}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: aLeads ? C.text : C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{unitA.name}</div>
+            <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name.split(' ')[0]).join(' & ')} · HCP {unitA.teamPlayingHcp}</div>
+          </div>
+          {aLeads && (
+            <div style={{ background: '#dcfce7', border: `1px solid #86efac`, borderRadius: 8, padding: '4px 10px', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{status}</span>
             </div>
-          </div>
-          <div style={{ flex: 1, textAlign: 'right' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: upDown < 0 ? C.text : C.muted }}>{unitB.name}</div>
-            <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#5a7898' }}>HCP {unitB.teamPlayingHcp}</div>
-          </div>
+          )}
         </div>
-        {/* Barra */}
-        <div style={{ position: 'relative', height: 6, background: '#e0ebf8', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, background: '#c8d8ec', transform: 'translateX(-50%)', zIndex: 1 }} />
-          {upDown !== 0 && (() => {
-            const played = holes.length - state.holesRemaining
-            const pct    = played > 0 ? Math.min(0.5, Math.abs(upDown) / Math.max(played, 1) * 0.5) : 0
-            return (
-              <div style={{ position: 'absolute', top: 0, bottom: 0, borderRadius: 3, width: `${pct * 100}%`, left: upDown > 0 ? `${50 - pct * 100}%` : '50%', background: upDown > 0 ? '#5b9bd5' : '#e07b4f' }} />
-            )
-          })()}
+
+        {/* Separador */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ flex: 1, height: 1, background: C.border }} />
+          {!aLeads && !bLeads && <span style={{ fontSize: 12, fontWeight: 700, color: C.muted, padding: '0 4px' }}>{status}</span>}
+          <div style={{ flex: 1, height: 1, background: C.border }} />
         </div>
-        <button onClick={() => setExpanded(!expanded)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.muted, fontFamily: FONT, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-          {expanded ? '▲' : '▼'} Hoyo a hoyo
-        </button>
+
+        {/* Equipo B */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 16, background: bLeads ? C.bogey : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{unitB.name.charAt(0)}</span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: bLeads ? C.text : C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{unitB.name}</div>
+            <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name.split(' ')[0]).join(' & ')} · HCP {unitB.teamPlayingHcp}</div>
+          </div>
+          {bLeads && (
+            <div style={{ background: '#fee2e2', border: `1px solid #fca5a5`, borderRadius: 8, padding: '4px 10px', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.bogey }}>{status}</span>
+            </div>
+          )}
+        </div>
+
+        {isFinished && (
+          <div style={{ marginTop: 10, padding: '6px 10px', background: '#dcfce7', borderRadius: 8, textAlign: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.primary }}>
+              {upDown > 0 ? unitA.name : unitB.name} ganó {status}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* ── Botón expandir */}
+      <button onClick={() => setExpanded(!expanded)}
+        style={{ width: '100%', padding: '9px 16px', background: C.bg, border: 'none', borderTop: `1px solid ${C.border}`, cursor: 'pointer', fontSize: 11, color: C.muted, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+          <path d="M6 9l6 6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        {expanded ? 'Cerrar' : 'Ver hoyo a hoyo'}
+      </button>
+
+      {/* ── Tabla hoyo a hoyo */}
       {expanded && (
-        <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 16px', overflowX: 'auto' }}>
-          <div style={{ display: 'flex', gap: 4, minWidth: 'fit-content' }}>
-            {holes.map(h => {
-              const res   = state.holeResults[h.hole_number] ?? 'pending'
-              const bg    = res === 'win' ? '#dbeafe' : res === 'loss' ? '#fee2e2' : res === 'halved' ? '#e8f0fa' : '#f0f6ff'
-              const color = res === 'win' ? '#5b9bd5' : res === 'loss' ? '#e07b4f' : res === 'halved' ? C.muted : '#2a2a3a'
-              const label = res === 'win' ? 'A' : res === 'loss' ? 'B' : res === 'halved' ? '—' : '·'
-              return (
-                <div key={h.hole_number} style={{ textAlign: 'center', minWidth: 26 }}>
-                  <div style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>{h.hole_number}</div>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color }}>{label}</div>
-                </div>
-              )
-            })}
-          </div>
+        <div style={{ borderTop: `1px solid ${C.border}`, overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', minWidth: tableW, width: '100%', fontFamily: FONT }}>
+            <thead>
+              <tr style={{ background: C.primary }}>
+                <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.label, padding: '7px 8px', textAlign: 'left', fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 400, borderRight: `1px solid rgba(255,255,255,0.15)` }}>
+                  Hoyo
+                </th>
+                {holes.map(h => (
+                  <th key={h.hole_number} style={{ width: colW.hole, textAlign: 'center', fontSize: 11, color: '#fff', fontWeight: 700, padding: '7px 2px' }}>
+                    {h.hole_number}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Par */}
+              <tr style={{ background: C.bg }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '4px 8px', fontSize: 10, color: C.muted, borderRight: `1px solid ${C.border}` }}>Par</td>
+                {holes.map(h => <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.muted, padding: '4px 2px' }}>{h.par}</td>)}
+              </tr>
+              {/* Hcp */}
+              <tr style={{ background: C.bg }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '3px 8px', fontSize: 10, color: C.border, borderRight: `1px solid ${C.border}` }}>Hcp</td>
+                {holes.map(h => <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.border, padding: '3px 2px' }}>{h.stroke_index}</td>)}
+              </tr>
+              {/* Equipo A label */}
+              <tr style={{ background: '#dcfce7' }}>
+                <td colSpan={holes.length + 1} style={{ padding: '4px 8px', fontSize: 10, fontWeight: 700, color: C.primary }}>{unitA.name}</td>
+              </tr>
+              {unitA.players.map(p => (
+                <MatchScoreRow key={p.id} player={p} holes={holes} scores={scores} bg={aLeads ? '#f0fdf4' : C.card} colW={colW} />
+              ))}
+              {/* Equipo B label */}
+              <tr style={{ background: '#f5f5f5' }}>
+                <td colSpan={holes.length + 1} style={{ padding: '4px 8px', fontSize: 10, fontWeight: 700, color: C.muted }}>{unitB.name}</td>
+              </tr>
+              {unitB.players.map(p => (
+                <MatchScoreRow key={p.id} player={p} holes={holes} scores={scores} bg={bLeads ? '#fff7ed' : C.card} colW={colW} />
+              ))}
+              {/* Posición acumulada */}
+              <tr style={{ background: C.bg, borderTop: `1.5px solid ${C.border}` }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '6px 8px', fontSize: 10, fontWeight: 700, color: C.muted, borderRight: `1px solid ${C.border}` }}>Pos</td>
+                {holes.map(h => {
+                  if (holeResults[h.hole_number] === 'pending' || holeResults[h.hole_number] === undefined)
+                    return <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.border }}>·</td>
+                  const pos = runByHole[h.hole_number]
+                  const label = pos === 0 ? 'AS' : pos > 0 ? `${pos}UP` : `${Math.abs(pos)}DN`
+                  const color = pos === 0 ? C.muted : pos > 0 ? C.primary : C.bogey
+                  return <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color, padding: '6px 1px' }}>{label}</td>
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
     </div>
+  )
+}
+
+function MatchScoreRow({ player, holes, scores, bg, colW }: {
+  player: Player; holes: Hole[]; scores: HoleScore[]
+  bg: string; colW: { label: number; hole: number }
+}) {
+  return (
+    <tr style={{ background: bg }}>
+      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: bg, padding: '5px 8px', borderRight: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: 3, background: TEE_HEX[player.tee_color] ?? '#888', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: C.text, whiteSpace: 'nowrap' }}>{player.display_name.split(' ')[0]}</span>
+        </div>
+      </td>
+      {holes.map(h => {
+        const gross = scores.find(s => s.player_id === player.id && s.hole_number === h.hole_number)?.gross ?? null
+        return (
+          <td key={h.hole_number} style={{ textAlign: 'center', padding: '4px 2px' }}>
+            {gross !== null
+              ? <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{gross}</span>
+              : <span style={{ fontSize: 12, color: C.border }}>·</span>}
+          </td>
+        )
+      })}
+    </tr>
   )
 }
 
@@ -1156,9 +1259,9 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
   }
 
   return (
-    <div style={{ overflowX: 'auto', paddingBottom: 16 }}>
+    <div style={{ overflow: 'auto', margin: '0 10px 16px' }}>
       <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
-        <thead>
+        <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
           <tr style={{ background: C.primary }}>
             <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.hole, padding: '9px 4px', fontSize: 12, color: '#fff', textAlign: 'center', fontWeight: 700 }}>H</th>
             <th style={{ width: colW.par, padding: '9px 4px', fontSize: 12, color: 'rgba(255,255,255,0.8)', textAlign: 'center', fontWeight: 500 }}>Par</th>
@@ -1180,10 +1283,6 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
           </tr>
         </thead>
         <tbody>
-          {front9.map((h, i) => renderHoleRow(h, i % 2 === 0))}
-          {front9.length > 0 && renderSubtotalRow('OUT', front9)}
-          {back9.map((h, i)  => renderHoleRow(h, i % 2 === 0))}
-          {back9.length > 0  && renderSubtotalRow('IN', back9)}
           {front9.length > 0 && back9.length > 0 && (
             <tr style={{ background: C.primary }}>
               <td colSpan={3} style={{ position: 'sticky', left: 0, zIndex: 1, background: C.primary, padding: '8px 10px', fontSize: 12, fontWeight: 700, color: '#fff' }}>
@@ -1210,6 +1309,10 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
               })}
             </tr>
           )}
+          {front9.map((h, i) => renderHoleRow(h, i % 2 === 0))}
+          {front9.length > 0 && renderSubtotalRow('IDA', front9)}
+          {back9.map((h, i)  => renderHoleRow(h, i % 2 === 0))}
+          {back9.length > 0  && renderSubtotalRow('VTA', back9)}
         </tbody>
       </table>
     </div>
