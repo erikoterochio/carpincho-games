@@ -12,8 +12,8 @@ const MULTIPLAYER = [
   { name: 'Berenjena',         href: '/berenjena', color: '#110736', img: '/images/berenjena.png' },
   { name: 'Tabú',              href: '/tabu',      color: '#065c6c', img: '/images/tabu.png' },
   { name: 'Dígalo con mímica', href: '/mimica',    color: '#055074', img: '/images/mimica.png' },
-  { name: 'Truco',             href: '/truco.html',     color: '#110736', img: '/images/truco.png' },
-  { name: 'Generala',          href: '/generala.html',  color: '#0b2659', img: '/images/generala.png' },
+  { name: 'Truco',             href: '/truco',     color: '#110736', img: '/images/truco.png' },
+  { name: 'Generala',          href: '/generala',  color: '#0b2659', img: '/images/generala.png' },
 ]
 
 const TOOLS = [
