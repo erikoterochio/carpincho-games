@@ -665,34 +665,44 @@ export default function TournamentPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '6px 12px' }}>
-                        {['#','JUGADOR', fmt?.format_type === 'stableford' ? 'PTS' : 'NETT','VS PAR','H'].map((h, i) => (
-                          <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 56px 50px 44px', gap: 6, padding: '4px 12px' }}>
+                        {(['#', 'JUGADOR', 'HCP', fmt?.format_type === 'stableford' ? 'PTS' : 'NETO', 'VS PAR', 'HOYO'] as const).map((h, i) => (
+                          <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i === 0 || i > 1 ? 'center' : 'left' }}>{h}</span>
                         ))}
                       </div>
                       {leaderboard.map((row, i) => {
                         const isStbf  = fmt?.format_type === 'stableford'
                         const vpColor = row.vsParDisplay === 'E' ? C.par : row.vsParDisplay.startsWith('-') ? C.birdie : C.bogey
+                        const initials = row.player.display_name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+                        const teeColor = TEE_HEX[row.player.tee_color] ?? '#888'
                         return (
-                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{row.pos}</div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
-                                <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{row.player.display_name}</span>
+                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 56px 50px 44px', gap: 6, padding: '10px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 12, alignItems: 'center' }}>
+                            {/* # */}
+                            <div style={{ fontSize: 20, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center', lineHeight: 1 }}>{row.pos}</div>
+                            {/* JUGADOR */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                              <div style={{ width: 34, height: 34, borderRadius: 17, background: teeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{initials}</span>
                               </div>
-                              <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.player.display_name}</span>
                             </div>
+                            {/* HCP */}
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#15803d' : C.text }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.playingHcp}</span>
+                            </div>
+                            {/* PTS / NETO */}
+                            <div style={{ textAlign: 'center' }}>
+                              <span style={{ fontSize: 18, fontWeight: 700, color: i === 0 ? '#15803d' : C.text, lineHeight: 1 }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
                               {isStbf && row.holesPlayed > 0 && <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>}
                             </div>
+                            {/* VS PAR */}
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: row.holesPlayed === 0 ? C.muted : vpColor }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: row.holesPlayed === 0 ? C.muted : vpColor }}>
                                 {row.holesPlayed === 0 ? '—' : row.vsParDisplay}
                               </span>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
+                            {/* HOYO */}
+                            <div style={{ textAlign: 'center' }}>
                               <span style={{ fontSize: 11, color: C.muted }}>{row.holesPlayed}/{totalHoles}</span>
                             </div>
                           </div>
@@ -1033,25 +1043,31 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '6px 12px' }}>
-            {['#', 'JUGADOR', 'PUNTOS', 'H'].map((h, i) => (
-              <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 60px 40px', gap: 6, padding: '4px 12px' }}>
+            {(['#', 'JUGADOR', 'HCP', 'PUNTOS', 'HOYO'] as const).map((h, i) => (
+              <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i === 0 || i > 1 ? 'center' : 'left' }}>{h}</span>
             ))}
           </div>
-          {rows.map((row, i) => (
-            <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{row.pos}</div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{row.player.display_name}</span>
+          {rows.map((row, i) => {
+            const initials = row.player.display_name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+            const teeColor = TEE_HEX[row.player.tee_color] ?? '#888'
+            return (
+              <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 60px 40px', gap: 6, padding: '10px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 12, alignItems: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center', lineHeight: 1 }}>{row.pos}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 17, background: teeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{initials}</span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.player.display_name}</span>
                 </div>
-                <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.playingHcp}</span>
+                </div>
+                <PtsCell pts={row.value} first={i === 0} />
+                <span style={{ fontSize: 11, color: C.muted, textAlign: 'center' }}>{row.holesPlayed}</span>
               </div>
-              <PtsCell pts={row.value} first={i === 0} />
-              <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{row.holesPlayed}</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
