@@ -1224,18 +1224,18 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
   const playerColW = players.length <= 2 ? 80 : players.length === 3 ? 68 : players.length === 4 ? 60 : 54
   const colW   = { hole: 38, par: 30, hcp: 28, player: playerColW }
   const tableW = colW.hole + colW.par + colW.hcp + players.length * colW.player
-  const RB     = '#021B1A'
+  const RB     = C.primary
   const div    = `1px solid ${C.border}`
-  const rbt    = `1px solid rgba(255,255,255,0.12)`
+  const rbt    = `1px solid rgba(255,255,255,0.15)`
 
   const renderHoleRow = (h: Hole) => {
     const canEdit = isActive && !!roundId
     return (
       <tr key={h.hole_number}>
-        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderRight: div, borderBottom: div }}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderBottom: div }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', padding: '11px 4px' }}>{h.hole_number}</div>
         </td>
-        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: '#021B1A', background: '#3FAF7C', borderRight: div, borderBottom: div }}>{h.par}</td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: '#021B1A', background: '#3FAF7C', borderBottom: div }}>{h.par}</td>
         <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: '#021B1A', background: '#C2E5CE', borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
         {players.map(p => {
           const strokes = getStrokes(p.id, h.hole_number)
@@ -1269,7 +1269,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
   const renderSectionRow = (label: string, holeSet: Hole[], open: boolean, toggle: () => void) => {
     return (
       <tr key={label} onClick={toggle} style={{ cursor: 'pointer' }}>
-        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, borderTop: rbt, borderBottom: rbt, borderRight: rbt }}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, borderTop: rbt, borderBottom: rbt }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '11px 8px' }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
               <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.5)" strokeWidth="2.2" strokeLinecap="round"/>
@@ -1277,7 +1277,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
             <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{label}</span>
           </div>
         </td>
-        <td style={{ background: RB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.55)', borderTop: rbt, borderBottom: rbt, borderRight: rbt }}>
+        <td style={{ background: RB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.7)', borderTop: rbt, borderBottom: rbt }}>
           {holeSet.reduce((a, h) => a + h.par, 0)}
         </td>
         <td style={{ background: RB, borderTop: rbt, borderBottom: rbt, borderRight: div }} />
@@ -1304,9 +1304,13 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
 
   const renderTotalRow = () => (
     <tr key="total">
-      <td colSpan={3} style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, padding: '11px 10px', fontSize: 13, fontWeight: 700, color: '#fff', borderBottom: rbt }}>
-        TOT <span style={{ fontWeight: 400, fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{holes.reduce((a, h) => a + h.par, 0)}</span>
+      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, padding: '11px 8px', fontSize: 13, fontWeight: 700, color: '#fff', borderBottom: rbt }}>
+        TOT
       </td>
+      <td style={{ background: RB, textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.7)', borderBottom: rbt }}>
+        {holes.reduce((a, h) => a + h.par, 0)}
+      </td>
+      <td style={{ background: RB, borderBottom: rbt, borderRight: div }} />
       {players.map(p => {
         const tots  = subTotal(p.id, holes)
         const val   = isStableford ? tots.pts : tots.gross
@@ -1333,9 +1337,9 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
         <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
           <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
             <tr>
-              <th style={{ position: 'sticky', left: 0, zIndex: 2, background: '#1B4D2E', width: colW.hole, padding: '9px 4px', fontSize: 11, color: '#fff', textAlign: 'center', fontWeight: 700, borderRight: '1px solid rgba(255,255,255,0.15)' }}>Hoyo</th>
-              <th style={{ width: colW.par, padding: '9px 4px', fontSize: 11, color: '#021B1A', background: '#3FAF7C', textAlign: 'center', fontWeight: 600, borderRight: '1px solid rgba(255,255,255,0.25)' }}>Par</th>
-              <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 10, color: '#021B1A', background: '#C2E5CE', textAlign: 'center', fontWeight: 500, borderRight: div }}>Hcp</th>
+              <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.card, width: colW.hole, padding: '9px 4px', fontSize: 11, color: C.text, textAlign: 'center', fontWeight: 700, borderRight: div, borderBottom: div }}>Hoyo</th>
+              <th style={{ width: colW.par, padding: '9px 4px', fontSize: 11, color: C.muted, background: C.card, textAlign: 'center', fontWeight: 500, borderBottom: div }}>Par</th>
+              <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 10, color: C.muted, background: C.card, textAlign: 'center', fontWeight: 400, borderRight: div, borderBottom: div }}>Hcp</th>
               {players.map(p => {
                 const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
                 return (
