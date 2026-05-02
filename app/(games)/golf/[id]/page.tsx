@@ -544,7 +544,7 @@ export default function TournamentPage() {
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
       `}</style>
 
-      <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 80 }}>
+      <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
@@ -715,7 +715,7 @@ export default function TournamentPage() {
 
       {/* FAB Scorear */}
       {isActive && round && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 20 }}>
+        <div style={{ position: 'fixed', bottom: 'calc(24px + env(safe-area-inset-bottom))', right: 24, zIndex: 20 }}>
           <Link href={`/golf/${id}/scorear`}
             style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.primary, color: '#ffffff', borderRadius: 28, padding: '14px 22px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT, boxShadow: '0 6px 24px rgba(22,101,52,0.45)' }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
@@ -1066,7 +1066,8 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
   const front9   = holes.filter(h => h.hole_number <= 9)
   const back9    = holes.filter(h => h.hole_number >= 10)
-  const colW     = { hole: 38, par: 30, hcp: 30, player: 56 }
+  const playerColW = players.length <= 2 ? 80 : players.length === 3 ? 68 : players.length === 4 ? 60 : 54
+  const colW     = { hole: 38, par: 30, hcp: 28, player: playerColW }
   const tableW   = colW.hole + colW.par + colW.hcp + players.length * colW.player
   const totalPar = holes.reduce((a, h) => a + h.par, 0)
 

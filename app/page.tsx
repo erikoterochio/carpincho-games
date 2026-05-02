@@ -3,15 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import SessionBridge from '@/components/SessionBridge'
 
 const FEATURED = [
-  { name: 'El Impostor', href: '/impostor.html', color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',   href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'El Impostor', href: '/impostor', color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',   href: '/berenjena', color: '#110736', img: '/images/berenjena.png' },
 ]
 
 const MULTIPLAYER = [
-  { name: 'El Impostor',       href: '/impostor.html',  color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',         href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
-  { name: 'Tabú',              href: '/tabu.html',      color: '#065c6c', img: '/images/tabu.png' },
-  { name: 'Dígalo con mímica', href: '/mimica.html',    color: '#055074', img: '/images/mimica.png' },
+  { name: 'El Impostor',       href: '/impostor',  color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',         href: '/berenjena', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'Tabú',              href: '/tabu',      color: '#065c6c', img: '/images/tabu.png' },
+  { name: 'Dígalo con mímica', href: '/mimica',    color: '#055074', img: '/images/mimica.png' },
   { name: 'Truco',             href: '/truco.html',     color: '#110736', img: '/images/truco.png' },
   { name: 'Generala',          href: '/generala.html',  color: '#0b2659', img: '/images/generala.png' },
 ]

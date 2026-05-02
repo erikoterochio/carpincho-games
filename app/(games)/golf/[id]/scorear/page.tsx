@@ -277,7 +277,8 @@ export default function ScorearPage() {
     </div>
   )
 
-  const colW = { hole: 38, par: 30, hcp: 30, player: 56 }
+  const playerColW = players.length <= 2 ? 80 : players.length === 3 ? 68 : players.length === 4 ? 60 : 54
+  const colW = { hole: 38, par: 30, hcp: 28, player: playerColW }
   const tableW = colW.hole + colW.par + colW.hcp + players.length * colW.player
 
   // ─── RENDER ────────────────────────────────────────────────────
@@ -451,7 +452,8 @@ export default function ScorearPage() {
           <div style={{
             position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)',
             width: '100%', maxWidth: 480, background: C.card,
-            borderRadius: '20px 20px 0 0', padding: '16px 24px 40px',
+            borderRadius: '20px 20px 0 0', padding: '16px 24px',
+            paddingBottom: 'calc(40px + env(safe-area-inset-bottom))',
             zIndex: 11, boxShadow: '0 -6px 32px rgba(0,0,0,0.15)',
           }}>
             {/* Handle */}
