@@ -554,9 +554,16 @@ export default function TournamentPage() {
                 <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </Link>
-            <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {tournament.name}
-            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tournament.num_rounds > 1 ? `${tournament.name} · Fecha #${round?.round_number ?? '—'}` : tournament.name}
+              </div>
+              {round?.date && (
+                <div style={{ fontSize: 11, color: C.muted }}>
+                  {new Date(round.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              )}
+            </div>
             {isActive && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
                 <div style={{ width: 6, height: 6, borderRadius: 3, background: '#15803d', animation: 'pulse 2s infinite' }} />
@@ -703,7 +710,7 @@ export default function TournamentPage() {
                             </div>
                             {/* HOYO */}
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 11, color: C.muted }}>{row.holesPlayed}/{totalHoles}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.holesPlayed}</span>
                             </div>
                           </div>
                         )
@@ -1196,16 +1203,15 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
   const renderHoleRow = (h: Hole) => {
     const div = `1px solid ${C.border}`
     return (
-      <tr key={h.hole_number} style={{ background: C.card }}>
-        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: C.card, width: colW.hole, textAlign: 'center', borderRight: div, borderBottom: div }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text, padding: '11px 4px' }}>{h.hole_number}</div>
+      <tr key={h.hole_number}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderRight: div, borderBottom: div }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', padding: '11px 4px' }}>{h.hole_number}</div>
         </td>
-        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: C.muted, borderRight: div, borderBottom: div }}>{h.par}</td>
-        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: C.border, borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: '#021B1A', background: '#3FAF7C', borderRight: div, borderBottom: div }}>{h.par}</td>
+        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: '#021B1A', background: '#C2E5CE', borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
         {players.map(p => {
           const strokes = getStrokes(p.id, h.hole_number)
           const gross   = getScore(p.id, h.hole_number)
-          const nett    = gross !== null ? gross - strokes : null
           let color: string | null = null
           if (gross !== null) {
             if (isStableford) {
@@ -1216,25 +1222,20 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
             }
           }
           return (
-            <td key={p.id} style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', borderBottom: `1px solid ${C.border}` }}>
+            <td key={p.id} style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', borderBottom: div, background: C.card }}>
               <div style={{
                 width: 46, height: 42, borderRadius: 9, margin: '0 auto',
                 background: gross !== null ? color! + '1c' : 'transparent',
                 border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
                 position: 'relative',
               }}>
                 {strokes > 0 && (
                   <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '70' }} />
                 )}
-                {gross !== null ? (
-                  <>
-                    <span style={{ fontSize: 18, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
-                    {strokes > 0 && nett !== null && (
-                      <span style={{ fontSize: 10, color: C.muted, lineHeight: 1.2 }}>/{nett}</span>
-                    )}
-                  </>
-                ) : <span style={{ fontSize: 16, color: C.border }}>·</span>}
+                {gross !== null
+                  ? <span style={{ fontSize: 18, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
+                  : <span style={{ fontSize: 16, color: C.border }}>·</span>}
               </div>
             </td>
           )
@@ -1245,15 +1246,20 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
   const renderSubtotalRow = (label: string, holeSet: Hole[]) => {
     const parTotal = holeSet.reduce((a, h) => a + h.par, 0)
+    const bt = `1.5px solid ${C.border}`
     return (
-      <tr key={label} style={{ background: '#dcfce7' }}>
-        <td colSpan={3} style={{
-          position: 'sticky', left: 0, zIndex: 1, background: '#dcfce7',
-          padding: '7px 8px', fontSize: 11, fontWeight: 700, color: C.primary,
-          borderTop: `1.5px solid ${C.border}`, borderBottom: `1.5px solid ${C.border}`,
+      <tr key={label}>
+        <td style={{
+          position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E',
+          padding: '7px 8px', fontSize: 11, fontWeight: 700, color: '#fff',
+          borderTop: bt, borderBottom: bt, borderRight: `1px solid rgba(255,255,255,0.15)`,
         }}>
-          {label} <span style={{ fontWeight: 400, color: C.muted, fontSize: 10 }}>{parTotal}</span>
+          {label}
         </td>
+        <td style={{ background: '#3FAF7C', textAlign: 'center', fontSize: 11, fontWeight: 700, color: '#021B1A', borderTop: bt, borderBottom: bt, borderRight: `1px solid rgba(255,255,255,0.25)` }}>
+          {parTotal}
+        </td>
+        <td style={{ background: '#C2E5CE', borderTop: bt, borderBottom: bt, borderRight: `1px solid ${C.border}` }} />
         {players.map(p => {
           const sub   = subTotal(p.id, holeSet)
           const val   = isStableford ? sub.pts : sub.gross
@@ -1310,7 +1316,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
               {players.map(p => {
                 const tots  = subTotal(p.id, holes)
                 const val   = isStableford ? tots.pts : tots.gross
-                const vsPar = tots.gross != null ? tots.gross - totalPar : null
+                const vsPar = tots.gross != null ? tots.gross - tots.par : null
                 const vpColor = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.65)') : null
                 return (
                   <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px' }}>
