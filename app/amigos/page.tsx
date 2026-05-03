@@ -41,7 +41,7 @@ function Avatar({ name, size = 38 }: { name: string; size?: number }) {
   )
 }
 
-type Profile = { id: string; username: string; nombre: string; apellido: string; avatar_url?: string }
+type Profile = { id: string; username: string; nombre: string; apellido: string; avatar_url?: string; email?: string }
 type Friendship = { id: string; requester_id: string; addressee_id: string; status: string; profile: Profile }
 
 export default function AmigosPage() {
@@ -49,6 +49,7 @@ export default function AmigosPage() {
   const router = useRouter()
 
   const [myId, setMyId] = useState('')
+  const [myUsername, setMyUsername] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'amigos'|'solicitudes'>('amigos')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Profile[]>([])
@@ -62,6 +63,7 @@ export default function AmigosPage() {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       setMyId(user.id)
+      setMyUsername(user.user_metadata?.username || null)
       loadFriendships(user.id)
     })
   }, [])
@@ -107,10 +109,11 @@ export default function AmigosPage() {
     if (searchTimer.current) clearTimeout(searchTimer.current)
     if (!val.trim() || val.length < 2) { setSearchResults([]); return }
     searchTimer.current = setTimeout(async () => {
+      const q = val.replace(/[%_]/g, '\\$&')
       const { data } = await supabase
         .from('profiles')
-        .select('id, username, nombre, apellido, avatar_url')
-        .ilike('username', `%${val}%`)
+        .select('id, username, nombre, apellido, avatar_url, email')
+        .or(`username.ilike.%${q}%,email.ilike.%${q}%,nombre.ilike.%${q}%,apellido.ilike.%${q}%`)
         .neq('id', myId)
         .limit(6)
       setSearchResults(data || [])
@@ -139,7 +142,8 @@ export default function AmigosPage() {
 
   const friendIds = new Set(friends.map(f => f.profile?.id))
 
-  const displayName = (p: Profile) => p?.nombre ? `${p.nombre} ${p.apellido || ''}`.trim() : p?.username || '?'
+  const displayName = (p: Profile) => p?.nombre ? `${p.nombre} ${p.apellido || ''}`.trim() : p?.username || p?.email || '?'
+  const handle = (p: Profile) => p?.username ? `@${p.username}` : (p?.email ?? '')
 
   return (
     <>
@@ -156,6 +160,23 @@ export default function AmigosPage() {
         </nav>
 
         <div style={S.content}>
+
+          {/* Banner: perfil incompleto */}
+          {myUsername === null || myUsername === '' ? (
+            <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '12px', padding: '12px 16px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="#d97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400e', marginBottom: '2px' }}>Completá tu perfil</div>
+                <div style={{ fontSize: '11px', color: '#b45309', lineHeight: 1.4 }}>Necesitás un nombre de usuario para que otros puedan encontrarte.</div>
+              </div>
+              <button
+                onClick={() => router.push('/cuenta')}
+                style={{ padding: '6px 12px', background: '#d97706', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Ubuntu', sans-serif", whiteSpace: 'nowrap' }}
+              >
+                Ir a mi cuenta →
+              </button>
+            </div>
+          ) : null}
 
           {/* Buscar */}
           <div style={S.section}>
@@ -179,7 +200,7 @@ export default function AmigosPage() {
                         <Avatar name={displayName(p)} />
                         <div style={S.userInfo}>
                           <div style={S.userName}>{displayName(p)}</div>
-                          <div style={S.userHandle}>@{p.username}</div>
+                          <div style={S.userHandle}>{handle(p)}</div>
                         </div>
                         {isFriend
                           ? <span style={{ fontSize: '12px', color: '#16a34a', fontWeight: 600 }}>✓ Amigo</span>
@@ -229,7 +250,7 @@ export default function AmigosPage() {
                       <Avatar name={displayName(f.profile)} />
                       <div style={S.userInfo}>
                         <div style={S.userName}>{displayName(f.profile)}</div>
-                        <div style={S.userHandle}>@{f.profile?.username}</div>
+                        <div style={S.userHandle}>{handle(f.profile)}</div>
                       </div>
                       <button style={S.btnRemove} onClick={() => removeFriend(f.id)}>✕ Eliminar</button>
                     </div>
@@ -242,7 +263,7 @@ export default function AmigosPage() {
                       <Avatar name={displayName(r.profile)} />
                       <div style={S.userInfo}>
                         <div style={S.userName}>{displayName(r.profile)}</div>
-                        <div style={S.userHandle}>@{r.profile?.username}</div>
+                        <div style={S.userHandle}>{handle(r.profile)}</div>
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
                         <button style={S.btnAccept} onClick={() => acceptRequest(r.id)}>✓ Aceptar</button>

@@ -115,6 +115,7 @@ export default function CuentaPage() {
         username,
         nombre,
         apellido,
+        email,
         avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
       })
@@ -195,6 +196,19 @@ export default function CuentaPage() {
         </nav>
 
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '20px 18px' }}>
+
+          {/* Banner: perfil incompleto */}
+          {(!username || !avatarUrl) && userId ? (
+            <div style={{ background: '#fffbeb', border: '1.5px solid #fde68a', borderRadius: '12px', padding: '13px 16px', marginBottom: '16px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#92400e', marginBottom: '4px' }}>
+                ⚠️ Completá tu perfil
+              </div>
+              <ul style={{ paddingLeft: '16px', margin: 0 }}>
+                {!username && <li style={{ fontSize: '12px', color: '#b45309', lineHeight: 1.6 }}>Elegí un nombre de usuario para que tus amigos puedan encontrarte</li>}
+                {!avatarUrl && <li style={{ fontSize: '12px', color: '#b45309', lineHeight: 1.6 }}>Agregá una foto de perfil</li>}
+              </ul>
+            </div>
+          ) : null}
 
           {/* Foto de perfil */}
           <div style={SECTION}>
