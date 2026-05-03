@@ -36,12 +36,12 @@ export default function TrucoPage() {
             <div style={{ background: '#0d0d1a', borderRadius: 14, padding: '18px 16px', border: '1px solid #1e1736' }}>
               <div style={{ fontSize: 13, color: '#706c7e', lineHeight: 1.7 }}>Envido, truco, flor y todas las puyas. Jugá al truco con el marcador digital para no perder la cuenta.</div>
             </div>
-            <a href="/truco.html" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#4c1d95', color: '#ffffff', borderRadius: 12, padding: '14px 20px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT }}>
-              🃏 Jugar Truco
-            </a>
-            <Link href="/registrar-partida?game=truco" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: 12, padding: '12px 20px', textDecoration: 'none', fontSize: 14, fontWeight: 600, fontFamily: FONT }}>
-              📋 Registrar partida
+            <Link href="/truco/jugar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#4c1d95', color: '#ffffff', borderRadius: 12, padding: '14px 20px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT }}>
+              🃏 Nuevo partido
             </Link>
+            <a href="/truco.html" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: 12, padding: '11px 20px', textDecoration: 'none', fontSize: 13, fontFamily: FONT }}>
+              Jugar rápido sin guardar
+            </a>
           </div>
         </div>
       </div>
