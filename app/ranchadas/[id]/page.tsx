@@ -193,6 +193,12 @@ export default function RanchadaDetailPage() {
               <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, letterSpacing: '1px', textTransform: 'uppercase' }}>
                 Partidas · {ranchada.game_sessions.length}
               </div>
+              <a
+                href={`/registrar-partida?ranchada=${id}`}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: C.primary, color: C.text, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none' }}
+              >
+                + Agregar
+              </a>
             </div>
 
             {sortedSessions.length === 0 ? (

@@ -39,6 +39,9 @@ export default function BerenjenPage() {
             <a href="/berenjena.html" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#7c3aed', color: '#ffffff', borderRadius: 12, padding: '14px 20px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT }}>
               🍆 Jugar Berenjena
             </a>
+            <Link href="/registrar-partida?game=berenjena" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: 12, padding: '12px 20px', textDecoration: 'none', fontSize: 14, fontWeight: 600, fontFamily: FONT }}>
+              📋 Registrar partida
+            </Link>
           </div>
         </div>
       </div>

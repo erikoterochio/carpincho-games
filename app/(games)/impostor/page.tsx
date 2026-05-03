@@ -39,6 +39,9 @@ export default function ImpostorPage() {
             <a href="/impostor.html" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#dc2626', color: '#ffffff', borderRadius: 12, padding: '14px 20px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT }}>
               🕵️ Jugar El Impostor
             </a>
+            <Link href="/registrar-partida?game=impostor" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: 12, padding: '12px 20px', textDecoration: 'none', fontSize: 14, fontWeight: 600, fontFamily: FONT }}>
+              📋 Registrar partida
+            </Link>
           </div>
         </div>
       </div>
