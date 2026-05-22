@@ -152,6 +152,11 @@ export default function CuentaPage() {
     setTimeout(() => setUploadMsg(null), 3000)
   }
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/')
+  }
+
   const handleDelete = async () => {
     setDeleting(true)
     const res = await fetch('/api/delete-account', { method: 'POST' })
@@ -282,6 +287,16 @@ export default function CuentaPage() {
               {passMsg && (
                 <div style={{ marginTop: '8px', padding: '9px 12px', borderRadius: '8px', fontSize: '12px', background: passSent ? '#f0fdf4' : '#fef2f2', color: passSent ? '#16a34a' : '#dc2626', border: `1px solid ${passSent ? '#86efac' : '#fca5a5'}` }}>{passMsg}</div>
               )}
+            </div>
+          </div>
+
+          {/* Cerrar sesión */}
+          <div style={SECTION}>
+            <div style={SECTION_HEADER}><span style={SECTION_TITLE}>Sesión</span></div>
+            <div style={SECTION_BODY}>
+              <button style={BTN_SECONDARY} onClick={handleSignOut}>
+                Cerrar sesión
+              </button>
             </div>
           </div>
 
