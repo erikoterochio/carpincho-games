@@ -38,27 +38,52 @@ export async function register(formData: FormData) {
 
   const password = formData.get('password') as string
   const confirmPassword = formData.get('confirmPassword') as string
-  const email = formData.get('email') as string
-  const username = formData.get('username') as string
+  const email = (formData.get('email') as string).trim().toLowerCase()
+  const username = (formData.get('username') as string).trim()
 
   if (password !== confirmPassword) {
     return { error: 'Las contraseñas no coinciden.' }
+  }
+
+  if (password.length < 6) {
+    return { error: 'La contraseña debe tener al menos 6 caracteres.' }
+  }
+
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    return { error: 'El nombre de usuario debe tener entre 3 y 20 caracteres (letras, números o _).' }
+  }
+
+  // Verificar si el username ya está en uso
+  const { data: existingProfile } = await supabase
+    .from('profiles')
+    .select('id')
+    .eq('username', username)
+    .maybeSingle()
+
+  if (existingProfile) {
+    return { error: 'Ese nombre de usuario ya está en uso. Elegí otro.' }
   }
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: {
-        username,
-        full_name: username, // ← esto puebla el "Display name" en el dashboard
-      },
+      data: { username, full_name: username },
     },
   })
 
-  if (error) return { error: 'No se pudo crear la cuenta. Intentá de nuevo.' }
+  if (error) {
+    if (error.message.toLowerCase().includes('already registered') || error.message.toLowerCase().includes('already been registered')) {
+      return { error: 'Ya existe una cuenta con ese mail.' }
+    }
+    return { error: `No se pudo crear la cuenta: ${error.message}` }
+  }
 
-  // Guardar email + username en profiles para poder hacer login por username
+  // Supabase devuelve identities vacío cuando el mail ya existe (con confirmación habilitada)
+  if (data.user && data.user.identities?.length === 0) {
+    return { error: 'Ya existe una cuenta con ese mail.' }
+  }
+
   if (data.user) {
     await supabase.from('profiles').upsert({
       id: data.user.id,
