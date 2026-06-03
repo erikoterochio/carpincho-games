@@ -412,7 +412,20 @@ export default function PredecirPage() {
                   <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '18px 20px' }}>
                     <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 16 }}>💥 Otros especiales</div>
                     <TeamSelect field="fair_play" label="Premio Fair Play — Equipo" />
-                    <TeamSelect field="revelacion" label="Revelación — Equipo sorpresa" />
+                    <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 12, color: MUTED, marginBottom: 6, fontWeight: 600 }}>Revelación — Equipo sorpresa (15 pts)</div>
+                    <select
+                      value={specials.revelacion}
+                      onChange={e => handleSpecialChange('revelacion', e.target.value)}
+                      disabled={isDeadlinePast}
+                      style={{ display: 'block', width: '100%', padding: '11px 14px', background: BG, color: specials.revelacion ? TEXT : '#aaa', border: `1.5px solid ${BORDER}`, borderRadius: 10, fontFamily: FONT, fontSize: 13, outline: 'none', appearance: 'none' }}
+                    >
+                      <option value="">Elegir equipo...</option>
+                      {['República Checa','Escocia','Túnez','RD del Congo','Uzbekistán','Qatar','Irak','Sudáfrica','Arabia Saudita','Jordania','Bosnia y Herzegovina','Cabo Verde','Ghana','Curazao','Haití','Nueva Zelanda'].map(t => (
+                        <option key={t} value={t} style={{ color: TEXT }}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
                     <div>
                       <div style={{ fontSize: 12, color: MUTED, marginBottom: 6, fontWeight: 600 }}>Goleada del torneo — Partido</div>
                       <select

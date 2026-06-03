@@ -37,10 +37,15 @@ const STAGE_LABEL: Record<string, string> = {
 
 function calcScore(pick: UserPick, match: Match) {
   if (match.home_score === null || match.away_score === null) return null
-  if (pick.home_score === match.home_score && pick.away_score === match.away_score) return 3
-  const pr = Math.sign(pick.home_score - pick.away_score)
-  const mr = Math.sign(match.home_score - match.away_score)
-  return pr === mr ? 1 : 0
+  const ph = pick.home_score, pa = pick.away_score
+  const rh = match.home_score, ra = match.away_score
+  if (ph === rh && pa === ra) return 12
+  const correctOutcome = Math.sign(ph - pa) === Math.sign(rh - ra)
+  const oneScoreMatch = ph === rh || pa === ra
+  if (correctOutcome && oneScoreMatch) return 7
+  if (correctOutcome) return 5
+  if (oneScoreMatch) return 2
+  return 0
 }
 
 function fmtDate(d: string) {
@@ -51,7 +56,7 @@ export default function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
-  const [tab, setTab] = useState<'predecir' | 'fixture' | 'tabla' | 'info'>('predecir')
+  const [tab, setTab] = useState<'predecir' | 'fixture' | 'tabla' | 'reglamento' | 'info'>('predecir')
   const [user, setUser] = useState<any>(null)
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -159,6 +164,7 @@ export default function TournamentPage() {
     { key: 'predecir', label: 'Predecir' },
     { key: 'fixture', label: 'Fixture' },
     { key: 'tabla', label: 'Tabla' },
+    { key: 'reglamento', label: 'Reglamento' },
     { key: 'info', label: 'Info' },
   ] as const
 
@@ -284,15 +290,18 @@ export default function TournamentPage() {
                   {/* Right: scoring */}
                   <div>
                     <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 14 }}>Sistema de puntos</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Puntos por partido</div>
+                      <div style={{ fontSize: 11, color: MUTED, marginBottom: 14 }}>Ver reglamento completo en la pestaña Reglamento</div>
                       {[
-                        { pts: '3', label: 'Resultado exacto', desc: 'Ej: predeciste 2-1 y fue 2-1', color: '#10b981' },
-                        { pts: '1', label: 'Resultado correcto', desc: 'Acertaste el ganador o el empate', color: GOLD },
-                        { pts: '0', label: 'Resultado incorrecto', desc: 'No acertaste el resultado', color: MUTED },
+                        { pts: '12', label: '¡Marcador exacto!', desc: 'Resultado y goles exactos', color: '#10b981' },
+                        { pts: '7', label: 'Resultado general', desc: 'Ganador correcto + goles de un equipo', color: '#3b82f6' },
+                        { pts: '5', label: 'Resultado parcial', desc: 'Ganador/empate correcto, fallan los goles', color: GOLD },
+                        { pts: '2', label: 'Un goleador', desc: 'Goles de un equipo correctos, ganador no', color: '#f97316' },
+                        { pts: '0', label: 'Sin aciertos', desc: 'Nada correcto', color: MUTED },
                       ].map(({ pts, label, desc, color }) => (
                         <div key={pts} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: `1px solid ${BORDER}` }}>
                           <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 16, fontWeight: 700, color }}>{pts}</span>
+                            <span style={{ fontSize: 15, fontWeight: 700, color }}>{pts}</span>
                           </div>
                           <div>
                             <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 2 }}>{label}</div>
@@ -413,6 +422,139 @@ export default function TournamentPage() {
               {!isDeadlinePast && (
                 <div style={{ fontSize: 12, color: MUTED, textAlign: 'center', marginTop: 14 }}>Los puntos se calculan después del cierre de predicciones el 11 de junio.</div>
               )}
+            </div>
+          )}
+
+          {/* ── REGLAMENTO ── */}
+          {tab === 'reglamento' && (
+            <div style={{ maxWidth: 760, margin: '0 auto' }}>
+
+              {/* Hero */}
+              <div style={{ background: '#000', borderRadius: 16, padding: '28px 24px', marginBottom: 20, display: 'flex', gap: 20, alignItems: 'center' }}>
+                <div style={{ fontSize: 48, lineHeight: 1 }}>🎻</div>
+                <div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Prode Violines Mundial 2026</div>
+                  <div style={{ fontSize: 13, color: '#888' }}>Reglamento Oficial · Carpincho Games SRL</div>
+                </div>
+              </div>
+
+              {/* Puntos por partido */}
+              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 6 }}>Sistema de puntuación — Partidos</div>
+                <div style={{ fontSize: 12, color: MUTED, marginBottom: 16 }}>Aplica para Etapa I y Etapa II</div>
+                {[
+                  { pts: 12, color: '#10b981', label: '¡Marcador exacto!', desc: 'Acertaste el resultado final y la cantidad de goles (9 + 3 adicionales).' },
+                  { pts: 7,  color: '#3b82f6', label: 'Resultado general',  desc: 'Acertaste al ganador y la cantidad de goles de un equipo.' },
+                  { pts: 5,  color: GOLD,      label: 'Resultado parcial',  desc: 'Acertaste al ganador o el empate, pero fallás los goles.' },
+                  { pts: 2,  color: '#f97316', label: 'Un goleador',        desc: 'No acertaste al ganador pero sí la cantidad de goles de uno de los equipos.' },
+                  { pts: 0,  color: MUTED,     label: 'Sin aciertos',       desc: 'No pegaste nada.' },
+                ].map(({ pts, color, label, desc }) => (
+                  <div key={pts} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 0', borderBottom: `1px solid ${BORDER}` }}>
+                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}18`, border: `1.5px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 17, fontWeight: 700, color }}>{pts}</span>
+                    </div>
+                    <div style={{ paddingTop: 4 }}>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 3 }}>{label}</div>
+                      <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{desc}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Example */}
+                <div style={{ marginTop: 16, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: MUTED, marginBottom: 10 }}>💡 EJEMPLO — Resultado oficial: A 3 vs B 1</div>
+                  {[
+                    ['3 - 1', '12 pts', 'Perfecto ✓'],
+                    ['3 - 0', '7 pts', 'Ganador + goles de A'],
+                    ['2 - 0', '5 pts', 'Ganador correcto, ningún marcador'],
+                    ['0 - 1', '2 pts', 'Goles de B correctos, ganador no'],
+                    ['0 - 0', '0 pts', 'Nada'],
+                  ].map(([pred, pts, note]) => (
+                    <div key={pred} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span style={{ width: 44, fontSize: 13, fontWeight: 700, color: TEXT, fontFamily: 'monospace' }}>{pred}</span>
+                      <span style={{ width: 48, fontSize: 13, fontWeight: 700, color: RED }}>{pts}</span>
+                      <span style={{ fontSize: 12, color: MUTED }}>{note}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Puntos especiales Etapa I */}
+              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 16 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 16 }}>Puntos especiales — Etapa I</div>
+                {[
+                  { pts: '6',  desc: 'Orden final correcto de todos los equipos dentro del grupo' },
+                  { pts: '6',  desc: 'Por equipo acertado que llegó a 16vos de final' },
+                  { pts: '10', desc: 'Por equipo acertado que llegó a 8vos de final' },
+                  { pts: '14', desc: 'Por equipo acertado que llegó a 4tos de final' },
+                  { pts: '18', desc: 'Por equipo acertado que llegó a Semifinal' },
+                  { pts: '25', desc: 'Por acertar el 4to puesto' },
+                  { pts: '30', desc: 'Por acertar el 3er puesto' },
+                  { pts: '35', desc: 'Por acertar el Subcampeón' },
+                  { pts: '40', desc: 'Por acertar el Campeón' },
+                  { pts: '15', desc: 'Por cada acierto en los premios FIFA: Balón de Oro, Guante de Oro, Botín de Oro, Equipo Fair Play' },
+                  { pts: '15', desc: 'Por elegir el partido con la mayor goleada en la fase de grupos' },
+                  { pts: '15', desc: 'Por el Equipo Revelación (el que llegue más lejos de la lista elegible)' },
+                ].map(({ pts, desc }, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: i < 11 ? `1px solid ${BORDER}` : 'none' }}>
+                    <div style={{ width: 40, height: 36, borderRadius: 10, background: `${GOLD}18`, border: `1.5px solid ${GOLD}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>{pts}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.5, paddingTop: 6 }}>{desc}</div>
+                  </div>
+                ))}
+
+                {/* Revelación teams */}
+                <div style={{ marginTop: 14, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: MUTED, marginBottom: 10 }}>EQUIPOS ELEGIBLES A REVELACIÓN</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {['República Checa','Escocia','Túnez','RD del Congo','Uzbekistán','Qatar','Irak','Sudáfrica','Arabia Saudita','Jordania','Bosnia y Herzegovina','Cabo Verde','Ghana','Curazao','Haití','Nueva Zelanda'].map(t => (
+                      <span key={t} style={{ padding: '4px 10px', background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: TEXT }}>{t}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Premios y plazos */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
+                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 14 }}>🏆 Premios</div>
+                  {[
+                    ['Etapa I (Pozo)', '$32.500'],
+                    ['Etapa II (Pozo)', '$17.500'],
+                    ['Inscripción', '$70.000 · alias: erik.ars'],
+                  ].map(([label, val]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span style={{ fontSize: 13, color: MUTED }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 14 }}>⏱ Plazos</div>
+                  {[
+                    ['Etapa I — cierre', 'Mié 11 jun · 16:00 ARG'],
+                    ['Etapa II — cierre', '1 hora antes de cada partido'],
+                    ['Pago inscripción', 'Vie 10 jun 2026'],
+                  ].map(([label, val]) => (
+                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span style={{ fontSize: 13, color: MUTED, flexShrink: 0 }}>{label}</span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: TEXT, textAlign: 'right' }}>{val}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Participación */}
+              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 10 }}>📋 Bases y condiciones</div>
+                <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.8 }}>
+                  Pueden participar únicamente los integrantes del grupo de WhatsApp <strong style={{ color: TEXT }}>🎻 Violines 🎻</strong> que hayan abonado la inscripción antes del viernes 10 de junio de 2026.
+                  Todo el monto recaudado se destina a premios. El organizador es <strong style={{ color: TEXT }}>Carpincho Games SRL</strong>.
+                </div>
+              </div>
+
             </div>
           )}
 
