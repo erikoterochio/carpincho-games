@@ -130,20 +130,20 @@ export default async function HomePage() {
           )}
 
           {/* Hero: Prode Mundial */}
-          <div style={{ border: '1px solid #04447b', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px' }}>
+          <Link href="/prode" style={{ border: '1px solid #D4AF37', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px', textDecoration: 'none' }}>
             <div style={{ flex: '0 0 55%', background: '#0b2659', padding: '18px 16px 18px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
               <div style={{ position: 'absolute', top: 0, right: -20, width: 40, height: '100%', background: 'linear-gradient(to right, #0b2659, transparent)', zIndex: 1, pointerEvents: 'none' }} />
-              <div style={{ display: 'inline-block', background: '#055074', color: '#c1c1c6', fontSize: '9px', fontWeight: 700, letterSpacing: '1px', padding: '3px 9px', borderRadius: '20px', marginBottom: '10px', width: 'fit-content' }}>
+              <div style={{ display: 'inline-block', background: '#D4AF37', color: '#01050F', fontSize: '9px', fontWeight: 700, letterSpacing: '1px', padding: '3px 9px', borderRadius: '20px', marginBottom: '10px', width: 'fit-content' }}>
                 MUNDIAL 2026
               </div>
               <div style={{ fontSize: '17px', fontWeight: 700, color: '#c1c1c6', marginBottom: '5px', lineHeight: 1.3 }}>Prode del Mundial con tus amigos</div>
               <div style={{ fontSize: '11px', color: '#8aa8cc', marginBottom: '14px', lineHeight: 1.5 }}>Predecí resultados y ganá el ranking</div>
-              <button style={{ background: '#c1c1c6', color: '#01050F', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'not-allowed', opacity: 0.6, width: 'fit-content' }}>
-                Próximamente
-              </button>
+              <div style={{ background: '#D4AF37', color: '#01050F', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, padding: '8px 16px', borderRadius: '9px', width: 'fit-content' }}>
+                ¡Jugar ahora!
+              </div>
             </div>
             <div style={{ flex: '0 0 45%', backgroundImage: 'url(/images/prode.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-          </div>
+          </Link>
 
           {/* Destacados */}
           <div className="sep"><div className="sep-line" /><span className="sep-text">Destacados</span><div className="sep-line" /></div>
