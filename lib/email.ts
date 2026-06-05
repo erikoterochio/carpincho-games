@@ -1,11 +1,11 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
-const FROM = process.env.RESEND_FROM ?? 'Ranchadapp <onboarding@resend.dev>'
+const from = () => process.env.RESEND_FROM ?? 'Ranchadapp <onboarding@resend.dev>'
+const client = () => new Resend(process.env.RESEND_API_KEY)
 
 export async function sendPasswordReset(to: string, resetLink: string) {
-  return resend.emails.send({
-    from: FROM,
+  return client().emails.send({
+    from: from(),
     to,
     subject: 'Recuperar contraseña — Ranchadapp',
     html: passwordResetHtml(resetLink),
@@ -13,8 +13,8 @@ export async function sendPasswordReset(to: string, resetLink: string) {
 }
 
 export async function sendEmailConfirmation(to: string, confirmLink: string) {
-  return resend.emails.send({
-    from: FROM,
+  return client().emails.send({
+    from: from(),
     to,
     subject: 'Confirmá tu cuenta — Ranchadapp',
     html: confirmationHtml(confirmLink),
@@ -34,7 +34,7 @@ function layout(content: string) {
       <table width="540" cellpadding="0" cellspacing="0"
         style="background:#fff;border-radius:16px;overflow:hidden;max-width:100%;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
         <tr>
-          <td style="background:#000;padding:22px 32px;display:flex;align-items:center;gap:8px;">
+          <td style="background:#000;padding:22px 32px;">
             <span style="font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.3px;">🎮 Ranchadapp</span>
           </td>
         </tr>
@@ -66,7 +66,7 @@ function passwordResetHtml(link: string) {
           Resetear contraseña →
         </a>
         <p style="margin:28px 0 0;color:#999;font-size:12px;line-height:1.6;">
-          Este link expira en 24 horas. Si no pediste este cambio, podés ignorar este mail con tranquilidad.
+          Este link expira en 24 horas. Si no pediste este cambio, podés ignorar este mail.
         </p>
       </td>
     </tr>
