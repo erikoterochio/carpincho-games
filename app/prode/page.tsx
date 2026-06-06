@@ -153,8 +153,9 @@ export default function ProdePage() {
         .view-btn { flex: 1; padding: 9px; border: none; border-radius: 8px; font-family: ${FONT_NORMAL}; font-size: 13px; font-weight: 900; cursor: pointer; transition: all 0.15s; background: transparent; color: ${MUTED}; }
         .view-btn.active { background: #fff; color: ${TEXT}; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; }
-        @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; } .full { grid-column: 1 / -1; } }
+        .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
+        @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; align-items: stretch; } .full { grid-column: 1 / -1; } }
+        .card-stretch { height: 100%; }
       `}</style>
 
       <div className="prode-page">
@@ -233,7 +234,7 @@ export default function ProdePage() {
               <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
                 {user ? 'Unirse o crear torneo' : 'Iniciá sesión para participar'}
               </div>
-              <div className="card">
+              <div className="card card-stretch">
                 {!user ? (
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 36, marginBottom: 12 }}>⚽</div>
