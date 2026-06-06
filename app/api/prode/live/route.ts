@@ -12,9 +12,11 @@ function adminDB() {
 }
 
 export async function GET() {
+  // Cache the API-Football call for 55s across all serverless instances.
+  // Combined with the 5-min client interval this keeps us well under 100 req/day.
   const res = await fetch(`${BASE}/fixtures?live=all`, {
     headers: { 'x-apisports-key': API_KEY },
-    cache: 'no-store',
+    next: { revalidate: 55 },
   })
 
   if (!res.ok) {

@@ -12,9 +12,18 @@ function adminDB() {
   )
 }
 
-function parseRound(round: string): { stage: string; group_name: string | null; sort_base: number } {
-  const g = round.match(/Group\s+([A-L])/i)
-  if (g) return { stage: 'group', group_name: g[1].toUpperCase(), sort_base: 0 }
+// API-Football uses league.group = "Group A" for WC fixtures (league.round = "Group Stage - 1")
+function parseRound(round: string, group?: string): { stage: string; group_name: string | null; sort_base: number } {
+  // Check league.group field first (WC format)
+  if (group) {
+    const gm = group.match(/\bGroup\s+([A-L])\b/i)
+    if (gm) return { stage: 'group', group_name: gm[1].toUpperCase(), sort_base: 0 }
+  }
+  // Fall back to league.round
+  const gr = round.match(/\bGroup\s+([A-L])\b/i)
+  if (gr) return { stage: 'group', group_name: gr[1].toUpperCase(), sort_base: 0 }
+  // "Group Stage - N" without a letter — still a group match
+  if (/Group Stage/i.test(round)) return { stage: 'group', group_name: null, sort_base: 0 }
   if (/Round of 32/i.test(round)) return { stage: 'r32', group_name: null, sort_base: 1000 }
   if (/Round of 16/i.test(round)) return { stage: 'r16', group_name: null, sort_base: 2000 }
   if (/Quarter.final/i.test(round)) return { stage: 'qf', group_name: null, sort_base: 3000 }
@@ -49,7 +58,7 @@ export async function POST() {
   }
 
   const rows = fixtures.map((f: any, i: number) => {
-    const { stage, group_name, sort_base } = parseRound(f.league.round)
+    const { stage, group_name, sort_base } = parseRound(f.league.round, f.league.group)
     return {
       id: String(f.fixture.id),
       home_team: f.teams.home.name,
@@ -125,5 +134,11 @@ export async function POST() {
     standingsNote = `Standings API error ${standingsRes.status}`
   }
 
-  return NextResponse.json({ synced: rows.length, standingsSynced, ...(standingsNote ? { standingsNote } : {}) })
+  const stageBreakdown = rows.reduce((acc: Record<string, number>, r) => {
+    const key = r.group_name ? `group_${r.group_name}` : r.stage
+    acc[key] = (acc[key] ?? 0) + 1
+    return acc
+  }, {})
+
+  return NextResponse.json({ synced: rows.length, standingsSynced, stageBreakdown, ...(standingsNote ? { standingsNote } : {}) })
 }
