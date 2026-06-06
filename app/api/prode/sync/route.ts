@@ -1,8 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 
 const API_KEY = process.env.API_FOOTBALL_KEY!
 const BASE = 'https://v3.football.api-sports.io'
+
+function adminDB() {
+  return createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 function parseRound(round: string): { stage: string; group_name: string | null; sort_base: number } {
   const g = round.match(/Group\s+([A-L])/i)
@@ -21,20 +29,23 @@ export async function POST() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const res = await fetch(`${BASE}/fixtures?league=1&season=2026`, {
+  const admin = adminDB()
+
+  // ── Fixtures ──────────────────────────────────────────────────────────────
+  const fixturesRes = await fetch(`${BASE}/fixtures?league=1&season=2026`, {
     headers: { 'x-apisports-key': API_KEY },
     cache: 'no-store',
   })
 
-  if (!res.ok) {
-    return NextResponse.json({ error: `API error ${res.status}` }, { status: 502 })
+  if (!fixturesRes.ok) {
+    return NextResponse.json({ error: `API error ${fixturesRes.status}` }, { status: 502 })
   }
 
-  const json = await res.json()
-  const fixtures: any[] = json.response ?? []
+  const fixturesJson = await fixturesRes.json()
+  const fixtures: any[] = fixturesJson.response ?? []
 
   if (fixtures.length === 0) {
-    return NextResponse.json({ synced: 0, note: 'API returned no fixtures' })
+    return NextResponse.json({ synced: 0, standingsSynced: 0, note: 'API returned no fixtures' })
   }
 
   const rows = fixtures.map((f: any, i: number) => {
@@ -59,8 +70,60 @@ export async function POST() {
     }
   })
 
-  const { error } = await supabase.from('prode_matches').upsert(rows, { onConflict: 'id' })
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const { error: fixturesError } = await admin.from('prode_matches').upsert(rows, { onConflict: 'id' })
+  if (fixturesError) return NextResponse.json({ error: fixturesError.message }, { status: 500 })
 
-  return NextResponse.json({ synced: rows.length })
+  // ── Standings ─────────────────────────────────────────────────────────────
+  let standingsSynced = 0
+  let standingsNote: string | undefined
+
+  const standingsRes = await fetch(`${BASE}/standings?league=1&season=2026`, {
+    headers: { 'x-apisports-key': API_KEY },
+    cache: 'no-store',
+  })
+
+  if (standingsRes.ok) {
+    const standingsJson = await standingsRes.json()
+    const leagues: any[] = standingsJson.response ?? []
+    const standingRows: any[] = []
+
+    for (const league of leagues) {
+      const groups: any[][] = league.league?.standings ?? []
+      for (const group of groups) {
+        for (const entry of group) {
+          const groupLetter = (entry.group as string)?.replace(/^Group\s+/i, '').trim() ?? 'X'
+          standingRows.push({
+            group_name: groupLetter,
+            team_id: entry.team.id,
+            team_name: entry.team.name,
+            team_logo: entry.team.logo ?? null,
+            rank: entry.rank,
+            played: entry.all.played,
+            win: entry.all.win,
+            draw: entry.all.draw,
+            lose: entry.all.lose,
+            goals_for: entry.all.goals.for,
+            goals_against: entry.all.goals.against,
+            goal_diff: entry.goalsDiff,
+            points: entry.points,
+            updated_at: new Date().toISOString(),
+          })
+        }
+      }
+    }
+
+    if (standingRows.length > 0) {
+      const { error: se } = await admin
+        .from('prode_standings')
+        .upsert(standingRows, { onConflict: 'group_name,team_id' })
+      if (!se) standingsSynced = standingRows.length
+      else standingsNote = se.message
+    } else {
+      standingsNote = 'Sin datos de standings aún (fase de grupos no comenzó)'
+    }
+  } else {
+    standingsNote = `Standings API error ${standingsRes.status}`
+  }
+
+  return NextResponse.json({ synced: rows.length, standingsSynced, ...(standingsNote ? { standingsNote } : {}) })
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -17,7 +17,25 @@ const FONT_NORMAL = "'FWC2026', 'Ubuntu', sans-serif"
 const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
 const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
-type Tab = 'predecir' | 'fixture' | 'tabla' | 'reglamento' | 'info'
+const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'])
+
+type Tab = 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info'
+
+type Standing = {
+  group_name: string
+  team_id: number
+  team_name: string
+  team_logo: string | null
+  rank: number
+  played: number
+  win: number
+  draw: number
+  lose: number
+  goals_for: number
+  goals_against: number
+  goal_diff: number
+  points: number
+}
 type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string }
 type Participant = {
   user_id: string; paid: boolean
@@ -73,23 +91,28 @@ export default function TournamentPage() {
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
   const [myPickCount, setMyPickCount] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [standings, setStandings] = useState<Standing[]>([])
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
   const [isParticipant, setIsParticipant] = useState(false)
   const [pointsOpen, setPointsOpen] = useState(false)
+  const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!id) return
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const [{ data: t }, { data: ps }, { data: ms }] = await Promise.all([
+      const [{ data: t }, { data: ps }, { data: ms }, { data: st }] = await Promise.all([
         supabase.from('prode_tournaments').select('*').eq('id', id).maybeSingle(),
         supabase.from('prode_participants').select('user_id, paid, profiles(username, nombre, apellido)').eq('tournament_id', id),
         supabase.from('prode_matches').select('*').order('sort_order'),
+        supabase.from('prode_standings').select('*').order('group_name').order('rank'),
       ])
       setTournament(t)
-      setMatches((ms ?? []) as Match[])
+      const matchList = (ms ?? []) as Match[]
+      setMatches(matchList)
+      setStandings((st ?? []) as Standing[])
       if (user && ps) {
         setIsParticipant(!!(ps as any[]).find(p => p.user_id === user.id))
         const { data: picks } = await supabase
@@ -102,18 +125,47 @@ export default function TournamentPage() {
         setParticipants((ps ?? []) as any[])
       }
       setLoading(false)
+
+      // Auto-refresh live scores every 60s while a match is in progress
+      const hasLive = matchList.some(m => LIVE_STATUSES.has(m.status))
+      if (hasLive) startLiveRefresh()
     }
     load()
+    return () => stopLiveRefresh()
   }, [id])
+
+  const stopLiveRefresh = () => {
+    if (liveRefreshRef.current) { clearInterval(liveRefreshRef.current); liveRefreshRef.current = null }
+  }
+
+  const startLiveRefresh = () => {
+    stopLiveRefresh()
+    liveRefreshRef.current = setInterval(async () => {
+      const res = await fetch('/api/prode/live')
+      const json = await res.json()
+      if (!json.live?.length) { stopLiveRefresh(); return }
+      // Merge live updates into local match list
+      setMatches(prev => prev.map(m => {
+        const live = json.live.find((l: any) => l.id === m.id)
+        return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status } : m
+      }))
+    }, 60_000)
+  }
 
   const handleSync = async () => {
     setSyncing(true); setSyncMsg(null)
     const res = await fetch('/api/prode/sync', { method: 'POST' })
     const json = await res.json()
     if (json.synced != null) {
-      setSyncMsg(`✓ ${json.synced} partidos sincronizados`)
-      const { data: ms } = await supabase.from('prode_matches').select('*').order('sort_order')
+      const parts = [`✓ ${json.synced} partidos`]
+      if (json.standingsSynced) parts.push(`${json.standingsSynced} posiciones`)
+      setSyncMsg(parts.join(' · ') + ' sincronizados')
+      const [{ data: ms }, { data: st }] = await Promise.all([
+        supabase.from('prode_matches').select('*').order('sort_order'),
+        supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+      ])
       setMatches((ms ?? []) as Match[])
+      setStandings((st ?? []) as Standing[])
     } else {
       setSyncMsg(`Error: ${json.error}`)
     }
@@ -145,6 +197,7 @@ export default function TournamentPage() {
   const TABS: { key: Tab; label: string }[] = [
     { key: 'predecir', label: 'Predecir' },
     { key: 'fixture', label: 'Fixture' },
+    { key: 'posiciones', label: 'Posiciones' },
     { key: 'tabla', label: 'Tabla' },
     { key: 'reglamento', label: 'Reglamento' },
     { key: 'info', label: 'Info' },
@@ -181,23 +234,38 @@ export default function TournamentPage() {
     </div>
   )
 
-  const MatchRow = ({ m }: { m: Match }) => (
-    <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER}` }}>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, justifyContent: 'flex-end' }}>
-        <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home_team}</span>
-        <img src={m.home_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+  const MatchRow = ({ m }: { m: Match }) => {
+    const isLive = LIVE_STATUSES.has(m.status)
+    const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
+    const liveLabel = m.status === 'HT' ? 'DESCANSO' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER}`, background: isLive ? 'rgba(16,185,129,0.04)' : undefined }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, justifyContent: 'flex-end' }}>
+          <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home_team}</span>
+          <img src={m.home_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        </div>
+        <div style={{ padding: '0 12px', textAlign: 'center', flexShrink: 0, minWidth: 100 }}>
+          {isDone ? (
+            <span style={{ fontSize: 15, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{m.home_score} - {m.away_score}</span>
+          ) : isLive ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <span style={{ fontSize: 16, fontWeight: 900, color: '#10b981', fontFamily: FONT_BLACK }}>{m.home_score ?? 0} - {m.away_score ?? 0}</span>
+              <span style={{ fontSize: 9, color: '#10b981', fontFamily: FONT_NORMAL, display: 'flex', alignItems: 'center', gap: 3 }}>
+                <span className="live-dot" />
+                {liveLabel}
+              </span>
+            </div>
+          ) : (
+            <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{fmtKickoff(m.kickoff)}</span>
+          )}
+        </div>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+          <img src={m.away_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away_team}</span>
+        </div>
       </div>
-      <div style={{ padding: '0 12px', textAlign: 'center', flexShrink: 0, minWidth: 100 }}>
-        {['FT','AET','PEN'].includes(m.status)
-          ? <span style={{ fontSize: 15, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{m.home_score} - {m.away_score}</span>
-          : <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{fmtKickoff(m.kickoff)}</span>}
-      </div>
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-        <img src={m.away_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away_team}</span>
-      </div>
-    </div>
-  )
+    )
+  }
 
   const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
     <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '16px 18px', backdropFilter: 'blur(4px)', ...style }}>
@@ -254,6 +322,17 @@ export default function TournamentPage() {
 
         .lb-row { display: flex; align-items: center; padding: 11px 18px; border-bottom: 1px solid ${BORDER}; }
         .lb-row:last-child { border-bottom: none; }
+
+        @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+        .live-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; display: inline-block; animation: livePulse 1.2s ease-in-out infinite; flex-shrink: 0; }
+
+        .st-table { width: 100%; border-collapse: collapse; }
+        .st-table th { font-family: ${FONT_BLACK}; font-size: 10px; font-weight: 900; color: #fff; text-align: center; padding: 7px 4px; }
+        .st-table th:first-child { text-align: left; padding-left: 14px; }
+        .st-table td { font-family: ${FONT_NORMAL}; font-size: 12px; color: ${TEXT}; text-align: center; padding: 8px 4px; border-bottom: 1px solid ${BORDER}; }
+        .st-table td:first-child { text-align: left; padding-left: 14px; }
+        .st-table tr:last-child td { border-bottom: none; }
+        .st-table tr:nth-child(1) td, .st-table tr:nth-child(2) td { background: rgba(16,185,129,0.05); }
       `}</style>
 
       <div className="t-page">
@@ -436,6 +515,69 @@ export default function TournamentPage() {
               )}
             </div>
           )}
+
+          {/* ── POSICIONES ── */}
+          {tab === 'posiciones' && (() => {
+            const groups = GROUPS.filter(g => standings.some(s => s.group_name === g))
+            if (groups.length === 0) return (
+              <Card style={{ textAlign: 'center', padding: 32, maxWidth: 480, margin: '0 auto' }}>
+                <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
+                <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 6 }}>Sin posiciones todavía</div>
+                <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.6 }}>
+                  Las posiciones reales se cargan cuando el admin hace{' '}
+                  <span style={{ fontWeight: 700 }}>↻ Sync API</span> durante el torneo.
+                </div>
+              </Card>
+            )
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 12 }}>
+                {groups.map(g => {
+                  const rows = standings.filter(s => s.group_name === g)
+                  return (
+                    <Card key={g} style={{ padding: 0, overflow: 'hidden' }}>
+                      <div style={{ background: NAVY, padding: '8px 14px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK, letterSpacing: 1 }}>GRUPO {g}</span>
+                      </div>
+                      <table className="st-table">
+                        <thead>
+                          <tr style={{ background: TEXT }}>
+                            <th style={{ minWidth: 130 }}>Equipo</th>
+                            <th>J</th><th>G</th><th>E</th><th>P</th>
+                            <th>GF</th><th>GC</th><th>DG</th>
+                            <th style={{ color: GOLD }}>Pts</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map(s => (
+                            <tr key={s.team_id}>
+                              <td>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                  {s.team_logo && (
+                                    <img src={s.team_logo} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                  )}
+                                  <span style={{ fontWeight: s.rank <= 2 ? 900 : 400, fontFamily: s.rank <= 2 ? FONT_BLACK : FONT_NORMAL }}>{s.team_name}</span>
+                                </div>
+                              </td>
+                              <td>{s.played}</td>
+                              <td>{s.win}</td>
+                              <td>{s.draw}</td>
+                              <td>{s.lose}</td>
+                              <td>{s.goals_for}</td>
+                              <td>{s.goals_against}</td>
+                              <td style={{ color: s.goal_diff > 0 ? '#10b981' : s.goal_diff < 0 ? RED : TEXT }}>
+                                {s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}
+                              </td>
+                              <td style={{ fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT }}>{s.points}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </Card>
+                  )
+                })}
+              </div>
+            )
+          })()}
 
           {/* ── TABLA ── */}
           {tab === 'tabla' && (
