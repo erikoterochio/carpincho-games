@@ -322,25 +322,25 @@ export default function TournamentPage() {
     const p = myEditPicks[m.id] ?? { h: '', a: '' }
     const filled = p.h !== '' && p.a !== ''
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 0', borderBottom: `1px solid ${BORDER}` }}>
-        <span style={{ fontSize: 9, color: MUTED, flexShrink: 0, width: 30, textAlign: 'right', lineHeight: 1.2, fontFamily: FONT_NORMAL }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 0', borderBottom: `1px solid ${BORDER}` }}>
+        <span style={{ fontSize: 9, color: MUTED, flexShrink: 0, width: 28, textAlign: 'right', lineHeight: 1.2, fontFamily: FONT_NORMAL }}>
           {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
         </span>
-        <img src={m.home_flag} alt="" style={{ width: 15, height: 15, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <span style={{ flex: 1, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: TEXT, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+        <img src={m.home_flag} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
         <input type="text" inputMode="numeric" className="grp-inp"
           value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
           disabled={isDeadlinePast} placeholder="—"
           style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
         />
-        <span style={{ color: BORDER, fontWeight: 700, fontSize: 11, fontFamily: FONT_BLACK, flexShrink: 0 }}>:</span>
+        <span style={{ color: MUTED, fontWeight: 400, fontSize: 10, fontFamily: FONT_NORMAL, flexShrink: 0 }}>-</span>
         <input type="text" inputMode="numeric" className="grp-inp"
           value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
           disabled={isDeadlinePast} placeholder="—"
           style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
         />
-        <img src={m.away_flag} alt="" style={{ width: 15, height: 15, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <span style={{ flex: 1, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+        <img src={m.away_flag} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
       </div>
     )
   }
@@ -348,30 +348,30 @@ export default function TournamentPage() {
   const GroupStandingsTable = ({ standings }: { standings: TeamStat[] }) => (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
-        <tr style={{ borderBottom: `1.5px solid ${BORDER}` }}>
+        <tr style={{ background: 'rgba(0,0,0,0.04)', borderBottom: `1px solid ${BORDER}` }}>
           {['#','Equipo','J','G','E','P','DG','Pts'].map((h, i) => (
-            <th key={h} style={{ padding: i <= 1 ? '4px 6px' : '4px 3px', textAlign: i <= 1 ? 'left' : 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>{h}</th>
+            <th key={h} style={{ padding: i <= 1 ? '5px 6px' : '5px 3px', textAlign: i <= 1 ? 'left' : 'center', fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, fontWeight: 700, letterSpacing: 0.3 }}>{h}</th>
           ))}
         </tr>
       </thead>
       <tbody>
         {standings.map((t, i) => (
-          <tr key={t.name} style={{ background: i < 2 ? 'rgba(16,185,129,0.06)' : i === 2 ? 'rgba(234,179,8,0.06)' : undefined, borderBottom: `1px solid ${BORDER}` }}>
-            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 11, color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : MUTED }}>{i + 1}</td>
+          <tr key={t.name} style={{ background: i < 2 ? 'rgba(16,185,129,0.05)' : i === 2 ? 'rgba(234,179,8,0.05)' : undefined, borderBottom: `1px solid ${BORDER}` }}>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 11, color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : MUTED }}>{i + 1}</td>
             <td style={{ padding: '5px 6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                 {t.flag && <img src={t.flag} alt="" style={{ width: 13, height: 13, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-                <span style={{ fontFamily: i < 2 ? FONT_BLACK : FONT_NORMAL, fontWeight: i < 2 ? 900 : 400, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 65 }}>{abbrev(t.name)}</span>
+                <span style={{ fontFamily: FONT_NORMAL, fontWeight: i < 2 ? 600 : 400, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 65 }}>{abbrev(t.name)}</span>
               </div>
             </td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pj || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pg || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pe || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pp || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : MUTED }}>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pj || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pg || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pe || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pp || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : MUTED }}>
               {t.pj > 0 ? (t.dg > 0 ? `+${t.dg}` : t.dg) : '–'}
             </td>
-            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12, color: TEXT }}>{t.pj > 0 ? t.pts : '–'}</td>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 12, color: TEXT }}>{t.pj > 0 ? t.pts : '–'}</td>
           </tr>
         ))}
       </tbody>
@@ -480,16 +480,16 @@ export default function TournamentPage() {
 
         /* Inline prediction */
         .grp-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-        @media (min-width: 1000px) { .grp-grid { grid-template-columns: 1fr 1fr; } }
+        @media (min-width: 960px) { .grp-grid { grid-template-columns: 1fr 1fr; } }
         .grp-body { display: flex; flex-direction: column; }
-        @media (min-width: 520px) { .grp-body { flex-direction: row; } }
-        .grp-matches { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
-        .grp-table-col { width: 100%; border-top: 1px solid ${BORDER}; padding: 8px 0; flex-shrink: 0; }
-        @media (min-width: 520px) { .grp-table-col { width: 205px; border-top: none; border-left: 1px solid ${BORDER}; } }
+        @media (min-width: 480px) { .grp-body { flex-direction: row; } }
+        .grp-matches { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
+        .grp-table-col { width: 100%; border-top: 1px solid ${BORDER}; padding: 6px 0; flex-shrink: 0; }
+        @media (min-width: 480px) { .grp-table-col { width: 220px; border-top: none; border-left: 1px solid ${BORDER}; } }
         .grp-inp {
-          width: 32px; height: 32px; text-align: center; background: #fafafa;
-          border: 1.5px solid; border-radius: 7px; font-family: ${FONT_COND};
-          font-size: 16px; font-weight: 900; outline: none; -moz-appearance: textfield;
+          width: 30px; height: 28px; text-align: center; background: #fafafa;
+          border: 1.5px solid; border-radius: 6px; font-family: ${FONT_NORMAL};
+          font-size: 14px; font-weight: 600; outline: none; -moz-appearance: textfield;
           transition: border-color 0.12s; flex-shrink: 0;
         }
         .grp-inp::-webkit-outer-spin-button,.grp-inp::-webkit-inner-spin-button{-webkit-appearance:none;}
