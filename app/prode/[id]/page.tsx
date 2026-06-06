@@ -118,6 +118,7 @@ export default function TournamentPage() {
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
   const [isParticipant, setIsParticipant] = useState(false)
   const [pointsOpen, setPointsOpen] = useState(false)
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -266,6 +267,12 @@ export default function TournamentPage() {
     else setSaveStatus('idle')
   }, [id, user, showSaved])
 
+  const toggleGroup = (g: string) => setOpenGroups(prev => {
+    const next = new Set(prev)
+    if (next.has(g)) next.delete(g); else next.add(g)
+    return next
+  })
+
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
     if (isDeadlinePast) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
@@ -341,26 +348,38 @@ export default function TournamentPage() {
   const GroupMatchRow = ({ m }: { m: Match }) => {
     const p = myEditPicks[m.id] ?? { h: '', a: '' }
     const filled = p.h !== '' && p.a !== ''
+    const ko = new Date(m.kickoff)
+    const date = ko.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })
+    const time = ko.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 0', borderBottom: `1px solid ${BORDER}` }}>
-        <span style={{ fontSize: 9, color: MUTED, flexShrink: 0, width: 28, textAlign: 'right', lineHeight: 1.2, fontFamily: FONT_NORMAL }}>
-          {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
-        </span>
-        <img src={m.home_flag} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 0', borderBottom: `1px solid ${BORDER}` }}>
+        {/* Fecha + Hora */}
+        <div style={{ flexShrink: 0, width: 36, textAlign: 'right' }}>
+          <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{date}</div>
+          <div style={{ fontSize: 8, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{time}</div>
+        </div>
+        {/* Local: nombre + bandera */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, minWidth: 0 }}>
+          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+          <img src={m.home_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        </div>
+        {/* Marcadores */}
         <input type="text" inputMode="numeric" className="grp-inp"
           value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
           disabled={isDeadlinePast} placeholder="—"
           style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
         />
-        <span style={{ color: MUTED, fontWeight: 400, fontSize: 10, fontFamily: FONT_NORMAL, flexShrink: 0 }}>-</span>
+        <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
         <input type="text" inputMode="numeric" className="grp-inp"
           value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
           disabled={isDeadlinePast} placeholder="—"
           style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
         />
-        <img src={m.away_flag} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+        {/* Visitante: bandera + nombre */}
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+          <img src={m.away_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+        </div>
       </div>
     )
   }
@@ -377,18 +396,18 @@ export default function TournamentPage() {
       <tbody>
         {standings.map((t, i) => (
           <tr key={t.name} style={{ background: i < 2 ? 'rgba(16,185,129,0.05)' : i === 2 ? 'rgba(234,179,8,0.05)' : undefined, borderBottom: `1px solid ${BORDER}` }}>
-            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 11, color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : MUTED }}>{i + 1}</td>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 11, color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : TEXT }}>{i + 1}</td>
             <td style={{ padding: '5px 6px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                {t.flag && <img src={t.flag} alt="" style={{ width: 13, height: 13, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-                <span style={{ fontFamily: FONT_NORMAL, fontWeight: i < 2 ? 600 : 400, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 65 }}>{abbrev(t.name)}</span>
+                {t.flag && <img src={t.flag} alt="" style={{ width: 18, height: 12, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                <span style={{ fontFamily: FONT_NORMAL, fontWeight: 600, fontSize: 11, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 65 }}>{abbrev(t.name)}</span>
               </div>
             </td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pj || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pg || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pe || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>{t.pp || '–'}</td>
-            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : MUTED }}>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT }}>{t.pj || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT }}>{t.pg || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT }}>{t.pe || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT }}>{t.pp || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : TEXT }}>
               {t.pj > 0 ? (t.dg > 0 ? `+${t.dg}` : t.dg) : '–'}
             </td>
             <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 12, color: TEXT }}>{t.pj > 0 ? t.pts : '–'}</td>
@@ -576,34 +595,15 @@ export default function TournamentPage() {
                 </Card>
               ) : (
                 <>
-                  {/* Progress + save button */}
-                  <div className="pred-header">
-                    <div>
-                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_NORMAL, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="prog-bar" style={{ width: 140 }}>
-                          <div className="prog-fill" style={{ width: `${progress}%` }} />
-                        </div>
-                        <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{myPickCount}/{groupMatches.length} predicciones</span>
+                  {/* Progress */}
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_NORMAL, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div className="prog-bar" style={{ width: 140 }}>
+                        <div className="prog-fill" style={{ width: `${progress}%` }} />
                       </div>
+                      <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{myPickCount}/{groupMatches.length} predicciones</span>
                     </div>
-                    {!isDeadlinePast && (
-                      <button
-                        onClick={saveAllPicks}
-                        disabled={saveStatus === 'saving' || myPickCount === 0}
-                        style={{
-                          padding: '9px 18px',
-                          background: saveStatus === 'saved' ? '#10b981' : TEXT,
-                          color: '#fff', border: 'none', borderRadius: 8,
-                          fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
-                          cursor: saveStatus === 'saving' ? 'wait' : myPickCount === 0 ? 'default' : 'pointer',
-                          transition: 'background 0.25s', flexShrink: 0,
-                          opacity: myPickCount === 0 ? 0.35 : 1,
-                        }}
-                      >
-                        {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar predicciones'}
-                      </button>
-                    )}
                   </div>
 
                   {isDeadlinePast && (
@@ -625,25 +625,34 @@ export default function TournamentPage() {
                     </Card>
                   ) : (
                     <>
-                      <div className="grp-grid">
+                      <div className="grp-grid" style={{ paddingBottom: 80 }}>
                         {GROUPS.filter(g => matches.some(m => m.group_name === g)).map(g => {
                           const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
                           const gSt = allGroupStandings[g] ?? []
                           const filled = gms.filter(m => myEditPicks[m.id]?.h !== '' && myEditPicks[m.id]?.a !== '').length
+                          const isOpen = openGroups.has(g)
                           return (
                             <div key={g} style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
-                              <div style={{ background: NAVY, padding: '7px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div
+                                onClick={() => toggleGroup(g)}
+                                style={{ background: NAVY, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
+                              >
                                 <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, letterSpacing: 1 }}>GRUPO {g}</span>
-                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: FONT_NORMAL }}>{filled}/{gms.length}</span>
-                              </div>
-                              <div className="grp-body">
-                                <div className="grp-matches">
-                                  {gms.map(m => <GroupMatchRow key={m.id} m={m} />)}
-                                </div>
-                                <div className="grp-table-col">
-                                  <GroupStandingsTable standings={gSt} />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                  <span style={{ color: filled === gms.length ? '#6ee7b7' : 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: FONT_NORMAL }}>{filled}/{gms.length}</span>
+                                  <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, lineHeight: 1 }}>{isOpen ? '▲' : '▼'}</span>
                                 </div>
                               </div>
+                              {isOpen && (
+                                <div className="grp-body">
+                                  <div className="grp-matches">
+                                    {gms.map(m => <GroupMatchRow key={m.id} m={m} />)}
+                                  </div>
+                                  <div className="grp-table-col">
+                                    <GroupStandingsTable standings={gSt} />
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )
                         })}
@@ -669,6 +678,41 @@ export default function TournamentPage() {
                     </>
                   )}
                 </>
+              )}
+              {/* Barra sticky de guardado */}
+              {!isDeadlinePast && isParticipant && (
+                <div style={{
+                  position: 'fixed', bottom: 0, left: 0, right: 0,
+                  background: 'rgba(255,255,255,0.97)',
+                  borderTop: `1px solid ${BORDER}`,
+                  padding: '10px 20px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  zIndex: 99,
+                }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                      {myPickCount}/{groupMatches.length} predicciones cargadas
+                    </div>
+                    <div className="prog-bar" style={{ width: 110, marginTop: 4 }}>
+                      <div className="prog-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                  </div>
+                  <button
+                    onClick={saveAllPicks}
+                    disabled={saveStatus === 'saving' || myPickCount === 0}
+                    style={{
+                      padding: '10px 22px',
+                      background: saveStatus === 'saved' ? '#10b981' : TEXT,
+                      color: '#fff', border: 'none', borderRadius: 8,
+                      fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
+                      cursor: saveStatus === 'saving' ? 'wait' : myPickCount === 0 ? 'default' : 'pointer',
+                      transition: 'background 0.25s',
+                      opacity: myPickCount === 0 ? 0.35 : 1,
+                    }}
+                  >
+                    {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar predicciones'}
+                  </button>
+                </div>
               )}
             </div>
           )}
