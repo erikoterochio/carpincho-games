@@ -88,6 +88,8 @@ type Match = {
   home_score: number | null; away_score: number | null; status: string
 }
 type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
+type BracketSlot = { team: TeamStat | null; label: string }
+type BracketMatchDef = { num: string; home: BracketSlot; away: BracketSlot }
 
 const STAGE_LABEL: Record<string, string> = {
   group: 'Fase de Grupos', r32: '16avos', r16: '8vos',
@@ -332,6 +334,60 @@ export default function TournamentPage() {
 
   const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
 
+  const bracketData = useMemo(() => {
+    const get = (pos: 1|2, grp: string): BracketSlot => ({
+      team: allGroupStandings[grp]?.[pos-1] ?? null,
+      label: `${pos}° Gr.${grp}`,
+    })
+    const t3 = (idx: number): BracketSlot => ({
+      team: bestThirds[idx] ?? null,
+      label: bestThirds[idx] ? `3° ${abbrev(bestThirds[idx]!.name)}` : `3° (${idx+1})`,
+    })
+    const ref = (label: string): BracketSlot => ({ team: null, label })
+    return {
+      r32: [
+        { num:'P49', home:get(1,'A'), away:get(2,'B') },
+        { num:'P50', home:get(1,'B'), away:get(2,'A') },
+        { num:'P51', home:get(1,'C'), away:get(2,'D') },
+        { num:'P52', home:get(1,'D'), away:get(2,'C') },
+        { num:'P53', home:get(1,'E'), away:get(2,'F') },
+        { num:'P54', home:get(1,'F'), away:get(2,'E') },
+        { num:'P55', home:get(1,'G'), away:get(2,'H') },
+        { num:'P56', home:get(1,'H'), away:get(2,'G') },
+        { num:'P57', home:get(1,'I'), away:get(2,'J') },
+        { num:'P58', home:get(1,'J'), away:get(2,'I') },
+        { num:'P59', home:get(1,'K'), away:get(2,'L') },
+        { num:'P60', home:get(1,'L'), away:get(2,'K') },
+        { num:'P61', home:t3(0), away:t3(1) },
+        { num:'P62', home:t3(2), away:t3(3) },
+        { num:'P63', home:t3(4), away:t3(5) },
+        { num:'P64', home:t3(6), away:t3(7) },
+      ] as BracketMatchDef[],
+      r16: [
+        { num:'R16-1', home:ref('Gan. P49'), away:ref('Gan. P50') },
+        { num:'R16-2', home:ref('Gan. P51'), away:ref('Gan. P52') },
+        { num:'R16-3', home:ref('Gan. P53'), away:ref('Gan. P54') },
+        { num:'R16-4', home:ref('Gan. P55'), away:ref('Gan. P56') },
+        { num:'R16-5', home:ref('Gan. P57'), away:ref('Gan. P58') },
+        { num:'R16-6', home:ref('Gan. P59'), away:ref('Gan. P60') },
+        { num:'R16-7', home:ref('Gan. P61'), away:ref('Gan. P62') },
+        { num:'R16-8', home:ref('Gan. P63'), away:ref('Gan. P64') },
+      ] as BracketMatchDef[],
+      qf: [
+        { num:'QF-1', home:ref('Gan. R16-1'), away:ref('Gan. R16-2') },
+        { num:'QF-2', home:ref('Gan. R16-3'), away:ref('Gan. R16-4') },
+        { num:'QF-3', home:ref('Gan. R16-5'), away:ref('Gan. R16-6') },
+        { num:'QF-4', home:ref('Gan. R16-7'), away:ref('Gan. R16-8') },
+      ] as BracketMatchDef[],
+      sf: [
+        { num:'SF-1', home:ref('Gan. QF-1'), away:ref('Gan. QF-2') },
+        { num:'SF-2', home:ref('Gan. QF-3'), away:ref('Gan. QF-4') },
+      ] as BracketMatchDef[],
+      third: { num:'3°/4°', home:ref('Per. SF-1'), away:ref('Per. SF-2') } as BracketMatchDef,
+      final: { num:'FINAL', home:ref('Gan. SF-1'), away:ref('Gan. SF-2') } as BracketMatchDef,
+    }
+  }, [allGroupStandings, bestThirds])
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
       <div style={{ color: MUTED }}>Cargando...</div>
@@ -417,6 +473,31 @@ export default function TournamentPage() {
         ))}
       </tbody>
     </table>
+  )
+
+  const BracketTeamSlot = ({ slot }: { slot: BracketSlot }) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', minWidth: 0 }}>
+      {slot.team ? (
+        <>
+          <img src={slot.team.flag} alt="" style={{ width: 16, height: 11, borderRadius: 2, objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 700, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(slot.team.name)}</span>
+          <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, marginLeft: 'auto', flexShrink: 0, paddingLeft: 4 }}>{slot.label}</span>
+        </>
+      ) : (
+        <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{slot.label}</span>
+      )}
+    </div>
+  )
+
+  const BracketMatchCard = ({ match }: { match: BracketMatchDef }) => (
+    <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ background: 'rgba(0,0,0,0.04)', padding: '3px 8px', borderBottom: `1px solid ${BORDER}` }}>
+        <span style={{ fontFamily: FONT_BLACK, fontSize: 9, fontWeight: 900, color: MUTED, letterSpacing: 0.5 }}>{match.num}</span>
+      </div>
+      <BracketTeamSlot slot={match.home} />
+      <div style={{ margin: '0 8px', height: 1, background: BORDER }} />
+      <BracketTeamSlot slot={match.away} />
+    </div>
   )
 
   const MatchRow = ({ m }: { m: Match }) => {
@@ -626,8 +707,8 @@ export default function TournamentPage() {
                       </div>
                     </Card>
                   ) : (
-                    <>
-                      <div className="grp-grid" style={{ paddingBottom: 80 }}>
+                    <div style={{ paddingBottom: 100 }}>
+                      <div className="grp-grid">
                         {GROUPS.filter(g => matches.some(m => m.group_name === g)).map(g => {
                           const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
                           const gSt = allGroupStandings[g] ?? []
@@ -677,7 +758,40 @@ export default function TournamentPage() {
                           </div>
                         </Card>
                       )}
-                    </>
+
+                      {/* Llave proyectada */}
+                      {Object.keys(allGroupStandings).length > 0 && (
+                        <div style={{ marginTop: 20 }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 6 }}>
+                            Llave proyectada
+                          </div>
+                          <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 16 }}>
+                            Basada en tus predicciones de fase de grupos. Los 8vos en adelante son el recorrido del bracket.
+                          </div>
+                          {([
+                            { label: '16avos de Final', matches: bracketData.r32 },
+                            { label: '8vos de Final', matches: bracketData.r16 },
+                            { label: 'Cuartos de Final', matches: bracketData.qf },
+                            { label: 'Semifinales', matches: bracketData.sf },
+                            { label: 'Tercer Puesto', matches: [bracketData.third] },
+                            { label: 'Final', matches: [bracketData.final] },
+                          ] as { label: string; matches: BracketMatchDef[] }[]).map(({ label, matches }) => (
+                            <div key={label} style={{ marginBottom: 16 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                                <div style={{ flex: 1, height: 1, background: BORDER }} />
+                                <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: MUTED, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                                  {label.toUpperCase()}
+                                </span>
+                                <div style={{ flex: 1, height: 1, background: BORDER }} />
+                              </div>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 8 }}>
+                                {matches.map((m, i) => <BracketMatchCard key={i} match={m} />)}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </>
               )}
