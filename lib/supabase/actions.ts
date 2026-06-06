@@ -26,8 +26,8 @@ export async function login(formData: FormData): Promise<Result | never> {
     const { data: profile } = await supabase
       .from('profiles')
       .select('email')
-      .eq('username', identifier)
-      .single()
+      .ilike('username', identifier)
+      .maybeSingle()
 
     if (!profile?.email) return { error: 'Usuario o contraseña incorrectos.' }
     email = profile.email

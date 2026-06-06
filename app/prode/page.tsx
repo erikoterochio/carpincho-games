@@ -84,12 +84,10 @@ export default function ProdePage() {
     if (!trimmed) return
     setWorking(true); setError(null)
     const { data: t } = await supabase.from('prode_tournaments').select('id,name').eq('code', trimmed).maybeSingle()
-    if (!t) { setError('Código no encontrado.'); setWorking(false); return }
-    const { data: ex } = await supabase.from('prode_participants').select('id').eq('tournament_id', t.id).eq('user_id', user.id).maybeSingle()
-    if (!ex) {
-      const { error: e } = await supabase.from('prode_participants').insert({ tournament_id: t.id, user_id: user.id })
-      if (e) { setError('No se pudo unirse.'); setWorking(false); return }
-    }
+    if (!t) { setError('Código no encontrado. Verificá que sea correcto.'); setWorking(false); return }
+    const { error: e } = await supabase.from('prode_participants').insert({ tournament_id: t.id, user_id: user.id })
+    // 23505 = unique violation → el usuario ya es participante, igual redirigir
+    if (e && e.code !== '23505') { setError('No se pudo unirse: ' + e.message); setWorking(false); return }
     router.push(`/prode/${t.id}`)
   }
 
@@ -183,6 +181,8 @@ export default function ProdePage() {
 
         .grid-2 { display: grid; grid-template-columns: 1fr; gap: 20px; align-items: start; }
         @media (min-width: 768px) { .grid-2 { grid-template-columns: 1fr 1fr; align-items: stretch; } .full { grid-column: 1 / -1; } }
+        .col-flex { display: flex; flex-direction: column; }
+        .card-fill { flex: 1; }
         .card-stretch { height: 100%; }
       `}</style>
 
@@ -234,10 +234,10 @@ export default function ProdePage() {
 
             {/* Mis torneos */}
             {!loading && user && (
-              <div>
+              <div className="col-flex">
                 <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>Mis torneos</div>
                 {tournaments.length === 0 ? (
-                  <div className="card" style={{ textAlign: 'center', padding: '28px 20px' }}>
+                  <div className="card card-fill" style={{ textAlign: 'center', padding: '28px 20px' }}>
                     <div style={{ fontSize: 36, marginBottom: 10 }}>🏆</div>
                     <div style={{ fontSize: 14, color: TEXT, fontWeight: 900, fontFamily: FONT_BLACK, marginBottom: 4 }}>No estás en ningún torneo</div>
                     <div style={{ fontSize: 12, color: MUTED }}>Uníte o creá uno abajo.</div>
@@ -259,11 +259,11 @@ export default function ProdePage() {
             )}
 
             {/* Join / Create */}
-            <div>
+            <div className="col-flex">
               <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
                 {user ? 'Unirse o crear torneo' : 'Iniciá sesión para participar'}
               </div>
-              <div className="card card-stretch">
+              <div className="card card-fill">
                 {!user ? (
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 36, marginBottom: 12 }}>⚽</div>
