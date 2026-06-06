@@ -27,12 +27,13 @@ function countdown() {
 }
 
 function fmtDeadline() {
-  // mié 11-jun · 16:00 hs (UTC-3 AR)
+  const tz = 'America/Argentina/Buenos_Aires'
   const d = DEADLINE
-  const day = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short' })
-  const dd  = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit' })
-  const mmm = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', month: 'short' })
-  const hh  = d.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit' })
+  const day = d.toLocaleDateString('es-AR', { timeZone: tz, weekday: 'short' })
+  const dd  = d.toLocaleDateString('es-AR', { timeZone: tz, day: '2-digit' })
+  const mmm = d.toLocaleDateString('es-AR', { timeZone: tz, month: 'short' })
+  // hour12:false fuerza formato 24h
+  const hh  = d.toLocaleTimeString('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false })
   return `${day} ${dd}-${mmm} · ${hh} hs (UTC-3 AR)`
 }
 
@@ -128,11 +129,19 @@ export default function ProdePage() {
         @media (min-width: 768px) { .prode-page { background-size: 320px; } }
         .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
 
+        .countdown-unit {
+          text-align: center; min-width: 56px;
+        }
+        @media (min-width: 768px) { .countdown-unit { min-width: 72px; } }
         .countdown-num {
           font-family: ${FONT_COND}; font-weight: 900; color: #111; line-height: 1;
-          font-size: 48px;
+          font-size: 48px; font-variant-numeric: tabular-nums; display: block;
         }
         @media (min-width: 768px) { .countdown-num { font-size: 64px; } }
+        .countdown-label {
+          font-size: 9px; color: #111; letter-spacing: 1.5px; margin-top: 3px;
+          text-transform: uppercase; font-family: ${FONT_NORMAL};
+        }
 
         .inp {
           display: block; width: 100%; padding: 12px 16px; background: #fff;
@@ -201,18 +210,18 @@ export default function ProdePage() {
                 <div style={{ fontSize: 15, fontWeight: 900, color: '#111', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14, fontFamily: FONT_BLACK }}>
                   Cierre de predicciones — Etapa I
                 </div>
-                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start' }}>
                   {([['DÍAS', timer.days], ['HORAS', timer.hours], ['MIN', timer.mins], ['SEG', timer.secs]] as [string, number][]).map(([label, val], i) => (
                     <div key={label} style={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <div style={{ textAlign: 'center' }}>
-                        <div className="countdown-num">{String(val).padStart(2, '0')}</div>
-                        <div style={{ fontSize: 9, color: '#555', letterSpacing: 1.5, fontFamily: FONT_NORMAL, marginTop: 3, textTransform: 'uppercase' }}>{label}</div>
+                      <div className="countdown-unit">
+                        <span className="countdown-num">{String(val).padStart(2, '0')}</span>
+                        <div className="countdown-label">{label}</div>
                       </div>
-                      {i < 3 && <div style={{ fontFamily: FONT_COND, fontSize: 48, fontWeight: 900, color: '#555', lineHeight: 1, margin: '0 2px', alignSelf: 'flex-start' }}>:</div>}
+                      {i < 3 && <div style={{ fontFamily: FONT_COND, fontSize: 48, fontWeight: 900, color: '#333', lineHeight: 1, margin: '0 1px', userSelect: 'none' }}>:</div>}
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: '#444', marginTop: 10, fontFamily: FONT_NORMAL }}>{fmtDeadline()}</div>
+                <div style={{ fontSize: 12, color: '#111', marginTop: 10, fontFamily: FONT_NORMAL }}>{fmtDeadline()}</div>
               </div>
             ) : (
               <div style={{ fontSize: 16, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Las predicciones de la Etapa I están cerradas.</div>
@@ -226,7 +235,7 @@ export default function ProdePage() {
             {/* Mis torneos */}
             {!loading && user && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>Mis torneos</div>
+                <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>Mis torneos</div>
                 {tournaments.length === 0 ? (
                   <div className="card" style={{ textAlign: 'center', padding: '28px 20px' }}>
                     <div style={{ fontSize: 36, marginBottom: 10 }}>🏆</div>
@@ -251,7 +260,7 @@ export default function ProdePage() {
 
             {/* Join / Create */}
             <div>
-              <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
+              <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
                 {user ? 'Unirse o crear torneo' : 'Iniciá sesión para participar'}
               </div>
               <div className="card card-stretch">
@@ -277,9 +286,9 @@ export default function ProdePage() {
 
                     {view === 'join' && (
                       <>
-                        <div style={{ fontSize: 13, color: MUTED, marginBottom: 12 }}>Ingresá el código del organizador.</div>
+                        <div style={{ fontSize: 13, color: '#333', marginBottom: 12 }}>Ingresá el código que te dio el organizador.</div>
                         <div style={{ display: 'flex', gap: 8 }}>
-                          <input className="inp" value={code} onChange={e => { setCode(e.target.value.toUpperCase()); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleJoin()} placeholder="Código del torneo" maxLength={12} style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 700 }} />
+                          <input className="inp" value={code} onChange={e => { setCode(e.target.value.toUpperCase()); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleJoin()} placeholder="Código" maxLength={12} style={{ textTransform: 'uppercase', letterSpacing: 2, fontWeight: 400 }} />
                           <button className="btn-red" onClick={handleJoin} disabled={working || !code.trim()}>{working ? '...' : 'Entrar'}</button>
                         </div>
                       </>
@@ -287,11 +296,11 @@ export default function ProdePage() {
 
                     {view === 'create' && (
                       <>
-                        <div style={{ fontSize: 13, color: MUTED, marginBottom: 12 }}>Creá tu propio torneo y compartí el código con tus amigos.</div>
-                        <input className="inp" value={newName} onChange={e => { setNewName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleCreate()} placeholder="Nombre del torneo" style={{ marginBottom: 10 }} />
-                        <button className="btn-navy" onClick={handleCreate} disabled={working || !newName.trim()} style={{ width: '100%' }}>
-                          {working ? 'Creando...' : 'Crear torneo'}
-                        </button>
+                        <div style={{ fontSize: 13, color: '#333', marginBottom: 12 }}>Nombre del torneo para compartir con tus amigos.</div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <input className="inp" value={newName} onChange={e => { setNewName(e.target.value); setError(null) }} onKeyDown={e => e.key === 'Enter' && handleCreate()} placeholder="Nombre del torneo" style={{ fontWeight: 400 }} />
+                          <button className="btn-navy" onClick={handleCreate} disabled={working || !newName.trim()}>{working ? '...' : 'Crear'}</button>
+                        </div>
                       </>
                     )}
                   </>
@@ -301,7 +310,7 @@ export default function ProdePage() {
 
             {/* Cómo funciona */}
             <div className="full">
-              <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>¿Cómo funciona?</div>
+              <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>¿Cómo funciona?</div>
               <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 0 }}>
                 {[
                   { icon: '⚽', title: 'Predecí resultados', desc: 'Todos los partidos de la fase de grupos antes del 11 de junio' },
@@ -311,8 +320,8 @@ export default function ProdePage() {
                 ].map(({ icon, title, desc }, i) => (
                   <div key={i} style={{ padding: '14px 16px', borderRight: i < 3 ? `1px solid ${BORDER}` : 'none', borderBottom: 'none' }}>
                     <div style={{ fontSize: 22, marginBottom: 6 }}>{icon}</div>
-                    <div style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 4 }}>{title}</div>
-                    <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{desc}</div>
+                    <div style={{ fontSize: 13, fontWeight: 400, color: TEXT, fontFamily: FONT_NORMAL, marginBottom: 4 }}>{title}</div>
+                    <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5, fontFamily: FONT_NORMAL }}>{desc}</div>
                   </div>
                 ))}
               </div>
