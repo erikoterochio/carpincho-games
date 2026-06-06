@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
+import type { TeamStat } from '@/lib/prode-standings'
 
 const RED = '#D4001A'
 const NAVY = '#002B7F'
@@ -18,6 +20,23 @@ const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
 const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
 const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'])
+
+const ABBREV: Record<string, string> = {
+  'Argentina':'ARG','Brazil':'BRA','France':'FRA','England':'ENG','Germany':'GER','Spain':'ESP',
+  'Portugal':'POR','Netherlands':'NED','Belgium':'BEL','Croatia':'CRO','Italy':'ITA','Uruguay':'URU',
+  'Colombia':'COL','United States':'USA','Mexico':'MEX','Canada':'CAN','Morocco':'MAR','Japan':'JPN',
+  'Australia':'AUS','South Korea':'KOR','Korea Republic':'KOR','South Africa':'RSA',
+  'Saudi Arabia':'SAU','Iran':'IRN','Nigeria':'NGA','Senegal':'SEN','Egypt':'EGY','Ghana':'GHA',
+  'Cameroon':'CMR','Ivory Coast':'CIV','Côte d\'Ivoire':'CIV','Tunisia':'TUN','Algeria':'ALG',
+  'New Zealand':'NZL','Switzerland':'SUI','Denmark':'DEN','Sweden':'SWE','Poland':'POL',
+  'Serbia':'SRB','Austria':'AUT','Hungary':'HUN','Turkey':'TUR','Ukraine':'UKR','Scotland':'SCO',
+  'Paraguay':'PAR','Ecuador':'ECU','Venezuela':'VEN','Bolivia':'BOL','Peru':'PER','Chile':'CHI',
+  'Costa Rica':'CRC','Honduras':'HON','Panama':'PAN','Qatar':'QAT','Iraq':'IRQ','Jordan':'JOR',
+  'Uzbekistan':'UZB','Czech Republic':'CZE','Slovakia':'SVK','Romania':'ROU','Greece':'GRE',
+  'Bosnia-Herzegovina':'BIH','Bosnia':'BIH','Albania':'ALB','Norway':'NOR',
+  'DR Congo':'COD','Cape Verde':'CPV','Curacao':'CUW','Haiti':'HAI',
+}
+function abbrev(name: string) { return ABBREV[name] ?? name.substring(0, 3).toUpperCase() }
 
 type Tab = 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info'
 
@@ -89,7 +108,10 @@ export default function TournamentPage() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [matches, setMatches] = useState<Match[]>([])
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
-  const [myPickCount, setMyPickCount] = useState(0)
+  const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
+  const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
+  const picksEditRef = useRef<Record<string, {h:string;a:string}>>({})
+  const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const [loading, setLoading] = useState(true)
   const [standings, setStandings] = useState<Standing[]>([])
   const [syncing, setSyncing] = useState(false)
@@ -119,12 +141,29 @@ export default function TournamentPage() {
           .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
         setAllPicks(allP)
-        setMyPickCount(allP.filter(p => p.user_id === user.id).length)
+        const pm: Record<string, {h:string;a:string}> = {}
+        for (const p of allP.filter(pk => pk.user_id === user.id)) {
+          pm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
+        }
+        setMyEditPicks(pm)
+        picksEditRef.current = pm
         setParticipants((ps as any[]).map(p => ({ ...p, pick_count: allP.filter(pk => pk.user_id === p.user_id).length })))
       } else {
         setParticipants((ps ?? []) as any[])
       }
       setLoading(false)
+
+      // Auto-sync if admin and no matches loaded yet
+      if (user && t && (t as any).admin_id === user.id && matchList.length === 0) {
+        fetch('/api/prode/sync', { method: 'POST' })
+          .then(r => r.json())
+          .then(async json => {
+            if (json.synced > 0) {
+              const { data: ms2 } = await supabase.from('prode_matches').select('*').order('sort_order')
+              setMatches((ms2 ?? []) as Match[])
+            }
+          }).catch(() => {})
+      }
 
       // Auto-refresh live scores every 60s while a match is in progress
       const hasLive = matchList.some(m => LIVE_STATUSES.has(m.status))
@@ -178,10 +217,44 @@ export default function TournamentPage() {
     if (!e || e.code === '23505') { setIsParticipant(true); window.location.reload() }
   }
 
+  const myPickCount = useMemo(() =>
+    Object.values(myEditPicks).filter(p => p.h !== '' && p.a !== '').length
+  , [myEditPicks])
+
   const isDeadlinePast = new Date() >= STAGE1_DEADLINE
   const groupMatches = matches.filter(m => m.stage === 'group')
   const progress = groupMatches.length > 0 ? Math.round((myPickCount / groupMatches.length) * 100) : 0
   const isAdmin = user?.id === tournament?.admin_id
+
+  const showSaved = useCallback(() => {
+    setSaveStatus('saved')
+    setTimeout(() => setSaveStatus('idle'), 2000)
+  }, [])
+
+  const savePick = useCallback(async (matchId: string) => {
+    if (!user) return
+    const p = picksEditRef.current[matchId]
+    if (!p || p.h === '' || p.a === '') return
+    const h = parseInt(p.h), a = parseInt(p.a)
+    if (isNaN(h) || isNaN(a)) return
+    setSaveStatus('saving')
+    const { error } = await supabase.from('prode_stage1_picks').upsert(
+      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
+      { onConflict: 'tournament_id,user_id,match_id' }
+    )
+    if (!error) showSaved()
+    else setSaveStatus('idle')
+  }, [id, user, showSaved])
+
+  const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
+    if (isDeadlinePast) return
+    const cleaned = value.replace(/\D/g, '').slice(0, 2)
+    const updated = { ...(picksEditRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
+    picksEditRef.current[matchId] = updated
+    setMyEditPicks(prev => ({ ...prev, [matchId]: updated }))
+    if (saveTimersRef.current[matchId]) clearTimeout(saveTimersRef.current[matchId])
+    saveTimersRef.current[matchId] = setTimeout(() => savePick(matchId), 800)
+  }
 
   const leaderboard = participants.map(p => {
     const name = p.profiles?.nombre
@@ -232,6 +305,77 @@ export default function TournamentPage() {
         <Link href="/prode" style={{ color: RED, fontSize: 13 }}>← Volver</Link>
       </div>
     </div>
+  )
+
+  const allGroupStandings = useMemo(() => {
+    const result: Record<string, TeamStat[]> = {}
+    for (const g of GROUPS) {
+      const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
+      if (gms.length) result[g] = computeGroupStandings(gms, myEditPicks)
+    }
+    return result
+  }, [matches, myEditPicks])
+
+  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings), [allGroupStandings])
+
+  const GroupMatchRow = ({ m }: { m: Match }) => {
+    const p = myEditPicks[m.id] ?? { h: '', a: '' }
+    const filled = p.h !== '' && p.a !== ''
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 0', borderBottom: `1px solid ${BORDER}` }}>
+        <span style={{ fontSize: 9, color: MUTED, flexShrink: 0, width: 30, textAlign: 'right', lineHeight: 1.2, fontFamily: FONT_NORMAL }}>
+          {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
+        </span>
+        <img src={m.home_flag} alt="" style={{ width: 15, height: 15, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span style={{ flex: 1, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: TEXT, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+        <input type="text" inputMode="numeric" className="grp-inp"
+          value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
+          disabled={isDeadlinePast} placeholder="—"
+          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+        />
+        <span style={{ color: BORDER, fontWeight: 700, fontSize: 11, fontFamily: FONT_BLACK, flexShrink: 0 }}>:</span>
+        <input type="text" inputMode="numeric" className="grp-inp"
+          value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
+          disabled={isDeadlinePast} placeholder="—"
+          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+        />
+        <img src={m.away_flag} alt="" style={{ width: 15, height: 15, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span style={{ flex: 1, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+      </div>
+    )
+  }
+
+  const GroupStandingsTable = ({ standings }: { standings: TeamStat[] }) => (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr style={{ borderBottom: `1.5px solid ${BORDER}` }}>
+          {['#','Equipo','J','G','E','P','DG','Pts'].map((h, i) => (
+            <th key={h} style={{ padding: i <= 1 ? '4px 6px' : '4px 3px', textAlign: i <= 1 ? 'left' : 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>{h}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {standings.map((t, i) => (
+          <tr key={t.name} style={{ background: i < 2 ? 'rgba(16,185,129,0.06)' : i === 2 ? 'rgba(234,179,8,0.06)' : undefined, borderBottom: `1px solid ${BORDER}` }}>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 11, color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : MUTED }}>{i + 1}</td>
+            <td style={{ padding: '5px 6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                {t.flag && <img src={t.flag} alt="" style={{ width: 13, height: 13, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                <span style={{ fontFamily: i < 2 ? FONT_BLACK : FONT_NORMAL, fontWeight: i < 2 ? 900 : 400, fontSize: 11, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 65 }}>{abbrev(t.name)}</span>
+              </div>
+            </td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pj || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pg || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pe || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: MUTED }}>{t.pp || '–'}</td>
+            <td style={{ padding: '5px 3px', textAlign: 'center', fontSize: 11, color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : MUTED }}>
+              {t.pj > 0 ? (t.dg > 0 ? `+${t.dg}` : t.dg) : '–'}
+            </td>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12, color: TEXT }}>{t.pj > 0 ? t.pts : '–'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
   )
 
   const MatchRow = ({ m }: { m: Match }) => {
@@ -333,6 +477,26 @@ export default function TournamentPage() {
         .st-table td:first-child { text-align: left; padding-left: 14px; }
         .st-table tr:last-child td { border-bottom: none; }
         .st-table tr:nth-child(1) td, .st-table tr:nth-child(2) td { background: rgba(16,185,129,0.05); }
+
+        /* Inline prediction */
+        .grp-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 1000px) { .grp-grid { grid-template-columns: 1fr 1fr; } }
+        .grp-body { display: flex; flex-direction: column; }
+        @media (min-width: 520px) { .grp-body { flex-direction: row; } }
+        .grp-matches { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
+        .grp-table-col { width: 100%; border-top: 1px solid ${BORDER}; padding: 8px 0; flex-shrink: 0; }
+        @media (min-width: 520px) { .grp-table-col { width: 205px; border-top: none; border-left: 1px solid ${BORDER}; } }
+        .grp-inp {
+          width: 32px; height: 32px; text-align: center; background: #fafafa;
+          border: 1.5px solid; border-radius: 7px; font-family: ${FONT_COND};
+          font-size: 16px; font-weight: 900; outline: none; -moz-appearance: textfield;
+          transition: border-color 0.12s; flex-shrink: 0;
+        }
+        .grp-inp::-webkit-outer-spin-button,.grp-inp::-webkit-inner-spin-button{-webkit-appearance:none;}
+        .grp-inp:focus { border-color: ${RED} !important; background: #fff0f1; }
+        .grp-inp:disabled { opacity: 0.35; cursor: not-allowed; }
+        .grp-thirds { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 8px; margin-top: 12px; }
+        .pred-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
       `}</style>
 
       <div className="t-page">
@@ -393,63 +557,84 @@ export default function TournamentPage() {
                 </Card>
               ) : (
                 <>
-                  {/* Progress */}
-                  <Card style={{ marginBottom: 12 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-                      <div style={{ fontSize: 14, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT }}>Fase de grupos — Etapa I</div>
-                      <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_COND }}>{myPickCount}/{groupMatches.length}</div>
+                  {/* Progress + save status */}
+                  <div className="pred-header">
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="prog-bar" style={{ width: 140 }}>
+                          <div className="prog-fill" style={{ width: `${progress}%` }} />
+                        </div>
+                        <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{myPickCount}/{groupMatches.length}</span>
+                      </div>
                     </div>
-                    <div className="prog-bar" style={{ marginBottom: 6 }}>
-                      <div className="prog-fill" style={{ width: `${progress}%` }} />
+                    <div style={{ fontSize: 12, fontWeight: 700, color: saveStatus === 'saved' ? '#10b981' : saveStatus === 'saving' ? '#f59e0b' : 'transparent', fontFamily: FONT_NORMAL, flexShrink: 0, transition: 'color 0.3s' }}>
+                      {saveStatus === 'saving' ? '⏳ Guardando...' : '✓ Guardado'}
                     </div>
-                    <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{progress}% completado</div>
-                  </Card>
+                  </div>
 
-                  {isDeadlinePast ? (
-                    <Card style={{ marginBottom: 12, background: '#fff0f1', borderColor: '#ffc0c5' }}>
-                      <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Las predicciones de la Etapa I están cerradas.</div>
-                    </Card>
-                  ) : (
-                    <Link href={`/prode/${id}/predecir`} style={{
-                      display: 'block', padding: '16px 20px', background: RED, color: '#fff',
-                      borderRadius: 14, textDecoration: 'none', textAlign: 'center',
-                      fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 16, marginBottom: 12,
-                    }}>
-                      {myPickCount === 0 ? '⚽ Comenzar a predecir' : '✏️ Continuar predicciones'}
-                    </Link>
+                  {isDeadlinePast && (
+                    <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '10px 14px', marginBottom: 14, fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>
+                      Las predicciones de la Etapa I están cerradas.
+                    </div>
                   )}
 
-                  {/* Collapsible scoring info */}
-                  <Card>
-                    <button
-                      onClick={() => setPointsOpen(v => !v)}
-                      style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: TEXT }}
-                    >
-                      <span>Sistema de puntos</span>
-                      <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 400 }}>{pointsOpen ? '▲ cerrar' : '▼ ver'}</span>
-                    </button>
-                    {pointsOpen && (
-                      <div style={{ marginTop: 14 }}>
-                        {[
-                          { pts: 12, color: '#10b981', label: '¡Marcador exacto!', desc: 'Resultado y goles exactos' },
-                          { pts: 7,  color: '#3b82f6', label: 'Resultado general',  desc: 'Ganador correcto + goles de un equipo' },
-                          { pts: 5,  color: GOLD,      label: 'Resultado parcial',  desc: 'Ganador/empate correcto, goles no' },
-                          { pts: 2,  color: '#f97316', label: 'Un goleador',        desc: 'Goles de un equipo bien, ganador no' },
-                          { pts: 0,  color: MUTED,     label: 'Sin aciertos',       desc: '' },
-                        ].map(({ pts, color, label, desc }) => (
-                          <div key={pts} className="pts-row">
-                            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                              <span style={{ fontSize: 14, fontWeight: 900, color, fontFamily: FONT_COND }}>{pts}</span>
-                            </div>
-                            <div>
-                              <div style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{label}</div>
-                              {desc && <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>{desc}</div>}
-                            </div>
-                          </div>
-                        ))}
+                  {/* Groups with live standings */}
+                  {groupMatches.length === 0 ? (
+                    <Card style={{ textAlign: 'center', padding: 32 }}>
+                      <div style={{ fontSize: 28, marginBottom: 10 }}>⏳</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 6 }}>
+                        {isAdmin ? 'Cargando partidos...' : 'Sin partidos todavía'}
                       </div>
-                    )}
-                  </Card>
+                      <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.6 }}>
+                        {isAdmin ? 'Sincronizando automáticamente desde la API.' : 'El admin debe sincronizar los partidos.'}
+                      </div>
+                    </Card>
+                  ) : (
+                    <>
+                      <div className="grp-grid">
+                        {GROUPS.filter(g => matches.some(m => m.group_name === g)).map(g => {
+                          const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
+                          const gSt = allGroupStandings[g] ?? []
+                          const filled = gms.filter(m => myEditPicks[m.id]?.h !== '' && myEditPicks[m.id]?.a !== '').length
+                          return (
+                            <div key={g} style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+                              <div style={{ background: NAVY, padding: '7px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, letterSpacing: 1 }}>GRUPO {g}</span>
+                                <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: FONT_NORMAL }}>{filled}/{gms.length}</span>
+                              </div>
+                              <div className="grp-body">
+                                <div className="grp-matches">
+                                  {gms.map(m => <GroupMatchRow key={m.id} m={m} />)}
+                                </div>
+                                <div className="grp-table-col">
+                                  <GroupStandingsTable standings={gSt} />
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {bestThirds.length > 0 && (
+                        <Card style={{ marginTop: 14 }}>
+                          <SectionTitle>Mejores terceros clasificados ({bestThirds.length}/8)</SectionTitle>
+                          <div className="grp-thirds">
+                            {bestThirds.map((t, i) => (
+                              <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '7px 10px', background: '#f9fafb', borderRadius: 8, border: `1px solid ${BORDER}` }}>
+                                <span style={{ fontSize: 11, fontWeight: 900, color: '#ca8a04', fontFamily: FONT_BLACK, width: 14, flexShrink: 0 }}>{i + 1}</span>
+                                {t.flag && <img src={t.flag} alt="" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(t.name)}</div>
+                                  <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL }}>{t.pts}pts · DG {t.dg > 0 ? `+${t.dg}` : t.dg}</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+                      )}
+                    </>
+                  )}
                 </>
               )}
             </div>
