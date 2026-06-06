@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
+import type { TeamStat } from '@/lib/prode-standings'
 
 const RED = '#D4001A'
 const NAVY = '#002B7F'
@@ -196,6 +198,96 @@ export default function PredecirPage() {
   const allTeams = [...new Set(groupMatches.flatMap(m => [m.home_team, m.away_team]))].sort()
   const availableStages = ['group', ...['r32','r16','qf','sf','3rd','final'].filter(s => stageMatches(s).length > 0)]
 
+  // Compute all group standings from user's picks (client-side, no DB)
+  const allGroupStandings = useMemo(() => {
+    const result: Record<string, TeamStat[]> = {}
+    for (const g of ['A','B','C','D','E','F','G','H','I','J','K','L']) {
+      const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
+      if (gms.length) result[g] = computeGroupStandings(gms, picks)
+    }
+    return result
+  }, [matches, picks])
+
+  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings), [allGroupStandings])
+
+  // Compact match row for group view
+  const GroupMatchRow = ({ m }: { m: Match }) => {
+    const p = picks[m.id] ?? { h: '', a: '' }
+    const filled = p.h !== '' && p.a !== ''
+    const started = new Date() >= new Date(m.kickoff)
+    const locked = isDeadlinePast || started
+    return (
+      <div className="gmr">
+        <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0, width: 34, textAlign: 'right', lineHeight: 1.2 }}>
+          {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
+        </span>
+        <img src={m.home_flag} alt="" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span className="gmr-team right">{abbrev(m.home_team)}</span>
+        <input type="text" inputMode="numeric" className="score-sm"
+          value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
+          disabled={locked} placeholder="—"
+          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+        />
+        <span style={{ color: BORDER, fontWeight: 700, fontSize: 12, fontFamily: FONT_BLACK, flexShrink: 0 }}>:</span>
+        <input type="text" inputMode="numeric" className="score-sm"
+          value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
+          disabled={locked} placeholder="—"
+          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+        />
+        <img src={m.away_flag} alt="" style={{ width: 16, height: 16, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span className="gmr-team">{abbrev(m.away_team)}</span>
+      </div>
+    )
+  }
+
+  // Group standings table
+  const GroupStandingsTable = ({ standings }: { standings: TeamStat[] }) => (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+      <thead>
+        <tr style={{ borderBottom: `1.5px solid ${BORDER}` }}>
+          <th style={{ padding: '4px 6px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>#</th>
+          <th style={{ padding: '4px 6px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>Equipo</th>
+          <th style={{ padding: '4px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>J</th>
+          <th style={{ padding: '4px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>G</th>
+          <th style={{ padding: '4px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>E</th>
+          <th style={{ padding: '4px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>P</th>
+          <th style={{ padding: '4px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900 }}>DG</th>
+          <th style={{ padding: '4px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, color: TEXT, fontWeight: 900 }}>Pts</th>
+        </tr>
+      </thead>
+      <tbody>
+        {standings.map((t, i) => (
+          <tr key={t.name} className="st-row">
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 11,
+              color: i < 2 ? '#16a34a' : i === 2 ? '#ca8a04' : MUTED }}>
+              {i + 1}
+            </td>
+            <td style={{ padding: '5px 6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                {t.flag && <img src={t.flag} alt="" style={{ width: 14, height: 14, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                <span style={{ fontFamily: i < 2 ? FONT_BLACK : FONT_NORMAL, fontWeight: i < 2 ? 900 : 400, fontSize: 11,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 70 }}>
+                  {abbrev(t.name)}
+                </span>
+              </div>
+            </td>
+            <td style={{ padding: '5px 4px', textAlign: 'center', color: MUTED }}>{t.pj || '–'}</td>
+            <td style={{ padding: '5px 4px', textAlign: 'center', color: MUTED }}>{t.pg || '–'}</td>
+            <td style={{ padding: '5px 4px', textAlign: 'center', color: MUTED }}>{t.pe || '–'}</td>
+            <td style={{ padding: '5px 4px', textAlign: 'center', color: MUTED }}>{t.pp || '–'}</td>
+            <td style={{ padding: '5px 4px', textAlign: 'center',
+              color: t.dg > 0 ? '#16a34a' : t.dg < 0 ? RED : MUTED }}>
+              {t.pj > 0 ? (t.dg > 0 ? `+${t.dg}` : t.dg) : '–'}
+            </td>
+            <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12, color: TEXT }}>
+              {t.pj > 0 ? t.pts : '–'}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
+
   const MatchCard = ({ m }: { m: Match }) => {
     const pick = picks[m.id] ?? { h: '', a: '' }
     const filled = pick.h !== '' && pick.a !== ''
@@ -329,6 +421,42 @@ export default function PredecirPage() {
         @media (min-width: 900px) { .specials-grid { grid-template-columns: 1fr 1fr 1fr; } }
 
         select option { background: #fff; color: ${TEXT}; }
+
+        /* Group stage layout */
+        .groups-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        @media (min-width: 960px) { .groups-grid { grid-template-columns: 1fr 1fr; } }
+
+        .group-body { display: flex; flex-direction: column; }
+        @media (min-width: 520px) { .group-body { flex-direction: row; align-items: flex-start; } }
+
+        .group-matches-col { flex: 1; padding: 10px 12px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .group-table-col {
+          padding: 8px 0; border-top: 1px solid ${BORDER};
+          flex-shrink: 0; width: 100%;
+        }
+        @media (min-width: 520px) {
+          .group-table-col { width: 210px; border-top: none; border-left: 1px solid ${BORDER}; }
+        }
+
+        .gmr { display: flex; align-items: center; gap: 5px; padding: 4px 0; border-bottom: 1px solid ${BORDER}; }
+        .gmr:last-child { border-bottom: none; }
+        .gmr-team { flex: 1; font-family: ${FONT_BLACK}; font-size: 11px; font-weight: 900; color: ${TEXT}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gmr-team.right { text-align: right; }
+
+        .score-sm {
+          width: 34px; height: 34px; text-align: center;
+          background: #fafafa; border: 1.5px solid; border-radius: 8px;
+          font-family: ${FONT_COND}; font-size: 17px; font-weight: 900;
+          outline: none; -moz-appearance: textfield; transition: border-color 0.12s;
+        }
+        .score-sm::-webkit-outer-spin-button, .score-sm::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .score-sm:focus { border-color: ${RED} !important; background: #fff0f1; }
+        .score-sm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .st-row:nth-child(1) td, .st-row:nth-child(2) td { background: rgba(16,185,129,0.06); }
+        .st-row:nth-child(3) td { background: rgba(234,179,8,0.06); }
+
+        .thirds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 16px; }
       `}</style>
 
       <div className="pred-page" style={{ paddingBottom: 60 }}>
@@ -369,23 +497,69 @@ export default function PredecirPage() {
             ))}
           </div>
 
-          {/* Group stage — by date */}
-          {activeStage === 'group' && (
-            <>
-              {groupMatches.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '48px 0', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>
-                  No hay partidos cargados todavía. El admin debe sincronizar desde la API.
+          {/* Group stage — by group with live standings */}
+          {activeStage === 'group' && (() => {
+            const presentGroups = ['A','B','C','D','E','F','G','H','I','J','K','L'].filter(
+              g => matches.some(m => m.group_name === g)
+            )
+            if (presentGroups.length === 0) return (
+              <div style={{ textAlign: 'center', padding: '48px 0', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>
+                No hay partidos cargados todavía. El admin debe sincronizar desde la API.
+              </div>
+            )
+            return (
+              <>
+                <div className="groups-grid">
+                  {presentGroups.map(g => {
+                    const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
+                    const standings = allGroupStandings[g] ?? []
+                    return (
+                      <div key={g} style={{ background: BG_CARD, border: `1.5px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
+                        {/* Group header */}
+                        <div style={{ background: NAVY, padding: '7px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12, letterSpacing: 1 }}>GRUPO {g}</span>
+                          <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: FONT_NORMAL }}>
+                            {gms.filter(m => picks[m.id]?.h !== '' && picks[m.id]?.a !== '').length}/{gms.length}
+                          </span>
+                        </div>
+                        <div className="group-body">
+                          {/* Left: fixtures */}
+                          <div className="group-matches-col">
+                            {gms.map(m => <GroupMatchRow key={m.id} m={m} />)}
+                          </div>
+                          {/* Right: standings */}
+                          <div className="group-table-col">
+                            <GroupStandingsTable standings={standings} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              ) : groupMatchesByDate(groupMatches).map(([date, ms]) => (
-                <div key={date}>
-                  <div className="date-header">📅 {date}</div>
-                  <div className="matches-grid">
-                    {ms.map(m => <MatchCard key={m.id} m={m} />)}
+
+                {/* Best thirds panel */}
+                {bestThirds.length > 0 && (
+                  <div style={{ marginTop: 20, background: BG_CARD, border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '14px 16px' }}>
+                    <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 10 }}>
+                      Mejores terceros clasificados ({bestThirds.length}/8)
+                    </div>
+                    <div className="thirds-grid">
+                      {bestThirds.map((t, i) => (
+                        <div key={t.name} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '7px 10px', background: '#f9fafb', borderRadius: 8, border: `1px solid ${BORDER}` }}>
+                          <span style={{ fontSize: 11, fontWeight: 900, color: '#ca8a04', fontFamily: FONT_BLACK, width: 14 }}>{i + 1}</span>
+                          {t.flag && <img src={t.flag} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(t.name)}</div>
+                            <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL }}>{t.pts}pts · DG {t.dg > 0 ? `+${t.dg}` : t.dg}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </>
-          )}
+                )}
+              </>
+            )
+          })()}
 
           {/* Knockout stages */}
           {['r32','r16','qf','sf','3rd','final'].includes(activeStage) && (() => {
