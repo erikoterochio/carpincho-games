@@ -21,6 +21,27 @@ const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
 const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'])
 
+// FIFA rankings June 2026 (lower number = better rank)
+const FIFA_RANKS: Record<string, number> = {
+  'Argentina': 1, 'France': 2, 'Spain': 3, 'England': 4, 'Brazil': 5,
+  'Portugal': 6, 'Netherlands': 7, 'Germany': 8, 'Belgium': 9, 'Croatia': 10,
+  'Italy': 11, 'Uruguay': 12, 'Colombia': 13, 'Morocco': 14, 'United States': 15,
+  'Mexico': 16, 'Japan': 17, 'Denmark': 19, 'Switzerland': 20, 'Senegal': 21,
+  'South Korea': 22, 'Korea Republic': 22, 'Australia': 23, 'Canada': 24,
+  'Ukraine': 25, 'Austria': 26, 'Ecuador': 27, 'Serbia': 28, 'Iran': 29,
+  'Sweden': 32, 'Nigeria': 33, 'Czech Republic': 34, 'Poland': 35,
+  'Turkey': 37, 'Hungary': 39, 'Peru': 40, 'Norway': 41, 'Egypt': 43,
+  'Venezuela': 44, 'Algeria': 45, 'Chile': 46,
+  'Ivory Coast': 47, "Côte d'Ivoire": 47,
+  'Scotland': 48, 'Romania': 49, 'Slovakia': 50, 'Greece': 51,
+  'DR Congo': 52, 'Paraguay': 53, 'Panama': 54, 'Tunisia': 55,
+  'Bosnia-Herzegovina': 56, 'Bosnia': 56, 'Saudi Arabia': 57, 'South Africa': 58,
+  'Cameroon': 59, 'Ghana': 62, 'Bolivia': 64, 'Albania': 68,
+  'Cape Verde': 71, 'Honduras': 72, 'Uzbekistan': 74, 'Qatar': 77,
+  'Iraq': 78, 'Jordan': 79, 'Costa Rica': 80, 'Haiti': 89,
+  'New Zealand': 91, 'Curacao': 93,
+}
+
 const ABBREV: Record<string, string> = {
   'Argentina':'ARG','Brazil':'BRA','France':'FRA','England':'ENG','Germany':'GER','Spain':'ESP',
   'Portugal':'POR','Netherlands':'NED','Belgium':'BEL','Croatia':'CRO','Italy':'ITA','Uruguay':'URU',
@@ -304,12 +325,12 @@ export default function TournamentPage() {
     const result: Record<string, TeamStat[]> = {}
     for (const g of GROUPS) {
       const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
-      if (gms.length) result[g] = computeGroupStandings(gms, myEditPicks)
+      if (gms.length) result[g] = computeGroupStandings(gms, myEditPicks, FIFA_RANKS)
     }
     return result
   }, [matches, myEditPicks])
 
-  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings), [allGroupStandings])
+  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>

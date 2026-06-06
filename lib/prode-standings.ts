@@ -29,7 +29,7 @@ function parsePick(picks: Picks, id: string): { h: number; a: number } | null {
   return { h, a }
 }
 
-// Head-to-head stats among a subset of teams
+// Head-to-head stats among a subset of teams (FIFA step 4–6)
 function h2hStats(
   tiedNames: string[],
   allMatches: MatchRef[],
@@ -55,30 +55,42 @@ function h2hStats(
   return stats
 }
 
-// FIFA group stage tiebreaker order (applied within teams with equal points)
+// FIFA WC 2026 group-stage tiebreaker order (among teams with same pts+GD+GF):
+//  1. H2H points
+//  2. H2H goal difference
+//  3. H2H goals scored
+//  4. FIFA ranking (lower number = better)
+//  5. Alphabetical (stand-in for drawing of lots)
 function resolveTied(
   tied: TeamStat[],
   allMatches: MatchRef[],
-  picks: Picks
+  picks: Picks,
+  fifaRanks: Record<string, number>
 ): TeamStat[] {
   if (tied.length <= 1) return tied
   const hth = h2hStats(tied.map(t => t.name), allMatches, picks)
   return [...tied].sort((a, b) => {
     const ha = hth.get(a.name)!, hb = hth.get(b.name)!
-    if (hb.pts !== ha.pts) return hb.pts - ha.pts   // 1. H2H pts
-    if (hb.gd  !== ha.gd)  return hb.gd  - ha.gd   // 2. H2H GD
-    if (hb.gf  !== ha.gf)  return hb.gf  - ha.gf   // 3. H2H GF
-    if (b.dg   !== a.dg)   return b.dg   - a.dg    // 4. Overall GD
-    if (b.gf   !== a.gf)   return b.gf   - a.gf    // 5. Overall GF
-    return a.name.localeCompare(b.name)              // 6. Alphabetical (stable fallback)
+    if (hb.pts !== ha.pts) return hb.pts - ha.pts          // 1. H2H pts
+    if (hb.gd  !== ha.gd)  return hb.gd  - ha.gd           // 2. H2H GD
+    if (hb.gf  !== ha.gf)  return hb.gf  - ha.gf           // 3. H2H GF
+    const ra = fifaRanks[a.name] ?? 999
+    const rb = fifaRanks[b.name] ?? 999
+    if (ra !== rb)         return ra - rb                   // 4. FIFA rank
+    return a.name.localeCompare(b.name)                     // 5. Lots (alphabetical)
   })
 }
 
 /**
  * Compute group standings for a set of matches + user's picks.
- * Returns 4 TeamStat entries sorted by FIFA tiebreaker rules.
+ * FIFA WC 2026 tiebreaker order:
+ *   pts → overall GD → overall GF → H2H pts → H2H GD → H2H GF → FIFA rank → lots
  */
-export function computeGroupStandings(matches: MatchRef[], picks: Picks): TeamStat[] {
+export function computeGroupStandings(
+  matches: MatchRef[],
+  picks: Picks,
+  fifaRanks: Record<string, number> = {}
+): TeamStat[] {
   const stats = new Map<string, TeamStat>()
   for (const m of matches) {
     if (!stats.has(m.home_team)) stats.set(m.home_team, { name: m.home_team, flag: m.home_flag, pts:0,pj:0,pg:0,pe:0,pp:0,gf:0,gc:0,dg:0 })
@@ -100,14 +112,25 @@ export function computeGroupStandings(matches: MatchRef[], picks: Picks): TeamSt
   }
   for (const s of stats.values()) s.dg = s.gf - s.gc
 
-  // Sort by pts first, then break ties per-group using H2H
-  const arr = [...stats.values()].sort((a, b) => b.pts - a.pts)
+  // Primary sort: pts → overall GD → overall GF
+  const arr = [...stats.values()].sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts
+    if (b.dg  !== a.dg)  return b.dg  - a.dg
+    return b.gf - a.gf
+  })
+
+  // For teams still equal on all three, apply H2H + FIFA rank
   const result: TeamStat[] = []
   let i = 0
   while (i < arr.length) {
     let j = i + 1
-    while (j < arr.length && arr[j].pts === arr[i].pts) j++
-    result.push(...resolveTied(arr.slice(i, j), matches, picks))
+    while (
+      j < arr.length &&
+      arr[j].pts === arr[i].pts &&
+      arr[j].dg  === arr[i].dg &&
+      arr[j].gf  === arr[i].gf
+    ) j++
+    result.push(...resolveTied(arr.slice(i, j), matches, picks, fifaRanks))
     i = j
   }
   return result
@@ -115,10 +138,11 @@ export function computeGroupStandings(matches: MatchRef[], picks: Picks): TeamSt
 
 /**
  * Given all 12 group standings, return the best N third-place teams.
- * FIFA tiebreaker for best thirds: pts → GD → GF → alphabetical.
+ * FIFA tiebreaker: pts → GD → GF → FIFA rank → alphabetical.
  */
 export function computeBestThirds(
   allStandings: Record<string, TeamStat[]>,
+  fifaRanks: Record<string, number> = {},
   topN = 8
 ): TeamStat[] {
   const thirds = Object.values(allStandings)
@@ -130,6 +154,9 @@ export function computeBestThirds(
       if (b.pts !== a.pts) return b.pts - a.pts
       if (b.dg  !== a.dg)  return b.dg  - a.dg
       if (b.gf  !== a.gf)  return b.gf  - a.gf
+      const ra = fifaRanks[a.name] ?? 999
+      const rb = fifaRanks[b.name] ?? 999
+      if (ra !== rb) return ra - rb
       return a.name.localeCompare(b.name)
     })
     .slice(0, topN)
