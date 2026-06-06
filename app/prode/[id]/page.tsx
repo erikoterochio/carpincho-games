@@ -111,7 +111,7 @@ export default function TournamentPage() {
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const picksEditRef = useRef<Record<string, {h:string;a:string}>>({})
-  const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({}) // kept for cleanup only
   const [loading, setLoading] = useState(true)
   const [standings, setStandings] = useState<Standing[]>([])
   const [syncing, setSyncing] = useState(false)
@@ -232,27 +232,10 @@ export default function TournamentPage() {
     setTimeout(() => setSaveStatus('idle'), 2000)
   }, [])
 
-  const savePick = useCallback(async (matchId: string) => {
-    if (!user) return
-    const p = picksEditRef.current[matchId]
-    if (!p || p.h === '' || p.a === '') return
-    const h = parseInt(p.h), a = parseInt(p.a)
-    if (isNaN(h) || isNaN(a)) return
-    setSaveStatus('saving')
-    const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
-      { onConflict: 'tournament_id,user_id,match_id' }
-    )
-    if (!error) showSaved()
-    else setSaveStatus('idle')
-  }, [id, user, showSaved])
-
   const saveAllPicks = useCallback(async () => {
     if (!user) return
     const entries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     if (!entries.length) return
-    Object.values(saveTimersRef.current).forEach(clearTimeout)
-    saveTimersRef.current = {}
     setSaveStatus('saving')
     const rows = entries.map(([matchId, v]) => ({
       tournament_id: id,
@@ -279,8 +262,6 @@ export default function TournamentPage() {
     const updated = { ...(picksEditRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksEditRef.current[matchId] = updated
     setMyEditPicks(prev => ({ ...prev, [matchId]: updated }))
-    if (saveTimersRef.current[matchId]) clearTimeout(saveTimersRef.current[matchId])
-    saveTimersRef.current[matchId] = setTimeout(() => savePick(matchId), 800)
   }
 
   const leaderboard = participants.map(p => {
