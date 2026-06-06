@@ -292,6 +292,17 @@ export default function TournamentPage() {
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b))
   }
 
+  const allGroupStandings = useMemo(() => {
+    const result: Record<string, TeamStat[]> = {}
+    for (const g of GROUPS) {
+      const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
+      if (gms.length) result[g] = computeGroupStandings(gms, myEditPicks)
+    }
+    return result
+  }, [matches, myEditPicks])
+
+  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings), [allGroupStandings])
+
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
       <div style={{ color: MUTED }}>Cargando...</div>
@@ -306,17 +317,6 @@ export default function TournamentPage() {
       </div>
     </div>
   )
-
-  const allGroupStandings = useMemo(() => {
-    const result: Record<string, TeamStat[]> = {}
-    for (const g of GROUPS) {
-      const gms = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
-      if (gms.length) result[g] = computeGroupStandings(gms, myEditPicks)
-    }
-    return result
-  }, [matches, myEditPicks])
-
-  const bestThirds = useMemo(() => computeBestThirds(allGroupStandings), [allGroupStandings])
 
   const GroupMatchRow = ({ m }: { m: Match }) => {
     const p = myEditPicks[m.id] ?? { h: '', a: '' }
