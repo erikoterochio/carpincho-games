@@ -246,6 +246,26 @@ export default function TournamentPage() {
     else setSaveStatus('idle')
   }, [id, user, showSaved])
 
+  const saveAllPicks = useCallback(async () => {
+    if (!user) return
+    const entries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
+    if (!entries.length) return
+    Object.values(saveTimersRef.current).forEach(clearTimeout)
+    saveTimersRef.current = {}
+    setSaveStatus('saving')
+    const rows = entries.map(([matchId, v]) => ({
+      tournament_id: id,
+      user_id: user.id,
+      match_id: matchId,
+      home_score: parseInt(v.h),
+      away_score: parseInt(v.a),
+      updated_at: new Date().toISOString(),
+    }))
+    const { error } = await supabase.from('prode_stage1_picks').upsert(rows, { onConflict: 'tournament_id,user_id,match_id' })
+    if (!error) showSaved()
+    else setSaveStatus('idle')
+  }, [id, user, showSaved])
+
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
     if (isDeadlinePast) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
@@ -480,7 +500,6 @@ export default function TournamentPage() {
 
         /* Inline prediction */
         .grp-grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
-        @media (min-width: 960px) { .grp-grid { grid-template-columns: 1fr 1fr; } }
         .grp-body { display: flex; flex-direction: column; }
         @media (min-width: 480px) { .grp-body { flex-direction: row; } }
         .grp-matches { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 0; min-width: 0; }
@@ -557,20 +576,34 @@ export default function TournamentPage() {
                 </Card>
               ) : (
                 <>
-                  {/* Progress + save status */}
+                  {/* Progress + save button */}
                   <div className="pred-header">
                     <div>
-                      <div style={{ fontSize: 13, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_NORMAL, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <div className="prog-bar" style={{ width: 140 }}>
                           <div className="prog-fill" style={{ width: `${progress}%` }} />
                         </div>
-                        <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{myPickCount}/{groupMatches.length}</span>
+                        <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{myPickCount}/{groupMatches.length} predicciones</span>
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: saveStatus === 'saved' ? '#10b981' : saveStatus === 'saving' ? '#f59e0b' : 'transparent', fontFamily: FONT_NORMAL, flexShrink: 0, transition: 'color 0.3s' }}>
-                      {saveStatus === 'saving' ? '⏳ Guardando...' : '✓ Guardado'}
-                    </div>
+                    {!isDeadlinePast && (
+                      <button
+                        onClick={saveAllPicks}
+                        disabled={saveStatus === 'saving' || myPickCount === 0}
+                        style={{
+                          padding: '9px 18px',
+                          background: saveStatus === 'saved' ? '#10b981' : TEXT,
+                          color: '#fff', border: 'none', borderRadius: 8,
+                          fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
+                          cursor: saveStatus === 'saving' ? 'wait' : myPickCount === 0 ? 'default' : 'pointer',
+                          transition: 'background 0.25s', flexShrink: 0,
+                          opacity: myPickCount === 0 ? 0.35 : 1,
+                        }}
+                      >
+                        {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar predicciones'}
+                      </button>
+                    )}
                   </div>
 
                   {isDeadlinePast && (
