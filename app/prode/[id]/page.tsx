@@ -5,18 +5,19 @@ import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-const FONT = "'Ubuntu', sans-serif"
 const RED = '#D4001A'
 const NAVY = '#002B7F'
 const GOLD = '#C8950A'
-const BG = '#FFFFFF'
-const CARD_BG = '#F7F8FA'
 const BORDER = '#E5E7EB'
 const TEXT = '#111111'
 const MUTED = '#6B7280'
 const STAGE1_DEADLINE = new Date('2026-06-11T19:00:00Z')
 const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+const FONT_NORMAL = "'FWC2026', 'Ubuntu', sans-serif"
+const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
+const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
+type Tab = 'predecir' | 'fixture' | 'tabla' | 'reglamento' | 'info'
 type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string }
 type Participant = {
   user_id: string; paid: boolean
@@ -31,32 +32,40 @@ type Match = {
 type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
 
 const STAGE_LABEL: Record<string, string> = {
-  group: 'Fase de Grupos', r32: 'Ronda de 32', r16: 'Ronda de 16',
-  qf: 'Cuartos de Final', sf: 'Semifinales', '3rd': 'Tercer Puesto', final: 'Final',
+  group: 'Fase de Grupos', r32: '16avos', r16: '8vos',
+  qf: 'Cuartos', sf: 'Semis', '3rd': '3°/4°', final: 'Final',
 }
 
 function calcScore(pick: UserPick, match: Match) {
   if (match.home_score === null || match.away_score === null) return null
-  const ph = pick.home_score, pa = pick.away_score
-  const rh = match.home_score, ra = match.away_score
+  const ph = pick.home_score, pa = pick.away_score, rh = match.home_score, ra = match.away_score
   if (ph === rh && pa === ra) return 12
-  const correctOutcome = Math.sign(ph - pa) === Math.sign(rh - ra)
-  const oneScoreMatch = ph === rh || pa === ra
-  if (correctOutcome && oneScoreMatch) return 7
-  if (correctOutcome) return 5
-  if (oneScoreMatch) return 2
+  const ok = Math.sign(ph - pa) === Math.sign(rh - ra)
+  const one = ph === rh || pa === ra
+  if (ok && one) return 7
+  if (ok) return 5
+  if (one) return 2
   return 0
 }
 
+function fmtKickoff(d: string) {
+  const tz = 'America/Argentina/Buenos_Aires'
+  const date = new Date(d).toLocaleDateString('es-AR', { timeZone: tz, day: '2-digit', month: '2-digit' })
+  const time = new Date(d).toLocaleTimeString('es-AR', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false })
+  return `${date} · ${time} hs`
+}
+
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleDateString('es-AR', {
+    timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit', year: 'numeric',
+  })
 }
 
 export default function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
-  const [tab, setTab] = useState<'predecir' | 'fixture' | 'tabla' | 'reglamento' | 'info'>('predecir')
+  const [tab, setTab] = useState<Tab>('predecir')
   const [user, setUser] = useState<any>(null)
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -65,29 +74,26 @@ export default function TournamentPage() {
   const [myPickCount, setMyPickCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
   const [isParticipant, setIsParticipant] = useState(false)
+  const [pointsOpen, setPointsOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-
       const [{ data: t }, { data: ps }, { data: ms }] = await Promise.all([
         supabase.from('prode_tournaments').select('*').eq('id', id).maybeSingle(),
         supabase.from('prode_participants').select('user_id, paid, profiles(username, nombre, apellido)').eq('tournament_id', id),
         supabase.from('prode_matches').select('*').order('sort_order'),
       ])
-
       setTournament(t)
       setMatches((ms ?? []) as Match[])
-
       if (user && ps) {
         setIsParticipant(!!(ps as any[]).find(p => p.user_id === user.id))
         const { data: picks } = await supabase
-          .from('prode_stage1_picks')
-          .select('match_id, home_score, away_score, user_id')
-          .eq('tournament_id', id)
+          .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
         setAllPicks(allP)
         setMyPickCount(allP.filter(p => p.user_id === user.id).length)
@@ -95,35 +101,35 @@ export default function TournamentPage() {
       } else {
         setParticipants((ps ?? []) as any[])
       }
-
       setLoading(false)
     }
     load()
   }, [id])
 
   const handleSync = async () => {
-    setSyncing(true)
+    setSyncing(true); setSyncMsg(null)
     const res = await fetch('/api/prode/sync', { method: 'POST' })
     const json = await res.json()
     if (json.synced != null) {
-      alert(`✓ Sincronizados ${json.synced} partidos.`)
-      router.refresh()
+      setSyncMsg(`✓ ${json.synced} partidos sincronizados`)
+      const { data: ms } = await supabase.from('prode_matches').select('*').order('sort_order')
+      setMatches((ms ?? []) as Match[])
     } else {
-      alert(`Error: ${json.error}`)
+      setSyncMsg(`Error: ${json.error}`)
     }
     setSyncing(false)
   }
 
   const handleJoin = async () => {
     if (!user) { router.push('/login'); return }
-    await supabase.from('prode_participants').insert({ tournament_id: id, user_id: user.id })
-    setIsParticipant(true)
-    window.location.reload()
+    const { error: e } = await supabase.from('prode_participants').insert({ tournament_id: id, user_id: user.id })
+    if (!e || e.code === '23505') { setIsParticipant(true); window.location.reload() }
   }
 
   const isDeadlinePast = new Date() >= STAGE1_DEADLINE
   const groupMatches = matches.filter(m => m.stage === 'group')
   const progress = groupMatches.length > 0 ? Math.round((myPickCount / groupMatches.length) * 100) : 0
+  const isAdmin = user?.id === tournament?.admin_id
 
   const leaderboard = participants.map(p => {
     const name = p.profiles?.nombre
@@ -131,104 +137,159 @@ export default function TournamentPage() {
       : p.profiles?.username ?? 'Jugador'
     const userPicks = allPicks.filter(pk => pk.user_id === p.user_id)
     const pts = isDeadlinePast
-      ? userPicks.reduce((acc, pk) => {
-          const m = matches.find(m => m.id === pk.match_id)
-          return acc + (m ? (calcScore(pk, m) ?? 0) : 0)
-        }, 0)
+      ? userPicks.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
       : null
     return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
   }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
 
-  if (loading) {
-    return (
-      <div style={{ background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
-        <div style={{ color: MUTED }}>Cargando...</div>
-      </div>
-    )
-  }
-
-  if (!tournament) {
-    return (
-      <div style={{ background: BG, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ color: TEXT, fontSize: 15, marginBottom: 12 }}>Torneo no encontrado.</div>
-          <Link href="/prode" style={{ color: RED, fontSize: 13 }}>← Volver</Link>
-        </div>
-      </div>
-    )
-  }
-
-  const isAdmin = user?.id === tournament.admin_id
-
-  const TABS = [
+  const TABS: { key: Tab; label: string }[] = [
     { key: 'predecir', label: 'Predecir' },
     { key: 'fixture', label: 'Fixture' },
     { key: 'tabla', label: 'Tabla' },
     { key: 'reglamento', label: 'Reglamento' },
     { key: 'info', label: 'Info' },
-  ] as const
+  ]
+
+  const REVELATION_TEAMS = [
+    'República Checa','Escocia','Túnez','RD del Congo','Uzbekistán','Qatar','Irak',
+    'Sudáfrica','Arabia Saudita','Jordania','Bosnia y Herzegovina','Cabo Verde',
+    'Ghana','Curazao','Haití','Nueva Zelanda',
+  ]
+
+  const groupByDate = (ms: Match[]) => {
+    const map: Record<string, Match[]> = {}
+    for (const m of ms) {
+      const d = fmtDate(m.kickoff)
+      if (!map[d]) map[d] = []
+      map[d].push(m)
+    }
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b))
+  }
+
+  if (loading) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
+      <div style={{ color: MUTED }}>Cargando...</div>
+    </div>
+  )
+
+  if (!tournament) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ color: TEXT, fontSize: 15, marginBottom: 12 }}>Torneo no encontrado.</div>
+        <Link href="/prode" style={{ color: RED, fontSize: 13 }}>← Volver</Link>
+      </div>
+    </div>
+  )
+
+  const MatchRow = ({ m }: { m: Match }) => (
+    <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER}` }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, justifyContent: 'flex-end' }}>
+        <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home_team}</span>
+        <img src={m.home_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+      </div>
+      <div style={{ padding: '0 12px', textAlign: 'center', flexShrink: 0, minWidth: 100 }}>
+        {['FT','AET','PEN'].includes(m.status)
+          ? <span style={{ fontSize: 15, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{m.home_score} - {m.away_score}</span>
+          : <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{fmtKickoff(m.kickoff)}</span>}
+      </div>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+        <img src={m.away_flag} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+        <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away_team}</span>
+      </div>
+    </div>
+  )
+
+  const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+    <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '16px 18px', backdropFilter: 'blur(4px)', ...style }}>
+      {children}
+    </div>
+  )
+
+  const SectionTitle = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
+      {children}
+    </div>
+  )
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
+        @font-face { font-family: 'FWC2026'; src: url('/fonts/FWC2026-NormalRegular.77c3c249.ttf') format('truetype'); font-weight: 400; }
+        @font-face { font-family: 'FWC2026'; src: url('/fonts/FWC2026-NormalBlack.2bd896c8.ttf') format('truetype'); font-weight: 900; }
+        @font-face { font-family: 'FWC2026UltraCond'; src: url('/fonts/FWC2026-UltraCondensedBlack.8e6ba053.ttf') format('truetype'); font-weight: 900; }
+        @font-face { font-family: 'FWC2026Black'; src: url('/fonts/FWC2026-NormalBlack.2bd896c8.ttf') format('truetype'); font-weight: 900; }
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
-        .match-row { display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid ${BORDER}; }
-        .match-row:last-child { border-bottom: none; }
-        .flag { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; background: ${BORDER}; flex-shrink: 0; }
+
+        .t-page {
+          min-height: 100vh; font-family: ${FONT_NORMAL};
+          background-image: url('/images/fifa-26-background-light.png');
+          background-repeat: repeat; background-size: 220px;
+        }
+        @media (min-width: 768px) { .t-page { background-size: 320px; } }
+        .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        .tab-btn {
+          padding: 14px 18px; background: transparent; border: none;
+          border-bottom: 3px solid transparent; color: ${MUTED};
+          font-family: ${FONT_BLACK}; font-size: 13px; font-weight: 900;
+          cursor: pointer; transition: all 0.15s; margin-bottom: -1px; white-space: nowrap;
+        }
+        .tab-btn.active { border-bottom-color: ${RED}; color: ${RED}; }
+        .tab-btn:hover:not(.active) { color: ${TEXT}; }
+
         .prog-bar { height: 8px; background: ${BORDER}; border-radius: 4px; overflow: hidden; }
         .prog-fill { height: 100%; background: ${RED}; border-radius: 4px; transition: width 0.4s; }
-        .lb-row { display: flex; align-items: center; padding: 11px 0; border-bottom: 1px solid ${BORDER}; }
-        .lb-row:last-child { border-bottom: none; }
-        .section-title { font-size: 11px; font-weight: 700; color: ${MUTED}; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px; font-family: ${FONT}; }
+
+        .stage-chip {
+          padding: 5px 12px; border-radius: 20px; border: 1.5px solid ${BORDER};
+          font-family: ${FONT_BLACK}; font-size: 11px; font-weight: 900;
+          color: ${MUTED}; background: rgba(255,255,255,0.8); cursor: default;
+        }
 
         .fixture-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
-        @media (min-width: 768px) {
-          .fixture-grid { grid-template-columns: 1fr 1fr; }
-          .pred-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        }
+        @media (min-width: 768px) { .fixture-grid { grid-template-columns: 1fr 1fr; } }
+
+        .pts-row { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid ${BORDER}; }
+        .pts-row:last-child { border-bottom: none; }
+
+        .lb-row { display: flex; align-items: center; padding: 11px 18px; border-bottom: 1px solid ${BORDER}; }
+        .lb-row:last-child { border-bottom: none; }
       `}</style>
 
-      <div style={{ background: BG, minHeight: '100vh', fontFamily: FONT }}>
+      <div className="t-page">
 
-        {/* Header */}
-        <nav style={{ background: '#000' }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 56, display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Link href="/prode" style={{ color: '#999', textDecoration: 'none', fontSize: 20, lineHeight: 1, flexShrink: 0 }}>←</Link>
+        {/* ── NAV ── */}
+        <nav style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', height: 60, display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Link href="/prode" style={{ color: MUTED, textDecoration: 'none', fontSize: 20, lineHeight: 1, flexShrink: 0 }}>←</Link>
+            <img src="/images/fifa-26-emblem.png" alt="FIFA 26" style={{ height: 32, width: 'auto', objectFit: 'contain', flexShrink: 0 }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</div>
-              <div style={{ fontSize: 11, color: '#777' }}>Código: <span style={{ color: GOLD, fontWeight: 700 }}>{tournament.code}</span> · {participants.length} participantes</div>
+              <div style={{ fontSize: 15, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tournament.name}</div>
+              <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>
+                Código: <span style={{ color: RED, fontWeight: 700 }}>{tournament.code}</span> · {participants.length} participantes · {matches.length} partidos
+              </div>
             </div>
             {isAdmin && (
               <button
-                onClick={handleSync}
-                disabled={syncing}
-                style={{ padding: '7px 14px', background: '#222', color: '#ccc', border: '1px solid #444', borderRadius: 8, fontFamily: FONT, fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}
+                onClick={handleSync} disabled={syncing}
+                style={{ padding: '7px 14px', background: syncing ? '#eee' : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, cursor: syncing ? 'default' : 'pointer', flexShrink: 0 }}
               >
-                {syncing ? 'Sincronizando...' : '↻ Sync'}
+                {syncing ? '⏳ Sync...' : '↻ Sync API'}
               </button>
             )}
           </div>
+          {syncMsg && (
+            <div style={{ background: syncMsg.startsWith('✓') ? '#f0fdf4' : '#fff0f1', color: syncMsg.startsWith('✓') ? '#16a34a' : RED, fontSize: 12, padding: '6px 20px', fontFamily: FONT_NORMAL, borderTop: `1px solid ${BORDER}` }}>
+              {syncMsg}
+            </div>
+          )}
         </nav>
 
-        {/* Tabs */}
-        <div style={{ borderBottom: `1px solid ${BORDER}`, background: BG, position: 'sticky', top: 0, zIndex: 10 }}>
-          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex', gap: 0 }}>
+        {/* ── TABS ── */}
+        <div style={{ background: 'rgba(255,255,255,0.9)', borderBottom: `1px solid ${BORDER}`, backdropFilter: 'blur(4px)', overflowX: 'auto', position: 'sticky', top: 0, zIndex: 10 }}>
+          <div style={{ maxWidth: 1100, margin: '0 auto', padding: '0 20px', display: 'flex' }}>
             {TABS.map(t => (
-              <button
-                key={t.key}
-                onClick={() => setTab(t.key)}
-                style={{
-                  padding: '14px 20px', background: 'transparent', border: 'none',
-                  borderBottom: tab === t.key ? `3px solid ${RED}` : '3px solid transparent',
-                  color: tab === t.key ? RED : MUTED,
-                  fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                  transition: 'all 0.15s', marginBottom: -1,
-                }}
-              >
-                {t.label}
-              </button>
+              <button key={t.key} className={`tab-btn${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>{t.label}</button>
             ))}
           </div>
         </div>
@@ -237,81 +298,80 @@ export default function TournamentPage() {
 
           {/* ── PREDECIR ── */}
           {tab === 'predecir' && (
-            <div>
+            <div style={{ maxWidth: 680, margin: '0 auto' }}>
               {!user ? (
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 32, textAlign: 'center' }}>
-                  <div style={{ fontSize: 15, color: TEXT, marginBottom: 8 }}>Iniciá sesión para predecir</div>
-                  <Link href="/login" style={{ display: 'inline-block', padding: '11px 28px', background: RED, color: '#fff', fontFamily: FONT, fontSize: 14, fontWeight: 700, borderRadius: 10, textDecoration: 'none' }}>
-                    Iniciar sesión
-                  </Link>
-                </div>
-              ) : !isParticipant ? (
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 32, textAlign: 'center' }}>
+                <Card style={{ textAlign: 'center', padding: 32 }}>
                   <div style={{ fontSize: 36, marginBottom: 12 }}>⚽</div>
-                  <div style={{ fontSize: 15, color: TEXT, fontWeight: 700, marginBottom: 6 }}>¿Querés participar?</div>
-                  <div style={{ fontSize: 13, color: MUTED, marginBottom: 20 }}>Uníte al torneo para hacer tus predicciones.</div>
-                  <button onClick={handleJoin} style={{ padding: '12px 32px', background: RED, color: '#fff', border: 'none', borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                    Unirme al torneo
-                  </button>
-                </div>
+                  <div style={{ fontSize: 15, fontWeight: 900, fontFamily: FONT_BLACK, marginBottom: 8, color: TEXT }}>Iniciá sesión para predecir</div>
+                  <Link href="/login" style={{ display: 'inline-block', padding: '10px 28px', background: RED, color: '#fff', fontFamily: FONT_BLACK, fontSize: 14, fontWeight: 900, borderRadius: 10, textDecoration: 'none' }}>Iniciar sesión</Link>
+                </Card>
+              ) : !isParticipant ? (
+                <Card style={{ textAlign: 'center', padding: 32 }}>
+                  <div style={{ fontSize: 36, marginBottom: 10 }}>⚽</div>
+                  <div style={{ fontSize: 15, fontWeight: 900, fontFamily: FONT_BLACK, marginBottom: 6, color: TEXT }}>¿Querés participar?</div>
+                  <div style={{ fontSize: 13, color: MUTED, marginBottom: 20, fontFamily: FONT_NORMAL }}>Uníte al torneo para hacer tus predicciones.</div>
+                  <button onClick={handleJoin} style={{ padding: '12px 32px', background: RED, color: '#fff', border: 'none', borderRadius: 10, fontFamily: FONT_BLACK, fontSize: 14, fontWeight: 900, cursor: 'pointer' }}>Unirme</button>
+                </Card>
               ) : (
-                <div className="pred-grid">
-                  {/* Left: progress + link */}
-                  <div>
-                    <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 20, marginBottom: 14 }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>Fase de grupos</div>
-                        <div style={{ fontSize: 13, color: RED, fontWeight: 700 }}>{myPickCount}/{groupMatches.length}</div>
-                      </div>
-                      <div className="prog-bar" style={{ marginBottom: 8 }}>
-                        <div className="prog-fill" style={{ width: `${progress}%` }} />
-                      </div>
-                      <div style={{ fontSize: 12, color: MUTED }}>{progress}% completado</div>
+                <>
+                  {/* Progress */}
+                  <Card style={{ marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+                      <div style={{ fontSize: 14, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT }}>Fase de grupos — Etapa I</div>
+                      <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_COND }}>{myPickCount}/{groupMatches.length}</div>
                     </div>
+                    <div className="prog-bar" style={{ marginBottom: 6 }}>
+                      <div className="prog-fill" style={{ width: `${progress}%` }} />
+                    </div>
+                    <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{progress}% completado</div>
+                  </Card>
 
-                    {isDeadlinePast ? (
-                      <div style={{ background: '#fff0f1', border: `1px solid #ffc0c5`, borderRadius: 12, padding: '14px 16px', fontSize: 13, color: RED }}>
-                        Las predicciones de fase de grupos están cerradas.
+                  {isDeadlinePast ? (
+                    <Card style={{ marginBottom: 12, background: '#fff0f1', borderColor: '#ffc0c5' }}>
+                      <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Las predicciones de la Etapa I están cerradas.</div>
+                    </Card>
+                  ) : (
+                    <Link href={`/prode/${id}/predecir`} style={{
+                      display: 'block', padding: '16px 20px', background: RED, color: '#fff',
+                      borderRadius: 14, textDecoration: 'none', textAlign: 'center',
+                      fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 16, marginBottom: 12,
+                    }}>
+                      {myPickCount === 0 ? '⚽ Comenzar a predecir' : '✏️ Continuar predicciones'}
+                    </Link>
+                  )}
+
+                  {/* Collapsible scoring info */}
+                  <Card>
+                    <button
+                      onClick={() => setPointsOpen(v => !v)}
+                      style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: TEXT }}
+                    >
+                      <span>Sistema de puntos</span>
+                      <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 400 }}>{pointsOpen ? '▲ cerrar' : '▼ ver'}</span>
+                    </button>
+                    {pointsOpen && (
+                      <div style={{ marginTop: 14 }}>
+                        {[
+                          { pts: 12, color: '#10b981', label: '¡Marcador exacto!', desc: 'Resultado y goles exactos' },
+                          { pts: 7,  color: '#3b82f6', label: 'Resultado general',  desc: 'Ganador correcto + goles de un equipo' },
+                          { pts: 5,  color: GOLD,      label: 'Resultado parcial',  desc: 'Ganador/empate correcto, goles no' },
+                          { pts: 2,  color: '#f97316', label: 'Un goleador',        desc: 'Goles de un equipo bien, ganador no' },
+                          { pts: 0,  color: MUTED,     label: 'Sin aciertos',       desc: '' },
+                        ].map(({ pts, color, label, desc }) => (
+                          <div key={pts} className="pts-row">
+                            <div style={{ width: 36, height: 36, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <span style={{ fontSize: 14, fontWeight: 900, color, fontFamily: FONT_COND }}>{pts}</span>
+                            </div>
+                            <div>
+                              <div style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{label}</div>
+                              {desc && <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>{desc}</div>}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ) : (
-                      <Link
-                        href={`/prode/${id}/predecir`}
-                        style={{
-                          display: 'block', padding: '16px 20px', background: RED, color: '#fff',
-                          borderRadius: 14, textDecoration: 'none', textAlign: 'center',
-                          fontWeight: 700, fontSize: 15,
-                        }}
-                      >
-                        {myPickCount === 0 ? '⚽ Comenzar a predecir' : '✏️ Continuar predicciones'}
-                      </Link>
                     )}
-                  </div>
-
-                  {/* Right: scoring */}
-                  <div>
-                    <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 20 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 4 }}>Puntos por partido</div>
-                      <div style={{ fontSize: 11, color: MUTED, marginBottom: 14 }}>Ver reglamento completo en la pestaña Reglamento</div>
-                      {[
-                        { pts: '12', label: '¡Marcador exacto!', desc: 'Resultado y goles exactos', color: '#10b981' },
-                        { pts: '7', label: 'Resultado general', desc: 'Ganador correcto + goles de un equipo', color: '#3b82f6' },
-                        { pts: '5', label: 'Resultado parcial', desc: 'Ganador/empate correcto, fallan los goles', color: GOLD },
-                        { pts: '2', label: 'Un goleador', desc: 'Goles de un equipo correctos, ganador no', color: '#f97316' },
-                        { pts: '0', label: 'Sin aciertos', desc: 'Nada correcto', color: MUTED },
-                      ].map(({ pts, label, desc, color }) => (
-                        <div key={pts} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: `1px solid ${BORDER}` }}>
-                          <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontSize: 15, fontWeight: 700, color }}>{pts}</span>
-                          </div>
-                          <div>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: TEXT, marginBottom: 2 }}>{label}</div>
-                            <div style={{ fontSize: 11, color: MUTED }}>{desc}</div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                  </Card>
+                </>
               )}
             </div>
           )}
@@ -320,68 +380,55 @@ export default function TournamentPage() {
           {tab === 'fixture' && (
             <div>
               {matches.length === 0 ? (
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: 32, textAlign: 'center' }}>
-                  <div style={{ fontSize: 13, color: MUTED, marginBottom: 8 }}>No hay partidos cargados todavía.</div>
-                  {isAdmin && <div style={{ fontSize: 12, color: MUTED }}>Usá el botón "Sync" del header para cargar los partidos desde la API.</div>}
-                </div>
+                <Card style={{ textAlign: 'center', padding: 32, maxWidth: 480, margin: '0 auto' }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+                  <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 6 }}>No hay partidos cargados</div>
+                  <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: isAdmin ? 16 : 0, lineHeight: 1.6 }}>
+                    {isAdmin ? 'Presioná "↻ Sync API" en el header para cargar los 104 partidos del Mundial.' : 'El administrador del torneo debe sincronizar los partidos.'}
+                  </div>
+                  {isAdmin && (
+                    <button onClick={handleSync} disabled={syncing} style={{ padding: '11px 28px', background: TEXT, color: '#fff', border: 'none', borderRadius: 10, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+                      {syncing ? '⏳ Sincronizando...' : '↻ Sincronizar desde API'}
+                    </button>
+                  )}
+                </Card>
               ) : (
                 <>
-                  <div className="fixture-grid">
-                    {GROUPS.map(g => {
-                      const gm = matches.filter(m => m.group_name === g).sort((a, b) => a.sort_order - b.sort_order)
-                      if (!gm.length) return null
-                      return (
-                        <div key={g} style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '14px 16px' }}>
-                          <div style={{ fontSize: 11, fontWeight: 700, color: RED, letterSpacing: 1, marginBottom: 10 }}>GRUPO {g}</div>
-                          {gm.map(m => (
-                            <div key={m.id} className="match-row">
-                              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, justifyContent: 'flex-end' }}>
-                                <span style={{ fontSize: 12, color: TEXT, fontWeight: 500, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.home_team}</span>
-                                <img src={m.home_flag} alt="" className="flag" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                  {/* Group stage by date */}
+                  {groupByDate(matches.filter(m => m.stage === 'group')).map(([date, ms]) => (
+                    <div key={date} style={{ marginBottom: 12 }}>
+                      <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 8 }}>📅 {date}</div>
+                      <div className="fixture-grid">
+                        {ms.sort((a, b) => a.sort_order - b.sort_order).reduce<Match[][]>((rows, m, i) => {
+                          if (i % 2 === 0) rows.push([])
+                          rows[rows.length - 1].push(m)
+                          return rows
+                        }, []).map((pair, ri) => (
+                          <Card key={ri} style={{ padding: '12px 14px' }}>
+                            {pair.map((m, mi) => (
+                              <div key={m.id} style={{ borderBottom: mi < pair.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+                                <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, marginTop: mi > 0 ? 8 : 0, marginBottom: 4 }}>GRUPO {m.group_name}</div>
+                                <MatchRow m={m} />
                               </div>
-                              <div style={{ padding: '0 10px', textAlign: 'center', flexShrink: 0, minWidth: 90 }}>
-                                {['FT', 'AET', 'PEN'].includes(m.status) ? (
-                                  <span style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>{m.home_score} - {m.away_score}</span>
-                                ) : (
-                                  <span style={{ fontSize: 10, color: MUTED }}>{fmtDate(m.kickoff)}</span>
-                                )}
-                              </div>
-                              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                                <img src={m.away_flag} alt="" className="flag" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                                <span style={{ fontSize: 12, color: TEXT, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.away_team}</span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {['r32', 'r16', 'qf', 'sf', '3rd', 'final'].map(stage => {
-                    const sm = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
-                    if (!sm.length) return null
-                    return (
-                      <div key={stage} style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '14px 16px', marginTop: 12 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: NAVY, letterSpacing: 1, marginBottom: 10 }}>{STAGE_LABEL[stage]?.toUpperCase()}</div>
-                        {sm.map(m => (
-                          <div key={m.id} className="match-row">
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
-                              <span style={{ fontSize: 13, color: TEXT, fontWeight: 500, textAlign: 'right' }}>{m.home_team}</span>
-                              <img src={m.home_flag} alt="" className="flag" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                            </div>
-                            <div style={{ padding: '0 12px', textAlign: 'center', flexShrink: 0, minWidth: 90 }}>
-                              {['FT', 'AET', 'PEN'].includes(m.status) ? (
-                                <span style={{ fontSize: 14, fontWeight: 700, color: TEXT }}>{m.home_score} - {m.away_score}</span>
-                              ) : (
-                                <span style={{ fontSize: 11, color: MUTED }}>{fmtDate(m.kickoff)}</span>
-                              )}
-                            </div>
-                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
-                              <img src={m.away_flag} alt="" className="flag" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                              <span style={{ fontSize: 13, color: TEXT, fontWeight: 500 }}>{m.away_team}</span>
-                            </div>
-                          </div>
+                            ))}
+                          </Card>
                         ))}
+                      </div>
+                    </div>
+                  ))}
+
+                  {/* Knockout stages */}
+                  {(['r32','r16','qf','sf','3rd','final'] as const).map(stage => {
+                    const ms = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
+                    if (!ms.length) return null
+                    return (
+                      <div key={stage} style={{ marginBottom: 12 }}>
+                        <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 8 }}>
+                          🏆 {STAGE_LABEL[stage]}
+                        </div>
+                        <Card style={{ padding: '4px 14px' }}>
+                          {ms.map(m => <MatchRow key={m.id} m={m} />)}
+                        </Card>
                       </div>
                     )
                   })}
@@ -392,35 +439,35 @@ export default function TournamentPage() {
 
           {/* ── TABLA ── */}
           {tab === 'tabla' && (
-            <div>
-              <div style={{ background: BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT, color: '#fff' }}>
-                  <div style={{ width: 32, fontSize: 11, fontWeight: 700 }}>#</div>
-                  <div style={{ flex: 1, fontSize: 11, fontWeight: 700 }}>JUGADOR</div>
-                  <div style={{ width: 72, textAlign: 'center', fontSize: 11, fontWeight: 700 }}>PICKS</div>
-                  <div style={{ width: 56, textAlign: 'center', fontSize: 11, fontWeight: 700, color: isDeadlinePast ? GOLD : '#999' }}>PTS</div>
+            <div style={{ maxWidth: 680, margin: '0 auto' }}>
+              <Card style={{ padding: 0, overflow: 'hidden' }}>
+                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
+                  <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
+                  <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
+                  <div style={{ width: 72, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>PICKS</div>
+                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: isDeadlinePast ? '#ffcc00' : '#fff', fontFamily: FONT_BLACK }}>PTS</div>
                 </div>
                 {leaderboard.length === 0 ? (
-                  <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13 }}>Nadie se unió todavía.</div>
+                  <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
                 ) : leaderboard.map((p, i) => (
-                  <div key={p.user_id} className="lb-row" style={{ padding: '12px 18px' }}>
-                    <div style={{ width: 32, fontSize: 14, fontWeight: 700, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
+                  <div key={p.user_id} className="lb-row">
+                    <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
                       {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
                     </div>
-                    <div style={{ flex: 1, fontSize: 14, fontWeight: p.user_id === user?.id ? 700 : 400, color: p.user_id === user?.id ? RED : TEXT }}>
+                    <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
                       {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament.admin_id ? ' 👑' : ''}
                     </div>
-                    <div style={{ width: 72, textAlign: 'center', fontSize: 13, color: MUTED }}>
+                    <div style={{ width: 72, textAlign: 'center', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>
                       {p.pick_count}/{groupMatches.length || '?'}
                     </div>
-                    <div style={{ width: 56, textAlign: 'center', fontSize: 15, fontWeight: 700, color: isDeadlinePast ? TEXT : MUTED }}>
+                    <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isDeadlinePast ? TEXT : MUTED, fontFamily: FONT_COND }}>
                       {isDeadlinePast ? (p.pts ?? 0) : '—'}
                     </div>
                   </div>
                 ))}
-              </div>
+              </Card>
               {!isDeadlinePast && (
-                <div style={{ fontSize: 12, color: MUTED, textAlign: 'center', marginTop: 14 }}>Los puntos se calculan después del cierre de predicciones el 11 de junio.</div>
+                <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los puntos se calculan a partir del 11 de junio.</div>
               )}
             </div>
           )}
@@ -428,173 +475,140 @@ export default function TournamentPage() {
           {/* ── REGLAMENTO ── */}
           {tab === 'reglamento' && (
             <div style={{ maxWidth: 760, margin: '0 auto' }}>
-
-              {/* Hero */}
-              <div style={{ background: '#000', borderRadius: 16, padding: '28px 24px', marginBottom: 20, display: 'flex', gap: 20, alignItems: 'center' }}>
-                <div style={{ fontSize: 48, lineHeight: 1 }}>🎻</div>
+              <Card style={{ marginBottom: 12, background: TEXT, border: 'none', display: 'flex', gap: 16, alignItems: 'center' }}>
+                <div style={{ fontSize: 40, lineHeight: 1 }}>🎻</div>
                 <div>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Prode Violines Mundial 2026</div>
-                  <div style={{ fontSize: 13, color: '#888' }}>Reglamento Oficial · Carpincho Games SRL</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>Prode Violines Mundial 2026</div>
+                  <div style={{ fontSize: 12, color: '#aaa', fontFamily: FONT_NORMAL }}>Reglamento Oficial · Carpincho Games SRL</div>
                 </div>
-              </div>
+              </Card>
 
-              {/* Puntos por partido */}
-              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 16 }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 6 }}>Sistema de puntuación — Partidos</div>
-                <div style={{ fontSize: 12, color: MUTED, marginBottom: 16 }}>Aplica para Etapa I y Etapa II</div>
+              <Card style={{ marginBottom: 12 }}>
+                <SectionTitle>Sistema de puntuación — Partidos</SectionTitle>
+                <div style={{ fontSize: 11, color: MUTED, marginBottom: 14, fontFamily: FONT_NORMAL }}>Aplica para Etapa I y Etapa II</div>
                 {[
-                  { pts: 12, color: '#10b981', label: '¡Marcador exacto!', desc: 'Acertaste el resultado final y la cantidad de goles (9 + 3 adicionales).' },
-                  { pts: 7,  color: '#3b82f6', label: 'Resultado general',  desc: 'Acertaste al ganador y la cantidad de goles de un equipo.' },
-                  { pts: 5,  color: GOLD,      label: 'Resultado parcial',  desc: 'Acertaste al ganador o el empate, pero fallás los goles.' },
-                  { pts: 2,  color: '#f97316', label: 'Un goleador',        desc: 'No acertaste al ganador pero sí la cantidad de goles de uno de los equipos.' },
-                  { pts: 0,  color: MUTED,     label: 'Sin aciertos',       desc: 'No pegaste nada.' },
+                  { pts: 12, color: '#10b981', label: '¡Marcador exacto!', desc: 'Resultado y goles exactos (9 + 3 adicionales)' },
+                  { pts: 7,  color: '#3b82f6', label: 'Resultado general',  desc: 'Ganador correcto + goles de un equipo' },
+                  { pts: 5,  color: GOLD,      label: 'Resultado parcial',  desc: 'Ganador/empate correcto, goles no' },
+                  { pts: 2,  color: '#f97316', label: 'Un goleador',        desc: 'Goles de un equipo bien, ganador no' },
+                  { pts: 0,  color: MUTED,     label: 'Sin aciertos',       desc: '' },
                 ].map(({ pts, color, label, desc }) => (
-                  <div key={pts} style={{ display: 'flex', gap: 14, alignItems: 'flex-start', padding: '12px 0', borderBottom: `1px solid ${BORDER}` }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 12, background: `${color}18`, border: `1.5px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 17, fontWeight: 700, color }}>{pts}</span>
+                  <div key={pts} className="pts-row">
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: `${color}18`, border: `1.5px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 15, fontWeight: 900, color, fontFamily: FONT_COND }}>{pts}</span>
                     </div>
-                    <div style={{ paddingTop: 4 }}>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: TEXT, marginBottom: 3 }}>{label}</div>
-                      <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.5 }}>{desc}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{label}</div>
+                      {desc && <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>{desc}</div>}
                     </div>
                   </div>
                 ))}
-
                 {/* Example */}
-                <div style={{ marginTop: 16, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: MUTED, marginBottom: 10 }}>💡 EJEMPLO — Resultado oficial: A 3 vs B 1</div>
-                  {[
-                    ['3 - 1', '12 pts', 'Perfecto ✓'],
-                    ['3 - 0', '7 pts', 'Ganador + goles de A'],
-                    ['2 - 0', '5 pts', 'Ganador correcto, ningún marcador'],
-                    ['0 - 1', '2 pts', 'Goles de B correctos, ganador no'],
-                    ['0 - 0', '0 pts', 'Nada'],
-                  ].map(([pred, pts, note]) => (
-                    <div key={pred} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '5px 0', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ width: 44, fontSize: 13, fontWeight: 700, color: TEXT, fontFamily: 'monospace' }}>{pred}</span>
-                      <span style={{ width: 48, fontSize: 13, fontWeight: 700, color: RED }}>{pts}</span>
-                      <span style={{ fontSize: 12, color: MUTED }}>{note}</span>
+                <div style={{ marginTop: 14, background: '#f9f9f9', borderRadius: 10, padding: '12px 14px', border: `1px solid ${BORDER}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, fontFamily: FONT_BLACK, marginBottom: 8 }}>EJEMPLO — Resultado oficial: A 3 · B 1</div>
+                  {[['3-1','12 pts','Exacto ✓'],['3-0','7 pts','Ganador + goles de A'],['2-0','5 pts','Ganador correcto'],['0-1','2 pts','Goles de B correctos'],['0-0','0 pts','Nada']].map(([pred,pts,note]) => (
+                    <div key={pred} style={{ display: 'flex', gap: 10, padding: '4px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span style={{ width: 36, fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{pred}</span>
+                      <span style={{ width: 50, fontSize: 12, fontWeight: 900, color: RED, fontFamily: FONT_BLACK }}>{pts}</span>
+                      <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>{note}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
 
-              {/* Puntos especiales Etapa I */}
-              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '20px 24px', marginBottom: 16 }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 16 }}>Puntos especiales — Etapa I</div>
+              <Card style={{ marginBottom: 12 }}>
+                <SectionTitle>Puntos especiales — Etapa I</SectionTitle>
                 {[
-                  { pts: '6',  desc: 'Orden final correcto de todos los equipos dentro del grupo' },
-                  { pts: '6',  desc: 'Por equipo acertado que llegó a 16vos de final' },
-                  { pts: '10', desc: 'Por equipo acertado que llegó a 8vos de final' },
-                  { pts: '14', desc: 'Por equipo acertado que llegó a 4tos de final' },
-                  { pts: '18', desc: 'Por equipo acertado que llegó a Semifinal' },
-                  { pts: '25', desc: 'Por acertar el 4to puesto' },
-                  { pts: '30', desc: 'Por acertar el 3er puesto' },
-                  { pts: '35', desc: 'Por acertar el Subcampeón' },
-                  { pts: '40', desc: 'Por acertar el Campeón' },
-                  { pts: '15', desc: 'Por cada acierto en los premios FIFA: Balón de Oro, Guante de Oro, Botín de Oro, Equipo Fair Play' },
-                  { pts: '15', desc: 'Por elegir el partido con la mayor goleada en la fase de grupos' },
-                  { pts: '15', desc: 'Por el Equipo Revelación (el que llegue más lejos de la lista elegible)' },
-                ].map(({ pts, desc }, i) => (
-                  <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '10px 0', borderBottom: i < 11 ? `1px solid ${BORDER}` : 'none' }}>
-                    <div style={{ width: 40, height: 36, borderRadius: 10, background: `${GOLD}18`, border: `1.5px solid ${GOLD}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <span style={{ fontSize: 14, fontWeight: 700, color: GOLD }}>{pts}</span>
+                  ['6','Orden final correcto de todos los equipos en el grupo'],
+                  ['6','Por equipo acertado que llegó a 16avos'],
+                  ['10','Por equipo acertado que llegó a 8vos'],
+                  ['14','Por equipo acertado que llegó a Cuartos'],
+                  ['18','Por equipo acertado que llegó a Semis'],
+                  ['25','Por acertar el 4to puesto'],
+                  ['30','Por acertar el 3er puesto'],
+                  ['35','Por acertar el Subcampeón'],
+                  ['40','Por acertar el Campeón'],
+                  ['15','Por cada acierto: Balón de Oro, Guante de Oro, Botín de Oro, Fair Play'],
+                  ['15','Por el partido con la mayor goleada en fase de grupos'],
+                  ['15','Por el Equipo Revelación (que llegue más lejos de la lista elegible)'],
+                ].map(([pts, desc], i) => (
+                  <div key={i} className="pts-row">
+                    <div style={{ width: 36, height: 32, borderRadius: 8, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 13, fontWeight: 900, color: GOLD, fontFamily: FONT_COND }}>{pts}</span>
                     </div>
-                    <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.5, paddingTop: 6 }}>{desc}</div>
+                    <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, lineHeight: 1.5 }}>{desc}</div>
                   </div>
                 ))}
-
-                {/* Revelación teams */}
-                <div style={{ marginTop: 14, background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: MUTED, marginBottom: 10 }}>EQUIPOS ELEGIBLES A REVELACIÓN</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {['República Checa','Escocia','Túnez','RD del Congo','Uzbekistán','Qatar','Irak','Sudáfrica','Arabia Saudita','Jordania','Bosnia y Herzegovina','Cabo Verde','Ghana','Curazao','Haití','Nueva Zelanda'].map(t => (
-                      <span key={t} style={{ padding: '4px 10px', background: CARD_BG, border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 12, color: TEXT }}>{t}</span>
+                <div style={{ marginTop: 14, background: '#f9f9f9', borderRadius: 10, padding: '12px 14px', border: `1px solid ${BORDER}` }}>
+                  <div style={{ fontSize: 11, fontWeight: 900, color: MUTED, fontFamily: FONT_BLACK, marginBottom: 8 }}>EQUIPOS ELEGIBLES A REVELACIÓN</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {REVELATION_TEAMS.map(t => (
+                      <span key={t} style={{ padding: '3px 9px', background: '#fff', border: `1px solid ${BORDER}`, borderRadius: 20, fontSize: 11, color: TEXT, fontFamily: FONT_NORMAL }}>{t}</span>
                     ))}
                   </div>
                 </div>
-              </div>
+              </Card>
 
-              {/* Premios y plazos */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginBottom: 16 }}>
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 14 }}>🏆 Premios</div>
-                  {[
-                    ['Etapa I (Pozo)', '$32.500'],
-                    ['Etapa II (Pozo)', '$17.500'],
-                    ['Inscripción', '$70.000 · alias: erik.ars'],
-                  ].map(([label, val]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ fontSize: 13, color: MUTED }}>{label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: TEXT }}>{val}</span>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 12, marginBottom: 12 }}>
+                <Card>
+                  <SectionTitle>Premios</SectionTitle>
+                  {[['Etapa I (Pozo)','$32.500'],['Etapa II (Pozo)','$17.500'],['Inscripción','$70.000 · alias: erik.ars']].map(([l,v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{l}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{v}</span>
                     </div>
                   ))}
-                </div>
-
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 14 }}>⏱ Plazos</div>
-                  {[
-                    ['Etapa I — cierre', 'Mié 11 jun · 16:00 ARG'],
-                    ['Etapa II — cierre', '1 hora antes de cada partido'],
-                    ['Pago inscripción', 'Vie 10 jun 2026'],
-                  ].map(([label, val]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ fontSize: 13, color: MUTED, flexShrink: 0 }}>{label}</span>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: TEXT, textAlign: 'right' }}>{val}</span>
+                </Card>
+                <Card>
+                  <SectionTitle>Plazos</SectionTitle>
+                  {[['Etapa I — cierre','Mié 11 jun · 16:00 ARG'],['Etapa II — cierre','1h antes de cada partido'],['Pago inscripción','Vie 10 jun 2026']].map(([l,v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '8px 0', borderBottom: `1px solid ${BORDER}`, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{l}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, textAlign: 'right' }}>{v}</span>
                     </div>
                   ))}
-                </div>
+                </Card>
               </div>
-
-              {/* Participación */}
-              <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 16, padding: '18px 20px' }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 10 }}>📋 Bases y condiciones</div>
-                <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.8 }}>
-                  Pueden participar únicamente los integrantes del grupo de WhatsApp <strong style={{ color: TEXT }}>🎻 Violines 🎻</strong> que hayan abonado la inscripción antes del viernes 10 de junio de 2026.
-                  Todo el monto recaudado se destina a premios. El organizador es <strong style={{ color: TEXT }}>Carpincho Games SRL</strong>.
-                </div>
-              </div>
-
             </div>
           )}
 
           {/* ── INFO ── */}
           {tab === 'info' && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 16 }}>
-              <div>
-                <div className="section-title">Información del torneo</div>
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
-                  {[
-                    ['Nombre', tournament.name],
-                    ['Código', tournament.code],
-                    ['Participantes', String(participants.length)],
-                    ['Cierre fase grupos', new Date('2026-06-11T19:00:00Z').toLocaleString('es-AR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })],
-                  ].map(([label, value]) => (
-                    <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ fontSize: 13, color: MUTED }}>{label}</span>
-                      <span style={{ fontSize: 13, color: TEXT, fontWeight: 700 }}>{value}</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 14 }}>
+              <Card>
+                <SectionTitle>Información del torneo</SectionTitle>
+                {[['Nombre',tournament.name],['Código',tournament.code],['Participantes',String(participants.length)],['Partidos cargados',String(matches.length)],['Cierre Etapa I','mié 11 jun · 16:00 (ARG)']].map(([l,v]) => (
+                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${BORDER}` }}>
+                    <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{l}</span>
+                    <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{v}</span>
+                  </div>
+                ))}
+                {isAdmin && (
+                  <div style={{ marginTop: 14 }}>
+                    <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 10, lineHeight: 1.6 }}>
+                      Como admin, podés sincronizar los partidos del Mundial desde la API haciendo click en el botón "↻ Sync API" del header. Los datos vienen de API-Football (FIFA 2026, league 1, season 2026).
                     </div>
-                  ))}
-                </div>
-              </div>
+                    <button onClick={handleSync} disabled={syncing} style={{ padding: '10px 20px', background: TEXT, color: '#fff', border: 'none', borderRadius: 10, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, cursor: 'pointer' }}>
+                      {syncing ? '⏳ Sincronizando...' : '↻ Sincronizar partidos desde API'}
+                    </button>
+                    {syncMsg && <div style={{ fontSize: 12, marginTop: 8, color: syncMsg.startsWith('✓') ? '#16a34a' : RED, fontFamily: FONT_NORMAL }}>{syncMsg}</div>}
+                  </div>
+                )}
+              </Card>
 
-              <div>
-                <div className="section-title">Participantes ({participants.length})</div>
-                <div style={{ background: CARD_BG, border: `1.5px solid ${BORDER}`, borderRadius: 14, overflow: 'hidden' }}>
-                  {participants.map(p => (
-                    <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 18px', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ fontSize: 13, fontWeight: p.user_id === user?.id ? 700 : 400, color: p.user_id === user?.id ? RED : TEXT }}>
-                        {p.profiles?.nombre ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim() : p.profiles?.username ?? 'Jugador'}
-                        {p.user_id === user?.id ? ' (vos)' : ''}
-                        {p.user_id === tournament.admin_id ? ' 👑' : ''}
-                      </span>
-                      <span style={{ fontSize: 11, color: p.paid ? '#10b981' : MUTED, fontWeight: 600 }}>
-                        {p.paid ? '✓ Pagó' : 'Sin pagar'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Card>
+                <SectionTitle>Participantes ({participants.length})</SectionTitle>
+                {participants.map(p => (
+                  <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+                    <span style={{ fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
+                      {p.profiles?.nombre ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim() : p.profiles?.username ?? 'Jugador'}
+                      {p.user_id === user?.id ? ' (vos)' : ''}
+                      {p.user_id === tournament.admin_id ? ' 👑' : ''}
+                    </span>
+                    <span style={{ fontSize: 11, color: p.paid ? '#10b981' : MUTED, fontWeight: 700, fontFamily: FONT_NORMAL }}>{p.paid ? '✓ Pagó' : 'Sin pagar'}</span>
+                  </div>
+                ))}
+              </Card>
             </div>
           )}
 
