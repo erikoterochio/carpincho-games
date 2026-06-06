@@ -19,10 +19,21 @@ function countdown() {
   const ms = DEADLINE.getTime() - Date.now()
   if (ms <= 0) return null
   return {
-    days: Math.floor(ms / 86400000),
+    days:  Math.floor(ms / 86400000),
     hours: Math.floor((ms % 86400000) / 3600000),
-    mins: Math.floor((ms % 3600000) / 60000),
+    mins:  Math.floor((ms % 3600000) / 60000),
+    secs:  Math.floor((ms % 60000) / 1000),
   }
+}
+
+function fmtDeadline() {
+  // mié 11-jun · 16:00 hs (UTC-3 AR)
+  const d = DEADLINE
+  const day = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short' })
+  const dd  = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit' })
+  const mmm = d.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', month: 'short' })
+  const hh  = d.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit' })
+  return `${day} ${dd}-${mmm} · ${hh} hs (UTC-3 AR)`
 }
 
 function genCode() {
@@ -43,7 +54,8 @@ export default function ProdePage() {
   const [timer, setTimer] = useState(countdown())
 
   useEffect(() => {
-    const id = setInterval(() => setTimer(countdown()), 30000)
+    setTimer(countdown())
+    const id = setInterval(() => setTimer(countdown()), 1000)
     return () => clearInterval(id)
   }, [])
 
@@ -111,9 +123,16 @@ export default function ProdePage() {
         .prode-page {
           min-height: 100vh; font-family: ${FONT_NORMAL};
           background-image: url('/images/fifa-26-background-light.png');
-          background-repeat: repeat; background-size: 400px;
+          background-repeat: repeat; background-size: 220px;
         }
+        @media (min-width: 768px) { .prode-page { background-size: 320px; } }
         .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+        .countdown-num {
+          font-family: ${FONT_COND}; font-weight: 900; color: #111; line-height: 1;
+          font-size: 48px;
+        }
+        @media (min-width: 768px) { .countdown-num { font-size: 64px; } }
 
         .inp {
           display: block; width: 100%; padding: 12px 16px; background: #fff;
@@ -174,28 +193,29 @@ export default function ProdePage() {
 
         {/* Countdown */}
         <div style={{ position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/images/fifa-26-fondo-colores-corto.png')", backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.35 }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.55)' }} />
-          <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '28px 20px' }}>
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/images/fifa-26-fondo-colores-corto.png')", backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.45 }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.52)' }} />
+          <div style={{ position: 'relative', zIndex: 1, maxWidth: 1100, margin: '0 auto', padding: '24px 20px' }}>
             {timer ? (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{ fontSize: 11, fontWeight: 900, color: '#ffcc00', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_NORMAL }}>
-                    ⏱ Cierre de predicciones — Fase de grupos
-                  </div>
-                  <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
-                    {[['DÍAS', timer.days], ['HORAS', timer.hours], ['MIN', timer.mins]].map(([label, val]) => (
-                      <div key={label as string} style={{ textAlign: 'center' }}>
-                        <div style={{ fontFamily: FONT_COND, fontSize: 56, fontWeight: 900, color: '#fff', lineHeight: 1 }}>{String(val).padStart(2, '0')}</div>
-                        <div style={{ fontSize: 9, color: '#aac', letterSpacing: 2, fontFamily: FONT_NORMAL, marginTop: 2 }}>{label}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div style={{ fontSize: 12, color: '#aac', marginTop: 10, fontFamily: FONT_NORMAL }}>11 jun · 16:00 hora Argentina</div>
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 900, color: '#111', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 14, fontFamily: FONT_BLACK }}>
+                  Cierre de predicciones — Etapa I
                 </div>
+                <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                  {([['DÍAS', timer.days], ['HORAS', timer.hours], ['MIN', timer.mins], ['SEG', timer.secs]] as [string, number][]).map(([label, val], i) => (
+                    <div key={label} style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <div style={{ textAlign: 'center' }}>
+                        <div className="countdown-num">{String(val).padStart(2, '0')}</div>
+                        <div style={{ fontSize: 9, color: '#555', letterSpacing: 1.5, fontFamily: FONT_NORMAL, marginTop: 3, textTransform: 'uppercase' }}>{label}</div>
+                      </div>
+                      {i < 3 && <div style={{ fontFamily: FONT_COND, fontSize: 48, fontWeight: 900, color: '#555', lineHeight: 1, margin: '0 2px', alignSelf: 'flex-start' }}>:</div>}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 12, color: '#444', marginTop: 10, fontFamily: FONT_NORMAL }}>{fmtDeadline()}</div>
               </div>
             ) : (
-              <div style={{ fontSize: 16, color: '#f87171', fontWeight: 900, fontFamily: FONT_BLACK }}>Las predicciones de fase de grupos están cerradas.</div>
+              <div style={{ fontSize: 16, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Las predicciones de la Etapa I están cerradas.</div>
             )}
           </div>
         </div>
