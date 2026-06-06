@@ -33,8 +33,19 @@ export async function login(formData: FormData): Promise<Result | never> {
     email = profile.email
   }
 
-  const { error } = await supabase.auth.signInWithPassword({ email, password })
+  const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
   if (error) return { error: 'Usuario o contraseña incorrectos.' }
+
+  // Asegurar que existe el perfil (por si el usuario existía antes del trigger)
+  if (authData.user) {
+    const u = authData.user
+    await supabase.from('profiles').upsert({
+      id: u.id,
+      email: u.email,
+      username: u.user_metadata?.username ?? u.user_metadata?.full_name ?? null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id', ignoreDuplicates: true })
+  }
 
   revalidatePath('/', 'layout')
   redirect('/')
