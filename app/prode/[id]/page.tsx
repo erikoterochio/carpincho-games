@@ -88,8 +88,11 @@ type Match = {
   home_score: number | null; away_score: number | null; status: string
 }
 type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
-type BracketSlot = { team: TeamStat | null; label: string }
-type BracketMatchDef = { num: string; home: BracketSlot; away: BracketSlot }
+type KoMatchNode = {
+  id: string; home: TeamStat | null; away: TeamStat | null
+  homeLabel: string; awayLabel: string
+  winner: TeamStat | null; loser: TeamStat | null; isTied: boolean
+}
 
 const STAGE_LABEL: Record<string, string> = {
   group: 'Fase de Grupos', r32: '16avos', r16: '8vos',
@@ -142,6 +145,8 @@ export default function TournamentPage() {
   const [isParticipant, setIsParticipant] = useState(false)
   const [pointsOpen, setPointsOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
+  const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
+  const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -287,6 +292,22 @@ export default function TournamentPage() {
     setMyEditPicks(prev => ({ ...prev, [matchId]: updated }))
   }
 
+  const handleKoPick = (matchId: string, side: 'h'|'a', value: string) => {
+    const cleaned = value.replace(/\D/g, '').slice(0, 2)
+    const current = koPicksRef.current[matchId] ?? { h: '', a: '' }
+    const updated = { ...current, [side]: cleaned }
+    koPicksRef.current[matchId] = updated
+    setKoEditPicks(prev => ({ ...prev, [matchId]: updated }))
+  }
+
+  const handleKoPen = (matchId: string, winner: 'h'|'a') => {
+    const current = koPicksRef.current[matchId] ?? { h: '', a: '' }
+    const pen: 'h'|'a'|undefined = current.pen === winner ? undefined : winner
+    const updated = { ...current, pen }
+    koPicksRef.current[matchId] = updated
+    setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
+  }
+
   const leaderboard = participants.map(p => {
     const name = p.profiles?.nombre
       ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
@@ -335,58 +356,55 @@ export default function TournamentPage() {
   const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
 
   const bracketData = useMemo(() => {
-    const get = (pos: 1|2, grp: string): BracketSlot => ({
-      team: allGroupStandings[grp]?.[pos-1] ?? null,
-      label: `${pos}° Gr.${grp}`,
-    })
-    const t3 = (idx: number): BracketSlot => ({
-      team: bestThirds[idx] ?? null,
-      label: bestThirds[idx] ? `3° ${abbrev(bestThirds[idx]!.name)}` : `3° (${idx+1})`,
-    })
-    const ref = (label: string): BracketSlot => ({ team: null, label })
-    return {
-      r32: [
-        { num:'P49', home:get(1,'A'), away:get(2,'B') },
-        { num:'P50', home:get(1,'B'), away:get(2,'A') },
-        { num:'P51', home:get(1,'C'), away:get(2,'D') },
-        { num:'P52', home:get(1,'D'), away:get(2,'C') },
-        { num:'P53', home:get(1,'E'), away:get(2,'F') },
-        { num:'P54', home:get(1,'F'), away:get(2,'E') },
-        { num:'P55', home:get(1,'G'), away:get(2,'H') },
-        { num:'P56', home:get(1,'H'), away:get(2,'G') },
-        { num:'P57', home:get(1,'I'), away:get(2,'J') },
-        { num:'P58', home:get(1,'J'), away:get(2,'I') },
-        { num:'P59', home:get(1,'K'), away:get(2,'L') },
-        { num:'P60', home:get(1,'L'), away:get(2,'K') },
-        { num:'P61', home:t3(0), away:t3(1) },
-        { num:'P62', home:t3(2), away:t3(3) },
-        { num:'P63', home:t3(4), away:t3(5) },
-        { num:'P64', home:t3(6), away:t3(7) },
-      ] as BracketMatchDef[],
-      r16: [
-        { num:'R16-1', home:ref('Gan. P49'), away:ref('Gan. P50') },
-        { num:'R16-2', home:ref('Gan. P51'), away:ref('Gan. P52') },
-        { num:'R16-3', home:ref('Gan. P53'), away:ref('Gan. P54') },
-        { num:'R16-4', home:ref('Gan. P55'), away:ref('Gan. P56') },
-        { num:'R16-5', home:ref('Gan. P57'), away:ref('Gan. P58') },
-        { num:'R16-6', home:ref('Gan. P59'), away:ref('Gan. P60') },
-        { num:'R16-7', home:ref('Gan. P61'), away:ref('Gan. P62') },
-        { num:'R16-8', home:ref('Gan. P63'), away:ref('Gan. P64') },
-      ] as BracketMatchDef[],
-      qf: [
-        { num:'QF-1', home:ref('Gan. R16-1'), away:ref('Gan. R16-2') },
-        { num:'QF-2', home:ref('Gan. R16-3'), away:ref('Gan. R16-4') },
-        { num:'QF-3', home:ref('Gan. R16-5'), away:ref('Gan. R16-6') },
-        { num:'QF-4', home:ref('Gan. R16-7'), away:ref('Gan. R16-8') },
-      ] as BracketMatchDef[],
-      sf: [
-        { num:'SF-1', home:ref('Gan. QF-1'), away:ref('Gan. QF-2') },
-        { num:'SF-2', home:ref('Gan. QF-3'), away:ref('Gan. QF-4') },
-      ] as BracketMatchDef[],
-      third: { num:'3°/4°', home:ref('Per. SF-1'), away:ref('Per. SF-2') } as BracketMatchDef,
-      final: { num:'FINAL', home:ref('Gan. SF-1'), away:ref('Gan. SF-2') } as BracketMatchDef,
+    const getGrp = (pos: 1|2, grp: string): TeamStat | null => allGroupStandings[grp]?.[pos-1] ?? null
+    const get3rd = (idx: number): TeamStat | null => bestThirds[idx] ?? null
+
+    const getWinner = (id: string, home: TeamStat | null, away: TeamStat | null): TeamStat | null => {
+      if (!home || !away) return null
+      const p = koEditPicks[id]
+      if (!p || p.h === '' || p.a === '') return null
+      const h = parseInt(p.h), a = parseInt(p.a)
+      if (h > a) return home
+      if (a > h) return away
+      if (p.pen === 'h') return home
+      if (p.pen === 'a') return away
+      return null
     }
-  }, [allGroupStandings, bestThirds])
+    const getLoser = (id: string, home: TeamStat | null, away: TeamStat | null): TeamStat | null => {
+      const w = getWinner(id, home, away)
+      return (w && home && away) ? (w === home ? away : home) : null
+    }
+    const mkNode = (id: string, home: TeamStat | null, away: TeamStat | null, homeLabel: string, awayLabel: string): KoMatchNode => {
+      const p = koEditPicks[id] ?? { h: '', a: '' }
+      const filled = p.h !== '' && p.a !== ''
+      return { id, home, away, homeLabel, awayLabel, winner: getWinner(id, home, away), loser: getLoser(id, home, away), isTied: filled && parseInt(p.h) === parseInt(p.a) }
+    }
+
+    const r32 = [
+      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B'),
+      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A'),
+      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D'),
+      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C'),
+      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F'),
+      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E'),
+      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H'),
+      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G'),
+      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J'),
+      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I'),
+      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L'),
+      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K'),
+      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2'),
+      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4'),
+      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6'),
+      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8'),
+    ]
+    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`))
+    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`))
+    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`))
+    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2')
+    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2')
+    return { r32, r16, qf, sf, third, final }
+  }, [allGroupStandings, bestThirds, koEditPicks])
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
@@ -475,30 +493,79 @@ export default function TournamentPage() {
     </table>
   )
 
-  const BracketTeamSlot = ({ slot }: { slot: BracketSlot }) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 8px', minWidth: 0 }}>
-      {slot.team ? (
-        <>
-          <img src={slot.team.flag} alt="" style={{ width: 16, height: 11, borderRadius: 2, objectFit: 'cover', border: '1px solid #eee', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 700, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(slot.team.name)}</span>
-          <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, marginLeft: 'auto', flexShrink: 0, paddingLeft: 4 }}>{slot.label}</span>
-        </>
-      ) : (
-        <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{slot.label}</span>
-      )}
-    </div>
-  )
+  const koMatchLabel = (id: string): string => {
+    if (id === 'ko-final') return 'FINAL'
+    if (id === 'ko-3rd') return '3°/4° Puesto'
+    if (id.startsWith('ko-r32-')) return `P${49 + parseInt(id.slice(7))}`
+    if (id.startsWith('ko-r16-')) return `R16-${+id.slice(7) + 1}`
+    if (id.startsWith('ko-qf-')) return `QF-${+id.slice(6) + 1}`
+    if (id.startsWith('ko-sf-')) return `SF-${+id.slice(6) + 1}`
+    return id
+  }
 
-  const BracketMatchCard = ({ match }: { match: BracketMatchDef }) => (
-    <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ background: 'rgba(0,0,0,0.04)', padding: '3px 8px', borderBottom: `1px solid ${BORDER}` }}>
-        <span style={{ fontFamily: FONT_BLACK, fontSize: 9, fontWeight: 900, color: MUTED, letterSpacing: 0.5 }}>{match.num}</span>
+  const KoMatchCard = ({ m }: { m: KoMatchNode }) => {
+    const pick = koEditPicks[m.id] ?? { h: '', a: '' }
+    const filled = pick.h !== '' && pick.a !== ''
+    const noTeams = !m.home || !m.away
+    const label = koMatchLabel(m.id)
+    return (
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: NAVY, padding: '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: FONT_BLACK, fontSize: 10, color: '#fff', letterSpacing: 0.5 }}>{label}</span>
+          {m.winner && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              {m.winner.flag && <img src={m.winner.flag} alt="" style={{ width: 14, height: 10, borderRadius: 1, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', flexShrink: 0 }} />}
+              <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: '#6ee7b7' }}>{abbrev(m.winner.name)}</span>
+            </div>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, minWidth: 0 }}>
+            {m.home ? (
+              <>
+                <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home.name)}</span>
+                <img src={m.home.flag} alt="" style={{ width: 20, height: 14, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              </>
+            ) : (
+              <span style={{ fontSize: 9, color: MUTED, fontStyle: 'italic', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.homeLabel}</span>
+            )}
+          </div>
+          <input type="text" inputMode="numeric" className="grp-inp"
+            value={pick.h} onChange={e => handleKoPick(m.id, 'h', e.target.value)}
+            disabled={noTeams} placeholder="—"
+            style={{ borderColor: filled ? NAVY : BORDER, color: filled ? NAVY : TEXT }}
+          />
+          <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
+          <input type="text" inputMode="numeric" className="grp-inp"
+            value={pick.a} onChange={e => handleKoPick(m.id, 'a', e.target.value)}
+            disabled={noTeams} placeholder="—"
+            style={{ borderColor: filled ? NAVY : BORDER, color: filled ? NAVY : TEXT }}
+          />
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+            {m.away ? (
+              <>
+                <img src={m.away.flag} alt="" style={{ width: 20, height: 14, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away.name)}</span>
+              </>
+            ) : (
+              <span style={{ fontSize: 9, color: MUTED, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.awayLabel}</span>
+            )}
+          </div>
+        </div>
+        {m.isTied && !noTeams && (
+          <div style={{ padding: '5px 10px', borderTop: `1px solid ${BORDER}`, background: '#fffbf0', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>PEN:</span>
+            <button onClick={() => handleKoPen(m.id, 'h')} style={{ flex: 1, padding: '3px 6px', background: pick.pen === 'h' ? NAVY : 'transparent', color: pick.pen === 'h' ? '#fff' : TEXT, border: `1px solid ${pick.pen === 'h' ? NAVY : BORDER}`, borderRadius: 4, fontSize: 10, fontFamily: FONT_NORMAL, cursor: 'pointer' }}>
+              {abbrev(m.home!.name)}
+            </button>
+            <button onClick={() => handleKoPen(m.id, 'a')} style={{ flex: 1, padding: '3px 6px', background: pick.pen === 'a' ? NAVY : 'transparent', color: pick.pen === 'a' ? '#fff' : TEXT, border: `1px solid ${pick.pen === 'a' ? NAVY : BORDER}`, borderRadius: 4, fontSize: 10, fontFamily: FONT_NORMAL, cursor: 'pointer' }}>
+              {abbrev(m.away!.name)}
+            </button>
+          </div>
+        )}
       </div>
-      <BracketTeamSlot slot={match.home} />
-      <div style={{ margin: '0 8px', height: 1, background: BORDER }} />
-      <BracketTeamSlot slot={match.away} />
-    </div>
-  )
+    )
+  }
 
   const MatchRow = ({ m }: { m: Match }) => {
     const isLive = LIVE_STATUSES.has(m.status)
@@ -618,6 +685,9 @@ export default function TournamentPage() {
         .grp-inp:disabled { opacity: 0.35; cursor: not-allowed; }
         .grp-thirds { display: grid; grid-template-columns: repeat(auto-fill,minmax(130px,1fr)); gap: 8px; margin-top: 12px; }
         .pred-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+
+        .ko-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+        @media (min-width: 480px) { .ko-grid { grid-template-columns: 1fr 1fr; } }
       `}</style>
 
       <div className="t-page">
@@ -766,7 +836,7 @@ export default function TournamentPage() {
                             Llave proyectada
                           </div>
                           <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 16 }}>
-                            Basada en tus predicciones de fase de grupos. Los 8vos en adelante son el recorrido del bracket.
+                            Completá los marcadores para armar tu llave hasta la Final. Si hay empate, elegí el ganador por penales.
                           </div>
                           {([
                             { label: '16avos de Final', matches: bracketData.r32 },
@@ -775,7 +845,7 @@ export default function TournamentPage() {
                             { label: 'Semifinales', matches: bracketData.sf },
                             { label: 'Tercer Puesto', matches: [bracketData.third] },
                             { label: 'Final', matches: [bracketData.final] },
-                          ] as { label: string; matches: BracketMatchDef[] }[]).map(({ label, matches }) => (
+                          ] as { label: string; matches: KoMatchNode[] }[]).map(({ label, matches }) => (
                             <div key={label} style={{ marginBottom: 16 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                 <div style={{ flex: 1, height: 1, background: BORDER }} />
@@ -784,8 +854,8 @@ export default function TournamentPage() {
                                 </span>
                                 <div style={{ flex: 1, height: 1, background: BORDER }} />
                               </div>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))', gap: 8 }}>
-                                {matches.map((m, i) => <BracketMatchCard key={i} match={m} />)}
+                              <div className="ko-grid">
+                                {matches.map((m, i) => <KoMatchCard key={i} m={m} />)}
                               </div>
                             </div>
                           ))}
