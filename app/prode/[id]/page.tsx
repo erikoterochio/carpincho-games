@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
+import { WC26_PLAYERS } from '@/lib/wc26-players'
 
 const RED = '#D4001A'
 const NAVY = '#002B7F'
@@ -42,39 +43,6 @@ const FIFA_RANKS: Record<string, number> = {
   'New Zealand': 91, 'Curacao': 93,
 }
 
-const WC26_PLAYERS = [
-  'Lionel Messi','Lautaro Martínez','Julián Álvarez','Ángel Di María','Rodrigo De Paul','Alexis Mac Allister','Paulo Dybala',
-  'Kylian Mbappé','Antoine Griezmann','Ousmane Dembélé','Marcus Thuram','Aurélien Tchouaméni','Randal Kolo Muani',
-  'Vinicius Jr.','Rodrygo','Endrick','Raphinha','Bruno Guimarães','Lucas Paquetá','Gabriel Martinelli',
-  'Jude Bellingham','Harry Kane','Phil Foden','Bukayo Saka','Trent Alexander-Arnold','Declan Rice','Cole Palmer',
-  'Pedri','Lamine Yamal','Álvaro Morata','Rodrigo Hernández','Gavi','Dani Olmo','Alejandro Grimaldo',
-  'Florian Wirtz','Jamal Musiala','Kai Havertz','Joshua Kimmich','Leroy Sané','Ilkay Gündogan','Antonio Rüdiger',
-  'Cristiano Ronaldo','Bernardo Silva','Rúben Neves','João Félix','Rafael Leão','Bruno Fernandes','Diogo Jota',
-  'Virgil van Dijk','Cody Gakpo','Memphis Depay','Frenkie de Jong','Tijjani Reijnders','Xavi Simons',
-  'Kevin De Bruyne','Romelu Lukaku','Jeremy Doku',
-  'Luka Modrić','Mateo Kovačić','Ivan Perišić',
-  'Darwin Núñez','Federico Valverde','Luis Suárez','Rodrigo Bentancur',
-  'James Rodríguez','Luis Díaz','Jhon Durán','Richard Ríos',
-  'Achraf Hakimi','Hakim Ziyech','Youssef En-Nesyri','Sofyan Amrabat',
-  'Christian Pulisic','Weston McKennie','Tyler Adams','Gio Reyna',
-  'Hirving Lozano','Raúl Jiménez','Edson Álvarez','Santiago Giménez',
-  'Takumi Minamino','Ritsu Doan','Ao Tanaka','Wataru Endo',
-  'Alphonso Davies','Jonathan David','Tajon Buchanan',
-  'Son Heung-min','Kim Min-jae','Hwang Hee-chan',
-  'Sadio Mané','Édouard Mendy','Idrissa Gueye',
-  'Mohamed Salah','Mostafa Mohamed',
-  'Granit Xhaka','Yann Sommer','Noah Okafor',
-  'Christian Eriksen','Rasmus Højlund','Pierre-Emile Højbjerg',
-  'Alexander Isak','Emil Forsberg',
-  'Victor Osimhen','Raphael Onyedika',
-  'Enner Valencia','Moisés Caicedo',
-  'Aleksandar Mitrović','Dušan Tadić','Sergej Milinković-Savić',
-  'Mehdi Taremi','Alireza Jahanbakhsh',
-  'Salem Al-Dawsari','Mohammed Al-Owais',
-  'David Alaba','Marcel Sabitzer','Marko Arnautovic',
-  'Hakan Çalhanoğlu','Kenan Yıldız','Arda Güler',
-  'Mykhailo Mudryk','Artem Dovbyk','Oleksandr Zinchenko',
-]
 
 const REVELATION_TEAMS_EN = [
   'Czech Republic','Scotland','Tunisia','DR Congo','Uzbekistan','Qatar','Iraq',
