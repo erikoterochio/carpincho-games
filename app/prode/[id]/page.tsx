@@ -103,13 +103,14 @@ type Match = {
   id: string; home_team: string; away_team: string; home_flag: string; away_flag: string
   kickoff: string; stage: string; group_name: string | null; sort_order: number
   home_score: number | null; away_score: number | null; status: string
+  venue: string | null
 }
 type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
 type KoMatchNode = {
   id: string; home: TeamStat | null; away: TeamStat | null
   homeLabel: string; awayLabel: string
   winner: TeamStat | null; loser: TeamStat | null; isTied: boolean
-  kickoff?: string
+  kickoff?: string; venue?: string
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -511,45 +512,45 @@ export default function TournamentPage() {
       const w = getWinner(id, home, away)
       return (w && home && away) ? (w === home ? away : home) : null
     }
-    const mkNode = (id: string, home: TeamStat | null, away: TeamStat | null, homeLabel: string, awayLabel: string, kickoff?: string): KoMatchNode => {
+    const mkNode = (id: string, home: TeamStat | null, away: TeamStat | null, homeLabel: string, awayLabel: string, kickoff?: string, venue?: string): KoMatchNode => {
       const p = koEditPicks[id] ?? { h: '', a: '' }
       const filled = p.h !== '' && p.a !== ''
-      return { id, home, away, homeLabel, awayLabel, winner: getWinner(id, home, away), loser: getLoser(id, home, away), isTied: filled && parseInt(p.h) === parseInt(p.a), kickoff }
+      return { id, home, away, homeLabel, awayLabel, winner: getWinner(id, home, away), loser: getLoser(id, home, away), isTied: filled && parseInt(p.h) === parseInt(p.a), kickoff, venue }
     }
 
-    const koDatesByStage = (stage: string) =>
-      matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order).map(m => m.kickoff)
+    const koByStage = (stage: string) =>
+      matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
 
-    const r32Dates = koDatesByStage('r32')
-    const r16Dates = koDatesByStage('r16')
-    const qfDates  = koDatesByStage('qf')
-    const sfDates  = koDatesByStage('sf')
-    const thirdDates = koDatesByStage('3rd')
-    const finalDates = koDatesByStage('final')
+    const r32Ms = koByStage('r32')
+    const r16Ms = koByStage('r16')
+    const qfMs  = koByStage('qf')
+    const sfMs  = koByStage('sf')
+    const thirdMs = koByStage('3rd')
+    const finalMs = koByStage('final')
 
     const r32 = [
-      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B', r32Dates[0]),
-      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A', r32Dates[1]),
-      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D', r32Dates[2]),
-      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C', r32Dates[3]),
-      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F', r32Dates[4]),
-      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E', r32Dates[5]),
-      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H', r32Dates[6]),
-      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G', r32Dates[7]),
-      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J', r32Dates[8]),
-      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I', r32Dates[9]),
-      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L', r32Dates[10]),
-      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K', r32Dates[11]),
-      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2', r32Dates[12]),
-      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4', r32Dates[13]),
-      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6', r32Dates[14]),
-      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8', r32Dates[15]),
+      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B', r32Ms[0]?.kickoff, r32Ms[0]?.venue ?? undefined),
+      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A', r32Ms[1]?.kickoff, r32Ms[1]?.venue ?? undefined),
+      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D', r32Ms[2]?.kickoff, r32Ms[2]?.venue ?? undefined),
+      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C', r32Ms[3]?.kickoff, r32Ms[3]?.venue ?? undefined),
+      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F', r32Ms[4]?.kickoff, r32Ms[4]?.venue ?? undefined),
+      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E', r32Ms[5]?.kickoff, r32Ms[5]?.venue ?? undefined),
+      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H', r32Ms[6]?.kickoff, r32Ms[6]?.venue ?? undefined),
+      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G', r32Ms[7]?.kickoff, r32Ms[7]?.venue ?? undefined),
+      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J', r32Ms[8]?.kickoff, r32Ms[8]?.venue ?? undefined),
+      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I', r32Ms[9]?.kickoff, r32Ms[9]?.venue ?? undefined),
+      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L', r32Ms[10]?.kickoff, r32Ms[10]?.venue ?? undefined),
+      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K', r32Ms[11]?.kickoff, r32Ms[11]?.venue ?? undefined),
+      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2', r32Ms[12]?.kickoff, r32Ms[12]?.venue ?? undefined),
+      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4', r32Ms[13]?.kickoff, r32Ms[13]?.venue ?? undefined),
+      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6', r32Ms[14]?.kickoff, r32Ms[14]?.venue ?? undefined),
+      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8', r32Ms[15]?.kickoff, r32Ms[15]?.venue ?? undefined),
     ]
-    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`, r16Dates[i]))
-    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`, qfDates[i]))
-    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`, sfDates[i]))
-    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2', thirdDates[0])
-    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2', finalDates[0])
+    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`, r16Ms[i]?.kickoff, r16Ms[i]?.venue ?? undefined))
+    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`, qfMs[i]?.kickoff, qfMs[i]?.venue ?? undefined))
+    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`, sfMs[i]?.kickoff, sfMs[i]?.venue ?? undefined))
+    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2', thirdMs[0]?.kickoff, thirdMs[0]?.venue ?? undefined)
+    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2', finalMs[0]?.kickoff, finalMs[0]?.venue ?? undefined)
     return { r32, r16, qf, sf, third, final }
   }, [allGroupStandings, bestThirds, koEditPicks, matches])
 
@@ -575,34 +576,41 @@ export default function TournamentPage() {
     const date = ko.toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })
     const time = ko.toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 0', borderBottom: `1px solid ${BORDER}` }}>
-        {/* Fecha + Hora */}
-        <div style={{ flexShrink: 0, width: 36, textAlign: 'right' }}>
-          <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{date}</div>
-          <div style={{ fontSize: 8, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{time}</div>
+      <div style={{ borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 0' }}>
+          {/* Fecha + Hora */}
+          <div style={{ flexShrink: 0, width: 36, textAlign: 'right' }}>
+            <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{date}</div>
+            <div style={{ fontSize: 8, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.4 }}>{time}</div>
+          </div>
+          {/* Local: nombre + bandera */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, minWidth: 0 }}>
+            <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+            <img src={m.home_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          </div>
+          {/* Marcadores */}
+          <input type="text" inputMode="numeric" className="grp-inp"
+            value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
+            disabled={isDeadlinePast} placeholder="—"
+            style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+          />
+          <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
+          <input type="text" inputMode="numeric" className="grp-inp"
+            value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
+            disabled={isDeadlinePast} placeholder="—"
+            style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
+          />
+          {/* Visitante: bandera + nombre */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+            <img src={m.away_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+          </div>
         </div>
-        {/* Local: nombre + bandera */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, minWidth: 0 }}>
-          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
-          <img src={m.home_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-        </div>
-        {/* Marcadores */}
-        <input type="text" inputMode="numeric" className="grp-inp"
-          value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
-          disabled={isDeadlinePast} placeholder="—"
-          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
-        />
-        <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
-        <input type="text" inputMode="numeric" className="grp-inp"
-          value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
-          disabled={isDeadlinePast} placeholder="—"
-          style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
-        />
-        {/* Visitante: bandera + nombre */}
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-          <img src={m.away_flag} alt="" style={{ width: 22, height: 15, borderRadius: 2, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-          <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
-        </div>
+        {m.venue && (
+          <div style={{ fontSize: 8, color: MUTED, fontFamily: FONT_NORMAL, paddingBottom: 4, paddingLeft: 41, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: 0.2 }}>
+            📍 {m.venue}
+          </div>
+        )}
       </div>
     )
   }
@@ -666,11 +674,18 @@ export default function TournamentPage() {
             </div>
           )}
         </div>
-        {m.kickoff && (
-          <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, padding: '3px 10px', borderBottom: `1px solid ${BORDER}`, background: '#fafafa' }}>
-            {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
-            {' · '}
-            {new Date(m.kickoff).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })} hs
+        {(m.kickoff || m.venue) && (
+          <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, padding: '3px 10px', borderBottom: `1px solid ${BORDER}`, background: '#fafafa', display: 'flex', gap: 6, overflow: 'hidden' }}>
+            {m.kickoff && (
+              <span style={{ flexShrink: 0 }}>
+                {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
+                {' · '}
+                {new Date(m.kickoff).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })} hs
+              </span>
+            )}
+            {m.venue && (
+              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>📍 {m.venue}</span>
+            )}
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px' }}>
