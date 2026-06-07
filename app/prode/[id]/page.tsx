@@ -925,6 +925,27 @@ export default function TournamentPage() {
                         {isAdmin ? 'Sincronizando automáticamente desde la API.' : 'El admin debe sincronizar los partidos.'}
                       </div>
                     </Card>
+                  ) : !GROUPS.some(g => matches.some(m => m.group_name === g)) ? (
+                    <Card style={{ textAlign: 'center', padding: 32 }}>
+                      <div style={{ fontSize: 28, marginBottom: 10 }}>🔄</div>
+                      <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 6 }}>
+                        {isAdmin ? 'Grupos sin asignar — hacé Sync API' : 'Grupos en proceso de sincronización'}
+                      </div>
+                      <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.6, marginBottom: isAdmin ? 14 : 0 }}>
+                        {isAdmin
+                          ? 'El cron desactualizó los grupos. Presioná Sync API arriba para restaurarlos.'
+                          : 'El admin está actualizando los datos. Volvé en unos minutos.'}
+                      </div>
+                      {isAdmin && (
+                        <button
+                          onClick={handleSync}
+                          disabled={syncing}
+                          style={{ padding: '10px 28px', background: syncing ? '#eee' : RED, color: '#fff', border: 'none', borderRadius: 10, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, cursor: syncing ? 'default' : 'pointer' }}
+                        >
+                          {syncing ? '⏳ Sincronizando...' : '↻ Sync API ahora'}
+                        </button>
+                      )}
+                    </Card>
                   ) : (
                     <div style={{ paddingBottom: 100 }}>
                       <div className="grp-grid">
