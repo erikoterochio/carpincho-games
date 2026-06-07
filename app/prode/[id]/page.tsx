@@ -199,6 +199,7 @@ export default function TournamentPage() {
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [bonusSaved, setBonusSaved] = useState(false)
+  const [bonusVersion, setBonusVersion] = useState(0)
 
   useEffect(() => {
     if (!id) return
@@ -257,7 +258,7 @@ export default function TournamentPage() {
     if (!user?.id || !id) return
     try {
       const saved = localStorage.getItem(`prode_bonus_${id}_${user.id}`)
-      if (saved) setBonus(JSON.parse(saved))
+      if (saved) { setBonus(JSON.parse(saved)); setBonusVersion(v => v + 1) }
     } catch {}
   }, [user?.id, id])
 
@@ -948,7 +949,7 @@ export default function TournamentPage() {
                                 </span>
                                 <div style={{ flex: 1, height: 1, background: BORDER }} />
                               </div>
-                              <div className="ko-grid">
+                              <div className={matches.length > 1 ? 'ko-grid' : undefined}>
                                 {matches.map((m, i) => <KoMatchCard key={i} m={m} />)}
                               </div>
                             </div>
@@ -976,11 +977,13 @@ export default function TournamentPage() {
                                   <div style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>+{f.pts} pts</div>
                                 </div>
                                 <input
+                                  key={`${f.key}-${bonusVersion}`}
                                   list={f.type === 'player' ? 'players-list' : f.type === 'revelation' ? 'revelation-list' : 'teams-list'}
-                                  value={bonus[f.key] ?? ''}
+                                  defaultValue={bonus[f.key] ?? ''}
                                   onChange={e => handleBonusChange(f.key, e.target.value)}
                                   placeholder="Buscar..."
-                                  style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${bonus[f.key] ? RED : BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: bonus[f.key] ? RED : TEXT, outline: 'none', background: '#fafafa' }}
+                                  autoComplete="off"
+                                  style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, outline: 'none', background: '#fafafa' }}
                                 />
                               </div>
                             ))}
