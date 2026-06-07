@@ -42,6 +42,54 @@ const FIFA_RANKS: Record<string, number> = {
   'New Zealand': 91, 'Curacao': 93,
 }
 
+const WC26_PLAYERS = [
+  'Lionel Messi','Lautaro Martínez','Julián Álvarez','Ángel Di María','Rodrigo De Paul','Alexis Mac Allister','Paulo Dybala',
+  'Kylian Mbappé','Antoine Griezmann','Ousmane Dembélé','Marcus Thuram','Aurélien Tchouaméni','Randal Kolo Muani',
+  'Vinicius Jr.','Rodrygo','Endrick','Raphinha','Bruno Guimarães','Lucas Paquetá','Gabriel Martinelli',
+  'Jude Bellingham','Harry Kane','Phil Foden','Bukayo Saka','Trent Alexander-Arnold','Declan Rice','Cole Palmer',
+  'Pedri','Lamine Yamal','Álvaro Morata','Rodrigo Hernández','Gavi','Dani Olmo','Alejandro Grimaldo',
+  'Florian Wirtz','Jamal Musiala','Kai Havertz','Joshua Kimmich','Leroy Sané','Ilkay Gündogan','Antonio Rüdiger',
+  'Cristiano Ronaldo','Bernardo Silva','Rúben Neves','João Félix','Rafael Leão','Bruno Fernandes','Diogo Jota',
+  'Virgil van Dijk','Cody Gakpo','Memphis Depay','Frenkie de Jong','Tijjani Reijnders','Xavi Simons',
+  'Kevin De Bruyne','Romelu Lukaku','Jeremy Doku',
+  'Luka Modrić','Mateo Kovačić','Ivan Perišić',
+  'Darwin Núñez','Federico Valverde','Luis Suárez','Rodrigo Bentancur',
+  'James Rodríguez','Luis Díaz','Jhon Durán','Richard Ríos',
+  'Achraf Hakimi','Hakim Ziyech','Youssef En-Nesyri','Sofyan Amrabat',
+  'Christian Pulisic','Weston McKennie','Tyler Adams','Gio Reyna',
+  'Hirving Lozano','Raúl Jiménez','Edson Álvarez','Santiago Giménez',
+  'Takumi Minamino','Ritsu Doan','Ao Tanaka','Wataru Endo',
+  'Alphonso Davies','Jonathan David','Tajon Buchanan',
+  'Son Heung-min','Kim Min-jae','Hwang Hee-chan',
+  'Sadio Mané','Édouard Mendy','Idrissa Gueye',
+  'Mohamed Salah','Mostafa Mohamed',
+  'Granit Xhaka','Yann Sommer','Noah Okafor',
+  'Christian Eriksen','Rasmus Højlund','Pierre-Emile Højbjerg',
+  'Alexander Isak','Emil Forsberg',
+  'Victor Osimhen','Raphael Onyedika',
+  'Enner Valencia','Moisés Caicedo',
+  'Aleksandar Mitrović','Dušan Tadić','Sergej Milinković-Savić',
+  'Mehdi Taremi','Alireza Jahanbakhsh',
+  'Salem Al-Dawsari','Mohammed Al-Owais',
+  'David Alaba','Marcel Sabitzer','Marko Arnautovic',
+  'Hakan Çalhanoğlu','Kenan Yıldız','Arda Güler',
+  'Mykhailo Mudryk','Artem Dovbyk','Oleksandr Zinchenko',
+]
+
+const REVELATION_TEAMS_EN = [
+  'Czech Republic','Scotland','Tunisia','DR Congo','Uzbekistan','Qatar','Iraq',
+  'South Africa','Saudi Arabia','Jordan','Bosnia-Herzegovina','Cape Verde',
+  'Ghana','Curacao','Haiti','New Zealand',
+]
+
+const BONUS_FIELDS: Array<{key: string; label: string; pts: number; type: 'player'|'team'|'revelation'}> = [
+  { key: 'balon_oro',   label: 'Balón de Oro',      pts: 15, type: 'player' },
+  { key: 'guante_oro',  label: 'Guante de Oro',     pts: 15, type: 'player' },
+  { key: 'botin_oro',   label: 'Botín de Oro',      pts: 15, type: 'player' },
+  { key: 'fair_play',   label: 'Fair Play',          pts: 15, type: 'team' },
+  { key: 'revelacion',  label: 'Equipo Revelación',  pts: 15, type: 'revelation' },
+]
+
 const ABBREV: Record<string, string> = {
   'Argentina':'ARG','Brazil':'BRA','France':'FRA','England':'ENG','Germany':'GER','Spain':'ESP',
   'Portugal':'POR','Netherlands':'NED','Belgium':'BEL','Croatia':'CRO','Italy':'ITA','Uruguay':'URU',
@@ -59,7 +107,7 @@ const ABBREV: Record<string, string> = {
 }
 function abbrev(name: string) { return ABBREV[name] ?? name.substring(0, 3).toUpperCase() }
 
-type Tab = 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info'
+type Tab = 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin'
 
 type Standing = {
   group_name: string
@@ -92,6 +140,7 @@ type KoMatchNode = {
   id: string; home: TeamStat | null; away: TeamStat | null
   homeLabel: string; awayLabel: string
   winner: TeamStat | null; loser: TeamStat | null; isTied: boolean
+  kickoff?: string
 }
 
 const STAGE_LABEL: Record<string, string> = {
@@ -148,6 +197,8 @@ export default function TournamentPage() {
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [bonus, setBonus] = useState<Record<string, string>>({})
+  const [bonusSaved, setBonusSaved] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -201,6 +252,14 @@ export default function TournamentPage() {
     load()
     return () => stopLiveRefresh()
   }, [id])
+
+  useEffect(() => {
+    if (!user?.id || !id) return
+    try {
+      const saved = localStorage.getItem(`prode_bonus_${id}_${user.id}`)
+      if (saved) setBonus(JSON.parse(saved))
+    } catch {}
+  }, [user?.id, id])
 
   const stopLiveRefresh = () => {
     if (liveRefreshRef.current) { clearInterval(liveRefreshRef.current); liveRefreshRef.current = null }
@@ -308,6 +367,23 @@ export default function TournamentPage() {
     setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
   }
 
+  const handleBonusChange = (key: string, value: string) => setBonus(prev => ({ ...prev, [key]: value }))
+  const saveBonus = () => {
+    if (!user?.id || !id) return
+    localStorage.setItem(`prode_bonus_${id}_${user.id}`, JSON.stringify(bonus))
+    setBonusSaved(true)
+    setTimeout(() => setBonusSaved(false), 2000)
+  }
+
+  const handleTogglePaid = async (targetUserId: string, currentPaid: boolean) => {
+    const res = await fetch('/api/prode/mark-paid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tournament_id: id, user_id: targetUserId, paid: !currentPaid }),
+    })
+    if (res.ok) setParticipants(prev => prev.map(p => p.user_id === targetUserId ? { ...p, paid: !currentPaid } : p))
+  }
+
   const leaderboard = participants.map(p => {
     const name = p.profiles?.nombre
       ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
@@ -326,6 +402,7 @@ export default function TournamentPage() {
     { key: 'tabla', label: 'Tabla' },
     { key: 'reglamento', label: 'Reglamento' },
     { key: 'info', label: 'Info' },
+    ...(isAdmin ? [{ key: 'admin' as Tab, label: '⚙ Admin' }] : []),
   ]
 
   const REVELATION_TEAMS = [
@@ -374,37 +451,47 @@ export default function TournamentPage() {
       const w = getWinner(id, home, away)
       return (w && home && away) ? (w === home ? away : home) : null
     }
-    const mkNode = (id: string, home: TeamStat | null, away: TeamStat | null, homeLabel: string, awayLabel: string): KoMatchNode => {
+    const mkNode = (id: string, home: TeamStat | null, away: TeamStat | null, homeLabel: string, awayLabel: string, kickoff?: string): KoMatchNode => {
       const p = koEditPicks[id] ?? { h: '', a: '' }
       const filled = p.h !== '' && p.a !== ''
-      return { id, home, away, homeLabel, awayLabel, winner: getWinner(id, home, away), loser: getLoser(id, home, away), isTied: filled && parseInt(p.h) === parseInt(p.a) }
+      return { id, home, away, homeLabel, awayLabel, winner: getWinner(id, home, away), loser: getLoser(id, home, away), isTied: filled && parseInt(p.h) === parseInt(p.a), kickoff }
     }
 
+    const koDatesByStage = (stage: string) =>
+      matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order).map(m => m.kickoff)
+
+    const r32Dates = koDatesByStage('r32')
+    const r16Dates = koDatesByStage('r16')
+    const qfDates  = koDatesByStage('qf')
+    const sfDates  = koDatesByStage('sf')
+    const thirdDates = koDatesByStage('3rd')
+    const finalDates = koDatesByStage('final')
+
     const r32 = [
-      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B'),
-      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A'),
-      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D'),
-      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C'),
-      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F'),
-      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E'),
-      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H'),
-      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G'),
-      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J'),
-      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I'),
-      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L'),
-      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K'),
-      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2'),
-      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4'),
-      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6'),
-      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8'),
+      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B', r32Dates[0]),
+      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A', r32Dates[1]),
+      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D', r32Dates[2]),
+      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C', r32Dates[3]),
+      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F', r32Dates[4]),
+      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E', r32Dates[5]),
+      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H', r32Dates[6]),
+      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G', r32Dates[7]),
+      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J', r32Dates[8]),
+      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I', r32Dates[9]),
+      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L', r32Dates[10]),
+      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K', r32Dates[11]),
+      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2', r32Dates[12]),
+      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4', r32Dates[13]),
+      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6', r32Dates[14]),
+      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8', r32Dates[15]),
     ]
-    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`))
-    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`))
-    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`))
-    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2')
-    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2')
+    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`, r16Dates[i]))
+    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`, qfDates[i]))
+    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`, sfDates[i]))
+    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2', thirdDates[0])
+    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2', finalDates[0])
     return { r32, r16, qf, sf, third, final }
-  }, [allGroupStandings, bestThirds, koEditPicks])
+  }, [allGroupStandings, bestThirds, koEditPicks, matches])
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
@@ -509,9 +596,9 @@ export default function TournamentPage() {
     const noTeams = !m.home || !m.away
     const label = koMatchLabel(m.id)
     return (
-      <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ background: NAVY, padding: '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontFamily: FONT_BLACK, fontSize: 10, color: '#fff', letterSpacing: 0.5 }}>{label}</span>
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: m.id === 'ko-final' ? `1.5px solid ${GOLD}` : `1.5px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ background: m.id === 'ko-final' ? GOLD : m.id === 'ko-3rd' ? '#8B6914' : NAVY, padding: m.id === 'ko-final' ? '8px 12px' : '5px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontFamily: FONT_BLACK, fontSize: m.id === 'ko-final' ? 13 : 10, color: '#fff', letterSpacing: 0.5 }}>{label}</span>
           {m.winner && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               {m.winner.flag && <img src={m.winner.flag} alt="" style={{ width: 14, height: 10, borderRadius: 1, objectFit: 'cover', border: '1px solid rgba(255,255,255,0.3)', flexShrink: 0 }} />}
@@ -519,6 +606,13 @@ export default function TournamentPage() {
             </div>
           )}
         </div>
+        {m.kickoff && (
+          <div style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, padding: '3px 10px', borderBottom: `1px solid ${BORDER}`, background: '#fafafa' }}>
+            {new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })}
+            {' · '}
+            {new Date(m.kickoff).toLocaleTimeString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false })} hs
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 10px' }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, minWidth: 0 }}>
             {m.home ? (
@@ -849,7 +943,7 @@ export default function TournamentPage() {
                             <div key={label} style={{ marginBottom: 16 }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                                 <div style={{ flex: 1, height: 1, background: BORDER }} />
-                                <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: MUTED, letterSpacing: 1, whiteSpace: 'nowrap' }}>
+                                <span style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: TEXT, letterSpacing: 0.5, whiteSpace: 'nowrap' }}>
                                   {label.toUpperCase()}
                                 </span>
                                 <div style={{ flex: 1, height: 1, background: BORDER }} />
@@ -859,6 +953,44 @@ export default function TournamentPage() {
                               </div>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Predicciones extra */}
+                      {isParticipant && (
+                        <div style={{ marginTop: 20 }}>
+                          <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 6 }}>
+                            Predicciones extra
+                          </div>
+                          <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 14 }}>
+                            15 puntos cada una. Se guardan localmente.
+                          </div>
+                          <datalist id="players-list">{WC26_PLAYERS.map(p => <option key={p} value={p} />)}</datalist>
+                          <datalist id="teams-list">{Object.keys(ABBREV).map(t => <option key={t} value={t} />)}</datalist>
+                          <datalist id="revelation-list">{REVELATION_TEAMS_EN.map(t => <option key={t} value={t} />)}</datalist>
+                          <Card style={{ padding: '12px 16px' }}>
+                            {BONUS_FIELDS.map(f => (
+                              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                  <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, color: TEXT }}>{f.label}</div>
+                                  <div style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>+{f.pts} pts</div>
+                                </div>
+                                <input
+                                  list={f.type === 'player' ? 'players-list' : f.type === 'revelation' ? 'revelation-list' : 'teams-list'}
+                                  value={bonus[f.key] ?? ''}
+                                  onChange={e => handleBonusChange(f.key, e.target.value)}
+                                  placeholder="Buscar..."
+                                  style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${bonus[f.key] ? RED : BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: bonus[f.key] ? RED : TEXT, outline: 'none', background: '#fafafa' }}
+                                />
+                              </div>
+                            ))}
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                              <button
+                                onClick={saveBonus}
+                                style={{ padding: '8px 20px', background: bonusSaved ? '#10b981' : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.25s' }}
+                              >{bonusSaved ? '✓ Guardado' : 'Guardar'}</button>
+                            </div>
+                          </Card>
                         </div>
                       )}
                     </div>
@@ -1198,6 +1330,94 @@ export default function TournamentPage() {
                     <span style={{ fontSize: 11, color: p.paid ? '#10b981' : MUTED, fontWeight: 700, fontFamily: FONT_NORMAL }}>{p.paid ? '✓ Pagó' : 'Sin pagar'}</span>
                   </div>
                 ))}
+              </Card>
+            </div>
+          )}
+
+          {/* ── ADMIN ── */}
+          {tab === 'admin' && isAdmin && (
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+              <Card style={{ marginBottom: 14 }}>
+                <SectionTitle>Pagos y predicciones</SectionTitle>
+                <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 12 }}>
+                  {participants.filter(p => p.paid).length}/{participants.length} pagados · {participants.filter(p => (p.pick_count ?? 0) >= groupMatches.length).length}/{participants.length} con predicciones completas
+                </div>
+                {participants.map(p => {
+                  const name = p.profiles?.nombre
+                    ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
+                    : p.profiles?.username ?? 'Jugador'
+                  const userPicksList = allPicks.filter(pk => pk.user_id === p.user_id)
+                  const pts = isDeadlinePast
+                    ? userPicksList.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
+                    : null
+                  const pct = groupMatches.length > 0 ? Math.round((p.pick_count ?? 0) / groupMatches.length * 100) : 0
+                  return (
+                    <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: `1px solid ${BORDER}` }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: FONT_NORMAL, fontWeight: 600, fontSize: 13, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {name}{p.user_id === user?.id ? ' (vos)' : ''}
+                        </div>
+                        <div style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, marginTop: 2 }}>
+                          {p.pick_count ?? 0}/{groupMatches.length} picks ({pct}%) {isDeadlinePast && `· ${pts} pts`}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleTogglePaid(p.user_id, p.paid)}
+                        style={{
+                          padding: '5px 14px', border: `1.5px solid ${p.paid ? '#10b981' : BORDER}`,
+                          background: p.paid ? '#f0fdf4' : '#fafafa', color: p.paid ? '#16a34a' : MUTED,
+                          borderRadius: 20, fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                          flexShrink: 0,
+                        }}
+                      >
+                        {p.paid ? '✓ Pagó' : 'Sin pagar'}
+                      </button>
+                    </div>
+                  )
+                })}
+              </Card>
+
+              {/* Pick breakdown per participant */}
+              <Card>
+                <SectionTitle>Detalle de predicciones</SectionTitle>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                    <thead>
+                      <tr style={{ background: TEXT }}>
+                        <th style={{ padding: '8px 12px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 11, position: 'sticky', left: 0, background: TEXT }}>Jugador</th>
+                        {groupMatches.slice(0, 20).map(m => (
+                          <th key={m.id} style={{ padding: '6px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 50 }}>
+                            {abbrev(m.home_team)}-{abbrev(m.away_team)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {participants.map(p => {
+                        const name = p.profiles?.username ?? 'Jugador'
+                        return (
+                          <tr key={p.user_id} style={{ borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '6px 12px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: '#fff', whiteSpace: 'nowrap' }}>{name}</td>
+                            {groupMatches.slice(0, 20).map(m => {
+                              const pk = allPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                              const score = pk && m.home_score !== null ? calcScore(pk, m) : null
+                              return (
+                                <td key={m.id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: score !== null ? (score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : MUTED) : MUTED }}>
+                                  {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {groupMatches.length > 20 && (
+                  <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginTop: 10, textAlign: 'center' }}>
+                    Mostrando los primeros 20 partidos de {groupMatches.length}
+                  </div>
+                )}
               </Card>
             </div>
           )}
