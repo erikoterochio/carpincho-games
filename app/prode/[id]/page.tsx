@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
-import { WC26_PLAYERS } from '@/lib/wc26-players'
+import { WC26_PLAYERS, WC26_TEAMS_ES } from '@/lib/wc26-players'
 
 const RED = '#D4001A'
 const NAVY = '#002B7F'
@@ -44,10 +44,10 @@ const FIFA_RANKS: Record<string, number> = {
 }
 
 
-const REVELATION_TEAMS_EN = [
-  'Czech Republic','Scotland','Tunisia','DR Congo','Uzbekistan','Qatar','Iraq',
-  'South Africa','Saudi Arabia','Jordan','Bosnia-Herzegovina','Cape Verde',
-  'Ghana','Curacao','Haiti','New Zealand',
+const REVELATION_TEAMS_ES = [
+  'República Checa','Escocia','Túnez','Congo RD','Uzbekistán','Catar','Irak',
+  'Sudáfrica','Arabia Saudita','Jordania','Bosnia y Herzegovina','Cabo Verde',
+  'Ghana','Curazao','Haití','Nueva Zelanda',
 ]
 
 const BONUS_FIELDS: Array<{key: string; label: string; pts: number; type: 'player'|'team'|'revelation'|'match'}> = [
@@ -169,8 +169,8 @@ function BonusSection({ initialBonus, bonusVersion, onSave }: {
   return (
     <Card style={{ padding: '12px 16px' }}>
       <datalist id="players-list">{WC26_PLAYERS.map(p => <option key={p} value={p} />)}</datalist>
-      <datalist id="teams-list">{Object.keys(ABBREV).map(t => <option key={t} value={t} />)}</datalist>
-      <datalist id="revelation-list">{REVELATION_TEAMS_EN.map(t => <option key={t} value={t} />)}</datalist>
+      <datalist id="teams-list">{WC26_TEAMS_ES.map(t => <option key={t} value={t} />)}</datalist>
+      <datalist id="revelation-list">{REVELATION_TEAMS_ES.map(t => <option key={t} value={t} />)}</datalist>
       {BONUS_FIELDS.map(f => (
         <div key={f.key} style={{ padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
