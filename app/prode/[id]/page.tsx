@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -82,12 +82,13 @@ const REVELATION_TEAMS_EN = [
   'Ghana','Curacao','Haiti','New Zealand',
 ]
 
-const BONUS_FIELDS: Array<{key: string; label: string; pts: number; type: 'player'|'team'|'revelation'}> = [
-  { key: 'balon_oro',   label: 'Balón de Oro',      pts: 15, type: 'player' },
-  { key: 'guante_oro',  label: 'Guante de Oro',     pts: 15, type: 'player' },
-  { key: 'botin_oro',   label: 'Botín de Oro',      pts: 15, type: 'player' },
-  { key: 'fair_play',   label: 'Fair Play',          pts: 15, type: 'team' },
-  { key: 'revelacion',  label: 'Equipo Revelación',  pts: 15, type: 'revelation' },
+const BONUS_FIELDS: Array<{key: string; label: string; pts: number; type: 'player'|'team'|'revelation'|'match'}> = [
+  { key: 'balon_oro',      label: 'Balón de Oro',       pts: 15, type: 'player' },
+  { key: 'guante_oro',     label: 'Guante de Oro',      pts: 15, type: 'player' },
+  { key: 'botin_oro',      label: 'Botín de Oro',       pts: 15, type: 'player' },
+  { key: 'fair_play',      label: 'Fair Play',           pts: 15, type: 'team' },
+  { key: 'revelacion',     label: 'Equipo Revelación',   pts: 15, type: 'revelation' },
+  { key: 'mayor_goleada',  label: 'Mayor Goleada',       pts: 15, type: 'match' },
 ]
 
 const ABBREV: Record<string, string> = {
@@ -173,6 +174,94 @@ function fmtDate(d: string) {
   })
 }
 
+const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
+  <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '16px 18px', backdropFilter: 'blur(4px)', ...style }}>
+    {children}
+  </div>
+)
+
+function BonusSection({ initialBonus, bonusVersion, onSave }: {
+  initialBonus: Record<string, string>
+  bonusVersion: number
+  onSave: (b: Record<string, string>) => void
+}) {
+  const [local, setLocal] = React.useState<Record<string, string>>(initialBonus)
+  const [saved, setSaved] = React.useState(false)
+
+  React.useEffect(() => { setLocal(initialBonus) }, [bonusVersion]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const upd = (key: string, val: string) => setLocal(p => ({ ...p, [key]: val }))
+
+  const handleSave = () => {
+    onSave(local)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
+  }
+
+  return (
+    <Card style={{ padding: '12px 16px' }}>
+      <datalist id="players-list">{WC26_PLAYERS.map(p => <option key={p} value={p} />)}</datalist>
+      <datalist id="teams-list">{Object.keys(ABBREV).map(t => <option key={t} value={t} />)}</datalist>
+      <datalist id="revelation-list">{REVELATION_TEAMS_EN.map(t => <option key={t} value={t} />)}</datalist>
+      {BONUS_FIELDS.map(f => (
+        <div key={f.key} style={{ padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, color: TEXT }}>{f.label}</div>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>+{f.pts} pts</div>
+            </div>
+            {f.type === 'match' ? (
+              <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  key={`${f.key}_home-${bonusVersion}`}
+                  list="teams-list"
+                  defaultValue={local[`${f.key}_home`] ?? ''}
+                  onChange={e => upd(`${f.key}_home`, e.target.value)}
+                  placeholder="Local"
+                  autoComplete="off"
+                  style={{ width: 110, padding: '6px 8px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa' }}
+                />
+                <input
+                  key={`${f.key}_score-${bonusVersion}`}
+                  defaultValue={local[`${f.key}_score`] ?? ''}
+                  onChange={e => upd(`${f.key}_score`, e.target.value.replace(/[^0-9-]/g, '').slice(0, 5))}
+                  placeholder="X-Y"
+                  style={{ width: 50, padding: '6px 6px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa', textAlign: 'center' }}
+                />
+                <input
+                  key={`${f.key}_away-${bonusVersion}`}
+                  list="teams-list"
+                  defaultValue={local[`${f.key}_away`] ?? ''}
+                  onChange={e => upd(`${f.key}_away`, e.target.value)}
+                  placeholder="Visitante"
+                  autoComplete="off"
+                  style={{ width: 110, padding: '6px 8px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa' }}
+                />
+              </div>
+            ) : (
+              <input
+                key={`${f.key}-${bonusVersion}`}
+                list={f.type === 'player' ? 'players-list' : f.type === 'revelation' ? 'revelation-list' : 'teams-list'}
+                defaultValue={local[f.key] ?? ''}
+                onChange={e => upd(f.key, e.target.value)}
+                placeholder="Buscar..."
+                autoComplete="off"
+                style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, outline: 'none', background: '#fafafa' }}
+              />
+            )}
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+        <button
+          onClick={handleSave}
+          style={{ padding: '8px 20px', background: saved ? '#10b981' : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.25s' }}
+        >{saved ? '✓ Guardado' : 'Guardar'}</button>
+      </div>
+    </Card>
+  )
+}
+
 export default function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -198,8 +287,13 @@ export default function TournamentPage() {
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
-  const [bonusSaved, setBonusSaved] = useState(false)
   const [bonusVersion, setBonusVersion] = useState(0)
+  const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
+  const toggleRound = (label: string) => setOpenRounds(prev => {
+    const next = new Set(prev)
+    if (next.has(label)) next.delete(label); else next.add(label)
+    return next
+  })
 
   useEffect(() => {
     if (!id) return
@@ -368,12 +462,9 @@ export default function TournamentPage() {
     setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
   }
 
-  const handleBonusChange = (key: string, value: string) => setBonus(prev => ({ ...prev, [key]: value }))
-  const saveBonus = () => {
-    if (!user?.id || !id) return
-    localStorage.setItem(`prode_bonus_${id}_${user.id}`, JSON.stringify(bonus))
-    setBonusSaved(true)
-    setTimeout(() => setBonusSaved(false), 2000)
+  const handleBonusSave = (b: Record<string, string>) => {
+    setBonus(b)
+    if (user?.id && id) localStorage.setItem(`prode_bonus_${id}_${user.id}`, JSON.stringify(b))
   }
 
   const handleTogglePaid = async (targetUserId: string, currentPaid: boolean) => {
@@ -695,11 +786,6 @@ export default function TournamentPage() {
     )
   }
 
-  const Card = ({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) => (
-    <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '16px 18px', backdropFilter: 'blur(4px)', ...style }}>
-      {children}
-    </div>
-  )
 
   const SectionTitle = ({ children }: { children: React.ReactNode }) => (
     <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12, fontFamily: FONT_BLACK }}>
@@ -940,20 +1026,29 @@ export default function TournamentPage() {
                             { label: 'Semifinales', matches: bracketData.sf },
                             { label: 'Tercer Puesto', matches: [bracketData.third] },
                             { label: 'Final', matches: [bracketData.final] },
-                          ] as { label: string; matches: KoMatchNode[] }[]).map(({ label, matches }) => (
-                            <div key={label} style={{ marginBottom: 16 }}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                                <div style={{ flex: 1, height: 1, background: BORDER }} />
-                                <span style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: TEXT, letterSpacing: 0.5, whiteSpace: 'nowrap' }}>
-                                  {label.toUpperCase()}
-                                </span>
-                                <div style={{ flex: 1, height: 1, background: BORDER }} />
+                          ] as { label: string; matches: KoMatchNode[] }[]).map(({ label, matches }) => {
+                            const isOpen = openRounds.has(label)
+                            return (
+                              <div key={label} style={{ marginBottom: 8 }}>
+                                <div
+                                  onClick={() => toggleRound(label)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: isOpen ? 8 : 0, cursor: 'pointer', userSelect: 'none' }}
+                                >
+                                  <div style={{ flex: 1, height: 1, background: BORDER }} />
+                                  <span style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: TEXT, letterSpacing: 0.5, whiteSpace: 'nowrap' }}>
+                                    {label.toUpperCase()}
+                                  </span>
+                                  <span style={{ fontSize: 10, color: MUTED }}>{isOpen ? '▲' : '▼'}</span>
+                                  <div style={{ flex: 1, height: 1, background: BORDER }} />
+                                </div>
+                                {isOpen && (
+                                  <div className={matches.length > 1 ? 'ko-grid' : undefined}>
+                                    {matches.map((m, i) => <KoMatchCard key={i} m={m} />)}
+                                  </div>
+                                )}
                               </div>
-                              <div className={matches.length > 1 ? 'ko-grid' : undefined}>
-                                {matches.map((m, i) => <KoMatchCard key={i} m={m} />)}
-                              </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       )}
 
@@ -966,34 +1061,11 @@ export default function TournamentPage() {
                           <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 14 }}>
                             15 puntos cada una. Se guardan localmente.
                           </div>
-                          <datalist id="players-list">{WC26_PLAYERS.map(p => <option key={p} value={p} />)}</datalist>
-                          <datalist id="teams-list">{Object.keys(ABBREV).map(t => <option key={t} value={t} />)}</datalist>
-                          <datalist id="revelation-list">{REVELATION_TEAMS_EN.map(t => <option key={t} value={t} />)}</datalist>
-                          <Card style={{ padding: '12px 16px' }}>
-                            {BONUS_FIELDS.map(f => (
-                              <div key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
-                                <div style={{ minWidth: 0, flex: 1 }}>
-                                  <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, color: TEXT }}>{f.label}</div>
-                                  <div style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>+{f.pts} pts</div>
-                                </div>
-                                <input
-                                  key={`${f.key}-${bonusVersion}`}
-                                  list={f.type === 'player' ? 'players-list' : f.type === 'revelation' ? 'revelation-list' : 'teams-list'}
-                                  defaultValue={bonus[f.key] ?? ''}
-                                  onChange={e => handleBonusChange(f.key, e.target.value)}
-                                  placeholder="Buscar..."
-                                  autoComplete="off"
-                                  style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, outline: 'none', background: '#fafafa' }}
-                                />
-                              </div>
-                            ))}
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-                              <button
-                                onClick={saveBonus}
-                                style={{ padding: '8px 20px', background: bonusSaved ? '#10b981' : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, cursor: 'pointer', transition: 'background 0.25s' }}
-                              >{bonusSaved ? '✓ Guardado' : 'Guardar'}</button>
-                            </div>
-                          </Card>
+                          <BonusSection
+                            initialBonus={bonus}
+                            bonusVersion={bonusVersion}
+                            onSave={handleBonusSave}
+                          />
                         </div>
                       )}
                     </div>
