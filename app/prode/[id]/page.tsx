@@ -899,7 +899,12 @@ export default function TournamentPage() {
                 <>
                   {/* Progress */}
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_NORMAL, color: TEXT, marginBottom: 6 }}>Fase de grupos — Etapa I</div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ fontSize: 13, fontWeight: 700, fontFamily: FONT_NORMAL, color: TEXT }}>Fase de grupos — Etapa I</div>
+                      <Link href={`/prode/${id}/planilla`} target="_blank" style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4, borderBottom: `1px dashed ${BORDER}` }}>
+                        🖨 Planilla imprimible
+                      </Link>
+                    </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div className="prog-bar" style={{ width: 140 }}>
                         <div className="prog-fill" style={{ width: `${progress}%` }} />
