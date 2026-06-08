@@ -115,7 +115,9 @@ export async function POST() {
       home_score:   f.goals.home ?? null,
       away_score:   f.goals.away ?? null,
       status:       f.fixture.status.short,
-      venue:        f.fixture.venue?.name ?? null,
+      venue:        f.fixture.venue?.name
+        ? `${f.fixture.venue.name}${f.fixture.venue.city ? `, (${f.fixture.venue.city})` : ''}`
+        : null,
       sort_order:   sort_base + i,
       updated_at:   new Date().toISOString(),
     }

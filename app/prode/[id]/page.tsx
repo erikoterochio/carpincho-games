@@ -883,7 +883,6 @@ export default function TournamentPage() {
       return '⚽'
     }
 
-    // Own goals count for the opposing side
     const homeEvents = events
       .filter(e => e.detail === 'Own Goal' ? e.team_id === m.away_team_id : e.team_id === m.home_team_id)
       .sort((a, b) => a.elapsed - b.elapsed)
@@ -903,39 +902,34 @@ export default function TournamentPage() {
     )
 
     const liveGreen = '#10b981'
+    // White gradient overlay: makes flag fade from full opacity at the edge toward transparent inward (~25° tilt)
+    const flagFadeLeft  = 'linear-gradient(115deg, transparent 15%, #fff 62%)'
+    const flagFadeRight = 'linear-gradient(295deg, transparent 15%, #fff 62%)'
 
     return (
-      <div style={{
-        background: '#fff',
-        borderRadius: 18,
-        boxShadow: isLive
-          ? `0 0 0 2px ${liveGreen}, 0 4px 20px rgba(16,185,129,0.15)`
-          : '0 2px 12px rgba(0,0,0,0.07)',
-        overflow: 'hidden',
-        position: 'relative',
-      }}>
+      <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', position: 'relative',
+        boxShadow: isLive ? `0 0 0 2px ${liveGreen}, 0 4px 20px rgba(16,185,129,0.15)` : '0 2px 12px rgba(0,0,0,0.07)' }}>
 
         {/* ── Header ── */}
-        <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          {/* Stage */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-            <div style={{ width: 30, height: 30, background: NAVY, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
-                <path d="M10 2L12.4 7.6H18L13.5 11.2L15.3 17L10 13.4L4.7 17L6.5 11.2L2 7.6H7.6L10 2Z" fill="#C8950A"/>
-              </svg>
+        <div style={{ padding: '13px 16px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          {/* Stage + venue */}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: NAVY, letterSpacing: 0.5 }}>
+              {stageLabel.toUpperCase()}
             </div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: NAVY, letterSpacing: 0.5 }}>{stageLabel.toUpperCase()}</div>
-              {m.venue && (
-                <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5z" fill={MUTED}/></svg>
+            {m.venue && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
+                <svg width="9" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5z" fill={MUTED}/>
+                </svg>
+                <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {m.venue}
-                </div>
-              )}
-            </div>
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Status */}
+          {/* Status + time */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             {isLive ? (
               <div style={{ background: liveGreen, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK, display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -951,9 +945,10 @@ export default function TournamentPage() {
                 <div style={{ background: NAVY, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK }}>
                   PRÓXIMO
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: MUTED }}>
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={MUTED} strokeWidth="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, fontWeight: 600 }}>{timeStr} hs</span>
+                <div style={{ width: 1, height: 18, background: BORDER }} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={MUTED} strokeWidth="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 400, color: TEXT }}>{timeStr} hs</span>
                 </div>
               </>
             )}
@@ -961,33 +956,39 @@ export default function TournamentPage() {
         </div>
 
         {/* ── Match area ── */}
-        <div style={{ position: 'relative', padding: '8px 0 14px', minHeight: 100 }}>
-          {/* Background logos */}
-          <img src={m.home_flag} alt="" aria-hidden
-            style={{ position: 'absolute', left: -14, top: '50%', transform: 'translateY(-50%)', width: 120, height: 120, objectFit: 'contain', opacity: 0.09, pointerEvents: 'none', userSelect: 'none' }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <img src={m.away_flag} alt="" aria-hidden
-            style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', width: 120, height: 120, objectFit: 'contain', opacity: 0.09, pointerEvents: 'none', userSelect: 'none' }}
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
+        <div style={{ position: 'relative', minHeight: 108 }}>
+          {/* Left flag: full opacity at edge, fades inward at ~25° */}
+          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '44%', overflow: 'hidden', pointerEvents: 'none' }}>
+            <img src={m.home_flag} alt="" aria-hidden
+              style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '90%', height: '90%', objectFit: 'contain' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: flagFadeLeft }} />
+          </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10, position: 'relative', zIndex: 1 }}>
-            {/* Home team */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <img src={m.home_flag} alt={m.home_team}
-                style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: TEXT, textAlign: 'center', lineHeight: 1.25, wordBreak: 'break-word' }}>
+          {/* Right flag: full opacity at edge, fades inward at ~25° */}
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '44%', overflow: 'hidden', pointerEvents: 'none' }}>
+            <img src={m.away_flag} alt="" aria-hidden
+              style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', width: '90%', height: '90%', objectFit: 'contain' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+            <div style={{ position: 'absolute', inset: 0, background: flagFadeRight }} />
+          </div>
+
+          {/* Content over flags */}
+          <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', gap: 8, position: 'relative', zIndex: 1 }}>
+            {/* Home name */}
+            <div style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 900, color: TEXT, lineHeight: 1.25, wordBreak: 'break-word',
+                textShadow: '0 0 6px #fff, 0 0 12px #fff, 0 0 20px #fff' }}>
                 {m.home_team}
               </span>
             </div>
 
-            {/* Score center */}
-            <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 96 }}>
+            {/* Score */}
+            <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 100 }}>
               {isDone || isLive ? (
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 32, fontWeight: 900, color: isLive ? liveGreen : TEXT, letterSpacing: 2 }}>
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 34, fontWeight: 900, color: isLive ? liveGreen : TEXT, letterSpacing: 2 }}>
                   {m.home_score ?? 0} - {m.away_score ?? 0}
                 </span>
               ) : (
@@ -995,7 +996,7 @@ export default function TournamentPage() {
                   <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
                   </div>
-                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, fontWeight: 600 }}>vs</span>
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>vs</span>
                   <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
                   </div>
@@ -1003,13 +1004,10 @@ export default function TournamentPage() {
               )}
             </div>
 
-            {/* Away team */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <img src={m.away_flag} alt={m.away_team}
-                style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: TEXT, textAlign: 'center', lineHeight: 1.25, wordBreak: 'break-word' }}>
+            {/* Away name */}
+            <div style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 900, color: TEXT, lineHeight: 1.25, wordBreak: 'break-word',
+                textShadow: '0 0 6px #fff, 0 0 12px #fff, 0 0 20px #fff' }}>
                 {m.away_team}
               </span>
             </div>
