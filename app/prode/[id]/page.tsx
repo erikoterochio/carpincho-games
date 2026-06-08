@@ -101,9 +101,15 @@ type Participant = {
 }
 type Match = {
   id: string; home_team: string; away_team: string; home_flag: string; away_flag: string
+  home_team_id: number; away_team_id: number
   kickoff: string; stage: string; group_name: string | null; sort_order: number
   home_score: number | null; away_score: number | null; status: string
   venue: string | null
+}
+type MatchEvent = {
+  elapsed: number; extra: number | null
+  team_id: number; player: string
+  type: 'Goal' | 'Card'; detail: string
 }
 type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
 type KoMatchNode = {
@@ -259,6 +265,7 @@ export default function TournamentPage() {
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
+  const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
   const toggleRound = (label: string) => setOpenRounds(prev => {
     const next = new Set(prev)
     if (next.has(label)) next.delete(label); else next.add(label)
@@ -340,6 +347,29 @@ export default function TournamentPage() {
       if (saved) { setBonus(JSON.parse(saved)); setBonusVersion(v => v + 1) }
     } catch {}
   }, [user?.id, id])
+
+  useEffect(() => {
+    const tz = 'America/Argentina/Buenos_Aires'
+    const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+    const matchDateIso = (m: Match) => new Date(m.kickoff).toLocaleDateString('en-CA', { timeZone: tz })
+    const allDates = [...new Set(matches.map(matchDateIso))].sort()
+    const datesToShow = new Set(allDates.filter(d => d >= todayIso).slice(0, 2))
+    const toFetch = matches.filter(m =>
+      (datesToShow.has(matchDateIso(m)) || LIVE_STATUSES.has(m.status)) &&
+      (LIVE_STATUSES.has(m.status) || ['FT', 'AET', 'PEN'].includes(m.status))
+    )
+    if (!toFetch.length) return
+    for (const m of toFetch) {
+      fetch(`/api/prode/events?fixture=${m.id}`)
+        .then(r => r.json())
+        .then((json: { events?: MatchEvent[] }) => {
+          if (json.events?.length) {
+            setMatchEvents(prev => ({ ...prev, [m.id]: json.events! }))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [matches])
 
   const stopLiveRefresh = () => {
     if (liveRefreshRef.current) { clearInterval(liveRefreshRef.current); liveRefreshRef.current = null }
@@ -828,6 +858,7 @@ export default function TournamentPage() {
     const pickScore = hasPick
       ? calcScore({ match_id: m.id, home_score: parseInt(myPick.h), away_score: parseInt(myPick.a), user_id: '' }, m)
       : null
+    const events = matchEvents[m.id] ?? []
 
     const timeStr = new Date(m.kickoff).toLocaleTimeString('es-AR', {
       timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
@@ -845,10 +876,36 @@ export default function TournamentPage() {
       : '#f3f4f6'
     const SCORE_LABELS: Record<number, string> = { 12: 'EXACTO', 7: 'RESULTADO+GOL', 5: 'PARCIAL', 2: 'UN GOL', 0: 'FALLASTE' }
 
+    const eventEmoji = (e: MatchEvent) => {
+      if (e.type === 'Card') return e.detail === 'Red Card' ? '🟥' : e.detail === 'Yellow Red Card' ? '🟨🟥' : '🟨'
+      if (e.detail === 'Penalty') return '⚽ (P)'
+      if (e.detail === 'Own Goal') return '⚽ (PP)'
+      return '⚽'
+    }
+
+    // Own goals count for the opposing side
+    const homeEvents = events
+      .filter(e => e.detail === 'Own Goal' ? e.team_id === m.away_team_id : e.team_id === m.home_team_id)
+      .sort((a, b) => a.elapsed - b.elapsed)
+    const awayEvents = events
+      .filter(e => e.detail === 'Own Goal' ? e.team_id === m.home_team_id : e.team_id === m.away_team_id)
+      .sort((a, b) => a.elapsed - b.elapsed)
+
+    const EventItem = ({ e, align }: { e: MatchEvent; align: 'left' | 'right' }) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: align === 'left' ? 'flex-start' : 'flex-end', padding: '1px 0' }}>
+        {align === 'right' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
+        <span style={{ fontSize: 11 }}>{eventEmoji(e)}</span>
+        {align === 'left' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
+        <span style={{ fontSize: 11, color: TEXT, fontFamily: FONT_NORMAL, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>
+          {e.player}
+        </span>
+      </div>
+    )
+
     return (
       <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${isLive ? '#10b981' : BORDER}`, borderRadius: 14, padding: '12px 16px', backdropFilter: 'blur(4px)', ...(isLive ? { boxShadow: '0 0 0 3px rgba(16,185,129,0.12)' } : {}) }}>
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: m.venue ? 4 : 10 }}>
           <span style={{ fontSize: 10, fontWeight: 900, color: NAVY, letterSpacing: 1, fontFamily: FONT_BLACK, textTransform: 'uppercase' }}>
             {stageLabel}
           </span>
@@ -862,6 +919,13 @@ export default function TournamentPage() {
             <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{timeStr} hs</span>
           )}
         </div>
+
+        {/* Venue */}
+        {m.venue && (
+          <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            📍 {m.venue}
+          </div>
+        )}
 
         {/* Match row */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -883,6 +947,18 @@ export default function TournamentPage() {
             <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
           </div>
         </div>
+
+        {/* Events */}
+        {events.length > 0 && (
+          <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+            <div style={{ minWidth: 0 }}>
+              {homeEvents.map((e, i) => <EventItem key={i} e={e} align="left" />)}
+            </div>
+            <div style={{ minWidth: 0 }}>
+              {awayEvents.map((e, i) => <EventItem key={i} e={e} align="right" />)}
+            </div>
+          </div>
+        )}
 
         {/* Pick row */}
         {user && isParticipant && (
