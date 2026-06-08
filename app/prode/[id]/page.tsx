@@ -879,7 +879,7 @@ export default function TournamentPage() {
     const eventEmoji = (e: MatchEvent) => {
       if (e.type === 'Card') return e.detail === 'Red Card' ? '🟥' : e.detail === 'Yellow Red Card' ? '🟨🟥' : '🟨'
       if (e.detail === 'Penalty') return '⚽ (P)'
-      if (e.detail === 'Own Goal') return '⚽ (PP)'
+      if (e.detail === 'Own Goal') return '⚽ (EC)'
       return '⚽'
     }
 
@@ -892,65 +892,133 @@ export default function TournamentPage() {
       .sort((a, b) => a.elapsed - b.elapsed)
 
     const EventItem = ({ e, align }: { e: MatchEvent; align: 'left' | 'right' }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: align === 'left' ? 'flex-start' : 'flex-end', padding: '1px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: align === 'left' ? 'flex-start' : 'flex-end', padding: '2px 0' }}>
         {align === 'right' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
-        <span style={{ fontSize: 11 }}>{eventEmoji(e)}</span>
+        <span style={{ fontSize: 12 }}>{eventEmoji(e)}</span>
         {align === 'left' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
-        <span style={{ fontSize: 11, color: TEXT, fontFamily: FONT_NORMAL, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 90 }}>
+        <span style={{ fontSize: 11, color: TEXT, fontFamily: FONT_NORMAL, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
           {e.player}
         </span>
       </div>
     )
 
+    const liveGreen = '#10b981'
+
     return (
-      <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${isLive ? '#10b981' : BORDER}`, borderRadius: 14, padding: '12px 16px', backdropFilter: 'blur(4px)', ...(isLive ? { boxShadow: '0 0 0 3px rgba(16,185,129,0.12)' } : {}) }}>
-        {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: m.venue ? 4 : 10 }}>
-          <span style={{ fontSize: 10, fontWeight: 900, color: NAVY, letterSpacing: 1, fontFamily: FONT_BLACK, textTransform: 'uppercase' }}>
-            {stageLabel}
-          </span>
-          {isLive ? (
-            <span style={{ fontSize: 10, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_NORMAL, fontWeight: 700 }}>
-              <span className="live-dot" />{liveLabel}
-            </span>
-          ) : isDone ? (
-            <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 600 }}>FINALIZADO</span>
-          ) : (
-            <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{timeStr} hs</span>
-          )}
-        </div>
+      <div style={{
+        background: '#fff',
+        borderRadius: 18,
+        boxShadow: isLive
+          ? `0 0 0 2px ${liveGreen}, 0 4px 20px rgba(16,185,129,0.15)`
+          : '0 2px 12px rgba(0,0,0,0.07)',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
 
-        {/* Venue */}
-        {m.venue && (
-          <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            📍 {m.venue}
+        {/* ── Header ── */}
+        <div style={{ padding: '14px 16px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+          {/* Stage */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+            <div style={{ width: 30, height: 30, background: NAVY, borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2L12.4 7.6H18L13.5 11.2L15.3 17L10 13.4L4.7 17L6.5 11.2L2 7.6H7.6L10 2Z" fill="#C8950A"/>
+              </svg>
+            </div>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: NAVY, letterSpacing: 0.5 }}>{stageLabel.toUpperCase()}</div>
+              {m.venue && (
+                <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5z" fill={MUTED}/></svg>
+                  {m.venue}
+                </div>
+              )}
+            </div>
           </div>
-        )}
 
-        {/* Match row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', minWidth: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
-            <img src={m.home_flag} alt="" style={{ width: 26, height: 19, borderRadius: 3, objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-          </div>
-          <div style={{ padding: '0 10px', textAlign: 'center', flexShrink: 0, minWidth: 72 }}>
-            {isDone ? (
-              <span style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{m.home_score} - {m.away_score}</span>
-            ) : isLive ? (
-              <span style={{ fontSize: 22, fontWeight: 900, color: '#10b981', fontFamily: FONT_BLACK }}>{m.home_score ?? 0} - {m.away_score ?? 0}</span>
+          {/* Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            {isLive ? (
+              <div style={{ background: liveGreen, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK, display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'livePulse 1.2s ease-in-out infinite', flexShrink: 0 }} />
+                {liveLabel}
+              </div>
+            ) : isDone ? (
+              <div style={{ background: '#f1f5f9', color: MUTED, borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK }}>
+                FINALIZADO
+              </div>
             ) : (
-              <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 700 }}>VS</span>
+              <>
+                <div style={{ background: NAVY, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK }}>
+                  PRÓXIMO
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: MUTED }}>
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={MUTED} strokeWidth="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round"/></svg>
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, fontWeight: 600 }}>{timeStr} hs</span>
+                </div>
+              </>
             )}
           </div>
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-            <img src={m.away_flag} alt="" style={{ width: 26, height: 19, borderRadius: 3, objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+        </div>
+
+        {/* ── Match area ── */}
+        <div style={{ position: 'relative', padding: '8px 0 14px', minHeight: 100 }}>
+          {/* Background logos */}
+          <img src={m.home_flag} alt="" aria-hidden
+            style={{ position: 'absolute', left: -14, top: '50%', transform: 'translateY(-50%)', width: 120, height: 120, objectFit: 'contain', opacity: 0.09, pointerEvents: 'none', userSelect: 'none' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <img src={m.away_flag} alt="" aria-hidden
+            style={{ position: 'absolute', right: -14, top: '50%', transform: 'translateY(-50%)', width: 120, height: 120, objectFit: 'contain', opacity: 0.09, pointerEvents: 'none', userSelect: 'none' }}
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+
+          <div style={{ display: 'flex', alignItems: 'center', padding: '0 16px', gap: 10, position: 'relative', zIndex: 1 }}>
+            {/* Home team */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <img src={m.home_flag} alt={m.home_team}
+                style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: TEXT, textAlign: 'center', lineHeight: 1.25, wordBreak: 'break-word' }}>
+                {m.home_team}
+              </span>
+            </div>
+
+            {/* Score center */}
+            <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 96 }}>
+              {isDone || isLive ? (
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 32, fontWeight: 900, color: isLive ? liveGreen : TEXT, letterSpacing: 2 }}>
+                  {m.home_score ?? 0} - {m.away_score ?? 0}
+                </span>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
+                  </div>
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, fontWeight: 600 }}>vs</span>
+                  <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Away team */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <img src={m.away_flag} alt={m.away_team}
+                style={{ width: 52, height: 52, objectFit: 'contain', flexShrink: 0 }}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: TEXT, textAlign: 'center', lineHeight: 1.25, wordBreak: 'break-word' }}>
+                {m.away_team}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Events */}
+        {/* ── Events ── */}
         {events.length > 0 && (
-          <div style={{ marginTop: 10, paddingTop: 8, borderTop: `1px solid ${BORDER}`, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '8px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
             <div style={{ minWidth: 0 }}>
               {homeEvents.map((e, i) => <EventItem key={i} e={e} align="left" />)}
             </div>
@@ -960,29 +1028,28 @@ export default function TournamentPage() {
           </div>
         )}
 
-        {/* Pick row */}
+        {/* ── Pick ── */}
         {user && isParticipant && (
-          <div style={{ marginTop: 10, padding: '8px 12px', background: pickBg, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>Mi pick</span>
-            <span style={{ flex: 1 }} />
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '10px 16px', textAlign: 'center', background: pickBg }}>
+            <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tu predicción</div>
             {hasPick ? (
-              <>
-                <span style={{ fontSize: 15, fontWeight: 900, color: isDone && pickScore !== null ? pickColor : TEXT, fontFamily: FONT_BLACK }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: isDone && pickScore !== null ? 'transparent' : '#fff', borderRadius: 12, padding: '6px 18px', border: isDone && pickScore !== null ? 'none' : `1.5px solid ${BORDER}` }}>
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 24, fontWeight: 900, color: isDone && pickScore !== null ? pickColor : NAVY }}>
                   {myPick.h} - {myPick.a}
                 </span>
                 {isDone && pickScore !== null && (
-                  <span style={{ fontSize: 10, fontWeight: 900, fontFamily: FONT_BLACK, color: '#fff', background: pickColor, padding: '2px 8px', borderRadius: 6 }}>
+                  <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#fff', background: pickColor, borderRadius: 8, padding: '3px 9px', letterSpacing: 0.3 }}>
                     {pickScore > 0 ? `+${pickScore}` : '—'} · {SCORE_LABELS[pickScore] ?? ''}
                   </span>
                 )}
                 {isLive && (
-                  <span style={{ fontSize: 10, color: '#10b981', fontFamily: FONT_NORMAL }}>
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: liveGreen }}>
                     {pickScore !== null && pickScore > 0 ? `~+${pickScore} pts` : 'en juego'}
                   </span>
                 )}
-              </>
+              </div>
             ) : (
-              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
+              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción para este partido</span>
             )}
           </div>
         )}
