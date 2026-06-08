@@ -241,6 +241,7 @@ export default function TournamentPage() {
   const [participants, setParticipants] = useState<Participant[]>([])
   const [matches, setMatches] = useState<Match[]>([])
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
+  const [adminAllPicks, setAdminAllPicks] = useState<UserPick[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const picksEditRef = useRef<Record<string, {h:string;a:string}>>({})
@@ -293,16 +294,17 @@ export default function TournamentPage() {
         picksEditRef.current = pm
         setParticipants((ps as any[]).map(p => ({ ...p, pick_count: allP.filter(pk => pk.user_id === p.user_id).length })))
 
-        // Admin: fetch real pick counts bypassing RLS (anon client only sees own picks)
+        // Admin: fetch all picks bypassing RLS (anon client only sees own picks)
         if ((t as any)?.admin_id === user.id) {
-          fetch(`/api/prode/${id}/pick-counts`)
+          fetch(`/api/prode/${id}/all-picks`)
             .then(r => r.json())
-            .then((counts: { user_id: string; count: number }[]) => {
-              if (!Array.isArray(counts)) return
-              setParticipants(prev => prev.map(p => {
-                const found = counts.find(c => c.user_id === p.user_id)
-                return found ? { ...p, pick_count: found.count } : p
-              }))
+            .then((allAdminPicks: UserPick[]) => {
+              if (!Array.isArray(allAdminPicks)) return
+              setAdminAllPicks(allAdminPicks)
+              setParticipants(prev => prev.map(p => ({
+                ...p,
+                pick_count: allAdminPicks.filter(pk => pk.user_id === p.user_id).length,
+              })))
             })
             .catch(() => {})
         }
@@ -1444,7 +1446,7 @@ export default function TournamentPage() {
                   const name = p.profiles?.nombre
                     ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
                     : p.profiles?.username ?? 'Jugador'
-                  const userPicksList = allPicks.filter(pk => pk.user_id === p.user_id)
+                  const userPicksList = adminAllPicks.filter(pk => pk.user_id === p.user_id)
                   const pts = isDeadlinePast
                     ? userPicksList.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
                     : null
@@ -1475,45 +1477,56 @@ export default function TournamentPage() {
                 })}
               </Card>
 
-              {/* Pick breakdown per participant */}
+              {/* Pick breakdown — matches as rows, participants as columns */}
               <Card>
                 <SectionTitle>Detalle de predicciones</SectionTitle>
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-                    <thead>
-                      <tr style={{ background: TEXT }}>
-                        <th style={{ padding: '8px 12px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 11, position: 'sticky', left: 0, background: TEXT }}>Jugador</th>
-                        {groupMatches.slice(0, 20).map(m => (
-                          <th key={m.id} style={{ padding: '6px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 50 }}>
-                            {abbrev(m.home_team)}-{abbrev(m.away_team)}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {participants.map(p => {
-                        const name = p.profiles?.username ?? 'Jugador'
-                        return (
-                          <tr key={p.user_id} style={{ borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '6px 12px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: '#fff', whiteSpace: 'nowrap' }}>{name}</td>
-                            {groupMatches.slice(0, 20).map(m => {
-                              const pk = allPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
-                              const score = pk && m.home_score !== null ? calcScore(pk, m) : null
-                              return (
-                                <td key={m.id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: score !== null ? (score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : MUTED) : MUTED }}>
-                                  {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                {groupMatches.length > 20 && (
-                  <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginTop: 10, textAlign: 'center' }}>
-                    Mostrando los primeros 20 partidos de {groupMatches.length}
+                {adminAllPicks.length === 0 ? (
+                  <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Cargando predicciones...</div>
+                ) : (
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                      <thead>
+                        <tr style={{ background: TEXT }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Partido</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Fecha</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
+                          {participants.map(p => (
+                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
+                              {p.profiles?.username ?? '?'}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {groupMatches.map((m, i) => {
+                          const matchDate = m.kickoff
+                            ? new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })
+                            : '—'
+                          const hasResult = m.home_score !== null && m.away_score !== null
+                          return (
+                            <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', whiteSpace: 'nowrap', fontSize: 10 }}>
+                                {abbrev(m.home_team)} vs {abbrev(m.away_team)}
+                              </td>
+                              <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, whiteSpace: 'nowrap' }}>{matchDate}</td>
+                              <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
+                                {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
+                              </td>
+                              {participants.map(p => {
+                                const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                const score = pk && hasResult ? calcScore(pk, m) : null
+                                const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
+                                return (
+                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap' }}>
+                                    {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </Card>
