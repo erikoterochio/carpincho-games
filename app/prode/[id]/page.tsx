@@ -292,6 +292,20 @@ export default function TournamentPage() {
         setMyEditPicks(pm)
         picksEditRef.current = pm
         setParticipants((ps as any[]).map(p => ({ ...p, pick_count: allP.filter(pk => pk.user_id === p.user_id).length })))
+
+        // Admin: fetch real pick counts bypassing RLS (anon client only sees own picks)
+        if ((t as any)?.admin_id === user.id) {
+          fetch(`/api/prode/${id}/pick-counts`)
+            .then(r => r.json())
+            .then((counts: { user_id: string; count: number }[]) => {
+              if (!Array.isArray(counts)) return
+              setParticipants(prev => prev.map(p => {
+                const found = counts.find(c => c.user_id === p.user_id)
+                return found ? { ...p, pick_count: found.count } : p
+              }))
+            })
+            .catch(() => {})
+        }
       } else {
         setParticipants((ps ?? []) as any[])
       }
