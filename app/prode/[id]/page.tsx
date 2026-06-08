@@ -76,7 +76,7 @@ const ABBREV: Record<string, string> = {
 }
 function abbrev(name: string) { return ABBREV[name] ?? name.substring(0, 3).toUpperCase() }
 
-type Tab = 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin'
+type Tab = 'home' | 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin'
 
 type Standing = {
   group_name: string
@@ -235,7 +235,7 @@ export default function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
-  const [tab, setTab] = useState<Tab>('predecir')
+  const [tab, setTab] = useState<Tab>('home')
   const [user, setUser] = useState<any>(null)
   const [tournament, setTournament] = useState<Tournament | null>(null)
   const [participants, setParticipants] = useState<Participant[]>([])
@@ -473,6 +473,7 @@ export default function TournamentPage() {
   }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
 
   const TABS: { key: Tab; label: string }[] = [
+    { key: 'home', label: 'Home' },
     { key: 'predecir', label: 'Predecir' },
     { key: 'fixture', label: 'Fixture' },
     { key: 'posiciones', label: 'Posiciones' },
@@ -508,6 +509,19 @@ export default function TournamentPage() {
   }, [matches, myEditPicks])
 
   const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
+
+  const homeMatches = useMemo(() => {
+    const tz = 'America/Argentina/Buenos_Aires'
+    const todayIso = new Date().toLocaleDateString('en-CA', { timeZone: tz })
+    const matchDateIso = (m: Match) => new Date(m.kickoff).toLocaleDateString('en-CA', { timeZone: tz })
+    const allDates = [...new Set(matches.map(matchDateIso))].sort()
+    const futureDates = allDates.filter(d => d >= todayIso)
+    const datesToShow = new Set(futureDates.slice(0, 2))
+    return matches
+      .filter(m => datesToShow.has(matchDateIso(m)) || LIVE_STATUSES.has(m.status))
+      .sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime())
+  }, [matches])
+
 
   const bracketData = useMemo(() => {
     const getGrp = (pos: 1|2, grp: string): TeamStat | null => allGroupStandings[grp]?.[pos-1] ?? null
@@ -792,6 +806,114 @@ export default function TournamentPage() {
     </div>
   )
 
+  const getDateLabel = (isoDate: string): string => {
+    const tz = 'America/Argentina/Buenos_Aires'
+    const today = new Date()
+    const todayStr = today.toLocaleDateString('en-CA', { timeZone: tz })
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    const tomorrowStr = tomorrow.toLocaleDateString('en-CA', { timeZone: tz })
+    if (isoDate === todayStr) return 'Hoy'
+    if (isoDate === tomorrowStr) return 'Mañana'
+    const [y, mo, d] = isoDate.split('-').map(Number)
+    return new Date(y, mo - 1, d).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
+  }
+
+  const HomeMatchCard = ({ m }: { m: Match }) => {
+    const isLive = LIVE_STATUSES.has(m.status)
+    const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
+    const liveLabel = m.status === 'HT' ? 'DESCANSO' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
+    const myPick = myEditPicks[m.id]
+    const hasPick = !!(myPick && myPick.h !== '' && myPick.a !== '')
+    const pickScore = hasPick
+      ? calcScore({ match_id: m.id, home_score: parseInt(myPick.h), away_score: parseInt(myPick.a), user_id: '' }, m)
+      : null
+
+    const timeStr = new Date(m.kickoff).toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
+    })
+    const stageLabel = m.stage === 'group' ? `Grupo ${m.group_name}` : STAGE_LABEL[m.stage]
+
+    const pickColor = pickScore === null ? MUTED
+      : pickScore >= 12 ? '#10b981'
+      : pickScore >= 7 ? '#0ea5e9'
+      : pickScore >= 5 ? '#d97706'
+      : pickScore >= 2 ? '#f97316'
+      : RED
+    const pickBg = isDone && pickScore !== null
+      ? pickScore >= 12 ? '#f0fdf4' : pickScore >= 7 ? '#eff6ff' : pickScore >= 5 ? '#fffbeb' : pickScore >= 2 ? '#fff7ed' : '#fef2f2'
+      : '#f3f4f6'
+    const SCORE_LABELS: Record<number, string> = { 12: 'EXACTO', 7: 'RESULTADO+GOL', 5: 'PARCIAL', 2: 'UN GOL', 0: 'FALLASTE' }
+
+    return (
+      <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${isLive ? '#10b981' : BORDER}`, borderRadius: 14, padding: '12px 16px', backdropFilter: 'blur(4px)', ...(isLive ? { boxShadow: '0 0 0 3px rgba(16,185,129,0.12)' } : {}) }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 900, color: NAVY, letterSpacing: 1, fontFamily: FONT_BLACK, textTransform: 'uppercase' }}>
+            {stageLabel}
+          </span>
+          {isLive ? (
+            <span style={{ fontSize: 10, color: '#10b981', display: 'flex', alignItems: 'center', gap: 4, fontFamily: FONT_NORMAL, fontWeight: 700 }}>
+              <span className="live-dot" />{liveLabel}
+            </span>
+          ) : isDone ? (
+            <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 600 }}>FINALIZADO</span>
+          ) : (
+            <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>{timeStr} hs</span>
+          )}
+        </div>
+
+        {/* Match row */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end', minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.home_team)}</span>
+            <img src={m.home_flag} alt="" style={{ width: 26, height: 19, borderRadius: 3, objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+          </div>
+          <div style={{ padding: '0 10px', textAlign: 'center', flexShrink: 0, minWidth: 72 }}>
+            {isDone ? (
+              <span style={{ fontSize: 20, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{m.home_score} - {m.away_score}</span>
+            ) : isLive ? (
+              <span style={{ fontSize: 22, fontWeight: 900, color: '#10b981', fontFamily: FONT_BLACK }}>{m.home_score ?? 0} - {m.away_score ?? 0}</span>
+            ) : (
+              <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, fontWeight: 700 }}>VS</span>
+            )}
+          </div>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+            <img src={m.away_flag} alt="" style={{ width: 26, height: 19, borderRadius: 3, objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+            <span style={{ fontSize: 13, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{abbrev(m.away_team)}</span>
+          </div>
+        </div>
+
+        {/* Pick row */}
+        {user && isParticipant && (
+          <div style={{ marginTop: 10, padding: '8px 12px', background: pickBg, borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>Mi pick</span>
+            <span style={{ flex: 1 }} />
+            {hasPick ? (
+              <>
+                <span style={{ fontSize: 15, fontWeight: 900, color: isDone && pickScore !== null ? pickColor : TEXT, fontFamily: FONT_BLACK }}>
+                  {myPick.h} - {myPick.a}
+                </span>
+                {isDone && pickScore !== null && (
+                  <span style={{ fontSize: 10, fontWeight: 900, fontFamily: FONT_BLACK, color: '#fff', background: pickColor, padding: '2px 8px', borderRadius: 6 }}>
+                    {pickScore > 0 ? `+${pickScore}` : '—'} · {SCORE_LABELS[pickScore] ?? ''}
+                  </span>
+                )}
+                {isLive && (
+                  <span style={{ fontSize: 10, color: '#10b981', fontFamily: FONT_NORMAL }}>
+                    {pickScore !== null && pickScore > 0 ? `~+${pickScore} pts` : 'en juego'}
+                  </span>
+                )}
+              </>
+            ) : (
+              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   return (
     <>
       <style>{`
@@ -909,6 +1031,52 @@ export default function TournamentPage() {
         </div>
 
         <div className="wrap">
+
+          {/* ── HOME ── */}
+          {tab === 'home' && (
+            <div style={{ maxWidth: 680, margin: '0 auto' }}>
+              {homeMatches.length === 0 ? (
+                <Card style={{ textAlign: 'center', padding: 40 }}>
+                  <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
+                  <div style={{ fontSize: 15, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 6 }}>Sin partidos próximos</div>
+                  <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, lineHeight: 1.6 }}>No hay partidos programados para hoy ni el próximo día con fixture.</div>
+                </Card>
+              ) : (() => {
+                const tz = 'America/Argentina/Buenos_Aires'
+                const matchDateIso = (m: Match) => new Date(m.kickoff).toLocaleDateString('en-CA', { timeZone: tz })
+                const byDate: Record<string, Match[]> = {}
+                for (const m of homeMatches) {
+                  const d = matchDateIso(m)
+                  if (!byDate[d]) byDate[d] = []
+                  byDate[d].push(m)
+                }
+                return (
+                  <>
+                    {Object.entries(byDate).sort(([a], [b]) => a.localeCompare(b)).map(([date, ms]) => (
+                      <div key={date} style={{ marginBottom: 22 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                          <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK }}>
+                            {getDateLabel(date)}
+                          </span>
+                          <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>
+                            · {new Date(ms[0].kickoff).toLocaleDateString('es-AR', { timeZone: tz, day: '2-digit', month: '2-digit' })}
+                          </span>
+                          {ms.some(m => LIVE_STATUSES.has(m.status)) && (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, color: '#10b981', fontFamily: FONT_NORMAL }}>
+                              <span className="live-dot" />EN VIVO
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {ms.map(m => <HomeMatchCard key={m.id} m={m} />)}
+                        </div>
+                      </div>
+                    ))}
+                  </>
+                )
+              })()}
+            </div>
+          )}
 
           {/* ── PREDECIR ── */}
           {tab === 'predecir' && (
