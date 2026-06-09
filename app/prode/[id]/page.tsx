@@ -344,8 +344,11 @@ export default function TournamentPage() {
             .catch(() => {})
           fetch(`/api/prode/${id}/all-specials`)
             .then(r => r.json())
-            .then((data: AdminSpecial[]) => { if (Array.isArray(data)) setAdminSpecials(data) })
-            .catch(() => {})
+            .then((data: unknown) => {
+              if (Array.isArray(data)) setAdminSpecials(data as AdminSpecial[])
+              else console.error('[all-specials]', data)
+            })
+            .catch(console.error)
         }
       } else {
         setParticipants((ps ?? []) as any[])

@@ -32,7 +32,7 @@ export async function GET(
   const admin = adminDB()
   const { data, error } = await admin
     .from('prode_stage1_specials')
-    .select('user_id, champion, runner_up, third_place, fourth_place, balon_oro, guante_oro, botin_oro, fair_play, revelacion, goleada_match_id')
+    .select('*')
     .eq('tournament_id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
