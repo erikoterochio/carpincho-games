@@ -1931,7 +1931,7 @@ export default function TournamentPage() {
               </Card>
 
               {/* ── KO round picks ── */}
-              {koMatches.length > 0 && adminAllPicks.length > 0 && (
+              {koMatches.length > 0 && (
                 <Card style={{ marginTop: 14 }}>
                   <SectionTitle>Picks — Rondas KO</SectionTitle>
                   <div style={{ overflowX: 'auto' }}>
@@ -1986,46 +1986,42 @@ export default function TournamentPage() {
               {/* ── Bonus (adicionales) picks ── */}
               <Card style={{ marginTop: 14 }}>
                 <SectionTitle>Adicionales</SectionTitle>
-                {adminSpecials.length === 0 ? (
-                  <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Nadie completó los adicionales todavía.</div>
-                ) : (
-                  <div style={{ overflowX: 'auto' }}>
-                    <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
-                      <thead>
-                        <tr style={{ background: TEXT }}>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Adicional</th>
-                          {participants.map(p => (
-                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
-                              {p.profiles?.username ?? '?'}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {SPECIAL_LABELS.map((f, i) => (
-                          <tr key={f.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
-                              {f.label}
-                            </td>
-                            {participants.map(p => {
-                              const sp = adminSpecials.find(s => s.user_id === p.user_id)
-                              let val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
-                              if (f.key === 'goleada_match_id' && val) {
-                                const gm = matches.find(m => m.id === val)
-                                val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
-                              }
-                              return (
-                                <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
-                                  {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
-                                </td>
-                              )
-                            })}
-                          </tr>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                    <thead>
+                      <tr style={{ background: TEXT }}>
+                        <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Adicional</th>
+                        {participants.map(p => (
+                          <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
+                            {p.profiles?.username ?? '?'}
+                          </th>
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {SPECIAL_LABELS.map((f, i) => (
+                        <tr key={f.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
+                          <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
+                            {f.label}
+                          </td>
+                          {participants.map(p => {
+                            const sp = adminSpecials.find(s => s.user_id === p.user_id)
+                            let val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
+                            if (f.key === 'goleada_match_id' && val) {
+                              const gm = matches.find(m => m.id === val)
+                              val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
+                            }
+                            return (
+                              <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
+                                {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
             </div>
           )}
