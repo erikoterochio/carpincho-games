@@ -901,8 +901,8 @@ export default function TournamentPage() {
     const allEvents = [...events].sort((a, b) => a.elapsed - b.elapsed)
 
     return (
-      <div style={{ background: '#fff', borderRadius: 28, overflow: 'hidden',
-        boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 4px 14px rgba(0,0,0,0.18)' }}>
+      <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden',
+        boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 2px 12px rgba(0,0,0,0.12)' }}>
 
         {/* ── HEADER ── */}
         <div style={{ minHeight: 58, background: barColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', gap: 12 }}>
@@ -930,47 +930,52 @@ export default function TournamentPage() {
           </div>
         </div>
 
-        {/* ── MATCH AREA (7-column grid, flags absolutely positioned) ── */}
-        <div className="hm-area">
-          <img src={m.home_flag} alt="" aria-hidden className="hm-flag-left"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div className="hm-fade-left" />
-          <img src={m.away_flag} alt="" aria-hidden className="hm-flag-right"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-          <div className="hm-fade-right" />
-
-          {/* col 1 — flag spacer */}
-          <div />
-          {/* col 2 — home name */}
-          <span className="hm-team" style={{ position: 'relative', zIndex: 3, fontFamily: FONT_COND, color: '#000', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 900, textAlign: 'center' }}>
-            {abbrev(m.home_team)}
-          </span>
-          {/* col 3 — home score */}
-          <div className="hm-score" style={{ position: 'relative', zIndex: 3, borderRadius: 10, border: '2px solid #d5d8df', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="hm-score-text" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
-              {isDone || isLive ? (m.home_score ?? 0) : '—'}
-            </span>
-          </div>
-          {/* col 4 — central icon */}
-          <div className="hm-icon" style={{ position: 'relative', zIndex: 3, borderRadius: 10, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)' }}>
-            <img src="/images/logo-fwc-blanco.png" alt="" className="hm-logo-img" style={{ objectFit: 'contain' }}
+        {/* ── MATCH AREA ── */}
+        <div className="hm2-match">
+          {/* Left flag */}
+          <div className="hm2-flag">
+            <img src={m.home_flag} alt="" aria-hidden
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
           </div>
-          {/* col 5 — away score */}
-          <div className="hm-score" style={{ position: 'relative', zIndex: 3, borderRadius: 10, border: '2px solid #d5d8df', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span className="hm-score-text" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
-              {isDone || isLive ? (m.away_score ?? 0) : '—'}
+
+          {/* Home name */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 12, minWidth: 0 }}>
+            <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase', textAlign: 'right' }}>
+              {abbrev(m.home_team)}
             </span>
           </div>
-          {/* col 6 — away name */}
-          <span className="hm-team" style={{ position: 'relative', zIndex: 3, fontFamily: FONT_COND, color: '#000', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 900, textAlign: 'center' }}>
-            {abbrev(m.away_team)}
-          </span>
-          {/* col 7 — flag spacer */}
-          <div />
+
+          {/* Score cluster */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div className="hm2-sbox" style={{ borderRadius: 8, border: '1.5px solid #dde1e8', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="hm2-stxt" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
+                {isDone || isLive ? (m.home_score ?? 0) : '—'}
+              </span>
+            </div>
+            <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: '#b0b8c4', lineHeight: 1 }}>
+              {isDone || isLive ? '-' : 'vs'}
+            </span>
+            <div className="hm2-sbox" style={{ borderRadius: 8, border: '1.5px solid #dde1e8', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span className="hm2-stxt" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
+                {isDone || isLive ? (m.away_score ?? 0) : '—'}
+              </span>
+            </div>
+          </div>
+
+          {/* Away name */}
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: 12, minWidth: 0 }}>
+            <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase' }}>
+              {abbrev(m.away_team)}
+            </span>
+          </div>
+
+          {/* Right flag */}
+          <div className="hm2-flag">
+            <img src={m.away_flag} alt="" aria-hidden
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+            />
+          </div>
         </div>
 
         {/* ── PREDICTION ── */}
@@ -1164,6 +1169,21 @@ export default function TournamentPage() {
         @media (max-width: 500px) { .hm-pred-box { min-width: 64px; height: 28px; } }
         .hm-pred-score { font-size: 24px; }
         @media (max-width: 500px) { .hm-pred-score { font-size: 17px; } }
+
+        /* ── HomeMatchCard v2 (flex) ── */
+        .hm2-match { display: flex; align-items: stretch; height: 84px; background: #f5f6f8; }
+        .hm2-flag { width: 90px; flex-shrink: 0; overflow: hidden; }
+        .hm2-flag img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .hm2-name { font-size: 26px; font-weight: 900; line-height: 1; }
+        .hm2-sbox { width: 42px; height: 42px; flex-shrink: 0; }
+        .hm2-stxt { font-size: 22px; }
+        @media (max-width: 500px) {
+          .hm2-match { height: 72px; }
+          .hm2-flag { width: 66px; }
+          .hm2-name { font-size: 20px; }
+          .hm2-sbox { width: 34px; height: 34px; }
+          .hm2-stxt { font-size: 17px; }
+        }
       `}</style>
 
       <div className="t-page">
