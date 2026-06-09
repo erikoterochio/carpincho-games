@@ -964,11 +964,11 @@ export default function TournamentPage() {
         <div style={{ display: 'flex', alignItems: 'stretch', height: 114 }}>
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 20px 0', background: '#eef1f4', flexShrink: 1 }}>
             <img src={m.home_flag} alt="" aria-hidden
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <span style={{ position: 'absolute', bottom: 7, right: 8, fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: NAVY, lineHeight: 1,
-              textShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 16px rgba(255,255,255,0.7)' }}>
+            <span style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1,
+              textShadow: '0 0 4px #fff, 0 0 8px #fff, 0 0 18px #fff, 0 0 32px rgba(255,255,255,0.7)' }}>
               {abbrev(m.home_team)}
             </span>
           </div>
@@ -994,11 +994,11 @@ export default function TournamentPage() {
 
           <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 0 20px', background: '#eef1f4', flexShrink: 1 }}>
             <img src={m.away_flag} alt="" aria-hidden
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <span style={{ position: 'absolute', bottom: 7, left: 8, fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: NAVY, lineHeight: 1,
-              textShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 16px rgba(255,255,255,0.7)' }}>
+            <span style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1,
+              textShadow: '0 0 4px #fff, 0 0 8px #fff, 0 0 18px #fff, 0 0 32px rgba(255,255,255,0.7)' }}>
               {abbrev(m.away_team)}
             </span>
           </div>
