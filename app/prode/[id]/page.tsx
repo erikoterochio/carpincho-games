@@ -21,9 +21,9 @@ const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
 const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
 const GROUP_COLORS: Record<string, string> = {
-  A: '#1D2E6E', B: '#0E4F7A', C: '#6B21A8', D: '#9B1C1C',
-  E: '#B45309', F: '#166534', G: '#0F766E', H: '#7C3AED',
-  I: '#065F46', J: '#C2410C', K: '#1D4ED8', L: '#0369A1',
+  A: '#20298b', B: '#0f766e', C: '#7c2d12', D: '#6d28d9',
+  E: '#be123c', F: '#047857', G: '#1d4ed8', H: '#9333ea',
+  I: '#b45309', J: '#0369a1', K: '#4d7c0f', L: '#9f1239',
 }
 const STAGE_COLORS: Record<string, string> = {
   r32: '#312E81', r16: '#1E1B4B', qf: '#0F172A', sf: '#172554', '3rd': '#1A1A2E', final: '#0A0A0A',
@@ -873,172 +873,169 @@ export default function TournamentPage() {
       timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
     })
 
+    const barColor = m.stage === 'group' && m.group_name
+      ? (GROUP_COLORS[m.group_name] ?? '#20298b')
+      : (STAGE_COLORS[m.stage] ?? '#20298b')
+
+    const scoreColor = isDone ? '#20298b' : isLive ? '#18b26b' : '#b9c3d1'
+
     const pickColor = pickScore === null ? MUTED
       : pickScore >= 12 ? '#10b981'
       : pickScore >= 7 ? '#0ea5e9'
       : pickScore >= 5 ? '#d97706'
       : pickScore >= 2 ? '#f97316'
       : RED
-    const pickBg = isDone && pickScore !== null
-      ? pickScore >= 12 ? '#f0fdf4' : pickScore >= 7 ? '#eff6ff' : pickScore >= 5 ? '#fffbeb' : pickScore >= 2 ? '#fff7ed' : '#fef2f2'
-      : '#f3f4f6'
     const SCORE_LABELS: Record<number, string> = { 12: 'EXACTO', 7: 'RESULTADO+GOL', 5: 'PARCIAL', 2: 'UN GOL', 0: 'FALLASTE' }
 
-    const barColor = m.stage === 'group' && m.group_name
-      ? (GROUP_COLORS[m.group_name] ?? NAVY)
-      : (STAGE_COLORS[m.stage] ?? NAVY)
-
-    const scoreColor = isLive ? '#10b981' : isDone ? TEXT : '#c8d3e0'
-
-    const eventEmoji = (e: MatchEvent) => {
-      if (e.type === 'Card') return e.detail === 'Red Card' ? '🟥' : e.detail === 'Yellow Red Card' ? '🟨🟥' : '🟨'
-      if (e.detail === 'Penalty') return '⚽ (P)'
-      if (e.detail === 'Own Goal') return '⚽ (EC)'
-      return '⚽'
+    const eventDisplay = (e: MatchEvent) => {
+      if (e.type === 'Card') {
+        if (e.detail === 'Red Card') return { icon: '🟥', accent: '#dc2626' }
+        if (e.detail === 'Yellow Red Card') return { icon: '🟨🟥', accent: '#dc2626' }
+        return { icon: '🟨', accent: '#eab308' }
+      }
+      if (e.detail === 'Own Goal') return { icon: '⚽ (EC)', accent: '#dc2626' }
+      if (e.detail === 'Penalty') return { icon: '⚽ (P)', accent: '#16a34a' }
+      return { icon: '⚽', accent: '#16a34a' }
     }
 
-    const homeEvents = events
-      .filter(e => e.detail === 'Own Goal' ? e.team_id === m.away_team_id : e.team_id === m.home_team_id)
-      .sort((a, b) => a.elapsed - b.elapsed)
-    const awayEvents = events
-      .filter(e => e.detail === 'Own Goal' ? e.team_id === m.home_team_id : e.team_id === m.away_team_id)
-      .sort((a, b) => a.elapsed - b.elapsed)
-
-    const EventItem = ({ e, align }: { e: MatchEvent; align: 'left' | 'right' }) => (
-      <div style={{ display: 'flex', alignItems: 'center', gap: 3, justifyContent: align === 'left' ? 'flex-start' : 'flex-end', padding: '2px 0' }}>
-        {align === 'right' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
-        <span style={{ fontSize: 12 }}>{eventEmoji(e)}</span>
-        {align === 'left' && <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{e.elapsed}{e.extra ? `+${e.extra}` : ''}'</span>}
-        <span style={{ fontSize: 11, color: TEXT, fontFamily: FONT_NORMAL, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 95 }}>
-          {e.player}
-        </span>
-      </div>
-    )
+    const allEvents = [...events].sort((a, b) => a.elapsed - b.elapsed)
 
     return (
-      <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden',
-        boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 2px 12px rgba(0,0,0,0.08)' }}>
+      <div style={{ background: '#fff', borderRadius: 28, overflow: 'hidden',
+        boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 4px 14px rgba(0,0,0,0.18)' }}>
 
-        {/* ── TOP BAR ── */}
-        <div style={{ background: barColor, padding: '9px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        {/* ── HEADER ── */}
+        <div style={{ minHeight: 58, background: barColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', gap: 12 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: FONT_BLACK, fontSize: 12, color: '#fff', letterSpacing: 0.5, lineHeight: 1 }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 800, color: '#fff', textTransform: 'uppercase', lineHeight: 1 }}>
               {m.stage === 'group' ? `GRUPO ${m.group_name ?? '?'}` : STAGE_LABEL[m.stage]?.toUpperCase()}
             </div>
             {m.venue && (
-              <div style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {m.venue}
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
-            {isLive ? (
-              <div style={{ background: '#10b981', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK, display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'livePulse 1.2s ease-in-out infinite', flexShrink: 0 }} />
-                {liveLabel}
-              </div>
-            ) : isDone ? (
-              <div style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK }}>
-                FINALIZADO
-              </div>
-            ) : (
-              <div style={{ background: '#fff', color: barColor, borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK }}>
-                PRÓXIMO
-              </div>
-            )}
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+            <div style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', borderRadius: 4, padding: '6px 12px', fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
+              {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b3b', display: 'inline-block', animation: 'livePulse 1.2s infinite', flexShrink: 0 }} />}
+              {isLive ? liveLabel : isDone ? 'FINAL' : 'PRÓXIMO'}
+            </div>
             {!isDone && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="6.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5"/>
-                  <path d="M8 4.5V8l2.5 1.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>{timeStr} hs</span>
-              </div>
+              <>
+                <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.35)', margin: '0 14px' }} />
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
+              </>
             )}
           </div>
         </div>
 
-        {/* ── MATCH AREA ── */}
-        {/* Left flag: top-left rounded by card + bottom-right explicit = 2 opposite corners */}
-        {/* Right flag: top-right rounded by card + bottom-left explicit = 2 opposite corners */}
-        <div style={{ display: 'flex', alignItems: 'stretch', height: 114 }}>
-          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 20px 0', background: '#eef1f4', flexShrink: 1 }}>
-            <img src={m.home_flag} alt="" aria-hidden
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-            <span style={{ position: 'absolute', top: '50%', right: 10, transform: 'translateY(-50%)', fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1,
-              textShadow: '0 0 4px #fff, 0 0 8px #fff, 0 0 18px #fff, 0 0 32px rgba(255,255,255,0.7)' }}>
-              {abbrev(m.home_team)}
+        {/* ── MATCH AREA (7-column grid, flags absolutely positioned) ── */}
+        <div className="hm-area">
+          <img src={m.home_flag} alt="" aria-hidden className="hm-flag-left"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <div className="hm-fade-left" />
+          <img src={m.away_flag} alt="" aria-hidden className="hm-flag-right"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <div className="hm-fade-right" />
+
+          {/* col 1 — flag spacer */}
+          <div />
+          {/* col 2 — home name */}
+          <span className="hm-team" style={{ position: 'relative', zIndex: 3, fontFamily: FONT_COND, color: '#000', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 900, textAlign: 'center' }}>
+            {abbrev(m.home_team)}
+          </span>
+          {/* col 3 — home score */}
+          <div className="hm-score" style={{ position: 'relative', zIndex: 3, borderRadius: 10, border: '2px solid #d5d8df', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="hm-score-text" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
+              {isDone || isLive ? (m.home_score ?? 0) : '—'}
             </span>
           </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 8px', flexShrink: 0 }}>
-            <div style={{ width: 40, height: 40, background: '#f1f5f9', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: scoreColor }}>
-                {isDone || isLive ? (m.home_score ?? 0) : '—'}
-              </span>
-            </div>
-            <div style={{ width: 50, height: 50, background: '#000', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <img src="/images/logo-fwc-blanco.png" alt="FIFA WC 2026"
-                style={{ width: 38, height: 38, objectFit: 'contain' }}
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-              />
-            </div>
-            <div style={{ width: 40, height: 40, background: '#f1f5f9', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: scoreColor }}>
-                {isDone || isLive ? (m.away_score ?? 0) : '—'}
-              </span>
-            </div>
-          </div>
-
-          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 0 20px', background: '#eef1f4', flexShrink: 1 }}>
-            <img src={m.away_flag} alt="" aria-hidden
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+          {/* col 4 — central icon */}
+          <div className="hm-icon" style={{ position: 'relative', zIndex: 3, borderRadius: 10, background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'translateY(-6px)' }}>
+            <img src="/images/logo-fwc-blanco.png" alt="" className="hm-logo-img" style={{ objectFit: 'contain' }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <span style={{ position: 'absolute', top: '50%', left: 10, transform: 'translateY(-50%)', fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: TEXT, lineHeight: 1,
-              textShadow: '0 0 4px #fff, 0 0 8px #fff, 0 0 18px #fff, 0 0 32px rgba(255,255,255,0.7)' }}>
-              {abbrev(m.away_team)}
+          </div>
+          {/* col 5 — away score */}
+          <div className="hm-score" style={{ position: 'relative', zIndex: 3, borderRadius: 10, border: '2px solid #d5d8df', background: '#fff', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span className="hm-score-text" style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor }}>
+              {isDone || isLive ? (m.away_score ?? 0) : '—'}
             </span>
           </div>
+          {/* col 6 — away name */}
+          <span className="hm-team" style={{ position: 'relative', zIndex: 3, fontFamily: FONT_COND, color: '#000', letterSpacing: 1, textTransform: 'uppercase', fontWeight: 900, textAlign: 'center' }}>
+            {abbrev(m.away_team)}
+          </span>
+          {/* col 7 — flag spacer */}
+          <div />
         </div>
 
-        {/* ── EVENTS ── */}
-        {events.length > 0 && (
-          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '7px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
-            <div style={{ minWidth: 0 }}>
-              {homeEvents.map((e, i) => <EventItem key={i} e={e} align="left" />)}
-            </div>
-            <div style={{ minWidth: 0 }}>
-              {awayEvents.map((e, i) => <EventItem key={i} e={e} align="right" />)}
-            </div>
-          </div>
-        )}
-
-        {/* ── PICK ── */}
+        {/* ── PREDICTION ── */}
         {user && isParticipant && (
-          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '10px 14px', textAlign: 'center', background: pickBg }}>
-            <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_BLACK, marginBottom: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Tu predicción</div>
+          <div style={{ background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px 20px 16px', borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: '#000', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+              Tu predicción
+            </div>
             {hasPick ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: isDone && pickScore !== null ? 'transparent' : '#fff', borderRadius: 10, padding: '5px 16px', border: isDone && pickScore !== null ? 'none' : `1.5px solid ${BORDER}` }}>
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 22, color: isDone && pickScore !== null ? pickColor : NAVY }}>
+              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ minWidth: 94, height: 36, borderRadius: 6, border: '1px solid #d6d6d6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BLACK, fontSize: 24, fontWeight: 900, color: '#20298b', lineHeight: 1 }}>
                   {myPick.h} - {myPick.a}
-                </span>
+                </div>
                 {isDone && pickScore !== null && (
-                  <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#fff', background: pickColor, borderRadius: 7, padding: '3px 8px' }}>
+                  <div style={{ background: pickColor, color: '#fff', borderRadius: 6, padding: '4px 10px', fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900 }}>
                     {pickScore > 0 ? `+${pickScore}` : '—'} · {SCORE_LABELS[pickScore] ?? ''}
-                  </span>
+                  </div>
                 )}
                 {isLive && pickScore !== null && pickScore > 0 && (
                   <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: '#10b981' }}>~+{pickScore} pts</span>
                 )}
               </div>
             ) : (
-              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
+              <div style={{ marginTop: 6, fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 700, color: '#6b7280', fontStyle: 'italic' }}>Sin predicción</div>
             )}
           </div>
         )}
+
+        {/* ── EVENTS ── */}
+        {(isLive || isDone) && (
+          <div style={{ borderTop: '1px solid #e5e7eb', padding: '12px 20px 16px' }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: '#6b7280', textTransform: 'uppercase', letterSpacing: 0.5, textAlign: 'center', marginBottom: 8 }}>
+              Sucesos del partido
+            </div>
+            {allEvents.length === 0 ? (
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: '#9ca3af', textAlign: 'center', padding: '4px 0' }}>
+                Todavía no hay sucesos registrados.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {allEvents.map((e, i) => {
+                  const { icon, accent } = eventDisplay(e)
+                  const isHomeEvent = e.detail === 'Own Goal'
+                    ? e.team_id === m.away_team_id
+                    : e.team_id === m.home_team_id
+                  return (
+                    <div key={i} style={{ display: 'grid', gridTemplateColumns: '42px 28px 1fr auto', alignItems: 'center', gap: 8, minHeight: 32, borderRadius: 10, background: '#f9fafb', padding: '7px 10px', borderLeft: `4px solid ${accent}` }}>
+                      <span style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: '#20298b', textAlign: 'right' }}>
+                        {e.elapsed}{e.extra ? `+${e.extra}` : ''}'
+                      </span>
+                      <span style={{ fontSize: 14, textAlign: 'center' }}>{icon}</span>
+                      <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {e.player}
+                      </span>
+                      <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#6b7280', textTransform: 'uppercase' }}>
+                        {isHomeEvent ? abbrev(m.home_team) : abbrev(m.away_team)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
     )
   }
@@ -1119,6 +1116,47 @@ export default function TournamentPage() {
 
         .ko-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
         @media (min-width: 480px) { .ko-grid { grid-template-columns: 1fr 1fr; } }
+
+        /* ── HomeMatchCard ── */
+        .hm-area {
+          display: grid;
+          grid-template-columns: 120px 90px 58px 64px 58px 90px 120px;
+          align-items: center; justify-items: center;
+          background: #f3f3f3; position: relative; height: 96px; overflow: hidden;
+        }
+        @media (max-width: 500px) {
+          .hm-area { grid-template-columns: 60px 1fr 38px 48px 38px 1fr 60px; height: 88px; }
+        }
+        .hm-team { font-size: 30px; font-weight: 900; line-height: 1; }
+        @media (max-width: 500px) { .hm-team { font-size: 20px; } }
+        .hm-score { width: 54px; height: 54px; }
+        .hm-score-text { font-size: 24px; }
+        @media (max-width: 500px) { .hm-score { width: 40px; height: 40px; } .hm-score-text { font-size: 19px; } }
+        .hm-icon { width: 64px; height: 86px; }
+        .hm-logo-img { width: 48px; height: 48px; }
+        @media (max-width: 500px) { .hm-icon { width: 46px; height: 66px; } .hm-logo-img { width: 34px; height: 34px; } }
+        .hm-flag-left {
+          position: absolute; left: -18px; top: 0; height: 100%; width: 150px;
+          border-radius: 0 0 32px 0; object-fit: cover; z-index: 1;
+        }
+        .hm-flag-right {
+          position: absolute; right: -18px; top: 0; height: 100%; width: 150px;
+          border-radius: 0 0 0 32px; object-fit: cover; z-index: 1;
+        }
+        .hm-fade-left {
+          position: absolute; left: 0; top: 0; height: 100%; width: 150px;
+          background: linear-gradient(to right, rgba(243,243,243,0) 40%, #f3f3f3 100%);
+          z-index: 2; pointer-events: none;
+        }
+        .hm-fade-right {
+          position: absolute; right: 0; top: 0; height: 100%; width: 150px;
+          background: linear-gradient(to left, rgba(243,243,243,0) 40%, #f3f3f3 100%);
+          z-index: 2; pointer-events: none;
+        }
+        @media (max-width: 500px) {
+          .hm-flag-left, .hm-flag-right { width: 100px; }
+          .hm-fade-left, .hm-fade-right { width: 100px; }
+        }
       `}</style>
 
       <div className="t-page">
