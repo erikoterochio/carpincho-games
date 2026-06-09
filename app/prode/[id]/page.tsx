@@ -916,15 +916,15 @@ export default function TournamentPage() {
               </div>
             )}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <div style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', borderRadius: 4, padding: '6px 12px', fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div className="hm2-hdr-right">
+            <div className="hm2-badge" style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', fontFamily: FONT_BLACK, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
               {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b3b', display: 'inline-block', animation: 'livePulse 1.2s infinite', flexShrink: 0 }} />}
               {isLive ? liveLabel : isDone ? 'FINAL' : 'PRÓXIMO'}
             </div>
             {!isDone && (
               <>
-                <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.35)', margin: '0 14px' }} />
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
+                <div className="hm2-hdiv" />
+                <span className="hm2-time" style={{ fontFamily: FONT_BLACK, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
               </>
             )}
           </div>
@@ -980,12 +980,12 @@ export default function TournamentPage() {
 
         {/* ── PREDICTION ── */}
         {user && isParticipant && (
-          <div className="hm-pred-section" style={{ background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: '#000', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <div className="hm-pred-section" style={{ background: '#fff', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10, borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.4, flexShrink: 0 }}>
               Tu predicción
             </div>
             {hasPick ? (
-              <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <div className="hm-pred-box hm-pred-score" style={{ borderRadius: 6, border: '1px solid #d6d6d6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: '#20298b', lineHeight: 1 }}>
                   {myPick.h} - {myPick.a}
                 </div>
@@ -999,7 +999,7 @@ export default function TournamentPage() {
                 )}
               </div>
             ) : (
-              <div style={{ marginTop: 6, fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 700, color: '#6b7280', fontStyle: 'italic' }}>Sin predicción</div>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>Sin predicción</div>
             )}
           </div>
         )}
@@ -1163,8 +1163,8 @@ export default function TournamentPage() {
           .hm-flag-right { left: auto; right: -12px; }
           .hm-fade-left, .hm-fade-right { width: 76px; }
         }
-        .hm-pred-section { padding: 14px 20px 16px; }
-        @media (max-width: 500px) { .hm-pred-section { padding: 8px 14px 10px; } }
+        .hm-pred-section { padding: 9px 16px 10px; }
+        @media (max-width: 500px) { .hm-pred-section { padding: 7px 14px 8px; } }
         .hm-pred-box { min-width: 94px; height: 36px; }
         @media (max-width: 500px) { .hm-pred-box { min-width: 64px; height: 28px; } }
         .hm-pred-score { font-size: 24px; }
@@ -1172,17 +1172,25 @@ export default function TournamentPage() {
 
         /* ── HomeMatchCard v2 (flex) ── */
         .hm2-match { display: flex; align-items: stretch; height: 84px; background: #f5f6f8; }
-        .hm2-flag { width: 90px; flex-shrink: 0; overflow: hidden; }
+        .hm2-flag { width: 90px; flex-shrink: 0; overflow: hidden; margin: 6px; border-radius: 5px; }
         .hm2-flag img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .hm2-name { font-size: 26px; font-weight: 900; line-height: 1; }
         .hm2-sbox { width: 42px; height: 42px; flex-shrink: 0; }
         .hm2-stxt { font-size: 22px; }
+        .hm2-hdr-right { display: flex; align-items: center; flex-shrink: 0; }
+        .hm2-badge { border-radius: 4px; padding: 6px 12px; font-size: 12px; }
+        .hm2-hdiv { width: 1px; height: 18px; background: rgba(255,255,255,0.35); margin: 0 14px; }
+        .hm2-time { font-size: 13px; }
         @media (max-width: 500px) {
           .hm2-match { height: 72px; }
-          .hm2-flag { width: 66px; }
+          .hm2-flag { width: 66px; margin: 5px; border-radius: 4px; }
           .hm2-name { font-size: 20px; }
           .hm2-sbox { width: 34px; height: 34px; }
           .hm2-stxt { font-size: 17px; }
+          .hm2-hdr-right { flex-direction: column; align-items: flex-end; gap: 3px; }
+          .hm2-badge { padding: 3px 8px; font-size: 10px; }
+          .hm2-hdiv { display: none; }
+          .hm2-time { font-size: 12px; }
         }
       `}</style>
 
