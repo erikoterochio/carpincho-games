@@ -975,13 +975,13 @@ export default function TournamentPage() {
 
         {/* ── PREDICTION ── */}
         {user && isParticipant && (
-          <div style={{ background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '14px 20px 16px', borderTop: `1px solid ${BORDER}` }}>
-            <div style={{ fontFamily: FONT_BLACK, fontSize: 12, fontWeight: 900, color: '#000', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+          <div className="hm-pred-section" style={{ background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: '#000', textTransform: 'uppercase', letterSpacing: 0.4 }}>
               Tu predicción
             </div>
             {hasPick ? (
-              <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
-                <div style={{ minWidth: 94, height: 36, borderRadius: 6, border: '1px solid #d6d6d6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BLACK, fontSize: 24, fontWeight: 900, color: '#20298b', lineHeight: 1 }}>
+              <div style={{ marginTop: 5, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div className="hm-pred-box hm-pred-score" style={{ borderRadius: 6, border: '1px solid #d6d6d6', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: '#20298b', lineHeight: 1 }}>
                   {myPick.h} - {myPick.a}
                 </div>
                 {isDone && pickScore !== null && (
@@ -1125,23 +1125,23 @@ export default function TournamentPage() {
           background: #f3f3f3; position: relative; height: 96px; overflow: hidden;
         }
         @media (max-width: 500px) {
-          .hm-area { grid-template-columns: 60px 1fr 38px 48px 38px 1fr 60px; height: 88px; }
+          .hm-area { grid-template-columns: 48px 1fr 34px 42px 34px 1fr 48px; height: 82px; }
         }
         .hm-team { font-size: 30px; font-weight: 900; line-height: 1; }
-        @media (max-width: 500px) { .hm-team { font-size: 20px; } }
+        @media (max-width: 500px) { .hm-team { font-size: 19px; } }
         .hm-score { width: 54px; height: 54px; }
         .hm-score-text { font-size: 24px; }
-        @media (max-width: 500px) { .hm-score { width: 40px; height: 40px; } .hm-score-text { font-size: 19px; } }
+        @media (max-width: 500px) { .hm-score { width: 36px; height: 36px; } .hm-score-text { font-size: 17px; } }
         .hm-icon { width: 64px; height: 86px; }
         .hm-logo-img { width: 48px; height: 48px; }
-        @media (max-width: 500px) { .hm-icon { width: 46px; height: 66px; } .hm-logo-img { width: 34px; height: 34px; } }
+        @media (max-width: 500px) { .hm-icon { width: 42px; height: 54px; } .hm-logo-img { width: 34px; height: 34px; } }
         .hm-flag-left {
           position: absolute; left: -18px; top: 0; height: 100%; width: 150px;
-          border-radius: 0 0 32px 0; object-fit: cover; z-index: 1;
+          border-radius: 0 0 28px 0; object-fit: cover; z-index: 1;
         }
         .hm-flag-right {
           position: absolute; right: -18px; top: 0; height: 100%; width: 150px;
-          border-radius: 0 0 0 32px; object-fit: cover; z-index: 1;
+          border-radius: 0 0 0 28px; object-fit: cover; z-index: 1;
         }
         .hm-fade-left {
           position: absolute; left: 0; top: 0; height: 100%; width: 150px;
@@ -1154,9 +1154,16 @@ export default function TournamentPage() {
           z-index: 2; pointer-events: none;
         }
         @media (max-width: 500px) {
-          .hm-flag-left, .hm-flag-right { width: 100px; }
-          .hm-fade-left, .hm-fade-right { width: 100px; }
+          .hm-flag-left, .hm-flag-right { width: 76px; left: -12px; }
+          .hm-flag-right { left: auto; right: -12px; }
+          .hm-fade-left, .hm-fade-right { width: 76px; }
         }
+        .hm-pred-section { padding: 14px 20px 16px; }
+        @media (max-width: 500px) { .hm-pred-section { padding: 8px 14px 10px; } }
+        .hm-pred-box { min-width: 94px; height: 36px; }
+        @media (max-width: 500px) { .hm-pred-box { min-width: 64px; height: 28px; } }
+        .hm-pred-score { font-size: 24px; }
+        @media (max-width: 500px) { .hm-pred-score { font-size: 17px; } }
       `}</style>
 
       <div className="t-page">
