@@ -477,6 +477,50 @@ export default function TournamentPage() {
   const progress = groupMatches.length > 0 ? Math.round((myPickCount / groupMatches.length) * 100) : 0
   const isAdmin = user?.id === tournament?.admin_id
 
+  // Sequential match number → Match (P1=first group match, P49=first R32 match, etc.)
+  const matchByNum = useMemo(() => {
+    const sorted = [...matches].sort((a, b) => a.sort_order - b.sort_order)
+    return new Map<number, Match>(sorted.map((m, i) => [i + 1, m]))
+  }, [matches])
+
+  // Resolve bracket placeholder names like "Gan. P49" → { label: "P49", sub: "MEX/CAN" }
+  function resolveTeam(name: string): { label: string; sub?: string } {
+    if (!name) return { label: '?' }
+    if (/^gan/i.test(name)) {
+      const numMatch = name.match(/P(\d+)/i)
+      if (numMatch) {
+        const num = parseInt(numMatch[1])
+        const ref = matchByNum.get(num)
+        if (ref && ABBREV[ref.home_team] && ABBREV[ref.away_team]) {
+          return { label: `P${num}`, sub: `${abbrev(ref.home_team)}/${abbrev(ref.away_team)}` }
+        }
+        return { label: `P${num}` }
+      }
+    }
+    const w = name.match(/winner\s+group\s+([A-L])/i)
+    if (w) return { label: `1°${w[1].toUpperCase()}` }
+    const r = name.match(/runner[\s-]up\s+group\s+([A-L])/i)
+    if (r) return { label: `2°${r[1].toUpperCase()}` }
+    return { label: abbrev(name) }
+  }
+
+  // For admin table: "Gan. P49" → "P49 (MEX-CAN)"
+  function resolveKo(name: string): string {
+    if (!name) return '?'
+    if (/^gan/i.test(name)) {
+      const numMatch = name.match(/P(\d+)/i)
+      if (numMatch) {
+        const num = parseInt(numMatch[1])
+        const ref = matchByNum.get(num)
+        if (ref && ABBREV[ref.home_team] && ABBREV[ref.away_team]) {
+          return `P${num} (${abbrev(ref.home_team)}-${abbrev(ref.away_team)})`
+        }
+        return `P${num}`
+      }
+    }
+    return fmtKoTeam(name)
+  }
+
   const showSaved = useCallback(() => {
     setSaveStatus('saved')
     setTimeout(() => setSaveStatus('idle'), 2000)
@@ -984,11 +1028,12 @@ export default function TournamentPage() {
           </div>
 
           {/* Home name */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: 12, minWidth: 0 }}>
-            <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase', textAlign: 'right' }}>
-              {abbrev(m.home_team)}
-            </span>
-          </div>
+          {(() => { const { label, sub } = resolveTeam(m.home_team); return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', paddingRight: 12, minWidth: 0 }}>
+              <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase', textAlign: 'right' }}>{label}</span>
+              {sub && <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: '#9ca3af', letterSpacing: 0.3, textTransform: 'uppercase', textAlign: 'right', lineHeight: 1.2, marginTop: 2 }}>{sub}</span>}
+            </div>
+          )})()}
 
           {/* Score cluster */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -1008,11 +1053,12 @@ export default function TournamentPage() {
           </div>
 
           {/* Away name */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', paddingLeft: 12, minWidth: 0 }}>
-            <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase' }}>
-              {abbrev(m.away_team)}
-            </span>
-          </div>
+          {(() => { const { label, sub } = resolveTeam(m.away_team); return (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', paddingLeft: 12, minWidth: 0 }}>
+              <span className="hm2-name" style={{ fontFamily: FONT_COND, color: '#111', letterSpacing: 1, textTransform: 'uppercase' }}>{label}</span>
+              {sub && <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: '#9ca3af', letterSpacing: 0.3, textTransform: 'uppercase', lineHeight: 1.2, marginTop: 2 }}>{sub}</span>}
+            </div>
+          )})()}
 
           {/* Right flag */}
           <div className="hm2-flag">
@@ -1976,7 +2022,7 @@ export default function TournamentPage() {
                             <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
                               <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
                                 <span style={{ color: MUTED, fontSize: 9, marginRight: 5 }}>{STAGE_LABEL[m.stage] ?? m.stage}</span>
-                                {fmtKoTeam(m.home_team)} vs {fmtKoTeam(m.away_team)}
+                                {resolveKo(m.home_team)} vs {resolveKo(m.away_team)}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, whiteSpace: 'nowrap' }}>{matchDate}</td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>

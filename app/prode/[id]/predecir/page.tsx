@@ -165,7 +165,9 @@ export default function PredecirPage() {
   }, [id, showSaved])
 
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
-    if (isDeadlinePast) return
+    const match = matches.find(m => m.id === matchId)
+    if (!match) return
+    if (match.stage === 'group' ? isDeadlinePast : new Date() >= new Date(match.kickoff)) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
     const updated = { ...(picksRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksRef.current[matchId] = updated
@@ -197,6 +199,32 @@ export default function PredecirPage() {
   const myPickCount = Object.values(picks).filter(p => p.h !== '' && p.a !== '').length
   const allTeams = [...new Set(groupMatches.flatMap(m => [m.home_team, m.away_team]))].sort()
   const availableStages = ['group', ...['r32','r16','qf','sf','3rd','final'].filter(s => stageMatches(s).length > 0)]
+
+  // Sequential match number → Match (for resolving "Gan. P49" bracket placeholders)
+  const matchByNum = useMemo(() => {
+    const sorted = [...matches].sort((a, b) => a.sort_order - b.sort_order)
+    return new Map<number, Match>(sorted.map((m, i) => [i + 1, m]))
+  }, [matches])
+
+  function resolveTeam(name: string): { label: string; sub?: string } {
+    if (!name) return { label: '?' }
+    if (/^gan/i.test(name)) {
+      const numMatch = name.match(/P(\d+)/i)
+      if (numMatch) {
+        const num = parseInt(numMatch[1])
+        const ref = matchByNum.get(num)
+        if (ref && ABBREV[ref.home_team] && ABBREV[ref.away_team]) {
+          return { label: `P${num}`, sub: `${abbrev(ref.home_team)}/${abbrev(ref.away_team)}` }
+        }
+        return { label: `P${num}` }
+      }
+    }
+    const w = name.match(/winner\s+group\s+([A-L])/i)
+    if (w) return { label: `1°${w[1].toUpperCase()}` }
+    const r = name.match(/runner[\s-]up\s+group\s+([A-L])/i)
+    if (r) return { label: `2°${r[1].toUpperCase()}` }
+    return { label: abbrev(name) }
+  }
 
   // Compute all group standings from user's picks (client-side, no DB)
   const allGroupStandings = useMemo(() => {
@@ -291,19 +319,25 @@ export default function PredecirPage() {
   const MatchCard = ({ m }: { m: Match }) => {
     const pick = picks[m.id] ?? { h: '', a: '' }
     const filled = pick.h !== '' && pick.a !== ''
+    const matchLocked = m.stage === 'group' ? isDeadlinePast : new Date() >= new Date(m.kickoff)
+    const { label: homeLabel, sub: homeSub } = resolveTeam(m.home_team)
+    const { label: awayLabel, sub: awaySub } = resolveTeam(m.away_team)
     return (
       <div style={{
         background: '#fff', border: `1.5px solid ${filled ? RED + '40' : BORDER}`,
         borderRadius: 14, padding: '12px 14px', transition: 'border-color 0.15s',
+        opacity: matchLocked ? 0.7 : 1,
       }}>
         <div style={{ fontSize: 10, color: MUTED, textAlign: 'center', marginBottom: 8, fontFamily: FONT_NORMAL, letterSpacing: 0.5 }}>
           {m.group_name ? `GRUPO ${m.group_name} · ` : ''}{fmtTime(m.kickoff)}
+          {matchLocked && <span style={{ marginLeft: 6, color: RED, fontWeight: 700 }}>🔒</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {/* Home */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
             <img src={m.home_flag} alt={m.home_team} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${BORDER}` }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, letterSpacing: 0.5 }}>{abbrev(m.home_team)}</span>
+            <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, letterSpacing: 0.5 }}>{homeLabel}</span>
+            {homeSub && <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, letterSpacing: 0.3, textTransform: 'uppercase' }}>{homeSub}</span>}
           </div>
           {/* Scores */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
@@ -312,7 +346,7 @@ export default function PredecirPage() {
               className="score-inp"
               value={pick.h}
               onChange={e => handlePickChange(m.id, 'h', e.target.value)}
-              disabled={isDeadlinePast}
+              disabled={matchLocked}
               placeholder="—"
               style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
             />
@@ -322,15 +356,16 @@ export default function PredecirPage() {
               className="score-inp"
               value={pick.a}
               onChange={e => handlePickChange(m.id, 'a', e.target.value)}
-              disabled={isDeadlinePast}
+              disabled={matchLocked}
               placeholder="—"
               style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
             />
           </div>
           {/* Away */}
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 0 }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, minWidth: 0 }}>
             <img src={m.away_flag} alt={m.away_team} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', border: `2px solid ${BORDER}` }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-            <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, letterSpacing: 0.5 }}>{abbrev(m.away_team)}</span>
+            <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, letterSpacing: 0.5 }}>{awayLabel}</span>
+            {awaySub && <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, letterSpacing: 0.3, textTransform: 'uppercase' }}>{awaySub}</span>}
           </div>
         </div>
       </div>
