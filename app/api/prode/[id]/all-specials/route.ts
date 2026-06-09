@@ -30,10 +30,20 @@ export async function GET(
   }
 
   const admin = adminDB()
+
+  // Fetch by participant user IDs (tournament_id may be null in legacy rows)
+  const { data: parts } = await admin
+    .from('prode_participants')
+    .select('user_id')
+    .eq('tournament_id', id)
+
+  const userIds = ((parts ?? []) as any[]).map(p => p.user_id)
+  if (userIds.length === 0) return NextResponse.json([])
+
   const { data, error } = await admin
     .from('prode_stage1_specials')
     .select('*')
-    .eq('tournament_id', id)
+    .in('user_id', userIds)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data ?? [])

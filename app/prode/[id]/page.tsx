@@ -163,6 +163,21 @@ function calcScore(pick: UserPick, match: Match) {
   return 0
 }
 
+// Converts API-Football bracket placeholder names to "1° Gr A" style labels
+function fmtKoTeam(name: string): string {
+  if (!name) return '?'
+  // "Winner Group A" → "1° Gr A", "Runner-up Group B" → "2° Gr B"
+  const w = name.match(/winner\s+group\s+([A-L])/i)
+  if (w) return `1° Gr ${w[1].toUpperCase()}`
+  const r = name.match(/runner[\s-]up\s+group\s+([A-L])/i)
+  if (r) return `2° Gr ${r[1].toUpperCase()}`
+  // "3rd Group A/B/C" style (WC R32 third-place qualifiers)
+  const t = name.match(/3rd\s+group\s+([A-L/]+)/i)
+  if (t) return `3° ${t[1].toUpperCase()}`
+  // Already a real team name — show it
+  return name
+}
+
 function fmtKickoff(d: string) {
   const tz = 'America/Argentina/Buenos_Aires'
   const date = new Date(d).toLocaleDateString('es-AR', { timeZone: tz, day: '2-digit', month: '2-digit' })
@@ -1575,7 +1590,7 @@ export default function TournamentPage() {
                     </div>
                   ))}
 
-                  {/* Knockout stages */}
+                  {/* Knockout stages — HomeMatchCard so picks/scores are visible */}
                   {(['r32','r16','qf','sf','3rd','final'] as const).map(stage => {
                     const ms = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
                     if (!ms.length) return null
@@ -1584,9 +1599,9 @@ export default function TournamentPage() {
                         <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 8 }}>
                           🏆 {STAGE_LABEL[stage]}
                         </div>
-                        <Card style={{ padding: '4px 14px' }}>
-                          {ms.map(m => <MatchRow key={m.id} m={m} />)}
-                        </Card>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                          {ms.map(m => <HomeMatchCard key={m.id} m={m} />)}
+                        </div>
                       </div>
                     )
                   })}
@@ -1961,7 +1976,7 @@ export default function TournamentPage() {
                             <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
                               <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
                                 <span style={{ color: MUTED, fontSize: 9, marginRight: 5 }}>{STAGE_LABEL[m.stage] ?? m.stage}</span>
-                                {abbrev(m.home_team)} vs {abbrev(m.away_team)}
+                                {fmtKoTeam(m.home_team)} vs {fmtKoTeam(m.away_team)}
                               </td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, whiteSpace: 'nowrap' }}>{matchDate}</td>
                               <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
