@@ -20,6 +20,15 @@ const FONT_NORMAL = "'FWC2026', 'Ubuntu', sans-serif"
 const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
 const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
 
+const GROUP_COLORS: Record<string, string> = {
+  A: '#1D2E6E', B: '#0E4F7A', C: '#6B21A8', D: '#9B1C1C',
+  E: '#B45309', F: '#166534', G: '#0F766E', H: '#7C3AED',
+  I: '#065F46', J: '#C2410C', K: '#1D4ED8', L: '#0369A1',
+}
+const STAGE_COLORS: Record<string, string> = {
+  r32: '#312E81', r16: '#1E1B4B', qf: '#0F172A', sf: '#172554', '3rd': '#1A1A2E', final: '#0A0A0A',
+}
+
 const LIVE_STATUSES = new Set(['1H', '2H', 'HT', 'ET', 'BT', 'P', 'LIVE'])
 
 // FIFA rankings June 2026 (lower number = better rank)
@@ -863,7 +872,6 @@ export default function TournamentPage() {
     const timeStr = new Date(m.kickoff).toLocaleTimeString('es-AR', {
       timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
     })
-    const stageLabel = m.stage === 'group' ? `Grupo ${m.group_name}` : STAGE_LABEL[m.stage]
 
     const pickColor = pickScore === null ? MUTED
       : pickScore >= 12 ? '#10b981'
@@ -875,6 +883,12 @@ export default function TournamentPage() {
       ? pickScore >= 12 ? '#f0fdf4' : pickScore >= 7 ? '#eff6ff' : pickScore >= 5 ? '#fffbeb' : pickScore >= 2 ? '#fff7ed' : '#fef2f2'
       : '#f3f4f6'
     const SCORE_LABELS: Record<number, string> = { 12: 'EXACTO', 7: 'RESULTADO+GOL', 5: 'PARCIAL', 2: 'UN GOL', 0: 'FALLASTE' }
+
+    const barColor = m.stage === 'group' && m.group_name
+      ? (GROUP_COLORS[m.group_name] ?? NAVY)
+      : (STAGE_COLORS[m.stage] ?? NAVY)
+
+    const scoreColor = isLive ? '#10b981' : isDone ? TEXT : '#c8d3e0'
 
     const eventEmoji = (e: MatchEvent) => {
       if (e.type === 'Card') return e.detail === 'Red Card' ? '🟥' : e.detail === 'Yellow Red Card' ? '🟨🟥' : '🟨'
@@ -901,122 +915,98 @@ export default function TournamentPage() {
       </div>
     )
 
-    const liveGreen = '#10b981'
-    // White gradient overlay: makes flag fade from full opacity at the edge toward transparent inward (~25° tilt)
-    const flagFadeLeft  = 'linear-gradient(115deg, transparent 15%, #fff 62%)'
-    const flagFadeRight = 'linear-gradient(295deg, transparent 15%, #fff 62%)'
-
     return (
-      <div style={{ background: '#fff', borderRadius: 18, overflow: 'hidden', position: 'relative',
-        boxShadow: isLive ? `0 0 0 2px ${liveGreen}, 0 4px 20px rgba(16,185,129,0.15)` : '0 2px 12px rgba(0,0,0,0.07)' }}>
+      <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden',
+        boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 2px 12px rgba(0,0,0,0.08)' }}>
 
-        {/* ── Header ── */}
-        <div style={{ padding: '13px 16px 10px', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
-          {/* Stage + venue */}
+        {/* ── TOP BAR ── */}
+        <div style={{ background: barColor, padding: '9px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: NAVY, letterSpacing: 0.5 }}>
-              {stageLabel.toUpperCase()}
+            <div style={{ fontFamily: FONT_BLACK, fontSize: 12, color: '#fff', letterSpacing: 0.5, lineHeight: 1 }}>
+              {m.stage === 'group' ? `GRUPO ${m.group_name ?? '?'}` : STAGE_LABEL[m.stage]?.toUpperCase()}
             </div>
             {m.venue && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, marginTop: 3 }}>
-                <svg width="9" height="9" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
-                  <path d="M8 1C5.24 1 3 3.24 3 6c0 3.75 5 9 5 9s5-5.25 5-9c0-2.76-2.24-5-5-5zm0 6.75A1.75 1.75 0 1 1 8 4.25a1.75 1.75 0 0 1 0 3.5z" fill={MUTED}/>
-                </svg>
-                <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {m.venue}
-                </span>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: 'rgba(255,255,255,0.75)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {m.venue}
               </div>
             )}
           </div>
-
-          {/* Status + time */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0 }}>
             {isLive ? (
-              <div style={{ background: liveGreen, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK, display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'livePulse 1.2s ease-in-out infinite', flexShrink: 0 }} />
+              <div style={{ background: '#10b981', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff', display: 'inline-block', animation: 'livePulse 1.2s ease-in-out infinite', flexShrink: 0 }} />
                 {liveLabel}
               </div>
             ) : isDone ? (
-              <div style={{ background: '#f1f5f9', color: MUTED, borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK }}>
+              <div style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK }}>
                 FINALIZADO
               </div>
             ) : (
-              <>
-                <div style={{ background: NAVY, color: '#fff', borderRadius: 8, padding: '4px 10px', fontSize: 11, fontWeight: 900, fontFamily: FONT_BLACK }}>
-                  PRÓXIMO
-                </div>
-                <div style={{ width: 1, height: 18, background: BORDER }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="6.5" stroke={MUTED} strokeWidth="1.5"/><path d="M8 4.5V8l2.5 1.5" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round"/></svg>
-                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 400, color: TEXT }}>{timeStr} hs</span>
-                </div>
-              </>
+              <div style={{ background: '#fff', color: barColor, borderRadius: 6, padding: '3px 8px', fontSize: 10, fontFamily: FONT_BLACK }}>
+                PRÓXIMO
+              </div>
+            )}
+            {!isDone && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <svg width="10" height="10" viewBox="0 0 16 16" fill="none">
+                  <circle cx="8" cy="8" r="6.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5"/>
+                  <path d="M8 4.5V8l2.5 1.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: 'rgba(255,255,255,0.9)' }}>{timeStr} hs</span>
+              </div>
             )}
           </div>
         </div>
 
-        {/* ── Match area ── */}
-        <div style={{ position: 'relative', minHeight: 108 }}>
-          {/* Left flag: full opacity at edge, fades inward at ~25° */}
-          <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: '44%', overflow: 'hidden', pointerEvents: 'none' }}>
+        {/* ── MATCH AREA ── */}
+        {/* Left flag: top-left rounded by card + bottom-right explicit = 2 opposite corners */}
+        {/* Right flag: top-right rounded by card + bottom-left explicit = 2 opposite corners */}
+        <div style={{ display: 'flex', alignItems: 'stretch', height: 114 }}>
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 20px 0', background: '#eef1f4', flexShrink: 1 }}>
             <img src={m.home_flag} alt="" aria-hidden
-              style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', width: '90%', height: '90%', objectFit: 'contain' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: flagFadeLeft }} />
+            <span style={{ position: 'absolute', bottom: 7, right: 8, fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: NAVY, lineHeight: 1,
+              textShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 16px rgba(255,255,255,0.7)' }}>
+              {abbrev(m.home_team)}
+            </span>
           </div>
 
-          {/* Right flag: full opacity at edge, fades inward at ~25° */}
-          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: '44%', overflow: 'hidden', pointerEvents: 'none' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '0 8px', flexShrink: 0 }}>
+            <div style={{ width: 40, height: 40, background: '#f1f5f9', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: scoreColor }}>
+                {isDone || isLive ? (m.home_score ?? 0) : '—'}
+              </span>
+            </div>
+            <div style={{ width: 50, height: 50, background: '#000', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <img src="/images/logo-fwc-blanco.png" alt="FIFA WC 2026"
+                style={{ width: 38, height: 38, objectFit: 'contain' }}
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+              />
+            </div>
+            <div style={{ width: 40, height: 40, background: '#f1f5f9', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: scoreColor }}>
+                {isDone || isLive ? (m.away_score ?? 0) : '—'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{ flex: 1, position: 'relative', overflow: 'hidden', borderRadius: '0 0 0 20px', background: '#eef1f4', flexShrink: 1 }}>
             <img src={m.away_flag} alt="" aria-hidden
-              style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', width: '90%', height: '90%', objectFit: 'contain' }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', padding: 6 }}
               onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
             />
-            <div style={{ position: 'absolute', inset: 0, background: flagFadeRight }} />
-          </div>
-
-          {/* Content over flags */}
-          <div style={{ display: 'flex', alignItems: 'center', padding: '14px 16px', gap: 8, position: 'relative', zIndex: 1 }}>
-            {/* Home name */}
-            <div style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 900, color: TEXT, lineHeight: 1.25, wordBreak: 'break-word',
-                textShadow: '0 0 6px #fff, 0 0 12px #fff, 0 0 20px #fff' }}>
-                {m.home_team}
-              </span>
-            </div>
-
-            {/* Score */}
-            <div style={{ flexShrink: 0, textAlign: 'center', minWidth: 100 }}>
-              {isDone || isLive ? (
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 34, fontWeight: 900, color: isLive ? liveGreen : TEXT, letterSpacing: 2 }}>
-                  {m.home_score ?? 0} - {m.away_score ?? 0}
-                </span>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
-                  </div>
-                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED }}>vs</span>
-                  <div style={{ width: 44, height: 44, background: '#f1f5f9', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontFamily: FONT_BLACK, fontSize: 20, color: '#c8d3e0' }}>—</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Away name */}
-            <div style={{ flex: 1, textAlign: 'center', minWidth: 0 }}>
-              <span style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 900, color: TEXT, lineHeight: 1.25, wordBreak: 'break-word',
-                textShadow: '0 0 6px #fff, 0 0 12px #fff, 0 0 20px #fff' }}>
-                {m.away_team}
-              </span>
-            </div>
+            <span style={{ position: 'absolute', bottom: 7, left: 8, fontFamily: FONT_COND, fontSize: 22, fontWeight: 900, color: NAVY, lineHeight: 1,
+              textShadow: '0 0 8px rgba(255,255,255,0.95), 0 0 16px rgba(255,255,255,0.7)' }}>
+              {abbrev(m.away_team)}
+            </span>
           </div>
         </div>
 
-        {/* ── Events ── */}
+        {/* ── EVENTS ── */}
         {events.length > 0 && (
-          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '8px 16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '7px 14px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
             <div style={{ minWidth: 0 }}>
               {homeEvents.map((e, i) => <EventItem key={i} e={e} align="left" />)}
             </div>
@@ -1026,28 +1016,26 @@ export default function TournamentPage() {
           </div>
         )}
 
-        {/* ── Pick ── */}
+        {/* ── PICK ── */}
         {user && isParticipant && (
-          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '10px 16px', textAlign: 'center', background: pickBg }}>
-            <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 4, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tu predicción</div>
+          <div style={{ borderTop: `1px solid ${BORDER}`, padding: '10px 14px', textAlign: 'center', background: pickBg }}>
+            <div style={{ fontSize: 10, color: MUTED, fontFamily: FONT_BLACK, marginBottom: 4, letterSpacing: 1, textTransform: 'uppercase' }}>Tu predicción</div>
             {hasPick ? (
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: isDone && pickScore !== null ? 'transparent' : '#fff', borderRadius: 12, padding: '6px 18px', border: isDone && pickScore !== null ? 'none' : `1.5px solid ${BORDER}` }}>
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 24, fontWeight: 900, color: isDone && pickScore !== null ? pickColor : NAVY }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: isDone && pickScore !== null ? 'transparent' : '#fff', borderRadius: 10, padding: '5px 16px', border: isDone && pickScore !== null ? 'none' : `1.5px solid ${BORDER}` }}>
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 22, color: isDone && pickScore !== null ? pickColor : NAVY }}>
                   {myPick.h} - {myPick.a}
                 </span>
                 {isDone && pickScore !== null && (
-                  <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#fff', background: pickColor, borderRadius: 8, padding: '3px 9px', letterSpacing: 0.3 }}>
+                  <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#fff', background: pickColor, borderRadius: 7, padding: '3px 8px' }}>
                     {pickScore > 0 ? `+${pickScore}` : '—'} · {SCORE_LABELS[pickScore] ?? ''}
                   </span>
                 )}
-                {isLive && (
-                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: liveGreen }}>
-                    {pickScore !== null && pickScore > 0 ? `~+${pickScore} pts` : 'en juego'}
-                  </span>
+                {isLive && pickScore !== null && pickScore > 0 && (
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: '#10b981' }}>~+{pickScore} pts</span>
                 )}
               </div>
             ) : (
-              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción para este partido</span>
+              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
             )}
           </div>
         )}
