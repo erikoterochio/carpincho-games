@@ -178,6 +178,53 @@ function fmtKoTeam(name: string): string {
   return name
 }
 
+// Compute predicted bracket winners per-participant from KO picks (cascading)
+function computeKoBracket(
+  picks: UserPick[],
+  r32Ms: Match[], r16Ms: Match[], qfMs: Match[], sfMs: Match[],
+  thirdMs: Match[], finalMs: Match[]
+): Map<string, string> {
+  const winners = new Map<string, string>()
+  const losers  = new Map<string, string>()
+
+  const apply = (ms: Match[], prev: Match[]) => {
+    for (let i = 0; i < ms.length; i++) {
+      const m = ms[i]
+      const pk = picks.find(p => p.match_id === m.id)
+      if (!pk) continue
+      const home = (prev.length ? winners.get(prev[i * 2]?.id ?? '') : null) ?? m.home_team
+      const away = (prev.length ? winners.get(prev[i * 2 + 1]?.id ?? '') : null) ?? m.away_team
+      if (pk.home_score > pk.away_score)      { winners.set(m.id, home); losers.set(m.id, away) }
+      else if (pk.away_score > pk.home_score) { winners.set(m.id, away); losers.set(m.id, home) }
+    }
+  }
+
+  apply(r32Ms, [])
+  apply(r16Ms, r32Ms)
+  apply(qfMs,  r16Ms)
+  apply(sfMs,  qfMs)
+
+  for (const m of thirdMs) {
+    const pk = picks.find(p => p.match_id === m.id)
+    if (!pk) continue
+    const home = losers.get(sfMs[0]?.id ?? '') ?? m.home_team
+    const away = losers.get(sfMs[1]?.id ?? '') ?? m.away_team
+    if (pk.home_score > pk.away_score)      winners.set(m.id, home)
+    else if (pk.away_score > pk.home_score) winners.set(m.id, away)
+  }
+
+  for (const m of finalMs) {
+    const pk = picks.find(p => p.match_id === m.id)
+    if (!pk) continue
+    const home = winners.get(sfMs[0]?.id ?? '') ?? m.home_team
+    const away = winners.get(sfMs[1]?.id ?? '') ?? m.away_team
+    if (pk.home_score > pk.away_score)      winners.set(m.id, home)
+    else if (pk.away_score > pk.home_score) winners.set(m.id, away)
+  }
+
+  return winners
+}
+
 function fmtKickoff(d: string) {
   const tz = 'America/Argentina/Buenos_Aires'
   const date = new Date(d).toLocaleDateString('es-AR', { timeZone: tz, day: '2-digit', month: '2-digit' })
@@ -520,6 +567,31 @@ export default function TournamentPage() {
     }
     return fmtKoTeam(name)
   }
+
+  // Inverse of matchByNum: match.id → sequential number (P49, P50, …)
+  const matchNumById = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const [num, match] of matchByNum) m.set(match.id, num)
+    return m
+  }, [matchByNum])
+
+  // KO matches sorted by stage for bracket computation
+  const r32Ms = useMemo(() => koMatches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+  const r16Ms = useMemo(() => koMatches.filter(m => m.stage === 'r16').sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+  const qfMs  = useMemo(() => koMatches.filter(m => m.stage === 'qf' ).sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+  const sfMs  = useMemo(() => koMatches.filter(m => m.stage === 'sf' ).sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+  const thirdMs = useMemo(() => koMatches.filter(m => m.stage === '3rd'  ).sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+  const finalMs = useMemo(() => koMatches.filter(m => m.stage === 'final').sort((a, b) => a.sort_order - b.sort_order), [koMatches])
+
+  // Per-participant bracket resolution: userId → (matchId → predicted winner team name)
+  const perParticipantBracket = useMemo(() => {
+    const result = new Map<string, Map<string, string>>()
+    for (const p of participants) {
+      const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
+      result.set(p.user_id, computeKoBracket(up, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs))
+    }
+    return result
+  }, [adminAllPicks, participants, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs])
 
   const showSaved = useCallback(() => {
     setSaveStatus('saved')
@@ -1994,16 +2066,15 @@ export default function TournamentPage() {
                 )}
               </Card>
 
-              {/* ── KO round picks ── */}
+              {/* ── Fase Eliminatoria ── */}
               {koMatches.length > 0 && (
                 <Card style={{ marginTop: 14 }}>
-                  <SectionTitle>Picks — Rondas KO</SectionTitle>
+                  <SectionTitle>Fase Eliminatoria</SectionTitle>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
                       <thead>
                         <tr style={{ background: TEXT }}>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 120 }}>Partido</th>
-                          <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Fecha</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 140 }}>Partido</th>
                           <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
                           {participants.map(p => (
                             <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
@@ -2013,34 +2084,52 @@ export default function TournamentPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {koMatches.map((m, i) => {
-                          const matchDate = m.kickoff
-                            ? new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })
-                            : '—'
-                          const hasResult = m.home_score !== null && m.away_score !== null
-                          return (
-                            <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
-                              <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
-                                <span style={{ color: MUTED, fontSize: 9, marginRight: 5 }}>{STAGE_LABEL[m.stage] ?? m.stage}</span>
-                                {resolveKo(m.home_team)} vs {resolveKo(m.away_team)}
-                              </td>
-                              <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, whiteSpace: 'nowrap' }}>{matchDate}</td>
-                              <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
-                                {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
-                              </td>
-                              {participants.map(p => {
-                                const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
-                                const score = pk && hasResult ? calcScore(pk, m) : null
-                                const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
-                                return (
-                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap' }}>
-                                    {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
-                                  </td>
-                                )
-                              })}
-                            </tr>
-                          )
-                        })}
+                        {([
+                          { stage: 'r32', ms: r32Ms },
+                          { stage: 'r16', ms: r16Ms },
+                          { stage: 'qf',  ms: qfMs  },
+                          { stage: 'sf',  ms: sfMs  },
+                          { stage: '3rd', ms: thirdMs },
+                          { stage: 'final', ms: finalMs },
+                        ] as const).filter(({ ms }) => ms.length > 0).flatMap(({ stage, ms }) => [
+                          <tr key={`hdr-${stage}`}>
+                            <td colSpan={participants.length + 2} style={{ background: '#1e293b', color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '4px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              {STAGE_LABEL[stage] ?? stage}
+                            </td>
+                          </tr>,
+                          ...ms.map((m, i) => {
+                            const num = matchNumById.get(m.id)
+                            const hasResult = m.home_score !== null && m.away_score !== null
+                            const bg = i % 2 === 0 ? '#fff' : '#f9fafb'
+                            return (
+                              <tr key={m.id} style={{ background: bg, borderBottom: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: bg, fontSize: 10, whiteSpace: 'nowrap' }}>
+                                  {num && stage === 'r32'
+                                    ? <><span style={{ color: MUTED, fontSize: 9, marginRight: 4 }}>P{num}</span>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</>
+                                    : <><span style={{ color: MUTED, fontSize: 9, marginRight: 4 }}>{STAGE_LABEL[stage]}</span>{resolveKo(m.home_team)} vs {resolveKo(m.away_team)}</>
+                                  }
+                                </td>
+                                <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
+                                  {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
+                                </td>
+                                {participants.map(p => {
+                                  const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                  const bracket = perParticipantBracket.get(p.user_id)
+                                  const winner = bracket?.get(m.id)
+                                  const matchScore = pk && hasResult ? calcScore(pk, m) : null
+                                  const color = matchScore !== null
+                                    ? (matchScore >= 12 ? '#15803d' : matchScore >= 7 ? '#16a34a' : matchScore >= 5 ? '#ca8a04' : matchScore >= 2 ? '#f97316' : RED)
+                                    : (winner ? TEXT : MUTED)
+                                  return (
+                                    <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 11, color, whiteSpace: 'nowrap' }}>
+                                      {!pk ? '—' : winner ? abbrev(winner) : `${pk.home_score}-${pk.away_score}`}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          }),
+                        ])}
                       </tbody>
                     </table>
                   </div>
