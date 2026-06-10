@@ -536,13 +536,40 @@ export default function TournamentPage() {
   const progress = groupMatches.length > 0 ? Math.round((myPickCount / groupMatches.length) * 100) : 0
   const isAdmin = user?.id === tournament?.admin_id
 
-  // Sequential match number → Match (P1=first group match, P49=first R32 match, etc.)
+  // Fixed match numbering: 12 groups × 6 = 72 group matches, then KO starts at P73
+  // group P1-P72, r32 P73-P88, r16 P89-P96, qf P97-P100, sf P101-P102, 3rd P103, final P104
+  const KO_STAGE_START: Record<string, number> = { group: 1, r32: 73, r16: 89, qf: 97, sf: 101, '3rd': 103, final: 104 }
   const matchByNum = useMemo(() => {
-    const sorted = [...matches].sort((a, b) => a.sort_order - b.sort_order)
-    return new Map<number, Match>(sorted.map((m, i) => [i + 1, m]))
-  }, [matches])
+    const byStage: Record<string, Match[]> = {}
+    for (const m of matches) {
+      if (!byStage[m.stage]) byStage[m.stage] = []
+      byStage[m.stage].push(m)
+    }
+    const result = new Map<number, Match>()
+    for (const [stage, start] of Object.entries(KO_STAGE_START)) {
+      const ms = (byStage[stage] ?? []).sort((a, b) => a.sort_order - b.sort_order)
+      ms.forEach((m, i) => result.set(start + i, m))
+    }
+    return result
+  }, [matches]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Resolve bracket placeholder names like "Gan. P49" → { label: "P49", sub: "MEX/CAN" }
+  // Inverse of matchByNum: match.id → P number (P73, P74, …)
+  const matchNumById = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const [num, match] of matchByNum) m.set(match.id, num)
+    return m
+  }, [matchByNum])
+
+  // team name → "1°A" / "2°B" seed label from real standings
+  const teamToSeed = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const s of standings) {
+      if (s.group_name && s.rank) m.set(s.team_name, `${s.rank}°${s.group_name}`)
+    }
+    return m
+  }, [standings])
+
+  // Resolve bracket placeholder names → { label, sub } for KO team slots
   function resolveTeam(name: string): { label: string; sub?: string } {
     if (!name) return { label: '?' }
     if (/^gan/i.test(name)) {
@@ -560,10 +587,11 @@ export default function TournamentPage() {
     if (w) return { label: `1°${w[1].toUpperCase()}` }
     const r = name.match(/runner[\s-]up\s+group\s+([A-L])/i)
     if (r) return { label: `2°${r[1].toUpperCase()}` }
-    return { label: abbrev(name) }
+    // Actual team name: show abbrev + seed position from standings
+    return { label: abbrev(name), sub: teamToSeed.get(name) }
   }
 
-  // For admin table: "Gan. P49" → "P49 (MEX-CAN)"
+  // For admin table: "Gan. P73" or "Winner Group A" → display string
   function resolveKo(name: string): string {
     if (!name) return '?'
     if (/^gan/i.test(name)) {
@@ -579,13 +607,6 @@ export default function TournamentPage() {
     }
     return fmtKoTeam(name)
   }
-
-  // Inverse of matchByNum: match.id → sequential number (P49, P50, …)
-  const matchNumById = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const [num, match] of matchByNum) m.set(match.id, num)
-    return m
-  }, [matchByNum])
 
   // KO matches sorted by stage for bracket computation
   const r32Ms = useMemo(() => koMatches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order), [koMatches])

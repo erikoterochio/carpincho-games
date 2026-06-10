@@ -99,6 +99,7 @@ export default function PredecirPage() {
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const [isParticipant, setIsParticipant] = useState(false)
+  const [standings, setStandings] = useState<{group_name: string; rank: number; team_name: string}[]>([])
 
   const picksRef = useRef<Picks>({})
   const specialsRef = useRef<Specials>(EMPTY_SPECIALS)
@@ -116,12 +117,14 @@ export default function PredecirPage() {
       const { data: part } = await supabase.from('prode_participants').select('id').eq('tournament_id', id).eq('user_id', user.id).maybeSingle()
       setIsParticipant(!!part)
       if (!part) { setLoading(false); return }
-      const [{ data: ms }, { data: myPicks }, { data: mySpecials }] = await Promise.all([
+      const [{ data: ms }, { data: myPicks }, { data: mySpecials }, { data: st }] = await Promise.all([
         supabase.from('prode_matches').select('id,home_team,away_team,home_flag,away_flag,kickoff,group_name,sort_order,stage').order('sort_order'),
         supabase.from('prode_stage1_picks').select('match_id,home_score,away_score').eq('tournament_id', id).eq('user_id', user.id),
         supabase.from('prode_stage1_specials').select('*').eq('tournament_id', id).eq('user_id', user.id).maybeSingle(),
+        supabase.from('prode_standings').select('group_name,rank,team_name').order('group_name').order('rank'),
       ])
       setMatches((ms ?? []) as Match[])
+      setStandings((st ?? []) as {group_name: string; rank: number; team_name: string}[])
       const pm: Picks = {}
       for (const p of (myPicks ?? [])) pm[p.match_id] = { h: String(p.home_score), a: String(p.away_score) }
       setPicks(pm); picksRef.current = pm
@@ -200,11 +203,35 @@ export default function PredecirPage() {
   const allTeams = [...new Set(groupMatches.flatMap(m => [m.home_team, m.away_team]))].sort()
   const availableStages = ['group', ...['r32','r16','qf','sf','3rd','final'].filter(s => stageMatches(s).length > 0)]
 
-  // Sequential match number → Match (for resolving "Gan. P49" bracket placeholders)
+  // Fixed match numbering: 12 groups × 6 = 72 group matches, KO starts at P73
+  const KO_STAGE_START: Record<string, number> = { group: 1, r32: 73, r16: 89, qf: 97, sf: 101, '3rd': 103, final: 104 }
   const matchByNum = useMemo(() => {
-    const sorted = [...matches].sort((a, b) => a.sort_order - b.sort_order)
-    return new Map<number, Match>(sorted.map((m, i) => [i + 1, m]))
-  }, [matches])
+    const byStage: Record<string, Match[]> = {}
+    for (const m of matches) {
+      if (!byStage[m.stage]) byStage[m.stage] = []
+      byStage[m.stage].push(m)
+    }
+    const result = new Map<number, Match>()
+    for (const [stage, start] of Object.entries(KO_STAGE_START)) {
+      const ms = (byStage[stage] ?? []).sort((a, b) => a.sort_order - b.sort_order)
+      ms.forEach((m, i) => result.set(start + i, m))
+    }
+    return result
+  }, [matches]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const matchNumById = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const [num, match] of matchByNum) m.set(match.id, num)
+    return m
+  }, [matchByNum])
+
+  const teamToSeed = useMemo(() => {
+    const m = new Map<string, string>()
+    for (const s of standings) {
+      if (s.group_name && s.rank) m.set(s.team_name, `${s.rank}°${s.group_name}`)
+    }
+    return m
+  }, [standings])
 
   function resolveTeam(name: string): { label: string; sub?: string } {
     if (!name) return { label: '?' }
@@ -223,7 +250,8 @@ export default function PredecirPage() {
     if (w) return { label: `1°${w[1].toUpperCase()}` }
     const r = name.match(/runner[\s-]up\s+group\s+([A-L])/i)
     if (r) return { label: `2°${r[1].toUpperCase()}` }
-    return { label: abbrev(name) }
+    // Actual team name: show abbrev + seed from standings
+    return { label: abbrev(name), sub: teamToSeed.get(name) }
   }
 
   // Compute all group standings from user's picks (client-side, no DB)
@@ -329,7 +357,10 @@ export default function PredecirPage() {
         opacity: matchLocked ? 0.7 : 1,
       }}>
         <div style={{ fontSize: 10, color: MUTED, textAlign: 'center', marginBottom: 8, fontFamily: FONT_NORMAL, letterSpacing: 0.5 }}>
-          {m.group_name ? `GRUPO ${m.group_name} · ` : ''}{fmtTime(m.kickoff)}
+          {m.stage === 'group'
+            ? (m.group_name ? `GRUPO ${m.group_name} · ` : '')
+            : `P${matchNumById.get(m.id) ?? '?'} · `
+          }{fmtTime(m.kickoff)}
           {matchLocked && <span style={{ marginLeft: 6, color: RED, fontWeight: 700 }}>🔒</span>}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
