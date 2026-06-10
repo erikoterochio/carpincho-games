@@ -178,6 +178,17 @@ function fmtKoTeam(name: string): string {
   return name
 }
 
+// Official WC2026 bracket routing: which r32 slots feed each r16 match
+// P89←P74,P77  P90←P73,P75  P91←P76,P78  P92←P79,P80
+// P93←P83,P84  P94←P81,P82  P95←P86,P88  P96←P85,P87
+const R16_FROM_R32: [number, number][] = [
+  [1, 4], [0, 2], [3, 5], [6, 7], [10, 11], [8, 9], [13, 15], [12, 14]
+]
+// P97←P89,P90  P98←P93,P94  P99←P91,P92  P100←P95,P96
+const QF_FROM_R16: [number, number][] = [
+  [0, 1], [4, 5], [2, 3], [6, 7]
+]
+
 // Compute predicted bracket winners per-participant from KO picks (cascading)
 function computeKoBracket(
   picks: UserPick[],
@@ -187,22 +198,19 @@ function computeKoBracket(
   const winners = new Map<string, string>()
   const losers  = new Map<string, string>()
 
-  const apply = (ms: Match[], prev: Match[]) => {
-    for (let i = 0; i < ms.length; i++) {
-      const m = ms[i]
-      const pk = picks.find(p => p.match_id === m.id)
-      if (!pk) continue
-      const home = (prev.length ? winners.get(prev[i * 2]?.id ?? '') : null) ?? m.home_team
-      const away = (prev.length ? winners.get(prev[i * 2 + 1]?.id ?? '') : null) ?? m.away_team
-      if (pk.home_score > pk.away_score)      { winners.set(m.id, home); losers.set(m.id, away) }
-      else if (pk.away_score > pk.home_score) { winners.set(m.id, away); losers.set(m.id, home) }
-    }
+  const applyMatch = (m: Match, homeId: string, awayId: string) => {
+    const pk = picks.find(p => p.match_id === m.id)
+    if (!pk) return
+    const home = (homeId ? winners.get(homeId) : null) ?? m.home_team
+    const away = (awayId ? winners.get(awayId) : null) ?? m.away_team
+    if (pk.home_score > pk.away_score)      { winners.set(m.id, home); losers.set(m.id, away) }
+    else if (pk.away_score > pk.home_score) { winners.set(m.id, away); losers.set(m.id, home) }
   }
 
-  apply(r32Ms, [])
-  apply(r16Ms, r32Ms)
-  apply(qfMs,  r16Ms)
-  apply(sfMs,  qfMs)
+  for (const m of r32Ms) applyMatch(m, '', '')
+  r16Ms.forEach((m, i) => { const [a,b] = R16_FROM_R32[i] ?? [i*2,i*2+1]; applyMatch(m, r32Ms[a]?.id??'', r32Ms[b]?.id??'') })
+  qfMs.forEach( (m, i) => { const [a,b] = QF_FROM_R16[i]  ?? [i*2,i*2+1]; applyMatch(m, r16Ms[a]?.id??'', r16Ms[b]?.id??'') })
+  sfMs.forEach( (m, i) => applyMatch(m, qfMs[i*2]?.id??'', qfMs[i*2+1]?.id??''))
 
   for (const m of thirdMs) {
     const pk = picks.find(p => p.match_id === m.id)
@@ -883,9 +891,28 @@ export default function TournamentPage() {
       mkNode('ko-r32-14', getGrp(1,'K'), get3rd(7),     '1° K','3° mejor', r32Ms[14]?.kickoff, r32Ms[14]?.venue ?? undefined), // P87
       mkNode('ko-r32-15', getGrp(2,'D'), getGrp(2,'G'), '2° D','2° G', r32Ms[15]?.kickoff, r32Ms[15]?.venue ?? undefined), // P88
     ]
-    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${73+i*2}`,`Gan. P${74+i*2}`, r16Ms[i]?.kickoff, r16Ms[i]?.venue ?? undefined))
-    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. P${89+i*2}`,`Gan. P${90+i*2}`, qfMs[i]?.kickoff, qfMs[i]?.venue ?? undefined))
-    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. P${97+i*2}`,`Gan. P${98+i*2}`, sfMs[i]?.kickoff, sfMs[i]?.venue ?? undefined))
+    // R16 — official WC2026 routing (not sequential)
+    const r16 = [
+      mkNode('ko-r16-0', r32[1].winner,  r32[4].winner,  'Gan. P74','Gan. P77', r16Ms[0]?.kickoff, r16Ms[0]?.venue ?? undefined), // P89
+      mkNode('ko-r16-1', r32[0].winner,  r32[2].winner,  'Gan. P73','Gan. P75', r16Ms[1]?.kickoff, r16Ms[1]?.venue ?? undefined), // P90
+      mkNode('ko-r16-2', r32[3].winner,  r32[5].winner,  'Gan. P76','Gan. P78', r16Ms[2]?.kickoff, r16Ms[2]?.venue ?? undefined), // P91
+      mkNode('ko-r16-3', r32[6].winner,  r32[7].winner,  'Gan. P79','Gan. P80', r16Ms[3]?.kickoff, r16Ms[3]?.venue ?? undefined), // P92
+      mkNode('ko-r16-4', r32[10].winner, r32[11].winner, 'Gan. P83','Gan. P84', r16Ms[4]?.kickoff, r16Ms[4]?.venue ?? undefined), // P93
+      mkNode('ko-r16-5', r32[8].winner,  r32[9].winner,  'Gan. P81','Gan. P82', r16Ms[5]?.kickoff, r16Ms[5]?.venue ?? undefined), // P94
+      mkNode('ko-r16-6', r32[13].winner, r32[15].winner, 'Gan. P86','Gan. P88', r16Ms[6]?.kickoff, r16Ms[6]?.venue ?? undefined), // P95
+      mkNode('ko-r16-7', r32[12].winner, r32[14].winner, 'Gan. P85','Gan. P87', r16Ms[7]?.kickoff, r16Ms[7]?.venue ?? undefined), // P96
+    ]
+    // QF — official WC2026 routing
+    const qf = [
+      mkNode('ko-qf-0', r16[0].winner, r16[1].winner, 'Gan. P89','Gan. P90', qfMs[0]?.kickoff, qfMs[0]?.venue ?? undefined), // P97
+      mkNode('ko-qf-1', r16[4].winner, r16[5].winner, 'Gan. P93','Gan. P94', qfMs[1]?.kickoff, qfMs[1]?.venue ?? undefined), // P98
+      mkNode('ko-qf-2', r16[2].winner, r16[3].winner, 'Gan. P91','Gan. P92', qfMs[2]?.kickoff, qfMs[2]?.venue ?? undefined), // P99
+      mkNode('ko-qf-3', r16[6].winner, r16[7].winner, 'Gan. P95','Gan. P96', qfMs[3]?.kickoff, qfMs[3]?.venue ?? undefined), // P100
+    ]
+    const sf = [
+      mkNode('ko-sf-0', qf[0].winner, qf[1].winner, 'Gan. P97','Gan. P98',   sfMs[0]?.kickoff, sfMs[0]?.venue ?? undefined), // P101
+      mkNode('ko-sf-1', qf[2].winner, qf[3].winner, 'Gan. P99','Gan. P100',  sfMs[1]?.kickoff, sfMs[1]?.venue ?? undefined), // P102
+    ]
     const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. P101','Per. P102', thirdMs[0]?.kickoff, thirdMs[0]?.venue ?? undefined)
     const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. P101','Gan. P102', finalMs[0]?.kickoff, finalMs[0]?.venue ?? undefined)
     return { r32, r16, qf, sf, third, final }
