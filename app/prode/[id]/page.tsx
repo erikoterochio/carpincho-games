@@ -60,12 +60,12 @@ const REVELATION_TEAMS_ES = [
 ]
 
 const BONUS_FIELDS: Array<{key: string; label: string; pts: number; type: 'player'|'team'|'revelation'|'match'}> = [
-  { key: 'balon_oro',      label: 'Balón de Oro',       pts: 15, type: 'player' },
-  { key: 'guante_oro',     label: 'Guante de Oro',      pts: 15, type: 'player' },
-  { key: 'botin_oro',      label: 'Botín de Oro',       pts: 15, type: 'player' },
-  { key: 'fair_play',      label: 'Fair Play',           pts: 15, type: 'team' },
-  { key: 'revelacion',     label: 'Equipo Revelación',   pts: 15, type: 'revelation' },
-  { key: 'mayor_goleada',  label: 'Mayor Goleada',       pts: 15, type: 'match' },
+  { key: 'balon_oro',        label: 'Balón de Oro',       pts: 15, type: 'player' },
+  { key: 'guante_oro',       label: 'Guante de Oro',      pts: 15, type: 'player' },
+  { key: 'botin_oro',        label: 'Botín de Oro',       pts: 15, type: 'player' },
+  { key: 'fair_play',        label: 'Fair Play',           pts: 15, type: 'team' },
+  { key: 'revelacion',       label: 'Equipo Revelación',   pts: 15, type: 'revelation' },
+  { key: 'goleada_match_id', label: 'Mayor Goleada',       pts: 15, type: 'match' },
 ]
 
 const ABBREV: Record<string, string> = {
@@ -244,9 +244,10 @@ const Card = ({ children, style }: { children: React.ReactNode; style?: React.CS
   </div>
 )
 
-function BonusSection({ initialBonus, bonusVersion, onSave }: {
+function BonusSection({ initialBonus, bonusVersion, groupMatches, onSave }: {
   initialBonus: Record<string, string>
   bonusVersion: number
+  groupMatches: Match[]
   onSave: (b: Record<string, string>) => void
 }) {
   const [local, setLocal] = React.useState<Record<string, string>>(initialBonus)
@@ -275,33 +276,17 @@ function BonusSection({ initialBonus, bonusVersion, onSave }: {
               <div style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>+{f.pts} pts</div>
             </div>
             {f.type === 'match' ? (
-              <div style={{ display: 'flex', gap: 5, alignItems: 'center', flexWrap: 'wrap' }}>
-                <input
-                  key={`${f.key}_home-${bonusVersion}`}
-                  list="teams-list"
-                  defaultValue={local[`${f.key}_home`] ?? ''}
-                  onChange={e => upd(`${f.key}_home`, e.target.value)}
-                  placeholder="Local"
-                  autoComplete="off"
-                  style={{ width: 110, padding: '6px 8px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa' }}
-                />
-                <input
-                  key={`${f.key}_score-${bonusVersion}`}
-                  defaultValue={local[`${f.key}_score`] ?? ''}
-                  onChange={e => upd(`${f.key}_score`, e.target.value.replace(/[^0-9-]/g, '').slice(0, 5))}
-                  placeholder="X-Y"
-                  style={{ width: 50, padding: '6px 6px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa', textAlign: 'center' }}
-                />
-                <input
-                  key={`${f.key}_away-${bonusVersion}`}
-                  list="teams-list"
-                  defaultValue={local[`${f.key}_away`] ?? ''}
-                  onChange={e => upd(`${f.key}_away`, e.target.value)}
-                  placeholder="Visitante"
-                  autoComplete="off"
-                  style={{ width: 110, padding: '6px 8px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: TEXT, outline: 'none', background: '#fafafa' }}
-                />
-              </div>
+              <select
+                key={`${f.key}-${bonusVersion}`}
+                value={local[f.key] ?? ''}
+                onChange={e => upd(f.key, e.target.value)}
+                style={{ width: 200, padding: '6px 10px', border: `1.5px solid ${local[f.key] ? '#D4001A' : BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: local[f.key] ? TEXT : MUTED, outline: 'none', background: '#fafafa' }}
+              >
+                <option value="">— Elegir partido —</option>
+                {groupMatches.map(m => (
+                  <option key={m.id} value={m.id}>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</option>
+                ))}
+              </select>
             ) : (
               <input
                 key={`${f.key}-${bonusVersion}`}
@@ -351,6 +336,7 @@ export default function TournamentPage() {
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
+  const koSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'cruces'|'ko'|'premios'>('pagos')
@@ -390,6 +376,31 @@ export default function TournamentPage() {
         }
         setMyEditPicks(pm)
         picksEditRef.current = pm
+
+        // Init KO bracket state from loaded picks
+        const groupMatchIdSet = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
+        const kopm: Record<string, {h:string;a:string}> = {}
+        for (const p of allP.filter(pk => pk.user_id === user.id && !groupMatchIdSet.has(pk.match_id)))
+          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
+        setKoEditPicks(kopm)
+        koPicksRef.current = kopm
+
+        // Load user's own specials (overwrites localStorage data if present)
+        const { data: mySpecials } = await supabase
+          .from('prode_stage1_specials').select('balon_oro,guante_oro,botin_oro,fair_play,revelacion,goleada_match_id')
+          .eq('tournament_id', id).eq('user_id', user.id).maybeSingle()
+        if (mySpecials) {
+          const bonusFromDB: Record<string, string> = {}
+          for (const k of ['balon_oro','guante_oro','botin_oro','fair_play','revelacion','goleada_match_id']) {
+            const v = (mySpecials as any)[k]
+            if (v) bonusFromDB[k] = v
+          }
+          if (Object.keys(bonusFromDB).length > 0) {
+            setBonus(bonusFromDB)
+            setBonusVersion(v => v + 1)
+          }
+        }
+
         setParticipants((ps as any[]).map(p => ({ ...p, pick_count: allP.filter(pk => pk.user_id === p.user_id).length })))
 
         // Admin: fetch all picks bypassing RLS (anon client only sees own picks)
@@ -661,6 +672,19 @@ export default function TournamentPage() {
     else setSaveStatus('idle')
   }, [id, user, showSaved])
 
+  const saveKoPick = useCallback(async (matchId: string) => {
+    if (!user) return
+    const p = koPicksRef.current[matchId]
+    if (!p || p.h === '' || p.a === '') return
+    const h = parseInt(p.h), a = parseInt(p.a)
+    if (isNaN(h) || isNaN(a)) return
+    const { error } = await supabase.from('prode_stage1_picks').upsert(
+      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
+      { onConflict: 'tournament_id,user_id,match_id' }
+    )
+    if (!error) showSaved()
+  }, [id, user, showSaved])
+
   const toggleGroup = (g: string) => setOpenGroups(prev => {
     const next = new Set(prev)
     if (next.has(g)) next.delete(g); else next.add(g)
@@ -681,6 +705,8 @@ export default function TournamentPage() {
     const updated = { ...current, [side]: cleaned }
     koPicksRef.current[matchId] = updated
     setKoEditPicks(prev => ({ ...prev, [matchId]: updated }))
+    if (koSaveTimersRef.current[matchId]) clearTimeout(koSaveTimersRef.current[matchId])
+    koSaveTimersRef.current[matchId] = setTimeout(() => saveKoPick(matchId), 800)
   }
 
   const handleKoPen = (matchId: string, winner: 'h'|'a') => {
@@ -691,10 +717,24 @@ export default function TournamentPage() {
     setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
   }
 
-  const handleBonusSave = (b: Record<string, string>) => {
+  const handleBonusSave = useCallback(async (b: Record<string, string>) => {
     setBonus(b)
     if (user?.id && id) localStorage.setItem(`prode_bonus_${id}_${user.id}`, JSON.stringify(b))
-  }
+    if (!user?.id || !id) return
+    await supabase.from('prode_stage1_specials').upsert(
+      {
+        tournament_id: id, user_id: user.id,
+        balon_oro:        b.balon_oro        || null,
+        guante_oro:       b.guante_oro       || null,
+        botin_oro:        b.botin_oro        || null,
+        fair_play:        b.fair_play        || null,
+        revelacion:       b.revelacion       || null,
+        goleada_match_id: b.goleada_match_id || null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'tournament_id,user_id' }
+    )
+  }, [id, user, supabase])
 
   const handleTogglePaid = async (targetUserId: string, currentPaid: boolean) => {
     const res = await fetch('/api/prode/mark-paid', {
@@ -1661,11 +1701,12 @@ export default function TournamentPage() {
                             Predicciones extra
                           </div>
                           <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, marginBottom: 14 }}>
-                            15 puntos cada una. Se guardan localmente.
+                            15 puntos cada una. Se guardan automáticamente.
                           </div>
                           <BonusSection
                             initialBonus={bonus}
                             bonusVersion={bonusVersion}
+                            groupMatches={matches.filter(m => m.stage === 'group')}
                             onSave={handleBonusSave}
                           />
                         </div>
