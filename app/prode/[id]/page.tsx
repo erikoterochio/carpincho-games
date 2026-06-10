@@ -830,7 +830,15 @@ export default function TournamentPage() {
       { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
       { onConflict: 'tournament_id,user_id,match_id' }
     )
-    if (!error) showSaved()
+    if (!error) {
+      showSaved()
+      // Keep adminAllPicks in sync so perParticipantBracket reflects picks made this session
+      // without needing a full page reload.
+      setAdminAllPicks(prev => {
+        const rest = prev.filter(pk => !(pk.user_id === user.id && pk.match_id === matchId))
+        return [...rest, { user_id: user.id, match_id: matchId, home_score: h, away_score: a }]
+      })
+    }
   }, [id, user, showSaved])
 
   const toggleGroup = (g: string) => setOpenGroups(prev => {
