@@ -408,7 +408,7 @@ export default function TournamentPage() {
       if (user && ps) {
         setIsParticipant(!!(ps as any[]).find(p => p.user_id === user.id))
         const { data: picks } = await supabase
-          .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id,predicted_home,predicted_away').eq('tournament_id', id)
+          .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
         setAllPicks(allP)
         const pm: Record<string, {h:string;a:string}> = {}
