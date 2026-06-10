@@ -14,19 +14,19 @@ function adminDB() {
 
 // API-Football uses league.group = "Group A" for WC fixtures.
 // If that's missing, fall back to league.round patterns.
-function parseRound(round: string, group?: string): { stage: string; group_name: string | null; sort_base: number } {
+function parseRound(round: string, group?: string): { stage: string; group_name: string | null } {
   for (const src of [group ?? '', round]) {
     const m = src.match(/\bGroup\s+([A-L])\b/i)
-    if (m) return { stage: 'group', group_name: m[1].toUpperCase(), sort_base: 0 }
+    if (m) return { stage: 'group', group_name: m[1].toUpperCase() }
   }
-  if (/Group Stage/i.test(round)) return { stage: 'group', group_name: null, sort_base: 0 }
-  if (/Round of 32/i.test(round))  return { stage: 'r32',   group_name: null, sort_base: 1000 }
-  if (/Round of 16/i.test(round))  return { stage: 'r16',   group_name: null, sort_base: 2000 }
-  if (/Quarter.final/i.test(round)) return { stage: 'qf',   group_name: null, sort_base: 3000 }
-  if (/Semi.final/i.test(round))   return { stage: 'sf',    group_name: null, sort_base: 4000 }
-  if (/3rd place/i.test(round))    return { stage: '3rd',   group_name: null, sort_base: 5000 }
-  if (/Final/i.test(round))        return { stage: 'final', group_name: null, sort_base: 6000 }
-  return { stage: 'other', group_name: null, sort_base: 9000 }
+  if (/Group Stage/i.test(round)) return { stage: 'group', group_name: null }
+  if (/Round of 32/i.test(round))  return { stage: 'r32',   group_name: null }
+  if (/Round of 16/i.test(round))  return { stage: 'r16',   group_name: null }
+  if (/Quarter.final/i.test(round)) return { stage: 'qf',   group_name: null }
+  if (/Semi.final/i.test(round))   return { stage: 'sf',    group_name: null }
+  if (/3rd place/i.test(round))    return { stage: '3rd',   group_name: null }
+  if (/Final/i.test(round))        return { stage: 'final', group_name: null }
+  return { stage: 'other', group_name: null }
 }
 
 export async function POST() {
@@ -94,13 +94,16 @@ export async function POST() {
   }
 
   // ── Build fixture rows, resolving group_name via standings when needed ─────
-  const rows = fixtures.map((f: any, i: number) => {
-    const { stage, group_name: fromRound, sort_base } = parseRound(f.league.round, f.league.group)
+  const rows = fixtures.map((f: any) => {
+    const { stage, group_name: fromRound } = parseRound(f.league.round, f.league.group)
     // If round/group fields didn't have a letter, look it up from the standings team map
     const group_name = fromRound
       ?? (stage === 'group'
         ? (teamGroupMap.get(f.teams.home.id) ?? teamGroupMap.get(f.teams.away.id) ?? null)
         : null)
+    // Use kickoff timestamp in minutes as sort_order — stable across syncs (same fixture
+    // always has the same date, so sort_order never changes between API calls).
+    const sort_order = Math.floor(new Date(f.fixture.date).getTime() / 60000)
     return {
       id:           String(f.fixture.id),
       home_team:    f.teams.home.name,
@@ -118,7 +121,7 @@ export async function POST() {
       venue:        f.fixture.venue?.name
         ? `${f.fixture.venue.name}${f.fixture.venue.city ? `, (${f.fixture.venue.city})` : ''}`
         : null,
-      sort_order:   sort_base + i,
+      sort_order,
       updated_at:   new Date().toISOString(),
     }
   })

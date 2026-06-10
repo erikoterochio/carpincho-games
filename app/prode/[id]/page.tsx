@@ -547,12 +547,25 @@ export default function TournamentPage() {
       const parts = [`✓ ${json.synced} partidos`]
       if (json.standingsSynced) parts.push(`${json.standingsSynced} posiciones`)
       setSyncMsg(parts.join(' · ') + ' sincronizados')
-      const [{ data: ms }, { data: st }] = await Promise.all([
+      const [{ data: ms }, { data: st }, { data: freshPicks }] = await Promise.all([
         supabase.from('prode_matches').select('*').order('sort_order'),
         supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+        supabase.from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id),
       ])
-      setMatches((ms ?? []) as Match[])
+      const matchList = (ms ?? []) as Match[]
+      setMatches(matchList)
       setStandings((st ?? []) as Standing[])
+      // Reload KO picks from DB so the bracket stays consistent with updated match data.
+      // Without this, a sort_order change would shift which fixture appears in each bracket slot
+      // and the in-memory koEditPicks (keyed by match_id) would show at the wrong positions.
+      if (user && freshPicks) {
+        const groupIds = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
+        const kopm: Record<string, {h:string;a:string}> = {}
+        for (const p of freshPicks.filter(pk => pk.user_id === user.id && !groupIds.has(pk.match_id)))
+          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
+        setKoEditPicks(kopm)
+        koPicksRef.current = kopm
+      }
     } else {
       setSyncMsg(`Error: ${json.error}`)
     }
