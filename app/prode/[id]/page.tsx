@@ -347,7 +347,7 @@ export default function TournamentPage() {
   const koSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
-  const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'cruces'|'ko'|'premios'>('pagos')
+  const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -677,6 +677,21 @@ export default function TournamentPage() {
     }
     return result
   }, [adminAllPicks, participants, groupMatches])
+
+  // Per-participant group qualifiers: who each user predicts will reach R32
+  const perParticipantClassified = useMemo(() => {
+    const result = new Map<string, { firsts: (string|null)[]; seconds: (string|null)[]; thirds: (string|null)[] }>()
+    for (const p of participants) {
+      const gs = adminGroupStandings.get(p.user_id)
+      const firsts  = GROUPS.map(g => gs?.get(g)?.[0]?.name ?? null)
+      const seconds = GROUPS.map(g => gs?.get(g)?.[1]?.name ?? null)
+      const gsRecord: Record<string, TeamStat[]> = {}
+      for (const g of GROUPS) { const t = gs?.get(g); if (t) gsRecord[g] = t }
+      const bestTs = computeBestThirds(gsRecord, FIFA_RANKS)
+      result.set(p.user_id, { firsts, seconds, thirds: bestTs.slice(0, 8).map(t => t.name) })
+    }
+    return result
+  }, [adminGroupStandings, participants])
 
   const showSaved = useCallback(() => {
     setSaveStatus('saved')
@@ -2119,7 +2134,7 @@ export default function TournamentPage() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               {/* Admin sub-tab nav */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                {(['pagos','partidos','grupos','cruces','ko','premios'] as const)
+                {(['pagos','partidos','grupos','clasificados','cruces','ko','premios'] as const)
                   .filter(k => (k !== 'cruces' && k !== 'ko') || koMatches.length > 0)
                   .map(k => (
                     <button
@@ -2131,7 +2146,7 @@ export default function TournamentPage() {
                         borderRadius: 20, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer',
                       }}
                     >
-                      {{ pagos: 'Pagos', partidos: 'Partidos', grupos: 'Grupos', cruces: 'Cruces KO', ko: 'Picks KO', premios: 'Premios' }[k]}
+                      {{ pagos: 'Pagos', partidos: 'Partidos', grupos: 'Grupos', clasificados: 'Clasificados', cruces: 'Cruces KO', ko: 'Picks KO', premios: 'Premios' }[k]}
                     </button>
                   ))}
               </div>
@@ -2301,6 +2316,115 @@ export default function TournamentPage() {
                       </table>
                     </div>
                   )}
+                </Card>
+              )}
+
+              {/* ── Clasificados — clasificados por fase según picks de cada jugador ── */}
+              {adminTab === 'clasificados' && (
+                <Card>
+                  <SectionTitle>Clasificados por fase</SectionTitle>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                      <thead>
+                        <tr style={{ background: TEXT }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 130 }}>Fase / Slot</th>
+                          {participants.map(p => (
+                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
+                              {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {/* ── 32 clasificados para 16avos ── */}
+                        <tr>
+                          <td colSpan={participants.length + 1} style={{ background: STAGE_COLORS['r32'] ?? '#312E81', color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                            Clasificados para 16avos de final (32 equipos)
+                          </td>
+                        </tr>
+                        {GROUPS.map((g, gi) => [
+                          <tr key={`cls-1st-${g}`} style={{ background: gi % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: gi % 2 === 0 ? '#fff' : '#f9fafb', whiteSpace: 'nowrap' }}>
+                              1° Grupo {g}
+                            </td>
+                            {participants.map(p => {
+                              const team = perParticipantClassified.get(p.user_id)?.firsts[gi] ?? null
+                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
+                            })}
+                          </tr>,
+                          <tr key={`cls-2nd-${g}`} style={{ background: gi % 2 === 0 ? '#f0f4ff' : '#eaf4ff', borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: gi % 2 === 0 ? '#f0f4ff' : '#eaf4ff', whiteSpace: 'nowrap' }}>
+                              2° Grupo {g}
+                            </td>
+                            {participants.map(p => {
+                              const team = perParticipantClassified.get(p.user_id)?.seconds[gi] ?? null
+                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
+                            })}
+                          </tr>,
+                        ])}
+                        {Array.from({ length: 8 }, (_, i) => (
+                          <tr key={`cls-3rd-${i}`} style={{ background: i % 2 === 0 ? '#fdf8ee' : '#fef3d8', borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fdf8ee' : '#fef3d8', whiteSpace: 'nowrap' }}>
+                              3° mejor #{i + 1}
+                            </td>
+                            {participants.map(p => {
+                              const team = perParticipantClassified.get(p.user_id)?.thirds[i] ?? null
+                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
+                            })}
+                          </tr>
+                        ))}
+                        {/* ── KO rounds ── */}
+                        {([
+                          { stageMs: r32Ms,  label: 'Avanzados a 8vos (ganadores 16avos)',    stageKey: 'r32' as const },
+                          { stageMs: r16Ms,  label: 'Avanzados a 4tos (ganadores 8vos)',       stageKey: 'r16' as const },
+                          { stageMs: qfMs,   label: 'Semifinalistas (ganadores 4tos)',          stageKey: 'qf'  as const },
+                          { stageMs: sfMs,   label: 'Finalistas y 3°/4° (ganadores Semis)',    stageKey: 'sf'  as const },
+                        ]).filter(({ stageMs }) => stageMs.length > 0).flatMap(({ stageMs, label, stageKey }) => [
+                          <tr key={`cls-hdr-${stageKey}`}>
+                            <td colSpan={participants.length + 1} style={{ background: STAGE_COLORS[stageKey] ?? '#1e293b', color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              {label}
+                            </td>
+                          </tr>,
+                          ...stageMs.map((m, i) => {
+                            const num = matchNumById.get(m.id)
+                            const rowBg = i % 2 === 0 ? '#fff' : '#f9fafb'
+                            return (
+                              <tr key={`cls-${stageKey}-${i}`} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
+                                  {num ? `Gan. P${num}` : `${stageKey.toUpperCase()} ${i + 1}`}
+                                </td>
+                                {participants.map(p => {
+                                  const bracket = perParticipantBracket.get(p.user_id)
+                                  const predicted = bracket?.get(m.id) ?? null
+                                  return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: predicted ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{predicted ? abbrev(predicted) : '—'}</td>
+                                })}
+                              </tr>
+                            )
+                          }),
+                        ])}
+                        {/* ── Posiciones finales ── */}
+                        {([
+                          { label: '4to Puesto',  bgColor: '#1e293b', getValue: (uid: string) => perParticipantFinals.get(uid)?.fourth  ?? null },
+                          { label: '3er Puesto',  bgColor: '#1e293b', getValue: (uid: string) => perParticipantFinals.get(uid)?.third   ?? null },
+                          { label: 'Sub-Campeón', bgColor: '#0A0A0A', getValue: (uid: string) => perParticipantFinals.get(uid)?.runnerUp ?? null },
+                          { label: 'Campeón 🏆',  bgColor: '#C8950A', getValue: (uid: string) => perParticipantFinals.get(uid)?.champion ?? null },
+                        ]).flatMap(({ label, bgColor, getValue }, idx) => [
+                          <tr key={`cls-fin-hdr-${idx}`}>
+                            <td colSpan={participants.length + 1} style={{ background: bgColor, color: bgColor === '#C8950A' ? '#fff' : '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                              {label}
+                            </td>
+                          </tr>,
+                          <tr key={`cls-fin-${idx}`} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: '#fff', whiteSpace: 'nowrap' }}>{label}</td>
+                            {participants.map(p => {
+                              const team = getValue(p.user_id)
+                              return <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 11, color: team ? (bgColor === '#C8950A' ? '#C8950A' : TEXT) : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
+                            })}
+                          </tr>,
+                        ])}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
               )}
 
