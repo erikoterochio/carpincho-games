@@ -679,44 +679,6 @@ export default function TournamentPage() {
     return m
   }, [matches])
 
-  // Per-participant bracket resolution: userId → (matchId → predicted winner team name)
-  const perParticipantBracket = useMemo(() => {
-    const result = new Map<string, Map<string, string>>()
-    for (const p of participants) {
-      const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
-      result.set(p.user_id, computeKoBracket(up, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs))
-    }
-    return result
-  }, [adminAllPicks, participants, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs])
-
-  // Champion / runner-up / 3rd / 4th derived from each user's KO bracket picks
-  const perParticipantFinals = useMemo(() => {
-    type Finals = { champion: string|null; runnerUp: string|null; third: string|null; fourth: string|null }
-    const result = new Map<string, Finals>()
-    for (const p of participants) {
-      const bracket = perParticipantBracket.get(p.user_id)
-      const empty: Finals = { champion: null, runnerUp: null, third: null, fourth: null }
-      if (!bracket || !finalMs.length) { result.set(p.user_id, empty); continue }
-
-      const champion = bracket.get(finalMs[0].id) ?? null
-      const sf0Win   = sfMs[0]  ? bracket.get(sfMs[0].id)  ?? null : null
-      const sf1Win   = sfMs[1]  ? bracket.get(sfMs[1].id)  ?? null : null
-      const runnerUp = champion ? (sf0Win === champion ? sf1Win : sf0Win) : null
-
-      const qf0Win   = qfMs[0]  ? bracket.get(qfMs[0].id)  ?? null : null
-      const qf1Win   = qfMs[1]  ? bracket.get(qfMs[1].id)  ?? null : null
-      const qf2Win   = qfMs[2]  ? bracket.get(qfMs[2].id)  ?? null : null
-      const qf3Win   = qfMs[3]  ? bracket.get(qfMs[3].id)  ?? null : null
-      const sf0Loser = sf0Win   ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
-      const sf1Loser = sf1Win   ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
-      const third    = thirdMs[0] ? bracket.get(thirdMs[0].id) ?? null : null
-      const fourth   = third    ? (third === sf0Loser ? sf1Loser : sf0Loser) : null
-
-      result.set(p.user_id, { champion, runnerUp, third, fourth })
-    }
-    return result
-  }, [perParticipantBracket, participants, finalMs, sfMs, qfMs, thirdMs])
-
   const adminGroupStandings = useMemo(() => {
     const result = new Map<string, Map<string, TeamStat[]>>()
     for (const p of participants) {
@@ -747,6 +709,59 @@ export default function TournamentPage() {
     }
     return result
   }, [adminGroupStandings, participants])
+
+  // Per-participant bracket resolution: userId → (matchId → predicted winner team name)
+  const perParticipantBracket = useMemo(() => {
+    const result = new Map<string, Map<string, string>>()
+    for (const p of participants) {
+      const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
+      const classified = perParticipantClassified.get(p.user_id)
+      // Augment R32 picks with resolved team names derived from group standings,
+      // so the cascade works without needing predicted_home/away stored in DB.
+      const augmented: UserPick[] = up.map(pk => {
+        if (pk.predicted_home || pk.predicted_away) return pk
+        const idx = r32Ms.findIndex(m => m.id === pk.match_id)
+        if (idx === -1 || !classified) return pk
+        const seeds = R32_SEEDS[idx]
+        if (!seeds) return pk
+        return {
+          ...pk,
+          predicted_home: resolveSlot(seeds[0], classified) ?? null,
+          predicted_away: resolveSlot(seeds[1], classified) ?? null,
+        }
+      })
+      result.set(p.user_id, computeKoBracket(augmented, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs))
+    }
+    return result
+  }, [adminAllPicks, participants, perParticipantClassified, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs])
+
+  // Champion / runner-up / 3rd / 4th derived from each user's KO bracket picks
+  const perParticipantFinals = useMemo(() => {
+    type Finals = { champion: string|null; runnerUp: string|null; third: string|null; fourth: string|null }
+    const result = new Map<string, Finals>()
+    for (const p of participants) {
+      const bracket = perParticipantBracket.get(p.user_id)
+      const empty: Finals = { champion: null, runnerUp: null, third: null, fourth: null }
+      if (!bracket || !finalMs.length) { result.set(p.user_id, empty); continue }
+
+      const champion = bracket.get(finalMs[0].id) ?? null
+      const sf0Win   = sfMs[0]  ? bracket.get(sfMs[0].id)  ?? null : null
+      const sf1Win   = sfMs[1]  ? bracket.get(sfMs[1].id)  ?? null : null
+      const runnerUp = champion ? (sf0Win === champion ? sf1Win : sf0Win) : null
+
+      const qf0Win   = qfMs[0]  ? bracket.get(qfMs[0].id)  ?? null : null
+      const qf1Win   = qfMs[1]  ? bracket.get(qfMs[1].id)  ?? null : null
+      const qf2Win   = qfMs[2]  ? bracket.get(qfMs[2].id)  ?? null : null
+      const qf3Win   = qfMs[3]  ? bracket.get(qfMs[3].id)  ?? null : null
+      const sf0Loser = sf0Win   ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
+      const sf1Loser = sf1Win   ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
+      const third    = thirdMs[0] ? bracket.get(thirdMs[0].id) ?? null : null
+      const fourth   = third    ? (third === sf0Loser ? sf1Loser : sf0Loser) : null
+
+      result.set(p.user_id, { champion, runnerUp, third, fourth })
+    }
+    return result
+  }, [perParticipantBracket, participants, finalMs, sfMs, qfMs, thirdMs])
 
   // Real final positions derived from actual match results
   const realFinals = useMemo(() => {
@@ -798,11 +813,8 @@ export default function TournamentPage() {
     if (!p || p.h === '' || p.a === '') return
     const h = parseInt(p.h), a = parseInt(p.a)
     if (isNaN(h) || isNaN(a)) return
-    const node = bracketNodeByIdRef.current.get(matchId)
-    const predicted_home = node?.home?.name ?? null
-    const predicted_away = node?.away?.name ?? null
     const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away, updated_at: new Date().toISOString() },
+      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
       { onConflict: 'tournament_id,user_id,match_id' }
     )
     if (!error) showSaved()

@@ -32,7 +32,7 @@ export async function GET(
   const admin = adminDB()
   const { data: picks, error } = await admin
     .from('prode_stage1_picks')
-    .select('user_id, match_id, home_score, away_score, predicted_home, predicted_away')
+    .select('user_id, match_id, home_score, away_score')
     .eq('tournament_id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
