@@ -219,6 +219,14 @@ const QF_FROM_R16: [number, number][] = [
   [0, 1], [4, 5], [2, 3], [6, 7]
 ]
 
+// Stable slot IDs for KO picks — independent of whether real match fixtures
+// are loaded in the DB. Picks are always stored by slot, never by real match_id.
+function koSlotId(stage: string, idx: number): string {
+  if (stage === '3rd')   return 'ko-3rd'
+  if (stage === 'final') return 'ko-final'
+  return `ko-${stage}-${idx}`
+}
+
 // Compute predicted bracket winners per-participant from KO picks (cascading)
 function computeKoBracket(
   picks: UserPick[],
@@ -228,38 +236,37 @@ function computeKoBracket(
   const winners = new Map<string, string>()
   const losers  = new Map<string, string>()
 
-  const applyMatch = (m: Match, homeId: string, awayId: string) => {
-    const pk = picks.find(p => p.match_id === m.id)
+  const applySlot = (slotId: string, homeSlotId: string, awaySlotId: string, fallbackHome: string, fallbackAway: string, predictedHome?: string | null, predictedAway?: string | null) => {
+    const pk = picks.find(p => p.match_id === slotId)
     if (!pk) return
-    // For R32 (homeId/awayId empty), use the stored predicted team names.
-    // For R16+, cascade from previous round winners.
-    const home = (homeId ? winners.get(homeId) : null) ?? pk.predicted_home ?? m.home_team
-    const away = (awayId ? winners.get(awayId) : null) ?? pk.predicted_away ?? m.away_team
-    if (pk.home_score > pk.away_score)      { winners.set(m.id, home); losers.set(m.id, away) }
-    else if (pk.away_score > pk.home_score) { winners.set(m.id, away); losers.set(m.id, home) }
+    const home = (homeSlotId ? winners.get(homeSlotId) : null) ?? predictedHome ?? fallbackHome
+    const away = (awaySlotId ? winners.get(awaySlotId) : null) ?? predictedAway ?? fallbackAway
+    if (pk.home_score > pk.away_score)      { winners.set(slotId, home); losers.set(slotId, away) }
+    else if (pk.away_score > pk.home_score) { winners.set(slotId, away); losers.set(slotId, home) }
   }
 
-  for (const m of r32Ms) applyMatch(m, '', '')
-  r16Ms.forEach((m, i) => { const [a,b] = R16_FROM_R32[i] ?? [i*2,i*2+1]; applyMatch(m, r32Ms[a]?.id??'', r32Ms[b]?.id??'') })
-  qfMs.forEach( (m, i) => { const [a,b] = QF_FROM_R16[i]  ?? [i*2,i*2+1]; applyMatch(m, r16Ms[a]?.id??'', r16Ms[b]?.id??'') })
-  sfMs.forEach( (m, i) => applyMatch(m, qfMs[i*2]?.id??'', qfMs[i*2+1]?.id??''))
+  for (let i = 0; i < 16; i++) {
+    const pk = picks.find(p => p.match_id === `ko-r32-${i}`)
+    applySlot(`ko-r32-${i}`, '', '', r32Ms[i]?.home_team ?? '?', r32Ms[i]?.away_team ?? '?', pk?.predicted_home, pk?.predicted_away)
+  }
+  r16Ms.forEach((m, i) => { const [a,b] = R16_FROM_R32[i] ?? [i*2,i*2+1]; applySlot(`ko-r16-${i}`, `ko-r32-${a}`, `ko-r32-${b}`, m.home_team, m.away_team) })
+  qfMs.forEach( (m, i) => { const [a,b] = QF_FROM_R16[i]  ?? [i*2,i*2+1]; applySlot(`ko-qf-${i}`,  `ko-r16-${a}`, `ko-r16-${b}`, m.home_team, m.away_team) })
+  sfMs.forEach( (m, i) => applySlot(`ko-sf-${i}`, `ko-qf-${i*2}`, `ko-qf-${i*2+1}`, m.home_team, m.away_team))
 
-  for (const m of thirdMs) {
-    const pk = picks.find(p => p.match_id === m.id)
-    if (!pk) continue
-    const home = losers.get(sfMs[0]?.id ?? '') ?? m.home_team
-    const away = losers.get(sfMs[1]?.id ?? '') ?? m.away_team
-    if (pk.home_score > pk.away_score)      winners.set(m.id, home)
-    else if (pk.away_score > pk.home_score) winners.set(m.id, away)
+  const thirdPk = picks.find(p => p.match_id === 'ko-3rd')
+  if (thirdPk) {
+    const home = losers.get('ko-sf-0') ?? thirdMs[0]?.home_team ?? '?'
+    const away = losers.get('ko-sf-1') ?? thirdMs[0]?.away_team ?? '?'
+    if (thirdPk.home_score > thirdPk.away_score)      winners.set('ko-3rd', home)
+    else if (thirdPk.away_score > thirdPk.home_score) winners.set('ko-3rd', away)
   }
 
-  for (const m of finalMs) {
-    const pk = picks.find(p => p.match_id === m.id)
-    if (!pk) continue
-    const home = winners.get(sfMs[0]?.id ?? '') ?? m.home_team
-    const away = winners.get(sfMs[1]?.id ?? '') ?? m.away_team
-    if (pk.home_score > pk.away_score)      winners.set(m.id, home)
-    else if (pk.away_score > pk.home_score) winners.set(m.id, away)
+  const finalPk = picks.find(p => p.match_id === 'ko-final')
+  if (finalPk) {
+    const home = winners.get('ko-sf-0') ?? finalMs[0]?.home_team ?? '?'
+    const away = winners.get('ko-sf-1') ?? finalMs[0]?.away_team ?? '?'
+    if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); losers.set('ko-final', away) }
+    else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); losers.set('ko-final', home) }
   }
 
   return winners
@@ -734,8 +741,10 @@ export default function TournamentPage() {
       // so the cascade works without needing predicted_home/away stored in DB.
       const augmented: UserPick[] = up.map(pk => {
         if (pk.predicted_home || pk.predicted_away) return pk
-        const idx = r32Ms.findIndex(m => m.id === pk.match_id)
-        if (idx === -1 || !classified) return pk
+        // Picks use stable slot IDs like 'ko-r32-3'; extract the index
+        const slotMatch = pk.match_id.match(/^ko-r32-(\d+)$/)
+        if (!slotMatch || !classified) return pk
+        const idx = parseInt(slotMatch[1])
         const seeds = R32_SEEDS[idx]
         if (!seeds) return pk
         return {
@@ -758,18 +767,18 @@ export default function TournamentPage() {
       const empty: Finals = { champion: null, runnerUp: null, third: null, fourth: null }
       if (!bracket || !finalMs.length) { result.set(p.user_id, empty); continue }
 
-      const champion = bracket.get(finalMs[0].id) ?? null
-      const sf0Win   = sfMs[0]  ? bracket.get(sfMs[0].id)  ?? null : null
-      const sf1Win   = sfMs[1]  ? bracket.get(sfMs[1].id)  ?? null : null
+      const champion = bracket.get('ko-final') ?? null
+      const sf0Win   = bracket.get('ko-sf-0') ?? null
+      const sf1Win   = bracket.get('ko-sf-1') ?? null
       const runnerUp = champion ? (sf0Win === champion ? sf1Win : sf0Win) : null
 
-      const qf0Win   = qfMs[0]  ? bracket.get(qfMs[0].id)  ?? null : null
-      const qf1Win   = qfMs[1]  ? bracket.get(qfMs[1].id)  ?? null : null
-      const qf2Win   = qfMs[2]  ? bracket.get(qfMs[2].id)  ?? null : null
-      const qf3Win   = qfMs[3]  ? bracket.get(qfMs[3].id)  ?? null : null
+      const qf0Win   = bracket.get('ko-qf-0') ?? null
+      const qf1Win   = bracket.get('ko-qf-1') ?? null
+      const qf2Win   = bracket.get('ko-qf-2') ?? null
+      const qf3Win   = bracket.get('ko-qf-3') ?? null
       const sf0Loser = sf0Win   ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
       const sf1Loser = sf1Win   ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
-      const third    = thirdMs[0] ? bracket.get(thirdMs[0].id) ?? null : null
+      const third    = bracket.get('ko-3rd') ?? null
       const fourth   = third    ? (third === sf0Loser ? sf1Loser : sf0Loser) : null
 
       result.set(p.user_id, { champion, runnerUp, third, fourth })
@@ -923,9 +932,19 @@ export default function TournamentPage() {
       if (isDeadlinePast) {
         if (useAdmin) {
           // Full scoring: match results + group order + KO advancement + final positions
+          // KO picks use stable slot IDs (ko-r32-0 etc.); build a slot→match map for scoring.
+          const slotMatchMap = new Map<string, Match>()
+          for (const stage of ['r32','r16','qf','sf'] as const)
+            matches.filter(m => m.stage === stage).sort((a,b) => a.sort_order - b.sort_order)
+              .forEach((m, i) => slotMatchMap.set(`ko-${stage}-${i}`, m))
+          const thirdM = matches.find(m => m.stage === '3rd')
+          const finalM = matches.find(m => m.stage === 'final')
+          if (thirdM) slotMatchMap.set('ko-3rd', thirdM)
+          if (finalM) slotMatchMap.set('ko-final', finalM)
+
           let score = 0
           for (const pk of adminAllPicks.filter(pk => pk.user_id === p.user_id)) {
-            const m = matches.find(m => m.id === pk.match_id)
+            const m = matches.find(m => m.id === pk.match_id) ?? slotMatchMap.get(pk.match_id)
             if (m) score += calcScore(pk, m) ?? 0
           }
           // Group order: 6 pts per group with all 4 teams in correct order
@@ -1069,14 +1088,14 @@ export default function TournamentPage() {
     const thirdMs = koByStage('3rd')
     const finalMs = koByStage('final')
 
-    // Use real DB match IDs as node IDs so koEditPicks (keyed by real match_id) maps correctly
-    // Official WC 2026 R32 bracket
-    const id32  = (i: number) => r32Ms[i]?.id  ?? `ko-r32-${i}`
-    const id16  = (i: number) => r16Ms[i]?.id  ?? `ko-r16-${i}`
-    const idQf  = (i: number) => qfMs[i]?.id   ?? `ko-qf-${i}`
-    const idSf  = (i: number) => sfMs[i]?.id   ?? `ko-sf-${i}`
-    const idTh  = ()          => thirdMs[0]?.id ?? 'ko-3rd'
-    const idFn  = ()          => finalMs[0]?.id ?? 'ko-final'
+    // Always use stable slot IDs for picks — never real match IDs.
+    // Real match data (kickoff, venue) is passed separately for display only.
+    const id32 = (i: number) => `ko-r32-${i}`
+    const id16 = (i: number) => `ko-r16-${i}`
+    const idQf = (i: number) => `ko-qf-${i}`
+    const idSf = (i: number) => `ko-sf-${i}`
+    const idTh = () => 'ko-3rd'
+    const idFn = () => 'ko-final'
 
     const r32 = [
       mkNode(id32(0),  getGrp(2,'A'), getGrp(2,'B'), '2° A','2° B', r32Ms[0]?.kickoff, r32Ms[0]?.venue ?? undefined),  // P73
@@ -2546,17 +2565,17 @@ export default function TournamentPage() {
                       {
                         key: 'r16', label: '8vos de final', pts: 10,
                         realTeams: [...realR16Set].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(r32Ms.map(m => perParticipantBracket.get(uid)?.get(m.id)).filter(Boolean) as string[]),
+                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:16}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r32-${i}`)).filter(Boolean) as string[]),
                       },
                       {
                         key: 'qf', label: 'Cuartos de final', pts: 14,
                         realTeams: [...realQfSet].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(r16Ms.map(m => perParticipantBracket.get(uid)?.get(m.id)).filter(Boolean) as string[]),
+                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:8}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[]),
                       },
                       {
                         key: 'sf', label: 'Semifinales', pts: 18,
                         realTeams: [...realSfSet].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(qfMs.map(m => perParticipantBracket.get(uid)?.get(m.id)).filter(Boolean) as string[]),
+                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:4}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[]),
                       },
                     ] as Array<{ key: string; label: string; pts: number; realTeams: string[]; getUserTeams: (uid: string) => Set<string> }>).map(({ key, label, pts, realTeams, getUserTeams }) => {
                       const stageColor = STAGE_COLORS[key] ?? '#1e293b'
@@ -2800,11 +2819,12 @@ export default function TournamentPage() {
                             </td>
                           </tr>,
                           ...ms.map((m, i) => {
+                            const slotId = koSlotId(stage, i)
                             const num = matchNumById.get(m.id)
                             const hasResult = m.home_score !== null && m.away_score !== null
                             const bg = i % 2 === 0 ? '#fff' : '#f9fafb'
                             return (
-                              <tr key={m.id} style={{ background: bg, borderBottom: `1px solid ${BORDER}` }}>
+                              <tr key={slotId} style={{ background: bg, borderBottom: `1px solid ${BORDER}` }}>
                                 <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: bg, fontSize: 10, whiteSpace: 'nowrap' }}>
                                   {num && stage === 'r32'
                                     ? <><span style={{ color: MUTED, fontSize: 9, marginRight: 4 }}>P{num}</span>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</>
@@ -2815,9 +2835,9 @@ export default function TournamentPage() {
                                   {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
                                 </td>
                                 {participants.map(p => {
-                                  const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                  const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === slotId)
                                   const bracket = perParticipantBracket.get(p.user_id)
-                                  const winner = bracket?.get(m.id)
+                                  const winner = bracket?.get(slotId)
                                   const matchScore = pk && hasResult ? calcScore(pk, m) : null
                                   const color = matchScore !== null
                                     ? (matchScore >= 12 ? '#15803d' : matchScore >= 7 ? '#16a34a' : matchScore >= 5 ? '#ca8a04' : matchScore >= 2 ? '#f97316' : RED)
