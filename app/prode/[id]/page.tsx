@@ -251,9 +251,9 @@ function computeKoBracket(
     const pk = picks.find(p => p.match_id === `ko-r32-${i}`)
     applySlot(`ko-r32-${i}`, '', '', r32Ms[i]?.home_team ?? '?', r32Ms[i]?.away_team ?? '?', pk?.predicted_home, pk?.predicted_away)
   }
-  r16Ms.forEach((m, i) => { const [a,b] = R16_FROM_R32[i] ?? [i*2,i*2+1]; applySlot(`ko-r16-${i}`, `ko-r32-${a}`, `ko-r32-${b}`, m.home_team, m.away_team) })
-  qfMs.forEach( (m, i) => { const [a,b] = QF_FROM_R16[i]  ?? [i*2,i*2+1]; applySlot(`ko-qf-${i}`,  `ko-r16-${a}`, `ko-r16-${b}`, m.home_team, m.away_team) })
-  sfMs.forEach( (m, i) => applySlot(`ko-sf-${i}`, `ko-qf-${i*2}`, `ko-qf-${i*2+1}`, m.home_team, m.away_team))
+  for (let i = 0; i < 8; i++) { const m = r16Ms[i]; const [a,b] = R16_FROM_R32[i] ?? [i*2,i*2+1]; applySlot(`ko-r16-${i}`, `ko-r32-${a}`, `ko-r32-${b}`, m?.home_team ?? '?', m?.away_team ?? '?') }
+  for (let i = 0; i < 4; i++) { const m = qfMs[i];  const [a,b] = QF_FROM_R16[i]  ?? [i*2,i*2+1]; applySlot(`ko-qf-${i}`,  `ko-r16-${a}`, `ko-r16-${b}`, m?.home_team ?? '?', m?.away_team ?? '?') }
+  for (let i = 0; i < 2; i++) { const m = sfMs[i];  applySlot(`ko-sf-${i}`, `ko-qf-${i*2}`, `ko-qf-${i*2+1}`, m?.home_team ?? '?', m?.away_team ?? '?') }
 
   const thirdPk = picks.find(p => p.match_id === 'ko-3rd')
   if (thirdPk) {
