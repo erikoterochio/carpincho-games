@@ -365,6 +365,7 @@ export default function TournamentPage() {
   const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const picksEditRef = useRef<Record<string, {h:string;a:string}>>({})
   const saveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({}) // kept for cleanup only
   const [loading, setLoading] = useState(true)
@@ -807,6 +808,7 @@ export default function TournamentPage() {
     const entries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     if (!entries.length) return
     setSaveStatus('saving')
+    setSaveError(null)
     const rows = entries.map(([matchId, v]) => ({
       tournament_id: id,
       user_id: user.id,
@@ -816,8 +818,13 @@ export default function TournamentPage() {
       updated_at: new Date().toISOString(),
     }))
     const { error } = await supabase.from('prode_stage1_picks').upsert(rows, { onConflict: 'tournament_id,user_id,match_id' })
-    if (!error) showSaved()
-    else setSaveStatus('idle')
+    if (!error) {
+      showSaved()
+    } else {
+      console.error('[saveAllPicks] Supabase error:', error)
+      setSaveStatus('idle')
+      setSaveError(error.message)
+    }
   }, [id, user, showSaved])
 
   const saveKoPick = useCallback(async (matchId: string) => {
@@ -838,6 +845,9 @@ export default function TournamentPage() {
         const rest = prev.filter(pk => !(pk.user_id === user.id && pk.match_id === matchId))
         return [...rest, { user_id: user.id, match_id: matchId, home_score: h, away_score: a }]
       })
+    } else {
+      console.error('[saveKoPick] Supabase error:', error, { matchId, h, a })
+      setSaveError(error.message)
     }
   }, [id, user, showSaved])
 
@@ -2005,6 +2015,11 @@ export default function TournamentPage() {
                   >
                     {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar predicciones'}
                   </button>
+                  {saveError && (
+                    <div style={{ color: '#dc2626', fontSize: 11, fontFamily: FONT_NORMAL, marginTop: 6 }}>
+                      Error: {saveError}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
