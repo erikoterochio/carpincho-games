@@ -353,7 +353,7 @@ export default function TournamentPage() {
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
-  const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'ko'|'premios'>('pagos')
+  const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'cruces'|'ko'|'premios'>('pagos')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -593,6 +593,34 @@ export default function TournamentPage() {
     }
     return result
   }, [adminAllPicks, participants, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs])
+
+  // Champion / runner-up / 3rd / 4th derived from each user's KO bracket picks
+  const perParticipantFinals = useMemo(() => {
+    type Finals = { champion: string|null; runnerUp: string|null; third: string|null; fourth: string|null }
+    const result = new Map<string, Finals>()
+    for (const p of participants) {
+      const bracket = perParticipantBracket.get(p.user_id)
+      const empty: Finals = { champion: null, runnerUp: null, third: null, fourth: null }
+      if (!bracket || !finalMs.length) { result.set(p.user_id, empty); continue }
+
+      const champion = bracket.get(finalMs[0].id) ?? null
+      const sf0Win   = sfMs[0]  ? bracket.get(sfMs[0].id)  ?? null : null
+      const sf1Win   = sfMs[1]  ? bracket.get(sfMs[1].id)  ?? null : null
+      const runnerUp = champion ? (sf0Win === champion ? sf1Win : sf0Win) : null
+
+      const qf0Win   = qfMs[0]  ? bracket.get(qfMs[0].id)  ?? null : null
+      const qf1Win   = qfMs[1]  ? bracket.get(qfMs[1].id)  ?? null : null
+      const qf2Win   = qfMs[2]  ? bracket.get(qfMs[2].id)  ?? null : null
+      const qf3Win   = qfMs[3]  ? bracket.get(qfMs[3].id)  ?? null : null
+      const sf0Loser = sf0Win   ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
+      const sf1Loser = sf1Win   ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
+      const third    = thirdMs[0] ? bracket.get(thirdMs[0].id) ?? null : null
+      const fourth   = third    ? (third === sf0Loser ? sf1Loser : sf0Loser) : null
+
+      result.set(p.user_id, { champion, runnerUp, third, fourth })
+    }
+    return result
+  }, [perParticipantBracket, participants, finalMs, sfMs, qfMs, thirdMs])
 
   const adminGroupStandings = useMemo(() => {
     const result = new Map<string, Map<string, TeamStat[]>>()
@@ -1988,8 +2016,8 @@ export default function TournamentPage() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               {/* Admin sub-tab nav */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                {(['pagos','partidos','grupos','ko','premios'] as const)
-                  .filter(k => k !== 'ko' || koMatches.length > 0)
+                {(['pagos','partidos','grupos','cruces','ko','premios'] as const)
+                  .filter(k => (k !== 'cruces' && k !== 'ko') || koMatches.length > 0)
                   .map(k => (
                     <button
                       key={k}
@@ -2000,7 +2028,7 @@ export default function TournamentPage() {
                         borderRadius: 20, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer',
                       }}
                     >
-                      {{ pagos: 'Pagos', partidos: 'Partidos', grupos: 'Grupos', ko: 'KO', premios: 'Premios' }[k]}
+                      {{ pagos: 'Pagos', partidos: 'Partidos', grupos: 'Grupos', cruces: 'Cruces KO', ko: 'Picks KO', premios: 'Premios' }[k]}
                     </button>
                   ))}
               </div>
@@ -2067,7 +2095,7 @@ export default function TournamentPage() {
                             <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
                             {participants.map(p => (
                               <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
-                                {p.profiles?.username ?? '?'}
+                                {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                               </th>
                             ))}
                           </tr>
@@ -2122,7 +2150,7 @@ export default function TournamentPage() {
                             <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
                             {participants.map(p => (
                               <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
-                                {p.profiles?.username ?? '?'}
+                                {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                               </th>
                             ))}
                           </tr>
@@ -2173,6 +2201,104 @@ export default function TournamentPage() {
                 </Card>
               )}
 
+              {/* ── Cruces KO — equipos que llegaron a cada fase ── */}
+              {adminTab === 'cruces' && koMatches.length > 0 && (
+                <Card>
+                  <SectionTitle>Cruces — Equipos por fase</SectionTitle>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                      <thead>
+                        <tr style={{ background: TEXT }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Fase / Equipo</th>
+                          {participants.map(p => (
+                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
+                              {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {([
+                          { stage: 'r32' as const, stageMs: r32Ms,   label: '16avos de final',    advancing: r16Ms },
+                          { stage: 'r16' as const, stageMs: r16Ms,   label: '8vos de final',      advancing: qfMs  },
+                          { stage: 'qf'  as const, stageMs: qfMs,    label: 'Cuartos de final',   advancing: sfMs  },
+                          { stage: 'sf'  as const, stageMs: sfMs,    label: 'Semifinal',          advancing: finalMs },
+                        ] as const).filter(({ stageMs }) => stageMs.length > 0).flatMap(({ stage, stageMs, label }) => {
+                          const stageColor = STAGE_COLORS[stage] ?? '#1e293b'
+                          return [
+                            <tr key={`cruces-hdr-${stage}`}>
+                              <td colSpan={participants.length + 1} style={{ background: stageColor, color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                {label}
+                              </td>
+                            </tr>,
+                            ...stageMs.map((m, i) => {
+                              const realAdvanced = stage === 'r32'
+                                ? r16Ms[Math.floor(i / 2)]
+                                  ? (i % 2 === 0 ? r16Ms[Math.floor(i / 2)]?.home_team : r16Ms[Math.floor(i / 2)]?.away_team)
+                                  : null
+                                : null
+                              const isRealTeam = realAdvanced && !realAdvanced.match(/winner|runner|gan\.|3rd/i)
+                              const rowBg = i % 2 === 0 ? '#fff' : '#f9fafb'
+                              return (
+                                <tr key={`cruces-${stage}-${i}`} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                                  <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
+                                    {stage === 'r32'
+                                      ? <><span style={{ color: MUTED }}>P{(matchNumById.get(m.id) ?? 0)}</span> {abbrev(m.home_team)} vs {abbrev(m.away_team)}</>
+                                      : `${STAGE_LABEL[stage] ?? stage} ${i + 1}`
+                                    }
+                                    {isRealTeam && <span style={{ color: '#16a34a', marginLeft: 4, fontWeight: 700 }}>→ {abbrev(realAdvanced!)}</span>}
+                                  </td>
+                                  {participants.map(p => {
+                                    const bracket = perParticipantBracket.get(p.user_id)
+                                    const predicted = bracket?.get(m.id) ?? null
+                                    const isOk = isRealTeam && predicted ? realAdvanced === predicted : null
+                                    const color = isOk === true ? '#16a34a' : isOk === false ? RED : predicted ? TEXT : MUTED
+                                    return (
+                                      <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap' }}>
+                                        {predicted ? abbrev(predicted) : '—'}
+                                      </td>
+                                    )
+                                  })}
+                                </tr>
+                              )
+                            }),
+                          ]
+                        })}
+                        {/* ── 3er/4to/Sub/Campeón ── */}
+                        {finalMs.length > 0 && (() => {
+                          const posRows: Array<{ label: string; getValue: (uid: string) => string | null; bgColor: string }> = [
+                            { label: '3er Puesto',  getValue: uid => perParticipantFinals.get(uid)?.third   ?? null, bgColor: '#1e293b' },
+                            { label: '4to Puesto',  getValue: uid => perParticipantFinals.get(uid)?.fourth  ?? null, bgColor: '#1e293b' },
+                            { label: 'Sub-Campeón', getValue: uid => perParticipantFinals.get(uid)?.runnerUp ?? null, bgColor: '#0A0A0A' },
+                            { label: 'Campeón 🏆',  getValue: uid => perParticipantFinals.get(uid)?.champion ?? null, bgColor: '#C8950A' },
+                          ]
+                          return posRows.map(({ label, getValue, bgColor }, idx) => [
+                            <tr key={`cruces-pos-hdr-${idx}`}>
+                              <td colSpan={participants.length + 1} style={{ background: bgColor, color: bgColor === '#C8950A' ? '#fff' : '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                                {label}
+                              </td>
+                            </tr>,
+                            <tr key={`cruces-pos-${idx}`} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: '#fff', whiteSpace: 'nowrap' }}>
+                                {label}
+                              </td>
+                              {participants.map(p => {
+                                const team = getValue(p.user_id)
+                                return (
+                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 11, color: team ? (bgColor === '#C8950A' ? '#C8950A' : TEXT) : MUTED, whiteSpace: 'nowrap' }}>
+                                    {team ? abbrev(team) : '—'}
+                                  </td>
+                                )
+                              })}
+                            </tr>,
+                          ])
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              )}
+
               {/* ── KO ── */}
               {adminTab === 'ko' && koMatches.length > 0 && (
                 <Card>
@@ -2185,7 +2311,7 @@ export default function TournamentPage() {
                           <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
                           {participants.map(p => (
                             <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
-                              {p.profiles?.username ?? '?'}
+                              {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                             </th>
                           ))}
                         </tr>
@@ -2254,32 +2380,49 @@ export default function TournamentPage() {
                           <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Adicional</th>
                           {participants.map(p => (
                             <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
-                              {p.profiles?.username ?? '?'}
+                              {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {SPECIAL_LABELS.map((f, i) => (
-                          <tr key={f.key} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', fontSize: 10, whiteSpace: 'nowrap' }}>
-                              {f.label}
-                            </td>
-                            {participants.map(p => {
-                              const sp = adminSpecials.find(s => s.user_id === p.user_id)
-                              let val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
-                              if (f.key === 'goleada_match_id' && val) {
-                                const gm = matches.find(m => m.id === val)
-                                val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
-                              }
-                              return (
-                                <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
-                                  {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
-                                </td>
-                              )
-                            })}
-                          </tr>
-                        ))}
+                        {SPECIAL_LABELS.map((f, i) => {
+                          const fromBracket = ['champion','runner_up','third_place','fourth_place'].includes(f.key)
+                          const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
+                          return (
+                            <tr key={f.key} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: rowBg, fontSize: 10, whiteSpace: 'nowrap' }}>
+                                {f.label}
+                                {fromBracket && <span style={{ fontSize: 8, color: MUTED, fontWeight: 400, marginLeft: 4 }}>(bracket)</span>}
+                              </td>
+                              {participants.map(p => {
+                                let val = ''
+                                if (fromBracket) {
+                                  const finals = perParticipantFinals.get(p.user_id)
+                                  const mapped: Record<string, string|null|undefined> = {
+                                    champion:    finals?.champion,
+                                    runner_up:   finals?.runnerUp,
+                                    third_place: finals?.third,
+                                    fourth_place: finals?.fourth,
+                                  }
+                                  val = mapped[f.key] ? abbrev(mapped[f.key]!) : ''
+                                } else {
+                                  const sp = adminSpecials.find(s => s.user_id === p.user_id)
+                                  val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
+                                  if (f.key === 'goleada_match_id' && val) {
+                                    const gm = matches.find(m => m.id === val)
+                                    val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
+                                  }
+                                }
+                                return (
+                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
+                                    {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
                       </tbody>
                     </table>
                   </div>
