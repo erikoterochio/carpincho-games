@@ -828,11 +828,12 @@ export default function TournamentPage() {
   }, [id, user, showSaved])
 
   const saveKoPick = useCallback(async (matchId: string) => {
-    if (!user) return
+    if (!user) { console.warn('[saveKoPick] no user'); return }
     const p = koPicksRef.current[matchId]
-    if (!p || p.h === '' || p.a === '') return
+    if (!p || p.h === '' || p.a === '') { console.log('[saveKoPick] skip', matchId, p); return }
     const h = parseInt(p.h), a = parseInt(p.a)
-    if (isNaN(h) || isNaN(a)) return
+    if (isNaN(h) || isNaN(a)) { console.warn('[saveKoPick] NaN', p); return }
+    console.log('[saveKoPick] saving', matchId, h, a)
     const { error } = await supabase.from('prode_stage1_picks').upsert(
       { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
       { onConflict: 'tournament_id,user_id,match_id' }
@@ -1709,6 +1710,14 @@ export default function TournamentPage() {
       `}</style>
 
       <div className="t-page">
+
+        {/* ── GLOBAL SAVE ERROR BANNER ── */}
+        {saveError && (
+          <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999, background: '#dc2626', color: '#fff', fontFamily: FONT_NORMAL, fontSize: 12, padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span>Error al guardar: {saveError}</span>
+            <button onClick={() => setSaveError(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: 16, padding: '0 4px' }}>✕</button>
+          </div>
+        )}
 
         {/* ── NAV ── */}
         <nav style={{ background: '#fff', borderBottom: `1px solid ${BORDER}`, boxShadow: '0 1px 8px rgba(0,0,0,0.06)' }}>
