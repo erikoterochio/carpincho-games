@@ -25,12 +25,10 @@ type Match = {
 }
 type Picks = Record<string, { h: string; a: string }>
 type Specials = {
-  champion: string; runner_up: string; third_place: string; fourth_place: string
   balon_oro: string; guante_oro: string; botin_oro: string
   fair_play: string; revelacion: string; goleada_match_id: string
 }
 const EMPTY_SPECIALS: Specials = {
-  champion: '', runner_up: '', third_place: '', fourth_place: '',
   balon_oro: '', guante_oro: '', botin_oro: '', fair_play: '', revelacion: '', goleada_match_id: '',
 }
 
@@ -130,8 +128,6 @@ export default function PredecirPage() {
       setPicks(pm); picksRef.current = pm
       if (mySpecials) {
         const sp: Specials = {
-          champion: mySpecials.champion ?? '', runner_up: mySpecials.runner_up ?? '',
-          third_place: mySpecials.third_place ?? '', fourth_place: mySpecials.fourth_place ?? '',
           balon_oro: mySpecials.balon_oro ?? '', guante_oro: mySpecials.guante_oro ?? '',
           botin_oro: mySpecials.botin_oro ?? '', fair_play: mySpecials.fair_play ?? '',
           revelacion: mySpecials.revelacion ?? '', goleada_match_id: mySpecials.goleada_match_id ?? '',
@@ -648,14 +644,6 @@ export default function PredecirPage() {
           {/* Especiales */}
           {activeStage === 'esp' && (
             <div className="specials-grid">
-
-              <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '18px 20px' }}>
-                <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 16 }}>🏆 Posiciones finales</div>
-                <TeamSelect field="champion" label="Campeón (40 pts)" />
-                <TeamSelect field="runner_up" label="Sub-campeón (35 pts)" />
-                <TeamSelect field="third_place" label="3er puesto (30 pts)" />
-                <TeamSelect field="fourth_place" label="4to puesto (25 pts)" />
-              </div>
 
               <div style={{ background: 'rgba(255,255,255,0.92)', border: `1.5px solid ${BORDER}`, borderRadius: 14, padding: '18px 20px' }}>
                 <div style={{ fontSize: 14, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, marginBottom: 16 }}>⭐ Premios individuales (15 pts c/u)</div>
