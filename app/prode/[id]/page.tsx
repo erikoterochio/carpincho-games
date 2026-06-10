@@ -424,15 +424,15 @@ export default function TournamentPage() {
           .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id,predicted_home,predicted_away,pen_winner').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
         setAllPicks(allP)
+        const groupMatchIdSet = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
         const pm: Record<string, {h:string;a:string}> = {}
-        for (const p of allP.filter(pk => pk.user_id === user.id)) {
+        for (const p of allP.filter(pk => pk.user_id === user.id && groupMatchIdSet.has(pk.match_id))) {
           pm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
         }
         setMyEditPicks(pm)
         picksEditRef.current = pm
 
         // Init KO bracket state from loaded picks (restores scores + penalty winner)
-        const groupMatchIdSet = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
         const kopm: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
         for (const p of allP.filter(pk => pk.user_id === user.id && !groupMatchIdSet.has(pk.match_id))) {
           const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner : undefined
