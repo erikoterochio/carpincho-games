@@ -780,7 +780,7 @@ export default function TournamentPage() {
     for (const p of participants) {
       const bracket = perParticipantBracket.get(p.user_id)
       const empty: Finals = { champion: null, runnerUp: null, third: null, fourth: null }
-      if (!bracket || !finalMs.length) { result.set(p.user_id, empty); continue }
+      if (!bracket) { result.set(p.user_id, empty); continue }
 
       const champion = bracket.get('ko-final') ?? null
       const sf0Win   = bracket.get('ko-sf-0') ?? null
