@@ -16,6 +16,36 @@ const TEXT = '#111111'
 const MUTED = '#6B7280'
 const STAGE1_DEADLINE = new Date('2026-06-11T19:00:00Z')
 const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
+
+// Official WC2026 R32 bracket seedings — maps slot index (P73=0 … P88=15) to the two seeds
+type SlotRef = { kind: 'first'|'second'; grp: string } | { kind: 'third'; idx: number }
+const R32_SEEDS: [SlotRef, SlotRef][] = [
+  [{ kind:'second',grp:'A' }, { kind:'second',grp:'B' }],  // P73
+  [{ kind:'first', grp:'E' }, { kind:'third',  idx:0  }],  // P74
+  [{ kind:'first', grp:'F' }, { kind:'second',grp:'C' }],  // P75
+  [{ kind:'first', grp:'C' }, { kind:'second',grp:'F' }],  // P76
+  [{ kind:'first', grp:'I' }, { kind:'third',  idx:1  }],  // P77
+  [{ kind:'second',grp:'E' }, { kind:'second',grp:'I' }],  // P78
+  [{ kind:'first', grp:'A' }, { kind:'third',  idx:2  }],  // P79
+  [{ kind:'first', grp:'L' }, { kind:'third',  idx:3  }],  // P80
+  [{ kind:'first', grp:'D' }, { kind:'third',  idx:4  }],  // P81
+  [{ kind:'first', grp:'G' }, { kind:'third',  idx:5  }],  // P82
+  [{ kind:'second',grp:'K' }, { kind:'second',grp:'L' }],  // P83
+  [{ kind:'first', grp:'H' }, { kind:'second',grp:'J' }],  // P84
+  [{ kind:'first', grp:'B' }, { kind:'third',  idx:6  }],  // P85
+  [{ kind:'first', grp:'J' }, { kind:'second',grp:'H' }],  // P86
+  [{ kind:'first', grp:'K' }, { kind:'third',  idx:7  }],  // P87
+  [{ kind:'second',grp:'D' }, { kind:'second',grp:'G' }],  // P88
+]
+function resolveSlot(
+  ref: SlotRef,
+  c: { firsts: (string|null)[]; seconds: (string|null)[]; thirds: (string|null)[] }
+): string | null {
+  if (ref.kind === 'third') return c.thirds[ref.idx] ?? null
+  const gi = GROUPS.indexOf(ref.grp)
+  if (gi === -1) return null
+  return (ref.kind === 'first' ? c.firsts : c.seconds)[gi] ?? null
+}
 const FONT_NORMAL = "'FWC2026', 'Ubuntu', sans-serif"
 const FONT_BLACK  = "'FWC2026Black', 'Ubuntu', sans-serif"
 const FONT_COND   = "'FWC2026UltraCond', 'Ubuntu', sans-serif"
@@ -120,7 +150,7 @@ type MatchEvent = {
   team_id: number; player: string
   type: 'Goal' | 'Card'; detail: string
 }
-type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string }
+type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string; predicted_home?: string | null; predicted_away?: string | null }
 type AdminSpecial = {
   user_id: string
   champion?: string | null; runner_up?: string | null; third_place?: string | null; fourth_place?: string | null
@@ -345,6 +375,7 @@ export default function TournamentPage() {
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const bracketNodeByIdRef = useRef<Map<string, KoMatchNode>>(new Map())
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
@@ -722,8 +753,11 @@ export default function TournamentPage() {
     if (!p || p.h === '' || p.a === '') return
     const h = parseInt(p.h), a = parseInt(p.a)
     if (isNaN(h) || isNaN(a)) return
+    const node = bracketNodeByIdRef.current.get(matchId)
+    const predicted_home = node?.home?.name ?? null
+    const predicted_away = node?.away?.name ?? null
     const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
+      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away, updated_at: new Date().toISOString() },
       { onConflict: 'tournament_id,user_id,match_id' }
     )
     if (!error) showSaved()
@@ -949,6 +983,14 @@ export default function TournamentPage() {
 
     return { r32, r16, qf, sf, third, final, matchLabels }
   }, [allGroupStandings, bestThirds, koEditPicks, matches])
+
+  // Keep bracketNodeByIdRef in sync so saveKoPick can read predicted teams without stale closure
+  useEffect(() => {
+    const m = new Map<string, KoMatchNode>()
+    const nodes = [...bracketData.r32, ...bracketData.r16, ...bracketData.qf, ...bracketData.sf, bracketData.third, bracketData.final]
+    for (const n of nodes) if (n) m.set(n.id, n)
+    bracketNodeByIdRef.current = m
+  }, [bracketData])
 
   if (loading) return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_NORMAL, background: '#f5f5f5' }}>
@@ -2319,7 +2361,7 @@ export default function TournamentPage() {
                 </Card>
               )}
 
-              {/* ── Clasificados — clasificados por fase según picks de cada jugador ── */}
+              {/* ── Clasificados — bracket completo por jugador ── */}
               {adminTab === 'clasificados' && (
                 <Card>
                   <SectionTitle>Clasificados por fase</SectionTitle>
@@ -2327,58 +2369,53 @@ export default function TournamentPage() {
                     <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
                       <thead>
                         <tr style={{ background: TEXT }}>
-                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 130 }}>Fase / Slot</th>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 150 }}>Fase / Slot</th>
                           {participants.map(p => (
-                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52 }}>
+                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 60 }}>
                               {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {/* ── 32 clasificados para 16avos ── */}
+                        {/* ── 16avos: bracket seedings desde picks de grupos ── */}
                         <tr>
                           <td colSpan={participants.length + 1} style={{ background: STAGE_COLORS['r32'] ?? '#312E81', color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                            Clasificados para 16avos de final (32 equipos)
+                            16avos de final — Bracket P73–P88 (clasificados desde grupos)
                           </td>
                         </tr>
-                        {GROUPS.map((g, gi) => [
-                          <tr key={`cls-1st-${g}`} style={{ background: gi % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: gi % 2 === 0 ? '#fff' : '#f9fafb', whiteSpace: 'nowrap' }}>
-                              1° Grupo {g}
-                            </td>
-                            {participants.map(p => {
-                              const team = perParticipantClassified.get(p.user_id)?.firsts[gi] ?? null
-                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
-                            })}
-                          </tr>,
-                          <tr key={`cls-2nd-${g}`} style={{ background: gi % 2 === 0 ? '#f0f4ff' : '#eaf4ff', borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: gi % 2 === 0 ? '#f0f4ff' : '#eaf4ff', whiteSpace: 'nowrap' }}>
-                              2° Grupo {g}
-                            </td>
-                            {participants.map(p => {
-                              const team = perParticipantClassified.get(p.user_id)?.seconds[gi] ?? null
-                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
-                            })}
-                          </tr>,
-                        ])}
-                        {Array.from({ length: 8 }, (_, i) => (
-                          <tr key={`cls-3rd-${i}`} style={{ background: i % 2 === 0 ? '#fdf8ee' : '#fef3d8', borderBottom: `1px solid ${BORDER}` }}>
-                            <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fdf8ee' : '#fef3d8', whiteSpace: 'nowrap' }}>
-                              3° mejor #{i + 1}
-                            </td>
-                            {participants.map(p => {
-                              const team = perParticipantClassified.get(p.user_id)?.thirds[i] ?? null
-                              return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: team ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{team ? abbrev(team) : '—'}</td>
-                            })}
-                          </tr>
-                        ))}
-                        {/* ── KO rounds ── */}
+                        {R32_SEEDS.map(([homeRef, awayRef], i) => {
+                          const rowBg = i % 2 === 0 ? '#fff' : '#f9fafb'
+                          const matchId = r32Ms[i]?.id
+                          return (
+                            <tr key={`cls-r32-${i}`} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '5px 10px', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
+                                P{73 + i}
+                                {homeRef.kind !== 'third' && awayRef.kind !== 'third'
+                                  ? <span style={{ color: '#9ca3af', marginLeft: 4 }}>({homeRef.kind==='first'?'1°':'2°'}{homeRef.grp} vs {awayRef.kind==='first'?'1°':'2°'}{(awayRef as any).grp})</span>
+                                  : null
+                                }
+                              </td>
+                              {participants.map(p => {
+                                const c = perParticipantClassified.get(p.user_id)
+                                const homeTeam = c ? resolveSlot(homeRef, c) : null
+                                const awayTeam = c ? resolveSlot(awayRef, c) : null
+                                const winner = matchId ? perParticipantBracket.get(p.user_id)?.get(matchId) ?? null : null
+                                const display = winner
+                                  ? <span style={{ fontWeight: 700, color: '#16a34a' }}>{abbrev(winner)}</span>
+                                  : homeTeam && awayTeam
+                                    ? <span style={{ color: TEXT, fontSize: 9 }}>{abbrev(homeTeam)}<span style={{ color: MUTED }}>/</span>{abbrev(awayTeam)}</span>
+                                    : <span style={{ color: MUTED }}>—</span>
+                                return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, whiteSpace: 'nowrap' }}>{display}</td>
+                              })}
+                            </tr>
+                          )
+                        })}
+                        {/* ── 8vos en adelante: derivados de picks KO ── */}
                         {([
-                          { stageMs: r32Ms,  label: 'Avanzados a 8vos (ganadores 16avos)',    stageKey: 'r32' as const },
-                          { stageMs: r16Ms,  label: 'Avanzados a 4tos (ganadores 8vos)',       stageKey: 'r16' as const },
-                          { stageMs: qfMs,   label: 'Semifinalistas (ganadores 4tos)',          stageKey: 'qf'  as const },
-                          { stageMs: sfMs,   label: 'Finalistas y 3°/4° (ganadores Semis)',    stageKey: 'sf'  as const },
+                          { stageMs: r16Ms, label: '8vos de final — Clasificados (ganadores 16avos)',  stageKey: 'r16' as const },
+                          { stageMs: qfMs,  label: '4tos de final — Clasificados (ganadores 8vos)',    stageKey: 'qf'  as const },
+                          { stageMs: sfMs,  label: 'Semifinalistas — Clasificados (ganadores 4tos)',   stageKey: 'sf'  as const },
                         ]).filter(({ stageMs }) => stageMs.length > 0).flatMap(({ stageMs, label, stageKey }) => [
                           <tr key={`cls-hdr-${stageKey}`}>
                             <td colSpan={participants.length + 1} style={{ background: STAGE_COLORS[stageKey] ?? '#1e293b', color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '5px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
@@ -2394,8 +2431,7 @@ export default function TournamentPage() {
                                   {num ? `Gan. P${num}` : `${stageKey.toUpperCase()} ${i + 1}`}
                                 </td>
                                 {participants.map(p => {
-                                  const bracket = perParticipantBracket.get(p.user_id)
-                                  const predicted = bracket?.get(m.id) ?? null
+                                  const predicted = perParticipantBracket.get(p.user_id)?.get(m.id) ?? null
                                   return <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: predicted ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{predicted ? abbrev(predicted) : '—'}</td>
                                 })}
                               </tr>

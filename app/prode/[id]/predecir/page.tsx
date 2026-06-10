@@ -101,6 +101,7 @@ export default function PredecirPage() {
 
   const picksRef = useRef<Picks>({})
   const specialsRef = useRef<Specials>(EMPTY_SPECIALS)
+  const matchesRef = useRef<Match[]>([])
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const specialsTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const userRef = useRef<any>(null)
@@ -121,7 +122,9 @@ export default function PredecirPage() {
         supabase.from('prode_stage1_specials').select('*').eq('tournament_id', id).eq('user_id', user.id).maybeSingle(),
         supabase.from('prode_standings').select('group_name,rank,team_name').order('group_name').order('rank'),
       ])
-      setMatches((ms ?? []) as Match[])
+      const matchList = (ms ?? []) as Match[]
+      setMatches(matchList)
+      matchesRef.current = matchList
       setStandings((st ?? []) as {group_name: string; rank: number; team_name: string}[])
       const pm: Picks = {}
       for (const p of (myPicks ?? [])) pm[p.match_id] = { h: String(p.home_score), a: String(p.away_score) }
@@ -147,8 +150,12 @@ export default function PredecirPage() {
     const h = parseInt(p.h), a = parseInt(p.a)
     if (isNaN(h) || isNaN(a)) return
     setSaveStatus('saving')
+    // For KO matches, persist which teams the user predicted for that slot
+    const m = matchesRef.current.find(mx => mx.id === matchId)
+    const predicted_home = m?.home_team ?? null
+    const predicted_away = m?.away_team ?? null
     const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: userRef.current?.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
+      { tournament_id: id, user_id: userRef.current?.id, match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away, updated_at: new Date().toISOString() },
       { onConflict: 'tournament_id,user_id,match_id' }
     )
     if (!error) showSaved(); else setSaveStatus('idle')
