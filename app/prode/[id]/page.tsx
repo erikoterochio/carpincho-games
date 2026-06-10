@@ -863,29 +863,31 @@ export default function TournamentPage() {
     const thirdMs = koByStage('3rd')
     const finalMs = koByStage('final')
 
+    // Official WC 2026 R32 bracket (wikipedia.org/wiki/2026_FIFA_World_Cup_knockout_stage)
+    // P73-P88; 8 best 3rd-place teams assigned in rank order to the 8 slots that need one
     const r32 = [
-      mkNode('ko-r32-0',  getGrp(1,'A'), getGrp(2,'B'), '1° A','2° B', r32Ms[0]?.kickoff, r32Ms[0]?.venue ?? undefined),
-      mkNode('ko-r32-1',  getGrp(1,'B'), getGrp(2,'A'), '1° B','2° A', r32Ms[1]?.kickoff, r32Ms[1]?.venue ?? undefined),
-      mkNode('ko-r32-2',  getGrp(1,'C'), getGrp(2,'D'), '1° C','2° D', r32Ms[2]?.kickoff, r32Ms[2]?.venue ?? undefined),
-      mkNode('ko-r32-3',  getGrp(1,'D'), getGrp(2,'C'), '1° D','2° C', r32Ms[3]?.kickoff, r32Ms[3]?.venue ?? undefined),
-      mkNode('ko-r32-4',  getGrp(1,'E'), getGrp(2,'F'), '1° E','2° F', r32Ms[4]?.kickoff, r32Ms[4]?.venue ?? undefined),
-      mkNode('ko-r32-5',  getGrp(1,'F'), getGrp(2,'E'), '1° F','2° E', r32Ms[5]?.kickoff, r32Ms[5]?.venue ?? undefined),
-      mkNode('ko-r32-6',  getGrp(1,'G'), getGrp(2,'H'), '1° G','2° H', r32Ms[6]?.kickoff, r32Ms[6]?.venue ?? undefined),
-      mkNode('ko-r32-7',  getGrp(1,'H'), getGrp(2,'G'), '1° H','2° G', r32Ms[7]?.kickoff, r32Ms[7]?.venue ?? undefined),
-      mkNode('ko-r32-8',  getGrp(1,'I'), getGrp(2,'J'), '1° I','2° J', r32Ms[8]?.kickoff, r32Ms[8]?.venue ?? undefined),
-      mkNode('ko-r32-9',  getGrp(1,'J'), getGrp(2,'I'), '1° J','2° I', r32Ms[9]?.kickoff, r32Ms[9]?.venue ?? undefined),
-      mkNode('ko-r32-10', getGrp(1,'K'), getGrp(2,'L'), '1° K','2° L', r32Ms[10]?.kickoff, r32Ms[10]?.venue ?? undefined),
-      mkNode('ko-r32-11', getGrp(1,'L'), getGrp(2,'K'), '1° L','2° K', r32Ms[11]?.kickoff, r32Ms[11]?.venue ?? undefined),
-      mkNode('ko-r32-12', get3rd(0), get3rd(1), '3° mejor 1','3° mejor 2', r32Ms[12]?.kickoff, r32Ms[12]?.venue ?? undefined),
-      mkNode('ko-r32-13', get3rd(2), get3rd(3), '3° mejor 3','3° mejor 4', r32Ms[13]?.kickoff, r32Ms[13]?.venue ?? undefined),
-      mkNode('ko-r32-14', get3rd(4), get3rd(5), '3° mejor 5','3° mejor 6', r32Ms[14]?.kickoff, r32Ms[14]?.venue ?? undefined),
-      mkNode('ko-r32-15', get3rd(6), get3rd(7), '3° mejor 7','3° mejor 8', r32Ms[15]?.kickoff, r32Ms[15]?.venue ?? undefined),
+      mkNode('ko-r32-0',  getGrp(2,'A'), getGrp(2,'B'), '2° A','2° B', r32Ms[0]?.kickoff, r32Ms[0]?.venue ?? undefined),  // P73
+      mkNode('ko-r32-1',  getGrp(1,'E'), get3rd(0),     '1° E','3° mejor', r32Ms[1]?.kickoff, r32Ms[1]?.venue ?? undefined),  // P74
+      mkNode('ko-r32-2',  getGrp(1,'F'), getGrp(2,'C'), '1° F','2° C', r32Ms[2]?.kickoff, r32Ms[2]?.venue ?? undefined),  // P75
+      mkNode('ko-r32-3',  getGrp(1,'C'), getGrp(2,'F'), '1° C','2° F', r32Ms[3]?.kickoff, r32Ms[3]?.venue ?? undefined),  // P76
+      mkNode('ko-r32-4',  getGrp(1,'I'), get3rd(1),     '1° I','3° mejor', r32Ms[4]?.kickoff, r32Ms[4]?.venue ?? undefined),  // P77
+      mkNode('ko-r32-5',  getGrp(2,'E'), getGrp(2,'I'), '2° E','2° I', r32Ms[5]?.kickoff, r32Ms[5]?.venue ?? undefined),  // P78
+      mkNode('ko-r32-6',  getGrp(1,'A'), get3rd(2),     '1° A','3° mejor', r32Ms[6]?.kickoff, r32Ms[6]?.venue ?? undefined),  // P79
+      mkNode('ko-r32-7',  getGrp(1,'L'), get3rd(3),     '1° L','3° mejor', r32Ms[7]?.kickoff, r32Ms[7]?.venue ?? undefined),  // P80
+      mkNode('ko-r32-8',  getGrp(1,'D'), get3rd(4),     '1° D','3° mejor', r32Ms[8]?.kickoff, r32Ms[8]?.venue ?? undefined),  // P81
+      mkNode('ko-r32-9',  getGrp(1,'G'), get3rd(5),     '1° G','3° mejor', r32Ms[9]?.kickoff, r32Ms[9]?.venue ?? undefined),  // P82
+      mkNode('ko-r32-10', getGrp(2,'K'), getGrp(2,'L'), '2° K','2° L', r32Ms[10]?.kickoff, r32Ms[10]?.venue ?? undefined), // P83
+      mkNode('ko-r32-11', getGrp(1,'H'), getGrp(2,'J'), '1° H','2° J', r32Ms[11]?.kickoff, r32Ms[11]?.venue ?? undefined), // P84
+      mkNode('ko-r32-12', getGrp(1,'B'), get3rd(6),     '1° B','3° mejor', r32Ms[12]?.kickoff, r32Ms[12]?.venue ?? undefined), // P85
+      mkNode('ko-r32-13', getGrp(1,'J'), getGrp(2,'H'), '1° J','2° H', r32Ms[13]?.kickoff, r32Ms[13]?.venue ?? undefined), // P86
+      mkNode('ko-r32-14', getGrp(1,'K'), get3rd(7),     '1° K','3° mejor', r32Ms[14]?.kickoff, r32Ms[14]?.venue ?? undefined), // P87
+      mkNode('ko-r32-15', getGrp(2,'D'), getGrp(2,'G'), '2° D','2° G', r32Ms[15]?.kickoff, r32Ms[15]?.venue ?? undefined), // P88
     ]
-    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${49+i*2}`,`Gan. P${50+i*2}`, r16Ms[i]?.kickoff, r16Ms[i]?.venue ?? undefined))
-    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. R16-${i*2+1}`,`Gan. R16-${i*2+2}`, qfMs[i]?.kickoff, qfMs[i]?.venue ?? undefined))
-    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. QF-${i*2+1}`,`Gan. QF-${i*2+2}`, sfMs[i]?.kickoff, sfMs[i]?.venue ?? undefined))
-    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. SF-1','Per. SF-2', thirdMs[0]?.kickoff, thirdMs[0]?.venue ?? undefined)
-    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. SF-1','Gan. SF-2', finalMs[0]?.kickoff, finalMs[0]?.venue ?? undefined)
+    const r16 = Array.from({length:8}, (_,i) => mkNode(`ko-r16-${i}`, r32[i*2].winner, r32[i*2+1].winner, `Gan. P${73+i*2}`,`Gan. P${74+i*2}`, r16Ms[i]?.kickoff, r16Ms[i]?.venue ?? undefined))
+    const qf  = Array.from({length:4}, (_,i) => mkNode(`ko-qf-${i}`, r16[i*2].winner, r16[i*2+1].winner, `Gan. P${89+i*2}`,`Gan. P${90+i*2}`, qfMs[i]?.kickoff, qfMs[i]?.venue ?? undefined))
+    const sf  = Array.from({length:2}, (_,i) => mkNode(`ko-sf-${i}`, qf[i*2].winner, qf[i*2+1].winner, `Gan. P${97+i*2}`,`Gan. P${98+i*2}`, sfMs[i]?.kickoff, sfMs[i]?.venue ?? undefined))
+    const third = mkNode('ko-3rd', sf[0].loser, sf[1].loser, 'Per. P101','Per. P102', thirdMs[0]?.kickoff, thirdMs[0]?.venue ?? undefined)
+    const final = mkNode('ko-final', sf[0].winner, sf[1].winner, 'Gan. P101','Gan. P102', finalMs[0]?.kickoff, finalMs[0]?.venue ?? undefined)
     return { r32, r16, qf, sf, third, final }
   }, [allGroupStandings, bestThirds, koEditPicks, matches])
 
@@ -986,10 +988,10 @@ export default function TournamentPage() {
   const koMatchLabel = (id: string): string => {
     if (id === 'ko-final') return 'FINAL'
     if (id === 'ko-3rd') return '3°/4° Puesto'
-    if (id.startsWith('ko-r32-')) return `P${49 + parseInt(id.slice(7))}`
-    if (id.startsWith('ko-r16-')) return `R16-${+id.slice(7) + 1}`
-    if (id.startsWith('ko-qf-')) return `QF-${+id.slice(6) + 1}`
-    if (id.startsWith('ko-sf-')) return `SF-${+id.slice(6) + 1}`
+    if (id.startsWith('ko-r32-')) return `P${73 + parseInt(id.slice(7))}`
+    if (id.startsWith('ko-r16-')) return `P${89 + parseInt(id.slice(7))}`
+    if (id.startsWith('ko-qf-'))  return `P${97 + parseInt(id.slice(6))}`
+    if (id.startsWith('ko-sf-'))  return `P${101 + parseInt(id.slice(6))}`
     return id
   }
 
