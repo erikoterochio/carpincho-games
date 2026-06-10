@@ -2559,149 +2559,158 @@ export default function TournamentPage() {
                 </Card>
               )}
 
-              {/* ── Clasificados — equipos predichos por etapa ── */}
+              {/* ── Clasificados — tabla por jugador, equipos en orden alfabético ── */}
               {adminTab === 'clasificados' && (
                 <Card>
                   <SectionTitle>Clasificados por etapa</SectionTitle>
                   <div style={{ overflowX: 'auto' }}>
-                    {/* KO stages: R32 → R16 → QF → SF */}
                     {([
                       {
-                        key: 'r32', label: '16avos de final', pts: 6,
-                        realTeams: [...realR32Set].sort(),
-                        getUserTeams: (uid: string) => {
+                        key: 'r32', label: '16avos de final', count: 32,
+                        realTeams: new Set([...realR32Set]),
+                        getTeams: (uid: string): string[] => {
                           const c = perParticipantClassified.get(uid)
-                          if (!c) return new Set<string>()
-                          return new Set<string>([
+                          if (!c) return []
+                          return [...new Set<string>([
                             ...(c.firsts.filter(Boolean) as string[]),
                             ...(c.seconds.filter(Boolean) as string[]),
                             ...(c.thirds.filter(Boolean) as string[]),
-                          ])
+                          ])].sort()
                         },
                       },
                       {
-                        key: 'r16', label: '8vos de final', pts: 10,
-                        realTeams: [...realR16Set].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:16}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r32-${i}`)).filter(Boolean) as string[]),
+                        key: 'r16', label: '8vos de final', count: 16,
+                        realTeams: new Set([...realR16Set]),
+                        getTeams: (uid: string): string[] =>
+                          [...new Set<string>(Array.from({length:16}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r32-${i}`)).filter(Boolean) as string[])].sort(),
                       },
                       {
-                        key: 'qf', label: 'Cuartos de final', pts: 14,
-                        realTeams: [...realQfSet].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:8}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[]),
+                        key: 'qf', label: 'Cuartos de final', count: 8,
+                        realTeams: new Set([...realQfSet]),
+                        getTeams: (uid: string): string[] =>
+                          [...new Set<string>(Array.from({length:8}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[])].sort(),
                       },
                       {
-                        key: 'sf', label: 'Semifinales', pts: 18,
-                        realTeams: [...realSfSet].sort(),
-                        getUserTeams: (uid: string) => new Set<string>(Array.from({length:4}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[]),
+                        key: 'sf', label: 'Semifinales', count: 4,
+                        realTeams: new Set([...realSfSet]),
+                        getTeams: (uid: string): string[] =>
+                          [...new Set<string>(Array.from({length:4}, (_,i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[])].sort(),
                       },
-                    ] as Array<{ key: string; label: string; pts: number; realTeams: string[]; getUserTeams: (uid: string) => Set<string> }>).map(({ key, label, pts, realTeams, getUserTeams }) => {
+                    ] as Array<{ key: string; label: string; count: number; realTeams: Set<string>; getTeams: (uid: string) => string[] }>).map(({ key, label, count, realTeams, getTeams }) => {
                       const stageColor = STAGE_COLORS[key] ?? '#1e293b'
-                      const hasRealData = realTeams.length > 0
-                      // When stage not yet resolved, show everyone's predictions pooled
-                      const displayTeams = hasRealData
-                        ? realTeams
-                        : [...new Set(participants.flatMap(p => [...getUserTeams(p.user_id)]).filter(Boolean))].sort()
+                      const hasReal = realTeams.size > 0
+                      const perUser = new Map(participants.map(p => [p.user_id, getTeams(p.user_id)]))
                       return (
-                        <div key={key} style={{ marginBottom: 10 }}>
+                        <div key={key} style={{ marginBottom: 16 }}>
                           <div style={{ background: stageColor, color: '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '6px 10px', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{label}</span>
-                            <span style={{ color: GOLD }}>{pts} pts/equipo{!hasRealData ? ' · pendiente' : ''}</span>
-                          </div>
-                          {displayTeams.length === 0 ? (
-                            <div style={{ padding: '10px 12px', color: MUTED, fontFamily: FONT_NORMAL, fontSize: 11, background: '#f9fafb', border: `1px solid ${BORDER}`, borderTop: 0 }}>Sin datos aún</div>
-                          ) : (
-                            <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
-                              <thead>
-                                <tr style={{ background: '#f1f5f9' }}>
-                                  <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, position: 'sticky', left: 0, background: '#f1f5f9', minWidth: 120, whiteSpace: 'nowrap' }}>
-                                    Equipo{hasRealData ? ` (${realTeams.length})` : ''}
-                                  </th>
-                                  {participants.map(p => {
-                                    const hits = hasRealData ? realTeams.filter(t => getUserTeams(p.user_id).has(t)).length : null
-                                    return (
-                                      <th key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, whiteSpace: 'nowrap', minWidth: 50 }}>
-                                        {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
-                                        {hits !== null && <div style={{ color: TEXT, fontFamily: FONT_NORMAL, fontSize: 8 }}>{hits}/{realTeams.length}</div>}
-                                      </th>
-                                    )
-                                  })}
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {displayTeams.map((team, i) => {
-                                  const flag = teamFlagMap.get(team)
-                                  const rowBg = i % 2 === 0 ? '#fff' : '#f9fafb'
-                                  return (
-                                    <tr key={team} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
-                                      <td style={{ padding: '5px 10px', position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                          {flag && <img src={flag} alt="" style={{ width: 18, height: 12, borderRadius: 1, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-                                          <span style={{ fontFamily: FONT_BLACK, fontSize: 10, color: TEXT }}>{abbrev(team)}</span>
-                                          <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>{team}</span>
-                                        </div>
-                                      </td>
-                                      {participants.map(p => {
-                                        const predicted = getUserTeams(p.user_id).has(team)
-                                        const color = hasRealData ? (predicted ? '#16a34a' : RED) : (predicted ? TEXT : MUTED)
-                                        return (
-                                          <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 14, color, whiteSpace: 'nowrap' }}>
-                                            {predicted ? '✓' : (hasRealData ? '✗' : '—')}
-                                          </td>
-                                        )
-                                      })}
-                                    </tr>
-                                  )
-                                })}
-                              </tbody>
-                            </table>
-                          )}
-                        </div>
-                      )
-                    })}
-
-                    {/* Final positions */}
-                    {([
-                      { key: 'fourth'   as const, label: '4to Puesto',   pts: 25, bgColor: '#374151', realTeam: realFinals.fourth   },
-                      { key: 'third'    as const, label: '3er Puesto',   pts: 30, bgColor: '#374151', realTeam: realFinals.third    },
-                      { key: 'runnerUp' as const, label: 'Sub-Campeón',  pts: 35, bgColor: '#0A0A0A', realTeam: realFinals.runnerUp },
-                      { key: 'champion' as const, label: 'Campeón 🏆',   pts: 40, bgColor: '#C8950A', realTeam: realFinals.champion },
-                    ]).map(({ key, label, pts, bgColor, realTeam }) => {
-                      const isGold = bgColor === '#C8950A'
-                      return (
-                        <div key={key} style={{ marginBottom: 10 }}>
-                          <div style={{ background: bgColor, color: isGold ? '#fff' : '#94a3b8', fontFamily: FONT_BLACK, fontSize: 9, padding: '6px 10px', textTransform: 'uppercase', letterSpacing: 0.5, display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{label}</span>
-                            <span style={{ color: isGold ? 'rgba(255,255,255,0.7)' : GOLD }}>{pts} pts</span>
+                            <span>{label} · {count} equipos</span>
+                            {!hasReal && <span style={{ color: GOLD }}>pendiente</span>}
                           </div>
                           <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
-                            <tbody>
-                              <tr style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
-                                <td style={{ padding: '6px 10px', position: 'sticky', left: 0, background: '#fff', minWidth: 120, whiteSpace: 'nowrap' }}>
-                                  {realTeam
-                                    ? <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                        {teamFlagMap.get(realTeam) && <img src={teamFlagMap.get(realTeam)!} alt="" style={{ width: 18, height: 12, borderRadius: 1, objectFit: 'cover', border: '1px solid #ddd' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
-                                        <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: isGold ? GOLD : TEXT }}>{abbrev(realTeam)}</span>
-                                        <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED }}>{realTeam}</span>
-                                      </div>
-                                    : <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED }}>Pendiente</span>
-                                  }
-                                </td>
+                            <thead>
+                              <tr style={{ background: '#f1f5f9' }}>
                                 {participants.map(p => {
-                                  const predicted = perParticipantFinals.get(p.user_id)?.[key] ?? null
-                                  const isHit = !!realTeam && predicted === realTeam
-                                  const color = isHit ? '#16a34a' : predicted ? (realTeam ? RED : TEXT) : MUTED
+                                  const teams = perUser.get(p.user_id) ?? []
+                                  const hits = hasReal ? teams.filter(t => realTeams.has(t)).length : null
                                   return (
-                                    <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 11, color, whiteSpace: 'nowrap', minWidth: 50 }}>
-                                      {predicted ? `${abbrev(predicted)}${isHit ? ' ✓' : ''}` : '—'}
-                                    </td>
+                                    <th key={p.user_id} style={{ padding: '5px 8px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, whiteSpace: 'nowrap', minWidth: 80, borderRight: `1px solid ${BORDER}` }}>
+                                      {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                                      {hits !== null && <div style={{ color: TEXT, fontFamily: FONT_NORMAL, fontSize: 8 }}>{hits}/{count}</div>}
+                                    </th>
                                   )
                                 })}
                               </tr>
+                            </thead>
+                            <tbody>
+                              {Array.from({ length: count }, (_, i) => (
+                                <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: `1px solid ${BORDER}` }}>
+                                  {participants.map(p => {
+                                    const teams = perUser.get(p.user_id) ?? []
+                                    const team = teams[i] ?? null
+                                    const flag = team ? teamFlagMap.get(team) : null
+                                    const isHit = hasReal && team ? realTeams.has(team) : null
+                                    return (
+                                      <td key={p.user_id} style={{
+                                        padding: '3px 8px',
+                                        borderRight: `1px solid ${BORDER}`,
+                                        background: isHit === true ? '#dcfce7' : isHit === false ? '#fef2f2' : undefined,
+                                        whiteSpace: 'nowrap',
+                                      }}>
+                                        {team ? (
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                            {flag && <img src={flag} alt="" style={{ width: 16, height: 11, borderRadius: 1, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                                            <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: TEXT }}>{team}</span>
+                                          </div>
+                                        ) : (
+                                          <span style={{ color: '#ccc', fontFamily: FONT_NORMAL, fontSize: 10 }}>—</span>
+                                        )}
+                                      </td>
+                                    )
+                                  })}
+                                </tr>
+                              ))}
                             </tbody>
                           </table>
                         </div>
                       )
                     })}
+
+                    {/* Posiciones finales */}
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ background: '#C8950A', color: '#fff', fontFamily: FONT_BLACK, fontSize: 9, padding: '6px 10px', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        Posiciones finales
+                      </div>
+                      <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
+                        <thead>
+                          <tr style={{ background: '#f1f5f9' }}>
+                            <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, position: 'sticky', left: 0, background: '#f1f5f9', minWidth: 90, whiteSpace: 'nowrap', borderRight: `1px solid ${BORDER}` }}>Posición</th>
+                            {participants.map(p => (
+                              <th key={p.user_id} style={{ padding: '5px 8px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, whiteSpace: 'nowrap', minWidth: 80, borderRight: `1px solid ${BORDER}` }}>
+                                {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {([
+                            { key: 'fourth'   as const, label: '4to Puesto',  realTeam: realFinals.fourth   },
+                            { key: 'third'    as const, label: '3er Puesto',  realTeam: realFinals.third    },
+                            { key: 'runnerUp' as const, label: 'Sub-Campeón', realTeam: realFinals.runnerUp },
+                            { key: 'champion' as const, label: 'Campeón',     realTeam: realFinals.champion },
+                          ]).map(({ key, label, realTeam }, i) => (
+                            <tr key={key} style={{ background: i % 2 === 0 ? '#fff' : '#f9fafb', borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '5px 10px', position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9fafb', fontFamily: FONT_BLACK, fontSize: 10, color: TEXT, whiteSpace: 'nowrap', borderRight: `1px solid ${BORDER}` }}>
+                                {label}
+                                {realTeam && <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, marginLeft: 5 }}>({realTeam})</span>}
+                              </td>
+                              {participants.map(p => {
+                                const predicted = perParticipantFinals.get(p.user_id)?.[key] ?? null
+                                const isHit = !!realTeam && predicted === realTeam
+                                const isMiss = !!realTeam && !!predicted && !isHit
+                                const flag = predicted ? teamFlagMap.get(predicted) : null
+                                return (
+                                  <td key={p.user_id} style={{
+                                    padding: '3px 8px',
+                                    borderRight: `1px solid ${BORDER}`,
+                                    background: isHit ? '#dcfce7' : isMiss ? '#fef2f2' : undefined,
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                    {predicted ? (
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                                        {flag && <img src={flag} alt="" style={{ width: 16, height: 11, borderRadius: 1, objectFit: 'cover', border: '1px solid #ddd', flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                                        <span style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: TEXT }}>{predicted}</span>
+                                      </div>
+                                    ) : (
+                                      <span style={{ color: '#ccc', fontFamily: FONT_NORMAL, fontSize: 10 }}>—</span>
+                                    )}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 </Card>
               )}
