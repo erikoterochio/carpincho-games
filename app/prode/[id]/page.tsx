@@ -150,7 +150,7 @@ type MatchEvent = {
   team_id: number; player: string
   type: 'Goal' | 'Card'; detail: string
 }
-type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string; predicted_home?: string | null; predicted_away?: string | null }
+type UserPick = { match_id: string; home_score: number; away_score: number; user_id: string; predicted_home?: string | null; predicted_away?: string | null; pen_winner?: string | null }
 type AdminSpecial = {
   user_id: string
   champion?: string | null; runner_up?: string | null; third_place?: string | null; fourth_place?: string | null
@@ -243,6 +243,8 @@ function computeKoBracket(
     const away = (awaySlotId ? winners.get(awaySlotId) : null) ?? predictedAway ?? fallbackAway
     if (pk.home_score > pk.away_score)      { winners.set(slotId, home); losers.set(slotId, away) }
     else if (pk.away_score > pk.home_score) { winners.set(slotId, away); losers.set(slotId, home) }
+    else if (pk.pen_winner === 'h')         { winners.set(slotId, home); losers.set(slotId, away) }
+    else if (pk.pen_winner === 'a')         { winners.set(slotId, away); losers.set(slotId, home) }
   }
 
   for (let i = 0; i < 16; i++) {
@@ -259,6 +261,8 @@ function computeKoBracket(
     const away = losers.get('ko-sf-1') ?? thirdMs[0]?.away_team ?? '?'
     if (thirdPk.home_score > thirdPk.away_score)      winners.set('ko-3rd', home)
     else if (thirdPk.away_score > thirdPk.home_score) winners.set('ko-3rd', away)
+    else if (thirdPk.pen_winner === 'h')               winners.set('ko-3rd', home)
+    else if (thirdPk.pen_winner === 'a')               winners.set('ko-3rd', away)
   }
 
   const finalPk = picks.find(p => p.match_id === 'ko-final')
@@ -267,6 +271,8 @@ function computeKoBracket(
     const away = winners.get('ko-sf-1') ?? finalMs[0]?.away_team ?? '?'
     if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); losers.set('ko-final', away) }
     else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); losers.set('ko-final', home) }
+    else if (finalPk.pen_winner === 'h')               { winners.set('ko-final', home); losers.set('ko-final', away) }
+    else if (finalPk.pen_winner === 'a')               { winners.set('ko-final', away); losers.set('ko-final', home) }
   }
 
   return winners
@@ -384,7 +390,6 @@ export default function TournamentPage() {
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
-  const koSaveTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const bracketNodeByIdRef = useRef<Map<string, KoMatchNode>>(new Map())
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
@@ -416,7 +421,7 @@ export default function TournamentPage() {
       if (user && ps) {
         setIsParticipant(!!(ps as any[]).find(p => p.user_id === user.id))
         const { data: picks } = await supabase
-          .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id)
+          .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id,predicted_home,predicted_away,pen_winner').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
         setAllPicks(allP)
         const pm: Record<string, {h:string;a:string}> = {}
@@ -426,11 +431,13 @@ export default function TournamentPage() {
         setMyEditPicks(pm)
         picksEditRef.current = pm
 
-        // Init KO bracket state from loaded picks
+        // Init KO bracket state from loaded picks (restores scores + penalty winner)
         const groupMatchIdSet = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
-        const kopm: Record<string, {h:string;a:string}> = {}
-        for (const p of allP.filter(pk => pk.user_id === user.id && !groupMatchIdSet.has(pk.match_id)))
-          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
+        const kopm: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
+        for (const p of allP.filter(pk => pk.user_id === user.id && !groupMatchIdSet.has(pk.match_id))) {
+          const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner : undefined
+          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
+        }
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
 
@@ -558,7 +565,7 @@ export default function TournamentPage() {
       const [{ data: ms }, { data: st }, { data: freshPicks }] = await Promise.all([
         supabase.from('prode_matches').select('*').order('sort_order'),
         supabase.from('prode_standings').select('*').order('group_name').order('rank'),
-        supabase.from('prode_stage1_picks').select('match_id,home_score,away_score,user_id').eq('tournament_id', id),
+        supabase.from('prode_stage1_picks').select('match_id,home_score,away_score,user_id,predicted_home,predicted_away,pen_winner').eq('tournament_id', id),
       ])
       const matchList = (ms ?? []) as Match[]
       setMatches(matchList)
@@ -568,9 +575,12 @@ export default function TournamentPage() {
       // and the in-memory koEditPicks (keyed by match_id) would show at the wrong positions.
       if (user && freshPicks) {
         const groupIds = new Set(matchList.filter(m => m.stage === 'group').map(m => m.id))
-        const kopm: Record<string, {h:string;a:string}> = {}
-        for (const p of freshPicks.filter(pk => pk.user_id === user.id && !groupIds.has(pk.match_id)))
-          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? '') }
+        const fpTyped = freshPicks as unknown as UserPick[]
+        const kopm: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
+        for (const p of fpTyped.filter(pk => pk.user_id === user.id && !groupIds.has(pk.match_id))) {
+          const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner : undefined
+          kopm[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
+        }
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
       }
@@ -585,6 +595,10 @@ export default function TournamentPage() {
     const { error: e } = await supabase.from('prode_participants').insert({ tournament_id: id, user_id: user.id })
     if (!e || e.code === '23505') { setIsParticipant(true); window.location.reload() }
   }
+
+  const koPickCount = useMemo(() =>
+    Object.values(koEditPicks).filter(p => p.h !== '' && p.a !== '').length
+  , [koEditPicks])
 
   const myPickCount = useMemo(() =>
     Object.values(myEditPicks).filter(p => p.h !== '' && p.a !== '').length
@@ -737,20 +751,21 @@ export default function TournamentPage() {
     for (const p of participants) {
       const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
       const classified = perParticipantClassified.get(p.user_id)
-      // Augment R32 picks with resolved team names derived from group standings,
-      // so the cascade works without needing predicted_home/away stored in DB.
+      // Augment R32 picks with team names from current group standings.
+      // Fresh computation always takes priority; DB-saved values are the fallback
+      // for groups where the user hasn't made all picks yet.
       const augmented: UserPick[] = up.map(pk => {
-        if (pk.predicted_home || pk.predicted_away) return pk
-        // Picks use stable slot IDs like 'ko-r32-3'; extract the index
         const slotMatch = pk.match_id.match(/^ko-r32-(\d+)$/)
         if (!slotMatch || !classified) return pk
         const idx = parseInt(slotMatch[1])
         const seeds = R32_SEEDS[idx]
         if (!seeds) return pk
+        const freshHome = resolveSlot(seeds[0], classified)
+        const freshAway = resolveSlot(seeds[1], classified)
         return {
           ...pk,
-          predicted_home: resolveSlot(seeds[0], classified) ?? null,
-          predicted_away: resolveSlot(seeds[1], classified) ?? null,
+          predicted_home: freshHome ?? pk.predicted_home ?? null,
+          predicted_away: freshAway ?? pk.predicted_away ?? null,
         }
       })
       result.set(p.user_id, computeKoBracket(augmented, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs))
@@ -812,51 +827,46 @@ export default function TournamentPage() {
     setTimeout(() => setSaveStatus('idle'), 2000)
   }, [])
 
-  const saveAllPicks = useCallback(async () => {
+  const saveAll = useCallback(async () => {
     if (!user) return
-    const entries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
-    if (!entries.length) return
+    const groupEntries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
+    const koEntries    = Object.entries(koPicksRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
+    if (!groupEntries.length && !koEntries.length) return
     setSaveStatus('saving')
     setSaveError(null)
-    const rows = entries.map(([matchId, v]) => ({
-      tournament_id: id,
-      user_id: user.id,
-      match_id: matchId,
-      home_score: parseInt(v.h),
-      away_score: parseInt(v.a),
-      updated_at: new Date().toISOString(),
-    }))
-    const { error } = await supabase.from('prode_stage1_picks').upsert(rows, { onConflict: 'tournament_id,user_id,match_id' })
+    const rows = [
+      ...groupEntries.map(([matchId, v]) => ({
+        tournament_id: id, user_id: user.id, match_id: matchId,
+        home_score: parseInt(v.h), away_score: parseInt(v.a),
+        updated_at: new Date().toISOString(),
+      })),
+      ...koEntries.map(([matchId, v]) => {
+        const node = bracketNodeByIdRef.current.get(matchId)
+        return {
+          tournament_id: id, user_id: user.id, match_id: matchId,
+          home_score: parseInt(v.h), away_score: parseInt(v.a),
+          predicted_home: node?.home?.name ?? null,
+          predicted_away: node?.away?.name ?? null,
+          pen_winner: v.pen ?? null,
+          updated_at: new Date().toISOString(),
+        }
+      }),
+    ]
+    const { error } = await supabase.from('prode_stage1_picks').upsert(rows as any[], { onConflict: 'tournament_id,user_id,match_id' })
     if (!error) {
       showSaved()
+      if (koEntries.length) {
+        setAdminAllPicks(prev => {
+          let updated = [...prev]
+          for (const row of rows) {
+            updated = updated.filter(pk => !(pk.user_id === user.id && pk.match_id === row.match_id))
+            updated.push({ user_id: user.id, match_id: row.match_id, home_score: row.home_score, away_score: row.away_score, predicted_home: (row as any).predicted_home ?? null, predicted_away: (row as any).predicted_away ?? null, pen_winner: (row as any).pen_winner ?? null })
+          }
+          return updated
+        })
+      }
     } else {
-      console.error('[saveAllPicks] Supabase error:', error)
       setSaveStatus('idle')
-      setSaveError(error.message)
-    }
-  }, [id, user, showSaved])
-
-  const saveKoPick = useCallback(async (matchId: string) => {
-    if (!user) { console.warn('[saveKoPick] no user'); return }
-    const p = koPicksRef.current[matchId]
-    if (!p || p.h === '' || p.a === '') { console.log('[saveKoPick] skip', matchId, p); return }
-    const h = parseInt(p.h), a = parseInt(p.a)
-    if (isNaN(h) || isNaN(a)) { console.warn('[saveKoPick] NaN', p); return }
-    console.log('[saveKoPick] saving', matchId, h, a)
-    const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: user.id, match_id: matchId, home_score: h, away_score: a, updated_at: new Date().toISOString() },
-      { onConflict: 'tournament_id,user_id,match_id' }
-    )
-    if (!error) {
-      showSaved()
-      // Keep adminAllPicks in sync so perParticipantBracket reflects picks made this session
-      // without needing a full page reload.
-      setAdminAllPicks(prev => {
-        const rest = prev.filter(pk => !(pk.user_id === user.id && pk.match_id === matchId))
-        return [...rest, { user_id: user.id, match_id: matchId, home_score: h, away_score: a }]
-      })
-    } else {
-      console.error('[saveKoPick] Supabase error:', error, { matchId, h, a })
       setSaveError(error.message)
     }
   }, [id, user, showSaved])
@@ -881,8 +891,6 @@ export default function TournamentPage() {
     const updated = { ...current, [side]: cleaned }
     koPicksRef.current[matchId] = updated
     setKoEditPicks(prev => ({ ...prev, [matchId]: updated }))
-    if (koSaveTimersRef.current[matchId]) clearTimeout(koSaveTimersRef.current[matchId])
-    koSaveTimersRef.current[matchId] = setTimeout(() => saveKoPick(matchId), 800)
   }
 
   const handleKoPen = (matchId: string, winner: 'h'|'a') => {
@@ -1152,7 +1160,7 @@ export default function TournamentPage() {
     return { r32, r16, qf, sf, third, final, matchLabels }
   }, [allGroupStandings, bestThirds, koEditPicks, matches])
 
-  // Keep bracketNodeByIdRef in sync so saveKoPick can read predicted teams without stale closure
+  // Keep bracketNodeByIdRef in sync so saveAll can read predicted teams without stale closure
   useEffect(() => {
     const m = new Map<string, KoMatchNode>()
     const nodes = [...bracketData.r32, ...bracketData.r16, ...bracketData.qf, ...bracketData.sf, bracketData.third, bracketData.final]
@@ -2011,7 +2019,7 @@ export default function TournamentPage() {
                 </>
               )}
               {/* Barra sticky de guardado */}
-              {!isDeadlinePast && isParticipant && (
+              {isParticipant && (
                 <div style={{
                   position: 'fixed', bottom: 0, left: 0, right: 0,
                   background: 'rgba(255,255,255,0.97)',
@@ -2021,27 +2029,36 @@ export default function TournamentPage() {
                   zIndex: 99,
                 }}>
                   <div>
-                    <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
-                      {myPickCount}/{groupMatches.length} predicciones cargadas
-                    </div>
-                    <div className="prog-bar" style={{ width: 110, marginTop: 4 }}>
-                      <div className="prog-fill" style={{ width: `${progress}%` }} />
-                    </div>
+                    {!isDeadlinePast && (
+                      <>
+                        <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                          {myPickCount}/{groupMatches.length} grupos · {koPickCount} llave
+                        </div>
+                        <div className="prog-bar" style={{ width: 110, marginTop: 4 }}>
+                          <div className="prog-fill" style={{ width: `${progress}%` }} />
+                        </div>
+                      </>
+                    )}
+                    {isDeadlinePast && koPickCount > 0 && (
+                      <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                        {koPickCount} picks de llave cargados
+                      </div>
+                    )}
                   </div>
                   <button
-                    onClick={saveAllPicks}
-                    disabled={saveStatus === 'saving' || myPickCount === 0}
+                    onClick={saveAll}
+                    disabled={saveStatus === 'saving' || (myPickCount === 0 && koPickCount === 0)}
                     style={{
                       padding: '10px 22px',
                       background: saveStatus === 'saved' ? '#10b981' : TEXT,
                       color: '#fff', border: 'none', borderRadius: 8,
                       fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
-                      cursor: saveStatus === 'saving' ? 'wait' : myPickCount === 0 ? 'default' : 'pointer',
+                      cursor: saveStatus === 'saving' ? 'wait' : (myPickCount === 0 && koPickCount === 0) ? 'default' : 'pointer',
                       transition: 'background 0.25s',
-                      opacity: myPickCount === 0 ? 0.35 : 1,
+                      opacity: (myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
                     }}
                   >
-                    {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar predicciones'}
+                    {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
                   </button>
                   {saveError && (
                     <div style={{ color: '#dc2626', fontSize: 11, fontFamily: FONT_NORMAL, marginTop: 6 }}>
