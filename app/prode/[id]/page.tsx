@@ -2568,6 +2568,27 @@ export default function TournamentPage() {
               {adminTab === 'clasificados' && (
                 <Card>
                   <SectionTitle>Clasificados por etapa</SectionTitle>
+                  {/* Diagnóstico: grupos faltantes o usuarios sin picks KO */}
+                  {(() => {
+                    const groupsInDB = GROUPS.filter(g => groupMatches.some(m => m.group_name === g))
+                    const missingGroups = GROUPS.filter(g => !groupsInDB.includes(g))
+                    const koPicksByUser = new Map(participants.map(p => [
+                      p.user_id,
+                      adminAllPicks.filter(pk => pk.user_id === p.user_id && pk.match_id.startsWith('ko-')).length,
+                    ]))
+                    const usersWithoutKo = participants.filter(p => (koPicksByUser.get(p.user_id) ?? 0) === 0)
+                    const warnings: string[] = []
+                    if (missingGroups.length > 0) warnings.push(`Grupos sin partidos en DB: ${missingGroups.join(', ')} — hacé Sync para actualizar`)
+                    if (usersWithoutKo.length > 0) warnings.push(`Sin picks KO: ${usersWithoutKo.map(p => p.profiles?.nombre?.split(' ')[0] ?? p.profiles?.username ?? '?').join(', ')}`)
+                    if (warnings.length === 0) return null
+                    return (
+                      <div style={{ background: '#fef9c3', border: '1px solid #ca8a04', borderRadius: 8, padding: '8px 12px', marginBottom: 12 }}>
+                        {warnings.map((w, i) => (
+                          <div key={i} style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: '#92400e' }}>⚠ {w}</div>
+                        ))}
+                      </div>
+                    )
+                  })()}
                   <div style={{ overflowX: 'auto' }}>
                     {([
                       {
