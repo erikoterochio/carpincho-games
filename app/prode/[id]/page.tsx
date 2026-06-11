@@ -1562,6 +1562,61 @@ export default function TournamentPage() {
           </div>
         )}
 
+        {/* ── ALL PICKS (LIVE) ── */}
+        {isLive && participants.length > 0 && (() => {
+          const picksSource = adminAllPicks.length > 0 ? adminAllPicks : allPicks
+          const pickKey = m.stage === 'group' ? m.id : (() => {
+            const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
+            const idx = stageMs.findIndex(x => x.id === m.id)
+            return idx >= 0 ? koSlotId(m.stage, idx) : m.id
+          })()
+          const rows = participants.map(p => {
+            const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
+            const pk = picksSource.find(pk => pk.user_id === p.user_id && pk.match_id === pickKey)
+            const pts = pk ? calcScore(pk, m) : null
+            return { userId: p.user_id, name, pk, pts }
+          }).sort((a, b) => (b.pts ?? -1) - (a.pts ?? -1))
+          if (!rows.some(r => r.pk)) return null
+          return (
+            <div style={{ borderTop: '1px solid #d1fae5' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 20px 5px', background: '#f0fdf4' }}>
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: '#059669', textTransform: 'uppercase', letterSpacing: 0.8 }}>Predicciones</span>
+                <span style={{ fontSize: 9, color: '#10b981', fontFamily: FONT_NORMAL, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <span className="live-dot" /> en vivo
+                </span>
+              </div>
+              <div style={{ background: '#f7fef9', paddingBottom: 4 }}>
+                {rows.map((row, i) => {
+                  const ptColor = row.pts === null ? MUTED : row.pts >= 12 ? '#10b981' : row.pts >= 7 ? '#0ea5e9' : row.pts >= 5 ? '#d97706' : row.pts >= 2 ? '#f97316' : RED
+                  return (
+                    <div key={row.userId} style={{
+                      display: 'flex', alignItems: 'center', gap: 10, padding: '5px 20px',
+                      borderTop: i === 0 ? '1px solid #d1fae5' : '1px solid #f0f0f0',
+                      background: row.userId === user?.id ? 'rgba(16,185,129,0.08)' : 'transparent',
+                    }}>
+                      <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: row.userId === user?.id ? 700 : 400, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {row.name}
+                      </span>
+                      {row.pk ? (
+                        <>
+                          <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#20298b', letterSpacing: 0.3, flexShrink: 0 }}>
+                            {row.pk.home_score}-{row.pk.away_score}
+                          </span>
+                          <span style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: ptColor, flexShrink: 0, minWidth: 44, textAlign: 'right' }}>
+                            {row.pts !== null ? `~+${row.pts}` : '—'}
+                          </span>
+                        </>
+                      ) : (
+                        <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>—</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
         {/* ── EVENTS ── */}
         {(isLive || isDone) && (
           <div style={{ borderTop: '1px solid #e5e7eb', padding: '12px 20px 16px' }}>
