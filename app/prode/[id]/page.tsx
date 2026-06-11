@@ -239,8 +239,9 @@ function computeKoBracket(
   const applySlot = (slotId: string, homeSlotId: string, awaySlotId: string, fallbackHome: string, fallbackAway: string, predictedHome?: string | null, predictedAway?: string | null) => {
     const pk = picks.find(p => p.match_id === slotId)
     if (!pk) return
-    const home = (homeSlotId ? winners.get(homeSlotId) : null) ?? predictedHome ?? fallbackHome
-    const away = (awaySlotId ? winners.get(awaySlotId) : null) ?? predictedAway ?? fallbackAway
+    // Priority: chained winner > pick's saved predicted team > external param > fixture fallback
+    const home = (homeSlotId ? winners.get(homeSlotId) : null) ?? pk.predicted_home ?? predictedHome ?? fallbackHome
+    const away = (awaySlotId ? winners.get(awaySlotId) : null) ?? pk.predicted_away ?? predictedAway ?? fallbackAway
     if (home === '?' || away === '?') return
     if (pk.home_score > pk.away_score)      { winners.set(slotId, home); losers.set(slotId, away) }
     else if (pk.away_score > pk.home_score) { winners.set(slotId, away); losers.set(slotId, home) }
@@ -258,8 +259,8 @@ function computeKoBracket(
 
   const thirdPk = picks.find(p => p.match_id === 'ko-3rd')
   if (thirdPk) {
-    const home = losers.get('ko-sf-0') ?? thirdMs[0]?.home_team ?? '?'
-    const away = losers.get('ko-sf-1') ?? thirdMs[0]?.away_team ?? '?'
+    const home = losers.get('ko-sf-0') ?? thirdPk.predicted_home ?? thirdMs[0]?.home_team ?? '?'
+    const away = losers.get('ko-sf-1') ?? thirdPk.predicted_away ?? thirdMs[0]?.away_team ?? '?'
     if (home !== '?' && away !== '?') {
       if (thirdPk.home_score > thirdPk.away_score)      winners.set('ko-3rd', home)
       else if (thirdPk.away_score > thirdPk.home_score) winners.set('ko-3rd', away)
@@ -270,13 +271,13 @@ function computeKoBracket(
 
   const finalPk = picks.find(p => p.match_id === 'ko-final')
   if (finalPk) {
-    const home = winners.get('ko-sf-0') ?? finalMs[0]?.home_team ?? '?'
-    const away = winners.get('ko-sf-1') ?? finalMs[0]?.away_team ?? '?'
+    const home = winners.get('ko-sf-0') ?? finalPk.predicted_home ?? finalMs[0]?.home_team ?? '?'
+    const away = winners.get('ko-sf-1') ?? finalPk.predicted_away ?? finalMs[0]?.away_team ?? '?'
     if (home !== '?' && away !== '?') {
-      if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); losers.set('ko-final', away) }
-      else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); losers.set('ko-final', home) }
-      else if (finalPk.pen_winner === 'h')               { winners.set('ko-final', home); losers.set('ko-final', away) }
-      else if (finalPk.pen_winner === 'a')               { winners.set('ko-final', away); losers.set('ko-final', home) }
+      if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); winners.set('ko-final-runner', away); losers.set('ko-final', away) }
+      else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); winners.set('ko-final-runner', home); losers.set('ko-final', home) }
+      else if (finalPk.pen_winner === 'h')               { winners.set('ko-final', home); winners.set('ko-final-runner', away); losers.set('ko-final', away) }
+      else if (finalPk.pen_winner === 'a')               { winners.set('ko-final', away); winners.set('ko-final-runner', home); losers.set('ko-final', home) }
     }
   }
 
@@ -790,7 +791,9 @@ export default function TournamentPage() {
       const champion = bracket.get('ko-final') ?? null
       const sf0Win   = bracket.get('ko-sf-0') ?? null
       const sf1Win   = bracket.get('ko-sf-1') ?? null
-      const runnerUp = champion ? (sf0Win === champion ? sf1Win : sf0Win) : null
+      const runnerUp = champion
+        ? (sf0Win === champion ? sf1Win : sf0Win) ?? bracket.get('ko-final-runner') ?? null
+        : null
 
       const qf0Win   = bracket.get('ko-qf-0') ?? null
       const qf1Win   = bracket.get('ko-qf-1') ?? null
