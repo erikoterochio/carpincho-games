@@ -751,33 +751,37 @@ export default function TournamentPage() {
     return result
   }, [adminGroupStandings, participants])
 
-  // Per-participant bracket resolution: userId → (matchId → predicted winner team name)
+  // Per-participant bracket resolution: userId → (slotId → predicted winner team name)
+  // Reads directly from saved DB values: predicted_home/away + score determines winner.
+  // No group-standings chain, no augmentation — always consistent with what's in the DB.
   const perParticipantBracket = useMemo(() => {
     const result = new Map<string, Map<string, string>>()
     for (const p of participants) {
       const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
-      const classified = perParticipantClassified.get(p.user_id)
-      // Augment R32 picks with team names from current group standings.
-      // Fresh computation always takes priority; DB-saved values are the fallback
-      // for groups where the user hasn't made all picks yet.
-      const augmented: UserPick[] = up.map(pk => {
-        const slotMatch = pk.match_id.match(/^ko-r32-(\d+)$/)
-        if (!slotMatch || !classified) return pk
-        const idx = parseInt(slotMatch[1])
-        const seeds = R32_SEEDS[idx]
-        if (!seeds) return pk
-        const freshHome = resolveSlot(seeds[0], classified)
-        const freshAway = resolveSlot(seeds[1], classified)
-        return {
-          ...pk,
-          predicted_home: freshHome ?? pk.predicted_home ?? null,
-          predicted_away: freshAway ?? pk.predicted_away ?? null,
-        }
-      })
-      result.set(p.user_id, computeKoBracket(augmented, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs))
+      const bracket = new Map<string, string>()
+      const addWinner = (pk: UserPick | undefined) => {
+        if (!pk?.predicted_home || !pk?.predicted_away) return
+        const home = pk.predicted_home
+        const away = pk.predicted_away
+        let winner: string | null = null
+        if (pk.home_score > pk.away_score)      winner = home
+        else if (pk.away_score > pk.home_score) winner = away
+        else if (pk.pen_winner === 'h')         winner = home
+        else if (pk.pen_winner === 'a')         winner = away
+        if (!winner) return
+        bracket.set(pk.match_id, winner)
+        if (pk.match_id === 'ko-final') bracket.set('ko-final-runner', winner === home ? away : home)
+      }
+      for (let i = 0; i < 16; i++) addWinner(up.find(pk => pk.match_id === `ko-r32-${i}`))
+      for (let i = 0; i < 8; i++)  addWinner(up.find(pk => pk.match_id === `ko-r16-${i}`))
+      for (let i = 0; i < 4; i++)  addWinner(up.find(pk => pk.match_id === `ko-qf-${i}`))
+      for (let i = 0; i < 2; i++)  addWinner(up.find(pk => pk.match_id === `ko-sf-${i}`))
+      addWinner(up.find(pk => pk.match_id === 'ko-3rd'))
+      addWinner(up.find(pk => pk.match_id === 'ko-final'))
+      result.set(p.user_id, bracket)
     }
     return result
-  }, [adminAllPicks, participants, perParticipantClassified, r32Ms, r16Ms, qfMs, sfMs, thirdMs, finalMs])
+  }, [adminAllPicks, participants])
 
   // Champion / runner-up / 3rd / 4th derived from each user's KO bracket picks
   const perParticipantFinals = useMemo(() => {
