@@ -402,6 +402,12 @@ export default function TournamentPage() {
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
+  const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set())
+  const toggleMatchExpand = (id: string) => setExpandedMatches(prev => {
+    const next = new Set(prev)
+    if (next.has(id)) next.delete(id); else next.add(id)
+    return next
+  })
   const toggleRound = (label: string) => setOpenRounds(prev => {
     const next = new Set(prev)
     if (next.has(label)) next.delete(label); else next.add(label)
@@ -966,16 +972,20 @@ export default function TournamentPage() {
           if (thirdM) slotMatchMap.set('ko-3rd', thirdM)
           if (finalM) slotMatchMap.set('ko-final', finalM)
 
+          const isDoneMatch = (m: Match) => ['FT', 'AET', 'PEN'].includes(m.status)
           let score = 0
           for (const pk of adminAllPicks.filter(pk => pk.user_id === p.user_id)) {
             const m = matches.find(m => m.id === pk.match_id) ?? slotMatchMap.get(pk.match_id)
-            if (m) score += calcScore(pk, m) ?? 0
+            if (m && isDoneMatch(m)) score += calcScore(pk, m) ?? 0
           }
-          // Group order: 6 pts per group with all 4 teams in correct order
+          // Group order: 6 pts per group with all 4 teams in correct final order.
+          // Only applies when all 6 group matches are finished.
           const gs = adminGroupStandings.get(p.user_id)
           for (const g of GROUPS) {
             const realOrder = standings.filter(s => s.group_name === g).sort((a, b) => a.rank - b.rank).map(s => s.team_name)
             if (realOrder.length !== 4) continue
+            const doneInGroup = matches.filter(m => m.group_name === g && isDoneMatch(m)).length
+            if (doneInGroup < 6) continue
             const userOrder = gs?.get(g)?.map(t => t.name) ?? []
             if (userOrder.length === 4 && realOrder.every((t, i) => t === userOrder[i])) score += 6
           }
@@ -1016,7 +1026,10 @@ export default function TournamentPage() {
           pts = score
         } else {
           const userPicks = allPicks.filter(pk => pk.user_id === p.user_id)
-          pts = userPicks.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
+          pts = userPicks.reduce((acc, pk) => {
+            const m = matches.find(m => m.id === pk.match_id)
+            return acc + (m && ['FT', 'AET', 'PEN'].includes(m.status) ? (calcScore(pk, m) ?? 0) : 0)
+          }, 0)
         }
       }
       return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
@@ -1455,36 +1468,59 @@ export default function TournamentPage() {
     }
 
     const allEvents = [...events].sort((a, b) => a.elapsed - b.elapsed)
+    const isExpanded = isDone ? expandedMatches.has(m.id) : true
 
     return (
       <div style={{ background: '#fff', borderRadius: 16, overflow: 'hidden',
         boxShadow: isLive ? '0 0 0 2px #10b981, 0 4px 20px rgba(16,185,129,0.15)' : '0 2px 12px rgba(0,0,0,0.12)' }}>
 
         {/* ── HEADER ── */}
-        <div style={{ minHeight: 58, background: barColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', gap: 12 }}>
-          <div style={{ minWidth: 0 }}>
-            <div style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 800, color: '#fff', textTransform: 'uppercase', lineHeight: 1 }}>
-              {m.stage === 'group' ? `GRUPO ${m.group_name ?? '?'}` : STAGE_LABEL[m.stage]?.toUpperCase()}
-            </div>
-            {m.venue && (
-              <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {m.venue}
+        <div
+          style={{ background: barColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 20px', gap: 12, cursor: isDone ? 'pointer' : 'default', minHeight: isDone && !isExpanded ? 46 : 58 }}
+          onClick={isDone ? () => toggleMatchExpand(m.id) : undefined}
+        >
+          {isDone && !isExpanded ? (
+            <>
+              <span style={{ fontFamily: FONT_BLACK, fontSize: 9, fontWeight: 900, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>
+                {m.stage === 'group' ? `GR ${m.group_name ?? '?'}` : STAGE_LABEL[m.stage]?.toUpperCase()}
+              </span>
+              <span style={{ flex: 1, fontFamily: FONT_BLACK, fontSize: 13, fontWeight: 900, color: '#fff', textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', padding: '0 10px' }}>
+                {abbrev(m.home_team)} {m.home_score} – {m.away_score} {abbrev(m.away_team)}
+              </span>
+              <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: 'rgba(255,255,255,0.55)', flexShrink: 0 }}>▼</span>
+            </>
+          ) : (
+            <>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontFamily: FONT_BLACK, fontSize: 15, fontWeight: 800, color: '#fff', textTransform: 'uppercase', lineHeight: 1 }}>
+                  {m.stage === 'group' ? `GRUPO ${m.group_name ?? '?'}` : STAGE_LABEL[m.stage]?.toUpperCase()}
+                </div>
+                {m.venue && (
+                  <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.95)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {m.venue}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-          <div className="hm2-hdr-right">
-            <div className="hm2-badge" style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', fontFamily: FONT_BLACK, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
-              {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b3b', display: 'inline-block', animation: 'livePulse 1.2s infinite', flexShrink: 0 }} />}
-              {isLive ? liveLabel : isDone ? 'FINAL' : 'PRÓXIMO'}
-            </div>
-            {!isDone && (
-              <>
-                <div className="hm2-hdiv" />
-                <span className="hm2-time" style={{ fontFamily: FONT_BLACK, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
-              </>
-            )}
-          </div>
+              <div className="hm2-hdr-right">
+                <div className="hm2-badge" style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', fontFamily: FONT_BLACK, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b3b', display: 'inline-block', animation: 'livePulse 1.2s infinite', flexShrink: 0 }} />}
+                  {isLive ? liveLabel : isDone ? 'FINAL' : 'PRÓXIMO'}
+                </div>
+                {!isDone && (
+                  <>
+                    <div className="hm2-hdiv" />
+                    <span className="hm2-time" style={{ fontFamily: FONT_BLACK, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
+                  </>
+                )}
+                {isDone && (
+                  <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: 'rgba(255,255,255,0.55)', paddingLeft: 8 }}>▲</span>
+                )}
+              </div>
+            </>
+          )}
         </div>
+
+        {isExpanded && (<>
 
         {/* ── MATCH AREA ── */}
         <div className="hm2-match">
@@ -1562,8 +1598,8 @@ export default function TournamentPage() {
           </div>
         )}
 
-        {/* ── ALL PICKS (LIVE) ── */}
-        {isLive && participants.length > 0 && (() => {
+        {/* ── ALL PICKS (LIVE / DONE) ── */}
+        {(isLive || isDone) && participants.length > 0 && (() => {
           const picksSource = adminAllPicks.length > 0 ? adminAllPicks : allPicks
           const pickKey = m.stage === 'group' ? m.id : (() => {
             const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
@@ -1577,22 +1613,27 @@ export default function TournamentPage() {
             return { userId: p.user_id, name, pk, pts }
           }).sort((a, b) => (b.pts ?? -1) - (a.pts ?? -1))
           if (!rows.some(r => r.pk)) return null
+          const SCORE_LABELS_SHORT: Record<number, string> = { 12: 'exacto', 7: 'res+gol', 5: 'parcial', 2: '1 gol', 0: '—' }
           return (
-            <div style={{ borderTop: '1px solid #d1fae5' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 20px 5px', background: '#f0fdf4' }}>
-                <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: '#059669', textTransform: 'uppercase', letterSpacing: 0.8 }}>Predicciones</span>
-                <span style={{ fontSize: 9, color: '#10b981', fontFamily: FONT_NORMAL, display: 'flex', alignItems: 'center', gap: 3 }}>
-                  <span className="live-dot" /> en vivo
+            <div style={{ borderTop: isLive ? '1px solid #d1fae5' : '1px solid #e5e7eb' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 20px 5px', background: isLive ? '#f0fdf4' : '#f8fafc' }}>
+                <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: isLive ? '#059669' : '#475569', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                  {isDone ? 'Puntos' : 'Predicciones'}
                 </span>
+                {isLive && (
+                  <span style={{ fontSize: 9, color: '#10b981', fontFamily: FONT_NORMAL, display: 'flex', alignItems: 'center', gap: 3 }}>
+                    <span className="live-dot" /> en vivo
+                  </span>
+                )}
               </div>
-              <div style={{ background: '#f7fef9', paddingBottom: 4 }}>
+              <div style={{ background: isLive ? '#f7fef9' : '#fff', paddingBottom: 4 }}>
                 {rows.map((row, i) => {
                   const ptColor = row.pts === null ? MUTED : row.pts >= 12 ? '#10b981' : row.pts >= 7 ? '#0ea5e9' : row.pts >= 5 ? '#d97706' : row.pts >= 2 ? '#f97316' : RED
                   return (
                     <div key={row.userId} style={{
                       display: 'flex', alignItems: 'center', gap: 10, padding: '5px 20px',
-                      borderTop: i === 0 ? '1px solid #d1fae5' : '1px solid #f0f0f0',
-                      background: row.userId === user?.id ? 'rgba(16,185,129,0.08)' : 'transparent',
+                      borderTop: i === 0 ? (isLive ? '1px solid #d1fae5' : '1px solid #e5e7eb') : '1px solid #f0f0f0',
+                      background: row.userId === user?.id ? (isLive ? 'rgba(16,185,129,0.07)' : 'rgba(32,41,139,0.04)') : 'transparent',
                     }}>
                       <span style={{ flex: 1, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: row.userId === user?.id ? 700 : 400, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {row.name}
@@ -1603,8 +1644,13 @@ export default function TournamentPage() {
                             {row.pk.home_score}-{row.pk.away_score}
                           </span>
                           <span style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: ptColor, flexShrink: 0, minWidth: 44, textAlign: 'right' }}>
-                            {row.pts !== null ? `~+${row.pts}` : '—'}
+                            {row.pts !== null ? (isLive ? `~+${row.pts}` : `+${row.pts}`) : '—'}
                           </span>
+                          {isDone && row.pts !== null && (
+                            <span style={{ fontFamily: FONT_NORMAL, fontSize: 9, color: ptColor, flexShrink: 0, minWidth: 50, textAlign: 'right' }}>
+                              {SCORE_LABELS_SHORT[row.pts] ?? ''}
+                            </span>
+                          )}
                         </>
                       ) : (
                         <span style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>—</span>
@@ -1653,6 +1699,8 @@ export default function TournamentPage() {
             )}
           </div>
         )}
+
+        </>)}
 
       </div>
     )
