@@ -14,7 +14,6 @@ const GOLD = '#C8950A'
 const BORDER = '#E5E7EB'
 const TEXT = '#111111'
 const MUTED = '#6B7280'
-const STAGE1_DEADLINE = new Date('2026-06-11T19:00:00Z')
 const GROUPS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L']
 
 // Official WC2026 R32 bracket seedings — maps slot index (P73=0 … P88=15) to the two seeds
@@ -610,8 +609,11 @@ export default function TournamentPage() {
     Object.values(myEditPicks).filter(p => p.h !== '' && p.a !== '').length
   , [myEditPicks])
 
-  const isDeadlinePast = new Date() >= STAGE1_DEADLINE
   const groupMatches  = matches.filter(m => m.stage === 'group')
+  // Lock group picks once the first group match kicks off; KO and specials remain always editable.
+  const isGroupPicksLocked = groupMatches.length > 0
+    ? Date.now() >= Math.min(...groupMatches.map(m => new Date(m.kickoff).getTime()))
+    : false
   const koMatches     = matches.filter(m => m.stage !== 'group')
   const groupMatchIds = new Set(groupMatches.map(m => m.id))
   const koMatchIds    = new Set(koMatches.map(m => m.id))
@@ -841,7 +843,9 @@ export default function TournamentPage() {
 
   const saveAll = useCallback(async () => {
     if (!user) return
-    const groupEntries = Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
+    const groupEntries = isGroupPicksLocked
+      ? []
+      : Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     const koEntries    = Object.entries(koPicksRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     if (!groupEntries.length && !koEntries.length) return
     setSaveStatus('saving')
@@ -881,7 +885,7 @@ export default function TournamentPage() {
       setSaveStatus('idle')
       setSaveError(error.message)
     }
-  }, [id, user, showSaved])
+  }, [id, user, showSaved, isGroupPicksLocked])
 
   const toggleGroup = (g: string) => setOpenGroups(prev => {
     const next = new Set(prev)
@@ -890,7 +894,7 @@ export default function TournamentPage() {
   })
 
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
-    if (isDeadlinePast) return
+    if (isGroupPicksLocked) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
     const updated = { ...(picksEditRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksEditRef.current[matchId] = updated
@@ -949,7 +953,7 @@ export default function TournamentPage() {
         : p.profiles?.username ?? 'Jugador'
 
       let pts: number | null = null
-      if (isDeadlinePast) {
+      if (isGroupPicksLocked) {
         if (useAdmin) {
           // Full scoring: match results + group order + KO advancement + final positions
           // KO picks use stable slot IDs (ko-r32-0 etc.); build a slot→match map for scoring.
@@ -1017,7 +1021,7 @@ export default function TournamentPage() {
       }
       return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
-  }, [participants, isDeadlinePast, allPicks, adminAllPicks, matches, adminGroupStandings,
+  }, [participants, isGroupPicksLocked, allPicks, adminAllPicks, matches, adminGroupStandings,
       perParticipantBracket, perParticipantClassified, perParticipantFinals,
       standings, r32Ms, r16Ms, qfMs, sfMs, adminSpecials,
       realR32Set, realR16Set, realQfSet, realSfSet, realFinals]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1217,13 +1221,13 @@ export default function TournamentPage() {
           {/* Marcadores */}
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
-            disabled={isDeadlinePast} placeholder="—"
+            disabled={isGroupPicksLocked} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
-            disabled={isDeadlinePast} placeholder="—"
+            disabled={isGroupPicksLocked} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           {/* Visitante: bandera + nombre */}
@@ -1876,9 +1880,10 @@ export default function TournamentPage() {
                     </div>
                   </div>
 
-                  {isDeadlinePast && (
-                    <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '10px 14px', marginBottom: 14, fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>
-                      Las predicciones de la Etapa I están cerradas.
+                  {isGroupPicksLocked && (
+                    <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '10px 14px', marginBottom: 14, fontFamily: FONT_NORMAL }}>
+                      <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Fase de grupos cerrada.</div>
+                      <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>Todavía podés editar la llave KO y los adicionales.</div>
                     </div>
                   )}
 
@@ -2041,7 +2046,7 @@ export default function TournamentPage() {
                   zIndex: 99,
                 }}>
                   <div>
-                    {!isDeadlinePast && (
+                    {!isGroupPicksLocked && (
                       <>
                         <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
                           {myPickCount}/{groupMatches.length} grupos · {koPickCount} llave
@@ -2051,23 +2056,23 @@ export default function TournamentPage() {
                         </div>
                       </>
                     )}
-                    {isDeadlinePast && koPickCount > 0 && (
+                    {isGroupPicksLocked && (
                       <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
-                        {koPickCount} picks de llave cargados
+                        {koPickCount > 0 ? `${koPickCount} picks de llave` : 'Grupos cerrados · editá la llave'}
                       </div>
                     )}
                   </div>
                   <button
                     onClick={saveAll}
-                    disabled={saveStatus === 'saving' || (myPickCount === 0 && koPickCount === 0)}
+                    disabled={saveStatus === 'saving' || (isGroupPicksLocked ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)}
                     style={{
                       padding: '10px 22px',
                       background: saveStatus === 'saved' ? '#10b981' : TEXT,
                       color: '#fff', border: 'none', borderRadius: 8,
                       fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
-                      cursor: saveStatus === 'saving' ? 'wait' : (myPickCount === 0 && koPickCount === 0) ? 'default' : 'pointer',
+                      cursor: saveStatus === 'saving' ? 'wait' : 'pointer',
                       transition: 'background 0.25s',
-                      opacity: (myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
+                      opacity: (isGroupPicksLocked ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
                     }}
                   >
                     {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
@@ -2214,7 +2219,7 @@ export default function TournamentPage() {
                   <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
                   <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
                   <div style={{ width: 72, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>PICKS</div>
-                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: isDeadlinePast ? '#ffcc00' : '#fff', fontFamily: FONT_BLACK }}>PTS</div>
+                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: isGroupPicksLocked ? '#ffcc00' : '#fff', fontFamily: FONT_BLACK }}>PTS</div>
                 </div>
                 {leaderboard.length === 0 ? (
                   <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
@@ -2229,13 +2234,13 @@ export default function TournamentPage() {
                     <div style={{ width: 72, textAlign: 'center', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>
                       {p.pick_count}/{groupMatches.length || '?'}
                     </div>
-                    <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isDeadlinePast ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                      {isDeadlinePast ? (p.pts ?? 0) : '—'}
+                    <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                      {isGroupPicksLocked ? (p.pts ?? 0) : '—'}
                     </div>
                   </div>
                 ))}
               </Card>
-              {!isDeadlinePast && (
+              {!isGroupPicksLocked && (
                 <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los puntos se calculan a partir del 11 de junio.</div>
               )}
             </div>
@@ -2415,7 +2420,7 @@ export default function TournamentPage() {
                       ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
                       : p.profiles?.username ?? 'Jugador'
                     const userPicksList = adminAllPicks.filter(pk => pk.user_id === p.user_id)
-                    const pts = isDeadlinePast
+                    const pts = isGroupPicksLocked
                       ? userPicksList.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
                       : null
                     const groupPickCount = userPicksList.filter(pk => groupMatchIds.has(pk.match_id)).length
@@ -2429,7 +2434,7 @@ export default function TournamentPage() {
                             {name}{p.user_id === user?.id ? ' (vos)' : ''}
                           </div>
                           <div style={{ fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, marginTop: 2 }}>
-                            Grupos: {groupPickCount}/{groupMatches.length}{koMatches.length > 0 && ` · KO: ${koPickCount}/${koMatches.length}`} · Adicionales: {bonusFilled}/{SPECIAL_LABELS.length}{isDeadlinePast && ` · ${pts} pts`}
+                            Grupos: {groupPickCount}/{groupMatches.length}{koMatches.length > 0 && ` · KO: ${koPickCount}/${koMatches.length}`} · Adicionales: {bonusFilled}/{SPECIAL_LABELS.length}{isGroupPicksLocked && ` · ${pts} pts`}
                           </div>
                         </div>
                         <button
