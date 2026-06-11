@@ -241,6 +241,7 @@ function computeKoBracket(
     if (!pk) return
     const home = (homeSlotId ? winners.get(homeSlotId) : null) ?? predictedHome ?? fallbackHome
     const away = (awaySlotId ? winners.get(awaySlotId) : null) ?? predictedAway ?? fallbackAway
+    if (home === '?' || away === '?') return
     if (pk.home_score > pk.away_score)      { winners.set(slotId, home); losers.set(slotId, away) }
     else if (pk.away_score > pk.home_score) { winners.set(slotId, away); losers.set(slotId, home) }
     else if (pk.pen_winner === 'h')         { winners.set(slotId, home); losers.set(slotId, away) }
@@ -259,20 +260,24 @@ function computeKoBracket(
   if (thirdPk) {
     const home = losers.get('ko-sf-0') ?? thirdMs[0]?.home_team ?? '?'
     const away = losers.get('ko-sf-1') ?? thirdMs[0]?.away_team ?? '?'
-    if (thirdPk.home_score > thirdPk.away_score)      winners.set('ko-3rd', home)
-    else if (thirdPk.away_score > thirdPk.home_score) winners.set('ko-3rd', away)
-    else if (thirdPk.pen_winner === 'h')               winners.set('ko-3rd', home)
-    else if (thirdPk.pen_winner === 'a')               winners.set('ko-3rd', away)
+    if (home !== '?' && away !== '?') {
+      if (thirdPk.home_score > thirdPk.away_score)      winners.set('ko-3rd', home)
+      else if (thirdPk.away_score > thirdPk.home_score) winners.set('ko-3rd', away)
+      else if (thirdPk.pen_winner === 'h')               winners.set('ko-3rd', home)
+      else if (thirdPk.pen_winner === 'a')               winners.set('ko-3rd', away)
+    }
   }
 
   const finalPk = picks.find(p => p.match_id === 'ko-final')
   if (finalPk) {
     const home = winners.get('ko-sf-0') ?? finalMs[0]?.home_team ?? '?'
     const away = winners.get('ko-sf-1') ?? finalMs[0]?.away_team ?? '?'
-    if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); losers.set('ko-final', away) }
-    else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); losers.set('ko-final', home) }
-    else if (finalPk.pen_winner === 'h')               { winners.set('ko-final', home); losers.set('ko-final', away) }
-    else if (finalPk.pen_winner === 'a')               { winners.set('ko-final', away); losers.set('ko-final', home) }
+    if (home !== '?' && away !== '?') {
+      if (finalPk.home_score > finalPk.away_score)      { winners.set('ko-final', home); losers.set('ko-final', away) }
+      else if (finalPk.away_score > finalPk.home_score) { winners.set('ko-final', away); losers.set('ko-final', home) }
+      else if (finalPk.pen_winner === 'h')               { winners.set('ko-final', home); losers.set('ko-final', away) }
+      else if (finalPk.pen_winner === 'a')               { winners.set('ko-final', away); losers.set('ko-final', home) }
+    }
   }
 
   return winners
