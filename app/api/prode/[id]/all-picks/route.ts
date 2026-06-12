@@ -25,7 +25,15 @@ export async function GET(
     .eq('id', id)
     .maybeSingle()
 
-  if (!tournament || tournament.admin_id !== user.id) {
+  // Allow any tournament participant (not just admin) — picks are public within the tournament
+  const { data: participant } = await supabase
+    .from('prode_participants')
+    .select('user_id')
+    .eq('tournament_id', id)
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (!tournament || (!participant && tournament.admin_id !== user.id)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

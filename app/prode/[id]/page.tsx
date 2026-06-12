@@ -380,6 +380,7 @@ export default function TournamentPage() {
   const [matches, setMatches] = useState<Match[]>([])
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
   const [adminAllPicks, setAdminAllPicks] = useState<UserPick[]>([])
+  const [predAllPicks, setPredAllPicks] = useState<UserPick[]>([])
   const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
@@ -471,19 +472,24 @@ export default function TournamentPage() {
 
         setParticipants((ps as any[]).map(p => ({ ...p, pick_count: allP.filter(pk => pk.user_id === p.user_id).length })))
 
-        // Admin: fetch all picks bypassing RLS (anon client only sees own picks)
+        // Fetch all picks via service role (anon client only sees own picks due to RLS)
+        // Available to any participant; admin tab also uses this data
+        fetch(`/api/prode/${id}/all-picks`)
+          .then(r => r.json())
+          .then((allServicePicks: UserPick[]) => {
+            if (!Array.isArray(allServicePicks)) return
+            setPredAllPicks(allServicePicks)
+            setParticipants(prev => prev.map(p => ({
+              ...p,
+              pick_count: allServicePicks.filter(pk => pk.user_id === p.user_id).length,
+            })))
+            if ((t as any)?.admin_id === user.id) {
+              setAdminAllPicks(allServicePicks)
+            }
+          })
+          .catch(() => {})
+
         if ((t as any)?.admin_id === user.id) {
-          fetch(`/api/prode/${id}/all-picks`)
-            .then(r => r.json())
-            .then((allAdminPicks: UserPick[]) => {
-              if (!Array.isArray(allAdminPicks)) return
-              setAdminAllPicks(allAdminPicks)
-              setParticipants(prev => prev.map(p => ({
-                ...p,
-                pick_count: allAdminPicks.filter(pk => pk.user_id === p.user_id).length,
-              })))
-            })
-            .catch(() => {})
           fetch(`/api/prode/${id}/all-specials`)
             .then(r => r.json())
             .then((data: unknown) => {
@@ -749,7 +755,7 @@ export default function TournamentPage() {
     const result = new Map<string, Map<string, TeamStat[]>>()
     for (const p of participants) {
       const pm: Record<string, {h:string;a:string}> = {}
-      for (const pk of allPicks.filter(pk => pk.user_id === p.user_id))
+      for (const pk of predAllPicks.filter(pk => pk.user_id === p.user_id))
         pm[pk.match_id] = { h: String(pk.home_score), a: String(pk.away_score) }
       const gm = new Map<string, TeamStat[]>()
       for (const g of GROUPS) {
@@ -759,7 +765,7 @@ export default function TournamentPage() {
       result.set(p.user_id, gm)
     }
     return result
-  }, [allPicks, participants, groupMatches])
+  }, [predAllPicks, participants, groupMatches])
 
   // Per-participant group qualifiers: who each user predicts will reach R32
   const perParticipantClassified = useMemo(() => {
@@ -3129,7 +3135,7 @@ export default function TournamentPage() {
               {predTab === 'partidos' && (
                 <Card>
                   <SectionTitle>Partidos — Fase de Grupos</SectionTitle>
-                  {allPicks.length === 0 ? (
+                  {predAllPicks.length === 0 ? (
                     <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Cargando predicciones...</div>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -3168,7 +3174,7 @@ export default function TournamentPage() {
                                   {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
                                 </td>
                                 {participants.map(p => {
-                                  const pk = allPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                  const pk = predAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
                                   const score = pk && hasResult ? calcScore(pk, m) : null
                                   const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
                                   return (
@@ -3191,7 +3197,7 @@ export default function TournamentPage() {
               {predTab === 'grupos' && (
                 <Card>
                   <SectionTitle>Orden de Grupos</SectionTitle>
-                  {allPicks.length === 0 ? (
+                  {predAllPicks.length === 0 ? (
                     <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Cargando predicciones...</div>
                   ) : (
                     <div style={{ overflowX: 'auto' }}>
@@ -3233,7 +3239,7 @@ export default function TournamentPage() {
                                     {participants.map(p => {
                                       const userGrpStandings = publicGroupStandings.get(p.user_id)?.get(g)
                                       const predictedTeam = userGrpStandings?.[posIdx]?.name ?? null
-                                      const hasGroupPicks = allPicks.some(pk => pk.user_id === p.user_id && groupMatches.some(m => m.id === pk.match_id && m.group_name === g))
+                                      const hasGroupPicks = predAllPicks.some(pk => pk.user_id === p.user_id && groupMatches.some(m => m.id === pk.match_id && m.group_name === g))
                                       const isOk = realTeam && predictedTeam ? realTeam === predictedTeam : null
                                       const color = isOk === true ? '#16a34a' : isOk === false ? RED : MUTED
                                       return (
