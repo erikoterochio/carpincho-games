@@ -12,8 +12,6 @@ function adminDB() {
 }
 
 export async function GET() {
-  // Cache the API-Football call for 55s across all serverless instances.
-  // Combined with the 5-min client interval this keeps us well under 100 req/day.
   const res = await fetch(`${BASE}/fixtures?live=all`, {
     headers: { 'x-apisports-key': API_KEY },
     next: { revalidate: 50 },
@@ -32,6 +30,16 @@ export async function GET() {
     return NextResponse.json({ live: [] })
   }
 
+  // Fetch events for each live fixture in parallel (cached 50s — one real call per minute across all users)
+  const eventsResults = await Promise.all(
+    fixtures.map(f =>
+      fetch(`${BASE}/fixtures/events?fixture=${f.fixture.id}`, {
+        headers: { 'x-apisports-key': API_KEY },
+        next: { revalidate: 50 },
+      }).then(r => r.json()).catch(() => ({ response: [] }))
+    )
+  )
+
   // Update scores and status in DB for every live match
   const admin = adminDB()
   const updates = fixtures.map((f: any) => ({
@@ -45,14 +53,28 @@ export async function GET() {
   await admin.from('prode_matches').upsert(updates, { onConflict: 'id' })
 
   return NextResponse.json({
-    live: fixtures.map((f: any) => ({
-      id: String(f.fixture.id),
-      home_team: f.teams.home.name,
-      away_team: f.teams.away.name,
-      home_score: f.goals.home ?? 0,
-      away_score: f.goals.away ?? 0,
-      status: f.fixture.status.short,
-      elapsed: f.fixture.status.elapsed ?? null,
-    })),
+    live: fixtures.map((f: any, i: number) => {
+      const evts = ((eventsResults[i]?.response ?? []) as any[])
+        .filter((e: any) => e.type === 'Goal' || (e.type === 'Card' && e.detail === 'Red Card'))
+        .map((e: any) => ({
+          elapsed: e.time.elapsed as number,
+          extra: (e.time.extra ?? null) as number | null,
+          team_id: e.team.id as number,
+          team_name: e.team.name as string,
+          player: e.player.name as string,
+          type: e.type as string,
+          detail: e.detail as string,
+        }))
+      return {
+        id: String(f.fixture.id),
+        home_team: f.teams.home.name,
+        away_team: f.teams.away.name,
+        home_score: f.goals.home ?? 0,
+        away_score: f.goals.away ?? 0,
+        status: f.fixture.status.short,
+        elapsed: f.fixture.status.elapsed ?? null,
+        events: evts,
+      }
+    }),
   })
 }

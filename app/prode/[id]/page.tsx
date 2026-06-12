@@ -406,6 +406,8 @@ export default function TournamentPage() {
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set())
+  const seenEventsRef = useRef<Set<string>>(new Set())
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(null)
   const toggleMatchExpand = (id: string) => setExpandedMatches(prev => {
     const next = new Set(prev)
     if (next.has(id)) next.delete(id); else next.add(id)
@@ -416,6 +418,12 @@ export default function TournamentPage() {
     if (next.has(label)) next.delete(label); else next.add(label)
     return next
   })
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission)
+    }
+  }, [])
 
   useEffect(() => {
     if (!id) return
@@ -551,6 +559,10 @@ export default function TournamentPage() {
         .then((json: { events?: MatchEvent[] }) => {
           if (json.events?.length) {
             setMatchEvents(prev => ({ ...prev, [m.id]: json.events! }))
+            // Pre-mark all existing events as seen so we don't notify about past events on load
+            for (const evt of json.events!) {
+              seenEventsRef.current.add(`${m.id}-${evt.elapsed}-${evt.type}-${evt.detail}-${evt.team_id}`)
+            }
           }
         })
         .catch(() => {})
@@ -572,6 +584,20 @@ export default function TournamentPage() {
         const live = json.live.find((l: any) => l.id === m.id)
         return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status, elapsed: live.elapsed ?? null } : m
       }))
+      // Fire browser notifications for new goals and red cards
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        for (const lm of json.live as any[]) {
+          for (const evt of lm.events ?? []) {
+            const key = `${lm.id}-${evt.elapsed}-${evt.type}-${evt.detail}-${evt.team_id}`
+            if (seenEventsRef.current.has(key)) continue
+            seenEventsRef.current.add(key)
+            const icon = evt.type === 'Card' ? '🟥' : evt.detail === 'Own Goal' ? '⚽ (EC)' : evt.detail === 'Penalty' ? '⚽ (P)' : '⚽'
+            const title = `${icon} ${lm.home_team} ${lm.home_score} – ${lm.away_score} ${lm.away_team}`
+            const body = `${evt.player} '${evt.elapsed}${evt.extra ? '+' + evt.extra : ''}`
+            new Notification(title, { body, icon: '/favicon.ico' })
+          }
+        }
+      }
     }, 60_000)
   }
 
@@ -1907,6 +1933,22 @@ export default function TournamentPage() {
       `}</style>
 
       <div className="t-page">
+
+        {/* ── NOTIF PERMISSION BANNER ── */}
+        {notifPermission === 'default' && (
+          <div style={{ background: '#fffbeb', borderBottom: '1px solid #fde68a', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, fontFamily: FONT_NORMAL, color: '#92400e' }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>🔔</span>
+            <span style={{ flex: 1 }}>Activar notificaciones para recibir alertas de goles y tarjetas rojas en vivo</span>
+            <button
+              onClick={() => Notification.requestPermission().then(p => setNotifPermission(p))}
+              style={{ padding: '4px 12px', background: '#d97706', color: '#fff', border: 'none', borderRadius: 6, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer', flexShrink: 0 }}
+            >Activar</button>
+            <button
+              onClick={() => setNotifPermission('denied')}
+              style={{ background: 'none', border: 'none', color: '#92400e', cursor: 'pointer', fontSize: 16, padding: '0 2px', flexShrink: 0, opacity: 0.6 }}
+            >✕</button>
+          </div>
+        )}
 
         {/* ── GLOBAL SAVE ERROR BANNER ── */}
         {saveError && (
