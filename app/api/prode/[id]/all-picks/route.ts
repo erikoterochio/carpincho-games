@@ -42,6 +42,7 @@ export async function GET(
     .from('prode_stage1_picks')
     .select('user_id, match_id, home_score, away_score, predicted_home, predicted_away, pen_winner')
     .eq('tournament_id', id)
+    .limit(10000)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
