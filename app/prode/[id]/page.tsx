@@ -770,6 +770,13 @@ export default function TournamentPage() {
     return result
   }, [predAllPicks, participants, groupMatches])
 
+  const orderedParticipants = useMemo(() => {
+    if (!user) return participants
+    const me = participants.find(p => p.user_id === user.id)
+    if (!me) return participants
+    return [me, ...participants.filter(p => p.user_id !== user.id)]
+  }, [participants, user])
+
   // Per-participant group qualifiers: who each user predicts will reach R32
   const perParticipantClassified = useMemo(() => {
     const result = new Map<string, { firsts: (string|null)[]; seconds: (string|null)[]; thirds: (string|null)[] }>()
@@ -3162,7 +3169,7 @@ export default function TournamentPage() {
                             <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Partido</th>
                             <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Fecha</th>
                             <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
-                            {participants.map(p => (
+                            {orderedParticipants.map(p => (
                               <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
                                 {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                                 {p.user_id === user?.id ? ' ★' : ''}
@@ -3189,7 +3196,7 @@ export default function TournamentPage() {
                                 <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
                                   {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
                                 </td>
-                                {participants.map(p => {
+                                {orderedParticipants.map(p => {
                                   const pk = predAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
                                   const score = pk && hasResult ? calcScore(pk, m) : null
                                   const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
@@ -3222,7 +3229,7 @@ export default function TournamentPage() {
                           <tr style={{ background: TEXT }}>
                             <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 60 }}>Pos</th>
                             <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
-                            {participants.map(p => (
+                            {orderedParticipants.map(p => (
                               <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
                                 {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
                                 {p.user_id === user?.id ? ' ★' : ''}
@@ -3252,7 +3259,7 @@ export default function TournamentPage() {
                                     <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: realTeam ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
                                       {realTeam ? abbrev(realTeam) : '—'}
                                     </td>
-                                    {participants.map(p => {
+                                    {orderedParticipants.map(p => {
                                       const userGrpStandings = publicGroupStandings.get(p.user_id)?.get(g)
                                       const predictedTeam = userGrpStandings?.[posIdx]?.name ?? null
                                       const hasGroupPicks = predAllPicks.some(pk => pk.user_id === p.user_id && groupMatches.some(m => m.id === pk.match_id && m.group_name === g))
