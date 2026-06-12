@@ -133,7 +133,7 @@ type Standing = {
 }
 type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string }
 type Participant = {
-  user_id: string; paid: boolean
+  user_id: string; paid: boolean; late_join?: boolean
   profiles: { username: string; nombre?: string; apellido?: string } | null
   pick_count?: number
 }
@@ -392,6 +392,7 @@ export default function TournamentPage() {
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState<string | null>(null)
   const [isParticipant, setIsParticipant] = useState(false)
+  const [isLateJoin, setIsLateJoin] = useState(false)
   const [pointsOpen, setPointsOpen] = useState(false)
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
@@ -423,7 +424,7 @@ export default function TournamentPage() {
       setUser(user)
       const [{ data: t }, { data: ps }, { data: ms }, { data: st }] = await Promise.all([
         supabase.from('prode_tournaments').select('*').eq('id', id).maybeSingle(),
-        supabase.from('prode_participants').select('user_id, paid, profiles(username, nombre, apellido)').eq('tournament_id', id),
+        supabase.from('prode_participants').select('user_id, paid, late_join, profiles(username, nombre, apellido)').eq('tournament_id', id),
         supabase.from('prode_matches').select('*').order('sort_order'),
         supabase.from('prode_standings').select('*').order('group_name').order('rank'),
       ])
@@ -432,7 +433,9 @@ export default function TournamentPage() {
       setMatches(matchList)
       setStandings((st ?? []) as Standing[])
       if (user && ps) {
-        setIsParticipant(!!(ps as any[]).find(p => p.user_id === user.id))
+        const myPart = (ps as any[]).find(p => p.user_id === user.id)
+        setIsParticipant(!!myPart)
+        setIsLateJoin(myPart?.late_join ?? false)
         const { data: picks } = await supabase
           .from('prode_stage1_picks').select('match_id,home_score,away_score,user_id,predicted_home,predicted_away,pen_winner').eq('tournament_id', id)
         const allP = (picks ?? []) as UserPick[]
@@ -872,9 +875,16 @@ export default function TournamentPage() {
 
   const saveAll = useCallback(async () => {
     if (!user) return
-    const groupEntries = isGroupPicksLocked
+    const groupEntries = (isGroupPicksLocked && !isLateJoin)
       ? []
-      : Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
+      : Object.entries(picksEditRef.current).filter(([matchId, v]) => {
+          if (v.h === '' || v.a === '') return false
+          if (isLateJoin) {
+            const m = matchesRef.current.find(mx => mx.id === matchId)
+            return m ? Date.now() < new Date(m.kickoff).getTime() : false
+          }
+          return true
+        })
     const koEntries    = Object.entries(koPicksRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     if (!groupEntries.length && !koEntries.length) return
     setSaveStatus('saving')
@@ -923,7 +933,11 @@ export default function TournamentPage() {
   })
 
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
-    if (isGroupPicksLocked) return
+    if (isGroupPicksLocked && !isLateJoin) return
+    if (isLateJoin) {
+      const m = matchesRef.current.find(mx => mx.id === matchId)
+      if (m && Date.now() >= new Date(m.kickoff).getTime()) return
+    }
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
     const updated = { ...(picksEditRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksEditRef.current[matchId] = updated
@@ -1258,13 +1272,13 @@ export default function TournamentPage() {
           {/* Marcadores */}
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
-            disabled={isGroupPicksLocked} placeholder="—"
+            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime())} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
-            disabled={isGroupPicksLocked} placeholder="—"
+            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime())} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           {/* Visitante: bandera + nombre */}
@@ -2007,7 +2021,7 @@ export default function TournamentPage() {
                     </div>
                   </div>
 
-                  {isGroupPicksLocked && (
+                  {isGroupPicksLocked && !isLateJoin && (
                     <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '10px 14px', marginBottom: 14, fontFamily: FONT_NORMAL }}>
                       <div style={{ fontSize: 13, color: RED, fontWeight: 900, fontFamily: FONT_BLACK }}>Fase de grupos cerrada.</div>
                       <div style={{ fontSize: 11, color: '#6b7280', marginTop: 3 }}>Todavía podés editar la llave KO y los adicionales.</div>
@@ -2183,7 +2197,7 @@ export default function TournamentPage() {
                         </div>
                       </>
                     )}
-                    {isGroupPicksLocked && (
+                    {isGroupPicksLocked && !isLateJoin && (
                       <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
                         {koPickCount > 0 ? `${koPickCount} picks de llave` : 'Grupos cerrados · editá la llave'}
                       </div>
@@ -2191,7 +2205,7 @@ export default function TournamentPage() {
                   </div>
                   <button
                     onClick={saveAll}
-                    disabled={saveStatus === 'saving' || (isGroupPicksLocked ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)}
+                    disabled={saveStatus === 'saving' || ((isGroupPicksLocked && !isLateJoin) ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)}
                     style={{
                       padding: '10px 22px',
                       background: saveStatus === 'saved' ? '#10b981' : TEXT,
