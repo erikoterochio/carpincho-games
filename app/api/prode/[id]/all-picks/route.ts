@@ -38,13 +38,23 @@ export async function GET(
   }
 
   const admin = adminDB()
-  const { data: picks, error } = await admin
-    .from('prode_stage1_picks')
-    .select('user_id, match_id, home_score, away_score, predicted_home, predicted_away, pen_winner')
-    .eq('tournament_id', id)
-    .limit(10000)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // PostgREST max_rows cap is 1000 — paginate to get all picks
+  const allPicks: Record<string, unknown>[] = []
+  const pageSize = 1000
+  let from = 0
+  while (true) {
+    const { data, error } = await admin
+      .from('prode_stage1_picks')
+      .select('user_id, match_id, home_score, away_score, predicted_home, predicted_away, pen_winner')
+      .eq('tournament_id', id)
+      .range(from, from + pageSize - 1)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (!data || data.length === 0) break
+    allPicks.push(...data)
+    if (data.length < pageSize) break
+    from += pageSize
+  }
 
-  return NextResponse.json(picks ?? [])
+  return NextResponse.json(allPicks)
 }
