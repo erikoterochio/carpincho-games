@@ -910,15 +910,17 @@ export default function TournamentPage() {
     const { error } = await supabase.from('prode_stage1_picks').upsert(rows as any[], { onConflict: 'tournament_id,user_id,match_id' })
     if (!error) {
       showSaved()
+      const updatePicks = (prev: UserPick[]) => {
+        let updated = [...prev]
+        for (const row of rows) {
+          updated = updated.filter(pk => !(pk.user_id === user.id && pk.match_id === row.match_id))
+          updated.push({ user_id: user.id, match_id: row.match_id, home_score: row.home_score, away_score: row.away_score, predicted_home: (row as any).predicted_home ?? null, predicted_away: (row as any).predicted_away ?? null, pen_winner: (row as any).pen_winner ?? null })
+        }
+        return updated
+      }
+      setPredAllPicks(updatePicks)
       if (koEntries.length) {
-        setAdminAllPicks(prev => {
-          let updated = [...prev]
-          for (const row of rows) {
-            updated = updated.filter(pk => !(pk.user_id === user.id && pk.match_id === row.match_id))
-            updated.push({ user_id: user.id, match_id: row.match_id, home_score: row.home_score, away_score: row.away_score, predicted_home: (row as any).predicted_home ?? null, predicted_away: (row as any).predicted_away ?? null, pen_winner: (row as any).pen_winner ?? null })
-          }
-          return updated
-        })
+        setAdminAllPicks(updatePicks)
       }
     } else {
       setSaveStatus('idle')
