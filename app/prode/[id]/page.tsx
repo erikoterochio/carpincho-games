@@ -114,7 +114,7 @@ const ABBREV: Record<string, string> = {
 }
 function abbrev(name: string) { return ABBREV[name] ?? name.substring(0, 3).toUpperCase() }
 
-type Tab = 'home' | 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin'
+type Tab = 'home' | 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin' | 'predicciones'
 
 type Standing = {
   group_name: string
@@ -399,6 +399,7 @@ export default function TournamentPage() {
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
+  const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -744,6 +745,22 @@ export default function TournamentPage() {
     return result
   }, [adminAllPicks, participants, groupMatches])
 
+  const publicGroupStandings = useMemo(() => {
+    const result = new Map<string, Map<string, TeamStat[]>>()
+    for (const p of participants) {
+      const pm: Record<string, {h:string;a:string}> = {}
+      for (const pk of allPicks.filter(pk => pk.user_id === p.user_id))
+        pm[pk.match_id] = { h: String(pk.home_score), a: String(pk.away_score) }
+      const gm = new Map<string, TeamStat[]>()
+      for (const g of GROUPS) {
+        const ms = groupMatches.filter(m => m.group_name === g)
+        if (ms.length) gm.set(g, computeGroupStandings(ms, pm, FIFA_RANKS))
+      }
+      result.set(p.user_id, gm)
+    }
+    return result
+  }, [allPicks, participants, groupMatches])
+
   // Per-participant group qualifiers: who each user predicts will reach R32
   const perParticipantClassified = useMemo(() => {
     const result = new Map<string, { firsts: (string|null)[]; seconds: (string|null)[]; thirds: (string|null)[] }>()
@@ -1047,6 +1064,7 @@ export default function TournamentPage() {
     { key: 'tabla', label: 'Tabla' },
     { key: 'reglamento', label: 'Reglamento' },
     { key: 'info', label: 'Info' },
+    ...(isParticipant ? [{ key: 'predicciones' as Tab, label: 'Predicciones' }] : []),
     ...(isAdmin ? [{ key: 'admin' as Tab, label: '⚙ Admin' }] : []),
   ]
 
@@ -3082,6 +3100,157 @@ export default function TournamentPage() {
                       </tbody>
                     </table>
                   </div>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* ── PREDICCIONES (pública) ── */}
+          {tab === 'predicciones' && isParticipant && (
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
+              {/* Sub-tab nav */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
+                {(['partidos', 'grupos'] as const).map(k => (
+                  <button
+                    key={k}
+                    onClick={() => setPredTab(k)}
+                    style={{
+                      padding: '6px 16px', border: `1.5px solid ${predTab === k ? RED : BORDER}`,
+                      background: predTab === k ? RED : '#fff', color: predTab === k ? '#fff' : TEXT,
+                      borderRadius: 20, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer',
+                    }}
+                  >
+                    {{ partidos: 'Partidos', grupos: 'Orden de grupos' }[k]}
+                  </button>
+                ))}
+              </div>
+
+              {/* ── Partidos — predicciones de todos por partido ── */}
+              {predTab === 'partidos' && (
+                <Card>
+                  <SectionTitle>Partidos — Fase de Grupos</SectionTitle>
+                  {allPicks.length === 0 ? (
+                    <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Cargando predicciones...</div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                        <thead>
+                          <tr style={{ background: TEXT }}>
+                            <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Grp</th>
+                            <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Partido</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Fecha</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
+                            {participants.map(p => (
+                              <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
+                                {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                                {p.user_id === user?.id ? ' ★' : ''}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {groupMatches.map((m, i) => {
+                            const matchDate = m.kickoff
+                              ? new Date(m.kickoff).toLocaleDateString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: '2-digit', month: '2-digit' })
+                              : '—'
+                            const hasResult = m.home_score !== null && m.away_score !== null
+                            const grpColor = GROUP_COLORS[m.group_name ?? ''] ?? TEXT
+                            return (
+                              <tr key={m.id} style={{ background: i % 2 === 0 ? '#fff' : '#f9f9f9', borderBottom: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, color: '#fff', background: grpColor, whiteSpace: 'nowrap' }}>
+                                  {m.group_name ?? ''}
+                                </td>
+                                <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: i % 2 === 0 ? '#fff' : '#f9f9f9', whiteSpace: 'nowrap', fontSize: 10 }}>
+                                  {abbrev(m.home_team)} vs {abbrev(m.away_team)}
+                                </td>
+                                <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, color: MUTED, fontSize: 9, whiteSpace: 'nowrap' }}>{matchDate}</td>
+                                <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: hasResult ? TEXT : MUTED }}>
+                                  {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
+                                </td>
+                                {participants.map(p => {
+                                  const pk = allPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                  const score = pk && hasResult ? calcScore(pk, m) : null
+                                  const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
+                                  return (
+                                    <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
+                                      {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </Card>
+              )}
+
+              {/* ── Grupos — orden predicho por jugador ── */}
+              {predTab === 'grupos' && (
+                <Card>
+                  <SectionTitle>Orden de Grupos</SectionTitle>
+                  {allPicks.length === 0 ? (
+                    <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>Cargando predicciones...</div>
+                  ) : (
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                        <thead>
+                          <tr style={{ background: TEXT }}>
+                            <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 60 }}>Pos</th>
+                            <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
+                            {participants.map(p => (
+                              <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
+                                {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                                {p.user_id === user?.id ? ' ★' : ''}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {GROUPS.filter(g => groupMatches.some(m => m.group_name === g)).flatMap(g => {
+                            const grpColor = GROUP_COLORS[g] ?? TEXT
+                            const realPos = [1,2,3,4].map(rank => standings.find(s => s.group_name === g && s.rank === rank)?.team_name ?? null)
+                            return [
+                              <tr key={`pred-grp-hdr-${g}`}>
+                                <td colSpan={participants.length + 2} style={{ background: grpColor, color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, padding: '5px 10px', letterSpacing: 0.5 }}>
+                                  GRUPO {g}
+                                </td>
+                              </tr>,
+                              ...[0,1,2,3].map(posIdx => {
+                                const realTeam = realPos[posIdx]
+                                const rowBg = posIdx % 2 === 0 ? '#fff' : '#f9f9f9'
+                                const posColor = posIdx < 2 ? '#16a34a' : posIdx === 2 ? '#ca8a04' : MUTED
+                                return (
+                                  <tr key={`pred-${g}-${posIdx}`} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                                    <td style={{ padding: '6px 10px', fontFamily: FONT_BLACK, fontSize: 11, color: posColor, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
+                                      {posIdx + 1}°
+                                    </td>
+                                    <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: realTeam ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
+                                      {realTeam ? abbrev(realTeam) : '—'}
+                                    </td>
+                                    {participants.map(p => {
+                                      const userGrpStandings = publicGroupStandings.get(p.user_id)?.get(g)
+                                      const predictedTeam = userGrpStandings?.[posIdx]?.name ?? null
+                                      const hasGroupPicks = allPicks.some(pk => pk.user_id === p.user_id && groupMatches.some(m => m.id === pk.match_id && m.group_name === g))
+                                      const isOk = realTeam && predictedTeam ? realTeam === predictedTeam : null
+                                      const color = isOk === true ? '#16a34a' : isOk === false ? RED : MUTED
+                                      return (
+                                        <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
+                                          {!hasGroupPicks ? '—' : (predictedTeam ? abbrev(predictedTeam) : '?')}
+                                        </td>
+                                      )
+                                    })}
+                                  </tr>
+                                )
+                              }),
+                            ]
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </Card>
               )}
             </div>
