@@ -1583,7 +1583,7 @@ export default function TournamentPage() {
                     <span style={{ fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 11, opacity: 0.9 }}>&apos;{m.elapsed}</span>
                   )}
                 </div>
-                {!isDone && (
+                {!isDone && !isLive && (
                   <>
                     <div className="hm2-hdiv" />
                     <span className="hm2-time" style={{ fontFamily: FONT_BLACK, fontWeight: 800, color: '#fff' }}>{timeStr} HS</span>
