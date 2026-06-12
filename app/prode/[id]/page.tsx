@@ -406,6 +406,7 @@ export default function TournamentPage() {
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
   const [expandedMatches, setExpandedMatches] = useState<Set<string>>(new Set())
+  const [expandedPicksMatches, setExpandedPicksMatches] = useState<Set<string>>(new Set())
   const seenEventsRef = useRef<Set<string>>(new Set())
   const [notifPermission, setNotifPermission] = useState<NotificationPermission | null>(null)
   const toggleMatchExpand = (id: string) => setExpandedMatches(prev => {
@@ -526,9 +527,14 @@ export default function TournamentPage() {
           }).catch(() => {})
       }
 
-      // Auto-refresh live scores every 60s while a match is in progress
+      // Auto-refresh live scores every 60s — start if DB says live OR if kickoff passed recently (handles stale DB status when no admin synced)
+      const now = Date.now()
       const hasLive = matchList.some(m => LIVE_STATUSES.has(m.status))
-      if (hasLive) startLiveRefresh()
+      const hasRecentKickoff = matchList.some(m => {
+        const ko = new Date(m.kickoff).getTime()
+        return ko <= now && now - ko < 3 * 60 * 60 * 1000 && !['FT', 'AET', 'PEN'].includes(m.status)
+      })
+      if (hasLive || hasRecentKickoff) startLiveRefresh()
     }
     load()
     return () => stopLiveRefresh()
@@ -573,18 +579,15 @@ export default function TournamentPage() {
     if (liveRefreshRef.current) { clearInterval(liveRefreshRef.current); liveRefreshRef.current = null }
   }
 
-  const startLiveRefresh = () => {
-    stopLiveRefresh()
-    liveRefreshRef.current = setInterval(async () => {
+  const doLiveFetch = async () => {
+    try {
       const res = await fetch('/api/prode/live')
       const json = await res.json()
       if (!json.live?.length) { stopLiveRefresh(); return }
-      // Merge live updates into local match list
       setMatches(prev => prev.map(m => {
         const live = json.live.find((l: any) => l.id === m.id)
         return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status, elapsed: live.elapsed ?? null } : m
       }))
-      // Fire browser notifications for new goals and red cards
       if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
         for (const lm of json.live as any[]) {
           for (const evt of lm.events ?? []) {
@@ -598,7 +601,13 @@ export default function TournamentPage() {
           }
         }
       }
-    }, 60_000)
+    } catch {}
+  }
+
+  const startLiveRefresh = () => {
+    stopLiveRefresh()
+    doLiveFetch() // immediate first fetch — populates elapsed right away
+    liveRefreshRef.current = setInterval(doLiveFetch, 60_000)
   }
 
   const handleSync = async () => {
@@ -1693,7 +1702,10 @@ export default function TournamentPage() {
           const SCORE_LABELS_SHORT: Record<number, string> = { 12: 'exacto', 7: 'res+gol', 5: 'parcial', 2: '1 gol', 0: '—' }
           return (
             <div style={{ borderTop: isLive ? '1px solid #d1fae5' : '1px solid #e5e7eb' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 20px 5px', background: isLive ? '#f0fdf4' : '#f8fafc' }}>
+              <div
+                onClick={() => setExpandedPicksMatches(prev => { const s = new Set(prev); s.has(m.id) ? s.delete(m.id) : s.add(m.id); return s })}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 20px 5px', background: isLive ? '#f0fdf4' : '#f8fafc', cursor: 'pointer', userSelect: 'none' }}
+              >
                 <span style={{ fontFamily: FONT_BLACK, fontSize: 10, fontWeight: 900, color: isLive ? '#059669' : '#475569', textTransform: 'uppercase', letterSpacing: 0.8 }}>
                   {isDone ? 'Puntos' : 'Predicciones'}
                 </span>
@@ -1702,8 +1714,11 @@ export default function TournamentPage() {
                     <span className="live-dot" /> en vivo
                   </span>
                 )}
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: isLive ? '#059669' : '#9ca3af' }}>
+                  {expandedPicksMatches.has(m.id) ? '▲' : '▼'}
+                </span>
               </div>
-              <div style={{ background: isLive ? '#f7fef9' : '#fff', paddingBottom: 4 }}>
+              <div style={{ background: isLive ? '#f7fef9' : '#fff', paddingBottom: 4, display: expandedPicksMatches.has(m.id) ? 'block' : 'none' }}>
                 {rows.map((row, i) => {
                   const ptColor = row.pts === null ? MUTED : row.pts >= 12 ? '#10b981' : row.pts >= 7 ? '#0ea5e9' : row.pts >= 5 ? '#d97706' : row.pts >= 2 ? '#f97316' : RED
                   return (
