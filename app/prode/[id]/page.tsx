@@ -935,7 +935,7 @@ export default function TournamentPage() {
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
     if (isGroupPicksLocked && !isLateJoin) return
     if (isLateJoin) {
-      const m = matchesRef.current.find(mx => mx.id === matchId)
+      const m = matches.find(mx => mx.id === matchId)
       if (m && Date.now() >= new Date(m.kickoff).getTime()) return
     }
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
