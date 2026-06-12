@@ -1763,7 +1763,7 @@ export default function TournamentPage() {
                         {e.elapsed}{e.extra ? `+${e.extra}` : ''}'
                       </span>
                       <span style={{ fontSize: 14, textAlign: 'center' }}>{icon}</span>
-                      <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 700, color: TEXT, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {e.player}
                       </span>
                       <span style={{ fontFamily: FONT_BLACK, fontSize: 11, color: '#6b7280', textTransform: 'uppercase' }}>
