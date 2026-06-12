@@ -1064,13 +1064,13 @@ export default function TournamentPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'home', label: 'Home' },
-    { key: 'predecir', label: 'Predecir' },
-    { key: 'fixture', label: 'Fixture' },
-    { key: 'posiciones', label: 'Posiciones' },
-    { key: 'tabla', label: 'Tabla' },
-    { key: 'reglamento', label: 'Reglamento' },
-    { key: 'info', label: 'Info' },
     ...(isParticipant ? [{ key: 'predicciones' as Tab, label: 'Predicciones' }] : []),
+    { key: 'predecir', label: 'Predecir' },
+    { key: 'tabla', label: 'Tabla' },
+    { key: 'posiciones', label: 'Posiciones' },
+    { key: 'fixture', label: 'Fixture' },
+    { key: 'info', label: 'Info' },
+    { key: 'reglamento', label: 'Reglamento' },
     ...(isAdmin ? [{ key: 'admin' as Tab, label: '⚙ Admin' }] : []),
   ]
 
