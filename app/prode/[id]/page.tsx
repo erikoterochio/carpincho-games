@@ -572,7 +572,7 @@ export default function TournamentPage() {
         const live = json.live.find((l: any) => l.id === m.id)
         return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status } : m
       }))
-    }, 300_000)
+    }, 60_000)
   }
 
   const handleSync = async () => {

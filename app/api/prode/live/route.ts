@@ -16,7 +16,7 @@ export async function GET() {
   // Combined with the 5-min client interval this keeps us well under 100 req/day.
   const res = await fetch(`${BASE}/fixtures?live=all`, {
     headers: { 'x-apisports-key': API_KEY },
-    next: { revalidate: 55 },
+    next: { revalidate: 50 },
   })
 
   if (!res.ok) {
