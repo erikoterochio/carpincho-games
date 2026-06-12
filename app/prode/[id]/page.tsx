@@ -142,7 +142,7 @@ type Match = {
   home_team_id: number; away_team_id: number
   kickoff: string; stage: string; group_name: string | null; sort_order: number
   home_score: number | null; away_score: number | null; status: string
-  venue: string | null
+  venue: string | null; elapsed?: number | null
 }
 type MatchEvent = {
   elapsed: number; extra: number | null
@@ -570,7 +570,7 @@ export default function TournamentPage() {
       // Merge live updates into local match list
       setMatches(prev => prev.map(m => {
         const live = json.live.find((l: any) => l.id === m.id)
-        return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status } : m
+        return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status, elapsed: live.elapsed ?? null } : m
       }))
     }, 60_000)
   }
@@ -1440,6 +1440,7 @@ export default function TournamentPage() {
               <span style={{ fontSize: 9, color: '#10b981', fontFamily: FONT_NORMAL, display: 'flex', alignItems: 'center', gap: 3 }}>
                 <span className="live-dot" />
                 {liveLabel}
+                {m.status !== 'HT' && m.elapsed != null && <span style={{ fontWeight: 700 }}>&apos;{m.elapsed}</span>}
               </span>
             </div>
           ) : (
@@ -1552,6 +1553,9 @@ export default function TournamentPage() {
                 <div className="hm2-badge" style={{ background: isLive ? '#18b26b' : isDone ? '#4b5563' : '#36a8ff', color: '#fff', fontFamily: FONT_BLACK, fontWeight: 800, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: 5 }}>
                   {isLive && <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff3b3b', display: 'inline-block', animation: 'livePulse 1.2s infinite', flexShrink: 0 }} />}
                   {isLive ? liveLabel : isDone ? 'FINAL' : 'PRÓXIMO'}
+                  {isLive && m.status !== 'HT' && m.elapsed != null && (
+                    <span style={{ fontFamily: FONT_NORMAL, fontWeight: 700, fontSize: 11, opacity: 0.9 }}>&apos;{m.elapsed}</span>
+                  )}
                 </div>
                 {!isDone && (
                   <>
