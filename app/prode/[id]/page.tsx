@@ -1424,7 +1424,7 @@ export default function TournamentPage() {
   const MatchRow = ({ m }: { m: Match }) => {
     const isLive = LIVE_STATUSES.has(m.status)
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
-    const liveLabel = m.status === 'HT' ? 'DESCANSO' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
+    const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
     return (
       <div style={{ display: 'flex', alignItems: 'center', padding: '10px 0', borderBottom: `1px solid ${BORDER}`, background: isLive ? 'rgba(16,185,129,0.04)' : undefined }}>
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, justifyContent: 'flex-end' }}>
@@ -1478,7 +1478,7 @@ export default function TournamentPage() {
   const HomeMatchCard = ({ m }: { m: Match }) => {
     const isLive = LIVE_STATUSES.has(m.status)
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
-    const liveLabel = m.status === 'HT' ? 'DESCANSO' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
+    const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
     const myPick = myEditPicks[m.id]
     const hasPick = !!(myPick && myPick.h !== '' && myPick.a !== '')
     const pickScore = hasPick
