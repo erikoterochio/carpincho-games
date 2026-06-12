@@ -880,7 +880,7 @@ export default function TournamentPage() {
       : Object.entries(picksEditRef.current).filter(([matchId, v]) => {
           if (v.h === '' || v.a === '') return false
           if (isLateJoin) {
-            const m = matchesRef.current.find(mx => mx.id === matchId)
+            const m = matches.find(mx => mx.id === matchId)
             return m ? Date.now() < new Date(m.kickoff).getTime() : false
           }
           return true
@@ -924,7 +924,7 @@ export default function TournamentPage() {
       setSaveStatus('idle')
       setSaveError(error.message)
     }
-  }, [id, user, showSaved, isGroupPicksLocked])
+  }, [id, user, showSaved, isGroupPicksLocked, isLateJoin, matches])
 
   const toggleGroup = (g: string) => setOpenGroups(prev => {
     const next = new Set(prev)
