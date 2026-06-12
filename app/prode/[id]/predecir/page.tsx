@@ -97,6 +97,7 @@ export default function PredecirPage() {
   const [loading, setLoading] = useState(true)
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const [isParticipant, setIsParticipant] = useState(false)
+  const [isLateJoin, setIsLateJoin] = useState(false)
   const [standings, setStandings] = useState<{group_name: string; rank: number; team_name: string}[]>([])
 
   const picksRef = useRef<Picks>({})
@@ -105,7 +106,7 @@ export default function PredecirPage() {
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const specialsTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const userRef = useRef<any>(null)
-  const isDeadlinePast = new Date() >= DEADLINE
+  const isDeadlinePast = !isLateJoin && new Date() >= DEADLINE
 
   useEffect(() => {
     if (!id) return
@@ -113,8 +114,9 @@ export default function PredecirPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/login'); return }
       userRef.current = user
-      const { data: part } = await supabase.from('prode_participants').select('id').eq('tournament_id', id).eq('user_id', user.id).maybeSingle()
+      const { data: part } = await supabase.from('prode_participants').select('id, late_join').eq('tournament_id', id).eq('user_id', user.id).maybeSingle()
       setIsParticipant(!!part)
+      setIsLateJoin(part?.late_join ?? false)
       if (!part) { setLoading(false); return }
       const [{ data: ms }, { data: myPicks }, { data: mySpecials }, { data: st }] = await Promise.all([
         supabase.from('prode_matches').select('id,home_team,away_team,home_flag,away_flag,kickoff,group_name,sort_order,stage').order('sort_order'),
@@ -173,7 +175,7 @@ export default function PredecirPage() {
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
     const match = matches.find(m => m.id === matchId)
     if (!match) return
-    if (match.stage === 'group' ? isDeadlinePast : new Date() >= new Date(match.kickoff)) return
+    if (new Date() >= new Date(match.kickoff) || (match.stage === 'group' && isDeadlinePast)) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
     const updated = { ...(picksRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksRef.current[matchId] = updated
@@ -350,7 +352,7 @@ export default function PredecirPage() {
   const MatchCard = ({ m }: { m: Match }) => {
     const pick = picks[m.id] ?? { h: '', a: '' }
     const filled = pick.h !== '' && pick.a !== ''
-    const matchLocked = m.stage === 'group' ? isDeadlinePast : new Date() >= new Date(m.kickoff)
+    const matchLocked = new Date() >= new Date(m.kickoff) || (m.stage === 'group' && isDeadlinePast)
     const { label: homeLabel, sub: homeSub } = resolveTeam(m.home_team)
     const { label: awayLabel, sub: awaySub } = resolveTeam(m.away_team)
     return (
