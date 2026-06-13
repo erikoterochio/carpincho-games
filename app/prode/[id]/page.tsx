@@ -965,7 +965,10 @@ export default function TournamentPage() {
           return true
         })
     const koEntries    = Object.entries(koPicksRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
-    if (!groupEntries.length && !koEntries.length) return
+    if (!groupEntries.length && !koEntries.length) {
+      if (isLateJoin) setSaveError('No hay predicciones nuevas para guardar. Los partidos ya iniciados no se pueden modificar.')
+      return
+    }
     setSaveStatus('saving')
     setSaveError(null)
     const rows = [
@@ -1014,7 +1017,7 @@ export default function TournamentPage() {
       }
     } else {
       setSaveStatus('idle')
-      setSaveError(error.message)
+      setSaveError(typeof error === 'object' && error?.message ? error.message : 'Error al guardar')
     }
   }, [id, user, showSaved, isGroupPicksLocked, isLateJoin, matches])
 
@@ -2320,6 +2323,11 @@ export default function TournamentPage() {
                         {koPickCount > 0 ? `${koPickCount} picks de llave` : 'Grupos cerrados · editá la llave'}
                       </div>
                     )}
+                    {isGroupPicksLocked && isLateJoin && (
+                      <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                        {myPickCount > 0 || koPickCount > 0 ? `${myPickCount} grupos · ${koPickCount} llave` : 'Ingresá picks para guardar'}
+                      </div>
+                    )}
                   </div>
                   <button
                     onClick={saveAll}
@@ -2331,7 +2339,7 @@ export default function TournamentPage() {
                       fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
                       cursor: saveStatus === 'saving' ? 'wait' : 'pointer',
                       transition: 'background 0.25s',
-                      opacity: (isGroupPicksLocked ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
+                      opacity: (isGroupPicksLocked && !isLateJoin ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
                     }}
                   >
                     {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
