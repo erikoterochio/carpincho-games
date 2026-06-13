@@ -814,7 +814,7 @@ export default function TournamentPage() {
     const result = new Map<string, Map<string, TeamStat[]>>()
     for (const p of participants) {
       const pm: Record<string, {h:string;a:string}> = {}
-      for (const pk of adminAllPicks.filter(pk => pk.user_id === p.user_id))
+      for (const pk of predAllPicks.filter(pk => pk.user_id === p.user_id))
         pm[pk.match_id] = { h: String(pk.home_score), a: String(pk.away_score) }
       const gm = new Map<string, TeamStat[]>()
       for (const g of GROUPS) {
@@ -824,7 +824,7 @@ export default function TournamentPage() {
       result.set(p.user_id, gm)
     }
     return result
-  }, [adminAllPicks, participants, groupMatches])
+  }, [predAllPicks, participants, groupMatches])
 
   const publicGroupStandings = useMemo(() => {
     const result = new Map<string, Map<string, TeamStat[]>>()
@@ -870,7 +870,7 @@ export default function TournamentPage() {
   const perParticipantBracket = useMemo(() => {
     const result = new Map<string, Map<string, string>>()
     for (const p of participants) {
-      const up = adminAllPicks.filter(pk => pk.user_id === p.user_id)
+      const up = predAllPicks.filter(pk => pk.user_id === p.user_id)
       const bracket = new Map<string, string>()
       const addWinner = (pk: UserPick | undefined) => {
         if (!pk?.predicted_home || !pk?.predicted_away) return
@@ -894,7 +894,7 @@ export default function TournamentPage() {
       result.set(p.user_id, bracket)
     }
     return result
-  }, [adminAllPicks, participants])
+  }, [predAllPicks, participants])
 
   // Champion / runner-up / 3rd / 4th derived from each user's KO bracket picks
   const perParticipantFinals = useMemo(() => {
@@ -1070,7 +1070,7 @@ export default function TournamentPage() {
   }
 
   const leaderboard = useMemo(() => {
-    const useAdmin = adminAllPicks.length > 0
+    const useAdmin = predAllPicks.length > 0
     return participants.map(p => {
       const name = p.profiles?.nombre
         ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
@@ -1092,7 +1092,7 @@ export default function TournamentPage() {
 
           const isDoneMatch = (m: Match) => ['FT', 'AET', 'PEN'].includes(m.status)
           let score = 0
-          for (const pk of adminAllPicks.filter(pk => pk.user_id === p.user_id)) {
+          for (const pk of predAllPicks.filter(pk => pk.user_id === p.user_id)) {
             const m = matches.find(m => m.id === pk.match_id) ?? slotMatchMap.get(pk.match_id)
             if (m && isDoneMatch(m)) score += calcScore(pk, m) ?? 0
           }
@@ -1152,7 +1152,7 @@ export default function TournamentPage() {
       }
       return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
-  }, [participants, isGroupPicksLocked, allPicks, adminAllPicks, matches, adminGroupStandings,
+  }, [participants, isGroupPicksLocked, allPicks, predAllPicks, matches, adminGroupStandings,
       perParticipantBracket, perParticipantClassified, perParticipantFinals,
       standings, r32Ms, r16Ms, qfMs, sfMs, adminSpecials,
       realR32Set, realR16Set, realQfSet, realSfSet, realFinals]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1723,7 +1723,7 @@ export default function TournamentPage() {
 
         {/* ── ALL PICKS (LIVE / DONE) ── */}
         {(isLive || isDone) && participants.length > 0 && (() => {
-          const picksSource = adminAllPicks.length > 0 ? adminAllPicks : allPicks
+          const picksSource = predAllPicks.length > 0 ? predAllPicks : allPicks
           const pickKey = m.stage === 'group' ? m.id : (() => {
             const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
             const idx = stageMs.findIndex(x => x.id === m.id)
