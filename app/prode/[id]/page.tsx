@@ -399,6 +399,7 @@ export default function TournamentPage() {
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const bracketNodeByIdRef = useRef<Map<string, KoMatchNode>>(new Map())
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const wasLiveRef = useRef(false)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
   const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
@@ -529,12 +530,30 @@ export default function TournamentPage() {
 
       // Auto-refresh live scores every 60s — start if DB says live OR if kickoff passed recently (handles stale DB status when no admin synced)
       const now = Date.now()
+      const FINISHED = ['FT', 'AET', 'PEN']
       const hasLive = matchList.some(m => LIVE_STATUSES.has(m.status))
       const hasRecentKickoff = matchList.some(m => {
         const ko = new Date(m.kickoff).getTime()
-        return ko <= now && now - ko < 3 * 60 * 60 * 1000 && !['FT', 'AET', 'PEN'].includes(m.status)
+        return ko <= now && now - ko < 3 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
       })
       if (hasLive || hasRecentKickoff) startLiveRefresh()
+      // If kickoff passed more than 2h ago and match isn't marked finished, DB is stale — auto-sync once
+      const hasStaleFinished = matchList.some(m => {
+        const ko = new Date(m.kickoff).getTime()
+        return ko <= now && now - ko >= 2 * 60 * 60 * 1000 && now - ko < 6 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
+      })
+      if (hasStaleFinished && !hasLive) {
+        fetch('/api/prode/sync', { method: 'POST' })
+          .then(() => Promise.all([
+            supabase.from('prode_matches').select('*').order('sort_order'),
+            supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+          ]))
+          .then(([{ data: ms }, { data: st }]) => {
+            if (ms) setMatches(ms as Match[])
+            if (st) setStandings(st as Standing[])
+          })
+          .catch(() => {})
+      }
     }
     load()
     return () => stopLiveRefresh()
@@ -583,7 +602,25 @@ export default function TournamentPage() {
     try {
       const res = await fetch('/api/prode/live')
       const json = await res.json()
-      if (!json.live?.length) { stopLiveRefresh(); return }
+      if (!json.live?.length) {
+        stopLiveRefresh()
+        // If we were tracking live matches and they just ended, auto-sync to capture final scores + FT status
+        if (wasLiveRef.current) {
+          wasLiveRef.current = false
+          fetch('/api/prode/sync', { method: 'POST' })
+            .then(() => Promise.all([
+              supabase.from('prode_matches').select('*').order('sort_order'),
+              supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+            ]))
+            .then(([{ data: ms }, { data: st }]) => {
+              if (ms) setMatches(ms as Match[])
+              if (st) setStandings(st as Standing[])
+            })
+            .catch(() => {})
+        }
+        return
+      }
+      wasLiveRef.current = true
       setMatches(prev => prev.map(m => {
         const live = json.live.find((l: any) => l.id === m.id)
         return live ? { ...m, home_score: live.home_score, away_score: live.away_score, status: live.status, elapsed: live.elapsed ?? null } : m
