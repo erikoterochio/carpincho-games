@@ -106,6 +106,7 @@ export default function PredecirPage() {
   const saveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const specialsTimer = useRef<ReturnType<typeof setTimeout>|null>(null)
   const userRef = useRef<any>(null)
+  const isLateJoinRef = useRef(false)
   const isDeadlinePast = !isLateJoin && new Date() >= DEADLINE
 
   useEffect(() => {
@@ -144,6 +145,8 @@ export default function PredecirPage() {
     load()
   }, [id])
 
+  useEffect(() => { isLateJoinRef.current = isLateJoin }, [isLateJoin])
+
   const showSaved = useCallback(() => { setSaveStatus('saved'); setTimeout(() => setSaveStatus('idle'), 2000) }, [])
 
   const savePick = useCallback(async (matchId: string) => {
@@ -152,14 +155,24 @@ export default function PredecirPage() {
     const h = parseInt(p.h), a = parseInt(p.a)
     if (isNaN(h) || isNaN(a)) return
     setSaveStatus('saving')
-    // For KO matches, persist which teams the user predicted for that slot
     const m = matchesRef.current.find(mx => mx.id === matchId)
     const predicted_home = m?.home_team ?? null
     const predicted_away = m?.away_team ?? null
-    const { error } = await supabase.from('prode_stage1_picks').upsert(
-      { tournament_id: id, user_id: userRef.current?.id, match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away, updated_at: new Date().toISOString() },
-      { onConflict: 'tournament_id,user_id,match_id' }
-    )
+    let error: any = null
+    if (isLateJoinRef.current) {
+      const res = await fetch(`/api/prode/${id}/late-join-save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ picks: [{ match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away }] }),
+      })
+      if (!res.ok) error = true
+    } else {
+      const result = await supabase.from('prode_stage1_picks').upsert(
+        { tournament_id: id, user_id: userRef.current?.id, match_id: matchId, home_score: h, away_score: a, predicted_home, predicted_away, updated_at: new Date().toISOString() },
+        { onConflict: 'tournament_id,user_id,match_id' }
+      )
+      error = result.error
+    }
     if (!error) showSaved(); else setSaveStatus('idle')
   }, [id, showSaved])
 

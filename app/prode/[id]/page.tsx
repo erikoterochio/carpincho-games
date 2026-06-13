@@ -986,7 +986,18 @@ export default function TournamentPage() {
         }
       }),
     ]
-    const { error } = await supabase.from('prode_stage1_picks').upsert(rows as any[], { onConflict: 'tournament_id,user_id,match_id' })
+    let error: any = null
+    if (isLateJoin) {
+      const res = await fetch(`/api/prode/${id}/late-join-save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ picks: rows }),
+      })
+      if (!res.ok) error = true
+    } else {
+      const result = await supabase.from('prode_stage1_picks').upsert(rows as any[], { onConflict: 'tournament_id,user_id,match_id' })
+      error = result.error
+    }
     if (!error) {
       showSaved()
       const updatePicks = (prev: UserPick[]) => {
