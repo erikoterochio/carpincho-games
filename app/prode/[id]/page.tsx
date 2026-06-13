@@ -540,7 +540,7 @@ export default function TournamentPage() {
       // If kickoff passed more than 2h ago and match isn't marked finished, DB is stale — auto-sync once
       const hasStaleFinished = matchList.some(m => {
         const ko = new Date(m.kickoff).getTime()
-        return ko <= now && now - ko >= 2 * 60 * 60 * 1000 && now - ko < 6 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
+        return ko <= now && now - ko >= 2 * 60 * 60 * 1000 && now - ko < 3 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
       })
       if (hasStaleFinished && !hasLive) {
         fetch('/api/prode/sync', { method: 'POST' })
