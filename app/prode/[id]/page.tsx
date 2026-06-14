@@ -381,6 +381,7 @@ export default function TournamentPage() {
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
   const [adminAllPicks, setAdminAllPicks] = useState<UserPick[]>([])
   const [predAllPicks, setPredAllPicks] = useState<UserPick[]>([])
+  const [picksLoaded, setPicksLoaded] = useState(false)
   const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
@@ -490,8 +491,9 @@ export default function TournamentPage() {
         fetch(`/api/prode/${id}/all-picks`)
           .then(r => r.json())
           .then((allServicePicks: UserPick[]) => {
-            if (!Array.isArray(allServicePicks)) return
+            if (!Array.isArray(allServicePicks)) { setPicksLoaded(true); return }
             setPredAllPicks(allServicePicks)
+            setPicksLoaded(true)
             setParticipants(prev => prev.map(p => ({
               ...p,
               pick_count: allServicePicks.filter(pk => pk.user_id === p.user_id).length,
@@ -500,7 +502,7 @@ export default function TournamentPage() {
               setAdminAllPicks(allServicePicks)
             }
           })
-          .catch(() => {})
+          .catch(() => { setPicksLoaded(true) })
 
         if ((t as any)?.admin_id === user.id) {
           fetch(`/api/prode/${id}/all-specials`)
@@ -956,19 +958,9 @@ export default function TournamentPage() {
     if (!user) return
     const groupEntries = (isGroupPicksLocked && !isLateJoin)
       ? []
-      : Object.entries(picksEditRef.current).filter(([matchId, v]) => {
-          if (v.h === '' || v.a === '') return false
-          if (isLateJoin) {
-            const m = matches.find(mx => mx.id === matchId)
-            return m ? Date.now() < new Date(m.kickoff).getTime() : false
-          }
-          return true
-        })
+      : Object.entries(picksEditRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
     const koEntries    = Object.entries(koPicksRef.current).filter(([, v]) => v.h !== '' && v.a !== '')
-    if (!groupEntries.length && !koEntries.length) {
-      if (isLateJoin) setSaveError('No hay predicciones nuevas para guardar. Los partidos ya iniciados no se pueden modificar.')
-      return
-    }
+    if (!groupEntries.length && !koEntries.length) return
     setSaveStatus('saving')
     setSaveError(null)
     const rows = [
@@ -1156,17 +1148,11 @@ export default function TournamentPage() {
             if (realFinals.fourth   && finals.fourth   === realFinals.fourth)   score += 25
           }
           pts = score
-        } else {
-          const userPicks = allPicks.filter(pk => pk.user_id === p.user_id)
-          pts = userPicks.reduce((acc, pk) => {
-            const m = matches.find(m => m.id === pk.match_id)
-            return acc + (m && ['FT', 'AET', 'PEN'].includes(m.status) ? (calcScore(pk, m) ?? 0) : 0)
-          }, 0)
         }
       }
       return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
-  }, [participants, isGroupPicksLocked, allPicks, predAllPicks, matches, adminGroupStandings,
+  }, [participants, isGroupPicksLocked, predAllPicks, matches, adminGroupStandings,
       perParticipantBracket, perParticipantClassified, perParticipantFinals,
       standings, r32Ms, r16Ms, qfMs, sfMs, adminSpecials,
       realR32Set, realR16Set, realQfSet, realSfSet, realFinals]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -1737,7 +1723,7 @@ export default function TournamentPage() {
 
         {/* ── ALL PICKS (LIVE / DONE) ── */}
         {(isLive || isDone) && participants.length > 0 && (() => {
-          const picksSource = predAllPicks.length > 0 ? predAllPicks : allPicks
+          const picksSource = predAllPicks
           const pickKey = m.stage === 'group' ? m.id : (() => {
             const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
             const idx = stageMs.findIndex(x => x.id === m.id)
@@ -2502,7 +2488,7 @@ export default function TournamentPage() {
                       {p.pick_count}/{groupMatches.length || '?'}
                     </div>
                     <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                      {isGroupPicksLocked ? (p.pts ?? 0) : '—'}
+                      {isGroupPicksLocked ? (picksLoaded ? (p.pts ?? 0) : '·') : '—'}
                     </div>
                   </div>
                 ))}

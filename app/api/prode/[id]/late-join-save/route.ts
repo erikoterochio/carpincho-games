@@ -31,20 +31,6 @@ export async function POST(
   const picks: any[] = body.picks ?? []
   if (!picks.length) return NextResponse.json({ saved: 0 })
 
-  // For real match IDs (not KO slot IDs), verify the match hasn't kicked off yet
-  const realIds = picks.map(p => p.match_id).filter(id => !id.startsWith('ko-'))
-  if (realIds.length) {
-    const { data: ms } = await supabase
-      .from('prode_matches')
-      .select('id, kickoff')
-      .in('id', realIds)
-    const now = new Date()
-    for (const m of ms ?? []) {
-      if (new Date(m.kickoff) <= now)
-        return NextResponse.json({ error: `Partido ${m.id} ya comenzó` }, { status: 400 })
-    }
-  }
-
   const rows = picks.map(p => ({
     tournament_id: id,
     user_id: user.id,
