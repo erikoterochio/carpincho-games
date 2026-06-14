@@ -19,25 +19,17 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: tournament } = await supabase
-    .from('prode_tournaments')
-    .select('admin_id')
-    .eq('id', id)
-    .maybeSingle()
+  // Use admin client for authorization checks to bypass RLS restrictions on prode_tournaments
+  const admin = adminDB()
 
-  // Allow any tournament participant (not just admin) — picks are public within the tournament
-  const { data: participant } = await supabase
-    .from('prode_participants')
-    .select('user_id')
-    .eq('tournament_id', id)
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const [{ data: tournament }, { data: participant }] = await Promise.all([
+    admin.from('prode_tournaments').select('admin_id').eq('id', id).maybeSingle(),
+    admin.from('prode_participants').select('user_id').eq('tournament_id', id).eq('user_id', user.id).maybeSingle(),
+  ])
 
   if (!tournament || (!participant && tournament.admin_id !== user.id)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
-
-  const admin = adminDB()
 
   // PostgREST max_rows cap is 1000 — paginate to get all picks
   const allPicks: Record<string, unknown>[] = []
