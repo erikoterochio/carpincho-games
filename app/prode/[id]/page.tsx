@@ -536,15 +536,15 @@ export default function TournamentPage() {
       const hasLive = matchList.some(m => LIVE_STATUSES.has(m.status))
       const hasRecentKickoff = matchList.some(m => {
         const ko = new Date(m.kickoff).getTime()
-        return ko <= now && now - ko < 3 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
+        return ko <= now && now - ko < 4 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
       })
       if (hasLive || hasRecentKickoff) startLiveRefresh()
-      // If kickoff passed more than 2h ago and match isn't marked finished, DB is stale — auto-sync once
-      const hasStaleFinished = matchList.some(m => {
+      // Any past match (>110 min after kickoff) not marked as finished → DB is stale → auto-sync
+      const hasStaleFinished = !hasLive && matchList.some(m => {
         const ko = new Date(m.kickoff).getTime()
-        return ko <= now && now - ko >= 2 * 60 * 60 * 1000 && now - ko < 3 * 60 * 60 * 1000 && !FINISHED.includes(m.status)
+        return ko <= now && now - ko >= 110 * 60 * 1000 && !FINISHED.includes(m.status) && m.status !== 'CANC'
       })
-      if (hasStaleFinished && !hasLive) {
+      if (hasStaleFinished) {
         fetch('/api/prode/sync', { method: 'POST' })
           .then(() => Promise.all([
             supabase.from('prode_matches').select('*').order('sort_order'),
@@ -568,6 +568,22 @@ export default function TournamentPage() {
       if (saved) { setBonus(JSON.parse(saved)); setBonusVersion(v => v + 1) }
     } catch {}
   }, [user?.id, id])
+
+  // Refresh matches + standings when user returns to tab (handles stale state after background)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible' || !id) return
+      Promise.all([
+        supabase.from('prode_matches').select('*').order('sort_order'),
+        supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+      ]).then(([{ data: ms }, { data: st }]) => {
+        if (ms) setMatches(ms as Match[])
+        if (st) setStandings(st as Standing[])
+      }).catch(() => {})
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => document.removeEventListener('visibilitychange', handleVisibility)
+  }, [id])
 
   useEffect(() => {
     const tz = 'America/Argentina/Buenos_Aires'
