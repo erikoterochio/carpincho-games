@@ -381,7 +381,7 @@ export default function TournamentPage() {
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
   const [adminAllPicks, setAdminAllPicks] = useState<UserPick[]>([])
   const [predAllPicks, setPredAllPicks] = useState<UserPick[]>([])
-  const [picksLoaded, setPicksLoaded] = useState(false)
+  const [serverScores, setServerScores] = useState<Map<string, number> | null>(null)
   const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
@@ -491,9 +491,8 @@ export default function TournamentPage() {
         fetch(`/api/prode/${id}/all-picks`)
           .then(r => r.json())
           .then((allServicePicks: UserPick[]) => {
-            if (!Array.isArray(allServicePicks)) { setPicksLoaded(true); return }
+            if (!Array.isArray(allServicePicks)) return
             setPredAllPicks(allServicePicks)
-            setPicksLoaded(true)
             setParticipants(prev => prev.map(p => ({
               ...p,
               pick_count: allServicePicks.filter(pk => pk.user_id === p.user_id).length,
@@ -502,7 +501,15 @@ export default function TournamentPage() {
               setAdminAllPicks(allServicePicks)
             }
           })
-          .catch(() => { setPicksLoaded(true) })
+          .catch(() => {})
+
+        // Fetch server-computed scores (admin client — same for all users regardless of RLS)
+        fetch(`/api/prode/${id}/scores`)
+          .then(r => r.ok ? r.json() : null)
+          .then((data: { user_id: string; pts: number }[] | null) => {
+            setServerScores(Array.isArray(data) ? new Map(data.map(s => [s.user_id, s.pts])) : new Map())
+          })
+          .catch(() => setServerScores(new Map()))
 
         if ((t as any)?.admin_id === user.id) {
           fetch(`/api/prode/${id}/all-specials`)
@@ -569,7 +576,7 @@ export default function TournamentPage() {
     } catch {}
   }, [user?.id, id])
 
-  // Refresh matches + standings when user returns to tab (handles stale state after background)
+  // Refresh matches, standings, and scores when user returns to tab
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState !== 'visible' || !id) return
@@ -580,6 +587,12 @@ export default function TournamentPage() {
         if (ms) setMatches(ms as Match[])
         if (st) setStandings(st as Standing[])
       }).catch(() => {})
+      fetch(`/api/prode/${id}/scores`)
+        .then(r => r.ok ? r.json() : null)
+        .then((data: { user_id: string; pts: number }[] | null) => {
+          if (Array.isArray(data)) setServerScores(new Map(data.map(s => [s.user_id, s.pts])))
+        })
+        .catch(() => {})
     }
     document.addEventListener('visibilitychange', handleVisibility)
     return () => document.removeEventListener('visibilitychange', handleVisibility)
@@ -633,6 +646,13 @@ export default function TournamentPage() {
             .then(([{ data: ms }, { data: st }]) => {
               if (ms) setMatches(ms as Match[])
               if (st) setStandings(st as Standing[])
+              // Refresh server scores after matches finalize
+              fetch(`/api/prode/${id}/scores`)
+                .then(r => r.ok ? r.json() : null)
+                .then((data: { user_id: string; pts: number }[] | null) => {
+                  if (Array.isArray(data)) setServerScores(new Map(data.map(s => [s.user_id, s.pts])))
+                })
+                .catch(() => {})
             })
             .catch(() => {})
         }
@@ -695,6 +715,13 @@ export default function TournamentPage() {
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
       }
+      // Refresh server-computed scores after sync (match results may have changed)
+      fetch(`/api/prode/${id}/scores`)
+        .then(r => r.ok ? r.json() : null)
+        .then((data: { user_id: string; pts: number }[] | null) => {
+          if (Array.isArray(data)) setServerScores(new Map(data.map(s => [s.user_id, s.pts])))
+        })
+        .catch(() => {})
     } else {
       setSyncMsg(`Error: ${json.error}`)
     }
@@ -1092,86 +1119,15 @@ export default function TournamentPage() {
   }
 
   const leaderboard = useMemo(() => {
-    const useAdmin = predAllPicks.length > 0
     return participants.map(p => {
       const name = p.profiles?.nombre
         ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
         : p.profiles?.username ?? 'Jugador'
-
-      let pts: number | null = null
-      if (isGroupPicksLocked) {
-        if (useAdmin) {
-          // Full scoring: match results + group order + KO advancement + final positions
-          // KO picks use stable slot IDs (ko-r32-0 etc.); build a slot→match map for scoring.
-          const slotMatchMap = new Map<string, Match>()
-          for (const stage of ['r32','r16','qf','sf'] as const)
-            matches.filter(m => m.stage === stage).sort((a,b) => a.sort_order - b.sort_order)
-              .forEach((m, i) => slotMatchMap.set(`ko-${stage}-${i}`, m))
-          const thirdM = matches.find(m => m.stage === '3rd')
-          const finalM = matches.find(m => m.stage === 'final')
-          if (thirdM) slotMatchMap.set('ko-3rd', thirdM)
-          if (finalM) slotMatchMap.set('ko-final', finalM)
-
-          const isDoneMatch = (m: Match) => ['FT', 'AET', 'PEN'].includes(m.status)
-          let score = 0
-          for (const pk of predAllPicks.filter(pk => pk.user_id === p.user_id)) {
-            const m = matches.find(m => m.id === pk.match_id) ?? slotMatchMap.get(pk.match_id)
-            if (m && isDoneMatch(m)) score += calcScore(pk, m) ?? 0
-          }
-          // Group order: 6 pts per group with all 4 teams in correct final order.
-          // Only applies when all 6 group matches are finished.
-          const gs = adminGroupStandings.get(p.user_id)
-          for (const g of GROUPS) {
-            const realOrder = standings.filter(s => s.group_name === g).sort((a, b) => a.rank - b.rank).map(s => s.team_name)
-            if (realOrder.length !== 4) continue
-            const doneInGroup = matches.filter(m => m.group_name === g && isDoneMatch(m)).length
-            if (doneInGroup < 6) continue
-            const userOrder = gs?.get(g)?.map(t => t.name) ?? []
-            if (userOrder.length === 4 && realOrder.every((t, i) => t === userOrder[i])) score += 6
-          }
-          // R32: 6 pts per team correctly predicted to reach 16avos
-          const classified = perParticipantClassified.get(p.user_id)
-          if (classified && realR32Set.size > 0) {
-            const userR32 = new Set<string>([
-              ...(classified.firsts.filter(Boolean) as string[]),
-              ...(classified.seconds.filter(Boolean) as string[]),
-              ...(classified.thirds.filter(Boolean) as string[]),
-            ])
-            for (const t of userR32) if (realR32Set.has(t)) score += 6
-          }
-          // R16: 10 pts per team correctly predicted to win their R32 match
-          const bracket = perParticipantBracket.get(p.user_id) ?? new Map<string, string>()
-          if (realR16Set.size > 0) {
-            const userR16 = new Set(r32Ms.map(m => bracket.get(m.id)).filter(Boolean) as string[])
-            for (const t of userR16) if (realR16Set.has(t)) score += 10
-          }
-          // QF: 14 pts per team
-          if (realQfSet.size > 0) {
-            const userQf = new Set(r16Ms.map(m => bracket.get(m.id)).filter(Boolean) as string[])
-            for (const t of userQf) if (realQfSet.has(t)) score += 14
-          }
-          // SF: 18 pts per team
-          if (realSfSet.size > 0) {
-            const userSf = new Set(qfMs.map(m => bracket.get(m.id)).filter(Boolean) as string[])
-            for (const t of userSf) if (realSfSet.has(t)) score += 18
-          }
-          // Final positions
-          const finals = perParticipantFinals.get(p.user_id)
-          if (finals) {
-            if (realFinals.champion && finals.champion === realFinals.champion) score += 40
-            if (realFinals.runnerUp && finals.runnerUp === realFinals.runnerUp) score += 35
-            if (realFinals.third    && finals.third    === realFinals.third)    score += 30
-            if (realFinals.fourth   && finals.fourth   === realFinals.fourth)   score += 25
-          }
-          pts = score
-        }
-      }
+      // Server scores use admin client — same data for all users regardless of RLS or client staleness
+      const pts = (isGroupPicksLocked && serverScores !== null) ? (serverScores.get(p.user_id) ?? 0) : null
       return { user_id: p.user_id, name, pick_count: p.pick_count ?? 0, pts, paid: p.paid }
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
-  }, [participants, isGroupPicksLocked, predAllPicks, matches, adminGroupStandings,
-      perParticipantBracket, perParticipantClassified, perParticipantFinals,
-      standings, r32Ms, r16Ms, qfMs, sfMs, adminSpecials,
-      realR32Set, realR16Set, realQfSet, realSfSet, realFinals]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [participants, isGroupPicksLocked, serverScores])
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'home', label: 'Home' },
@@ -2504,7 +2460,7 @@ export default function TournamentPage() {
                       {p.pick_count}/{groupMatches.length || '?'}
                     </div>
                     <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                      {isGroupPicksLocked ? (picksLoaded ? (p.pts ?? 0) : '·') : '—'}
+                      {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
                     </div>
                   </div>
                 ))}
