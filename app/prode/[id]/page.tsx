@@ -1129,6 +1129,17 @@ export default function TournamentPage() {
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
   }, [participants, isGroupPicksLocked, serverScores])
 
+  // Current user's picks from admin-client source (bypasses RLS — used in HomeMatchCard)
+  const myServerPicks = useMemo(() => {
+    if (!user) return new Map<string, { h: string; a: string }>()
+    const m = new Map<string, { h: string; a: string }>()
+    for (const pk of predAllPicks) {
+      if (pk.user_id === user.id)
+        m.set(pk.match_id, { h: String(pk.home_score), a: String(pk.away_score) })
+    }
+    return m
+  }, [predAllPicks, user])
+
   const TABS: { key: Tab; label: string }[] = [
     { key: 'home', label: 'Home' },
     ...(isParticipant ? [{ key: 'predicciones' as Tab, label: 'Predicciones' }] : []),
@@ -1523,7 +1534,8 @@ export default function TournamentPage() {
     const isLive = LIVE_STATUSES.has(m.status)
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
     const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
-    const myPick = myEditPicks[m.id]
+    // Use admin-client picks when loaded (bypasses RLS); fall back to anon-client picks
+    const myPick = (myServerPicks.size > 0 ? myServerPicks.get(m.id) : null) ?? myEditPicks[m.id]
     const hasPick = !!(myPick && myPick.h !== '' && myPick.a !== '')
     const pickScore = hasPick
       ? calcScore({ match_id: m.id, home_score: parseInt(myPick.h), away_score: parseInt(myPick.a), user_id: '' }, m)
