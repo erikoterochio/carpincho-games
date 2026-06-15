@@ -395,6 +395,7 @@ export default function TournamentPage() {
   const [isParticipant, setIsParticipant] = useState(false)
   const [isLateJoin, setIsLateJoin] = useState(false)
   const [pointsOpen, setPointsOpen] = useState(false)
+  const [expandedUserId, setExpandedUserId] = useState<string | null>(null)
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set(GROUPS))
   const [koEditPicks, setKoEditPicks] = useState<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
   const koPicksRef = useRef<Record<string, {h:string; a:string; pen?:'h'|'a'}>>({})
@@ -2460,22 +2461,96 @@ export default function TournamentPage() {
                 </div>
                 {leaderboard.length === 0 ? (
                   <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
-                ) : leaderboard.map((p, i) => (
-                  <div key={p.user_id} className="lb-row">
-                    <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
-                      {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                ) : leaderboard.map((p, i) => {
+                  const isExpanded = expandedUserId === p.user_id
+                  const userPicks = predAllPicks.filter(pk => pk.user_id === p.user_id)
+                  const pickMatchIds = new Set(userPicks.map(pk => pk.match_id))
+                  const DONE_ST = new Set(['FT','AET','PEN'])
+                  // Matches with a pick (any stage) + finished matches (to show misses), sorted by sort_order
+                  const relevantMatches = matches
+                    .filter(m => pickMatchIds.has(m.id) || DONE_ST.has(m.status))
+                    .sort((a, b) => a.sort_order - b.sort_order)
+                  return (
+                    <div key={p.user_id}>
+                      <div
+                        className="lb-row"
+                        onClick={() => setExpandedUserId(isExpanded ? null : p.user_id)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
+                          {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                        </div>
+                        <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
+                          {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
+                        </div>
+                        <div style={{ width: 72, textAlign: 'center', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>
+                          {p.pick_count}/{groupMatches.length || '?'}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', width: 60 }}>
+                          <div style={{ width: 42, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                            {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
+                          </div>
+                          <span style={{ fontSize: 10, color: MUTED, lineHeight: 1 }}>{isExpanded ? '▲' : '▼'}</span>
+                        </div>
+                      </div>
+
+                      {isExpanded && (
+                        <div style={{ background: '#f7f8fa', borderTop: `1px solid ${BORDER}`, padding: '10px 14px 14px' }}>
+                          {predAllPicks.length === 0 ? (
+                            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Cargando...</div>
+                          ) : relevantMatches.length === 0 ? (
+                            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Sin predicciones todavía.</div>
+                          ) : (
+                            <div style={{ overflowX: 'auto' }}>
+                              <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
+                                <thead>
+                                  <tr style={{ color: MUTED, fontFamily: FONT_BLACK, fontSize: 9, textTransform: 'uppercase' }}>
+                                    <th style={{ textAlign: 'left',   padding: '4px 6px 6px 0',  fontWeight: 900, whiteSpace: 'nowrap' }}>Partido</th>
+                                    <th style={{ textAlign: 'center', padding: '4px 6px 6px',     fontWeight: 900 }}>Real</th>
+                                    <th style={{ textAlign: 'center', padding: '4px 6px 6px',     fontWeight: 900 }}>Pred.</th>
+                                    <th style={{ textAlign: 'center', padding: '4px 0  6px 6px',  fontWeight: 900 }}>Pts</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {relevantMatches.map(m => {
+                                    const pk = userPicks.find(pk => pk.match_id === m.id)
+                                    const isDone = DONE_ST.has(m.status)
+                                    const hasResult = isDone && m.home_score !== null && m.away_score !== null
+                                    const score = pk && hasResult
+                                      ? calcScore(pk, m)
+                                      : null
+                                    const scoreColor = score === null ? MUTED
+                                      : score >= 12 ? '#10b981'
+                                      : score >= 7  ? '#0ea5e9'
+                                      : score >= 5  ? '#d97706'
+                                      : score >= 2  ? '#f97316'
+                                      : '#dc2626'
+                                    return (
+                                      <tr key={m.id} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                        <td style={{ padding: '5px 6px 5px 0', fontFamily: FONT_NORMAL, color: TEXT, whiteSpace: 'nowrap' }}>
+                                          {abbrev(m.home_team)} <span style={{ color: MUTED }}>vs</span> {abbrev(m.away_team)}
+                                        </td>
+                                        <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: hasResult ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
+                                          {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
+                                        </td>
+                                        <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: pk ? '#20298b' : MUTED, whiteSpace: 'nowrap' }}>
+                                          {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
+                                        </td>
+                                        <td style={{ padding: '5px 0 5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor, whiteSpace: 'nowrap' }}>
+                                          {score !== null ? (score > 0 ? `+${score}` : '0') : '—'}
+                                        </td>
+                                      </tr>
+                                    )
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
-                      {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament.admin_id ? ' 👑' : ''}
-                    </div>
-                    <div style={{ width: 72, textAlign: 'center', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>
-                      {p.pick_count}/{groupMatches.length || '?'}
-                    </div>
-                    <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                      {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </Card>
               {!isGroupPicksLocked && (
                 <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los puntos se calculan a partir del 11 de junio.</div>
