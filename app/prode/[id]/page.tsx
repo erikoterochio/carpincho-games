@@ -2456,7 +2456,6 @@ export default function TournamentPage() {
                 <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
                   <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
                   <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
-                  <div style={{ width: 72, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>PICKS</div>
                   <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: isGroupPicksLocked ? '#ffcc00' : '#fff', fontFamily: FONT_BLACK }}>PTS</div>
                 </div>
                 {leaderboard.length === 0 ? (
@@ -2466,9 +2465,9 @@ export default function TournamentPage() {
                   const userPicks = predAllPicks.filter(pk => pk.user_id === p.user_id)
                   const pickMatchIds = new Set(userPicks.map(pk => pk.match_id))
                   const DONE_ST = new Set(['FT','AET','PEN'])
-                  // Matches with a pick (any stage) + finished matches (to show misses), sorted by sort_order
+                  // Only finished matches, sorted by sort_order
                   const relevantMatches = matches
-                    .filter(m => pickMatchIds.has(m.id) || DONE_ST.has(m.status))
+                    .filter(m => DONE_ST.has(m.status))
                     .sort((a, b) => a.sort_order - b.sort_order)
                   return (
                     <div key={p.user_id}>
@@ -2482,9 +2481,6 @@ export default function TournamentPage() {
                         </div>
                         <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
                           {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
-                        </div>
-                        <div style={{ width: 72, textAlign: 'center', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>
-                          {p.pick_count}/{groupMatches.length || '?'}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', width: 60 }}>
                           <div style={{ width: 42, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
