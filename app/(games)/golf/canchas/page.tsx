@@ -29,15 +29,16 @@ type Hole = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  success: '#4ade80',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
 } as const
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 12px',
-  background: '#080812', border: `1px solid #1e1736`,
-  borderRadius: 9, color: '#c1c1c6', fontSize: 14, fontFamily: FONT,
+  background: '#e0f5e8', border: `1px solid #AACBC4`,
+  borderRadius: 9, color: '#021B1A', fontSize: 14, fontFamily: FONT,
 }
 
 const DEFAULT_PARS: (3|4|5)[] = [4,4,3,4,4,5,3,4,4, 4,3,4,5,4,4,3,4,5]
@@ -159,7 +160,7 @@ export default function CanchasPage() {
         input:focus, select:focus { outline: none; }
         input[type=number]::-webkit-inner-spin-button { opacity: 0.4; }
         ::-webkit-scrollbar { width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #1e1736; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #AACBC4; border-radius: 3px; }
       `}</style>
 
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 40 }}>
@@ -175,7 +176,7 @@ export default function CanchasPage() {
             <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1 }}>Canchas</span>
             {userId && (
               <button onClick={() => setShowCreate(!showCreate)}
-                style={{ padding: '7px 14px', background: showCreate ? '#111124' : C.primary, border: `1px solid ${showCreate ? C.border : 'transparent'}`, borderRadius: 9, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: showCreate ? C.muted : C.text, cursor: 'pointer' }}>
+                style={{ padding: '7px 14px', background: showCreate ? '#e0f5e8' : C.primary, border: `1px solid ${showCreate ? C.border : 'transparent'}`, borderRadius: 9, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: showCreate ? C.muted : '#ffffff', cursor: 'pointer' }}>
                 {showCreate ? 'Cancelar' : '+ Nueva'}
               </button>
             )}
@@ -220,7 +221,7 @@ export default function CanchasPage() {
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 5 }}>
                     {form.holes.map((h, i) => (
-                      <div key={i} style={{ background: '#080812', border: `1px solid ${C.border}`, borderRadius: 7, padding: '6px 9px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <div key={i} style={{ background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 7, padding: '6px 9px', display: 'flex', alignItems: 'center', gap: 5 }}>
                         <span style={{ fontSize: 9, color: C.muted, width: 20, textAlign: 'right', flexShrink: 0 }}>H{h.hole_number}</span>
                         {([3,4,5] as const).map(p => (
                           <button key={p} onClick={() => updateHole(i, 'par', p)}
@@ -232,7 +233,7 @@ export default function CanchasPage() {
                           <span style={{ fontSize: 9, color: C.muted }}>SI</span>
                           <input type="number" min={1} max={18} value={h.stroke_index}
                             onChange={e => updateHole(i, 'stroke_index', Math.min(18, Math.max(1, parseInt(e.target.value) || 1)))}
-                            style={{ width: 30, padding: '1px 2px', background: '#01050F', border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 10, textAlign: 'center' }} />
+                            style={{ width: 30, padding: '1px 2px', background: '#F1F7F6', border: `1px solid ${C.border}`, borderRadius: 4, color: C.text, fontSize: 10, textAlign: 'center' }} />
                         </div>
                       </div>
                     ))}
@@ -240,7 +241,7 @@ export default function CanchasPage() {
                 </div>
 
                 <button onClick={handleCreate} disabled={saving || !form.name.trim()}
-                  style={{ padding: '13px', background: saving || !form.name.trim() ? '#111124' : C.primary, border: 'none', borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: saving || !form.name.trim() ? C.muted : C.text, cursor: saving || !form.name.trim() ? 'not-allowed' : 'pointer' }}>
+                  style={{ padding: '13px', background: saving || !form.name.trim() ? '#e0ebf8' : C.primary, border: 'none', borderRadius: 10, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: saving || !form.name.trim() ? C.muted : '#ffffff', cursor: saving || !form.name.trim() ? 'not-allowed' : 'pointer' }}>
                   {saving ? 'Guardando...' : 'Guardar cancha'}
                 </button>
               </div>
@@ -295,62 +296,62 @@ function CourseCard({ course, holes, expanded, onToggle, isOwner }: {
   expanded: boolean; onToggle: () => void; isOwner: boolean
 }) {
   return (
-    <div style={{ background: '#0d0d1a', border: `1px solid ${expanded ? '#055074' : '#1e1736'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
+    <div style={{ background: '#ffffff', border: `1px solid ${expanded ? '#03624C' : '#AACBC4'}`, borderRadius: 14, overflow: 'hidden', transition: 'border-color 0.15s' }}>
       {/* Header clickeable */}
       <button onClick={onToggle}
         style={{ width: '100%', padding: '14px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', display: 'flex', alignItems: 'center', gap: 12 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: '#c1c1c6', marginBottom: 3 }}>{course.name}</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#021B1A', marginBottom: 3 }}>{course.name}</div>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            {course.city && <span style={{ fontSize: 11, color: '#706c7e' }}>{course.city}</span>}
-            <span style={{ fontSize: 11, color: '#706c7e' }}>{course.total_holes} hoyos</span>
-            {course.par && <span style={{ fontSize: 11, color: '#706c7e' }}>Par {course.par}</span>}
-            {course.rating && <span style={{ fontSize: 11, color: '#706c7e' }}>Rating {course.rating}</span>}
-            {course.slope && course.slope !== 113 && <span style={{ fontSize: 11, color: '#706c7e' }}>Slope {course.slope}</span>}
+            {course.city && <span style={{ fontSize: 11, color: '#707D7D' }}>{course.city}</span>}
+            <span style={{ fontSize: 11, color: '#707D7D' }}>{course.total_holes} hoyos</span>
+            {course.par && <span style={{ fontSize: 11, color: '#707D7D' }}>Par {course.par}</span>}
+            {course.rating && <span style={{ fontSize: 11, color: '#707D7D' }}>Rating {course.rating}</span>}
+            {course.slope && course.slope !== 113 && <span style={{ fontSize: 11, color: '#707D7D' }}>Slope {course.slope}</span>}
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-          {isOwner && <span style={{ fontSize: 9, fontWeight: 700, color: '#055074', letterSpacing: 0.8 }}>TUYA</span>}
+          {isOwner && <span style={{ fontSize: 9, fontWeight: 700, color: '#03624C', letterSpacing: 0.8 }}>TUYA</span>}
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
             style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-            <path d="M6 9l6 6 6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M6 9l6 6 6-6" stroke="#707D7D" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
       </button>
 
       {/* Detalle de hoyos */}
       {expanded && (
-        <div style={{ borderTop: '1px solid #1e1736', padding: '12px 16px', overflowX: 'auto' }}>
+        <div style={{ borderTop: '1px solid #AACBC4', padding: '12px 16px', overflowX: 'auto' }}>
           {holes === null ? (
-            <p style={{ fontSize: 12, color: '#706c7e', textAlign: 'center', padding: '10px 0' }}>Cargando hoyos...</p>
+            <p style={{ fontSize: 12, color: '#707D7D', textAlign: 'center', padding: '10px 0' }}>Cargando hoyos...</p>
           ) : holes.length === 0 ? (
-            <p style={{ fontSize: 12, color: '#706c7e', textAlign: 'center', padding: '10px 0' }}>Sin hoyos cargados</p>
+            <p style={{ fontSize: 12, color: '#707D7D', textAlign: 'center', padding: '10px 0' }}>Sin hoyos cargados</p>
           ) : (
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11, fontFamily: FONT, minWidth: 380 }}>
               <thead>
                 <tr>
-                  {['H', 'Par', 'SI', '⬛', '🔵', '⬜', '🟡', '🔴'].map(h => (
-                    <th key={h} style={{ padding: '4px 6px', color: '#706c7e', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #1e1736', fontSize: 10 }}>{h}</th>
+                  {['H', 'Par', 'Hcp', '⬛', '🔵', '⬜', '🟡', '🔴'].map(h => (
+                    <th key={h} style={{ padding: '4px 6px', color: '#707D7D', fontWeight: 700, textAlign: 'center', borderBottom: '1px solid #AACBC4', fontSize: 10 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {holes.map(h => (
                   <tr key={h.hole_number}>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#706c7e', fontWeight: 700 }}>{h.hole_number}</td>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#c1c1c6', fontWeight: 700 }}>{h.par}</td>
-                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#706c7e' }}>{h.stroke_index}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#707D7D', fontWeight: 700 }}>{h.hole_number}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#021B1A', fontWeight: 700 }}>{h.par}</td>
+                    <td style={{ padding: '5px 6px', textAlign: 'center', color: '#707D7D' }}>{h.stroke_index}</td>
                     {['distance_black','distance_blue','distance_white','distance_yellow','distance_red'].map(key => (
-                      <td key={key} style={{ padding: '5px 6px', textAlign: 'center', color: '#4a4a55' }}>
+                      <td key={key} style={{ padding: '5px 6px', textAlign: 'center', color: '#707D7D' }}>
                         {(h as any)[key] ?? '—'}
                       </td>
                     ))}
                   </tr>
                 ))}
                 {/* Totales */}
-                <tr style={{ borderTop: '1px solid #1e1736' }}>
-                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#706c7e', fontWeight: 700 }}>Σ</td>
-                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#c1c1c6', fontWeight: 700 }}>
+                <tr style={{ borderTop: '1px solid #AACBC4' }}>
+                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#707D7D', fontWeight: 700 }}>Σ</td>
+                  <td style={{ padding: '5px 6px', textAlign: 'center', color: '#021B1A', fontWeight: 700 }}>
                     {holes.reduce((s, h) => s + h.par, 0)}
                   </td>
                   <td colSpan={6} />
@@ -371,7 +372,7 @@ function CourseCard({ course, holes, expanded, onToggle, isOwner }: {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <div style={{ fontSize: 10, fontWeight: 700, color: '#706c7e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
+      <div style={{ fontSize: 10, fontWeight: 700, color: '#707D7D', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>{label}</div>
       {children}
     </div>
   )

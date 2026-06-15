@@ -82,13 +82,11 @@ export default function LoginPage() {
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ width: '56px', height: '56px', backgroundColor: '#055074', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                  <rect x="4" y="10" width="24" height="16" rx="3" stroke="#c1c1c6" strokeWidth="1.8"/>
-                  <path d="M4 15h24" stroke="#c1c1c6" strokeWidth="1.8"/>
-                  <circle cx="10" cy="22" r="2" fill="#c1c1c6"/>
-                  <circle cx="16" cy="22" r="2" fill="#c1c1c6"/>
-                  <circle cx="22" cy="22" r="2" fill="#c1c1c6"/>
-                  <path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#c1c1c6" strokeWidth="1.8" strokeLinecap="round"/>
+                <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
+                  <path d="M5 16c0-4 2-7 6-7h12c4 0 6 3 6 7v2c0 4-2 6-6 6h-1l-3 2-3-2h-2c-4 0-6-2-6-6v-2z" stroke="#c1c1c6" strokeWidth="1.8" strokeLinejoin="round"/>
+                  <path d="M11 14v5M8.5 16.5h5" stroke="#c1c1c6" strokeWidth="1.8" strokeLinecap="round"/>
+                  <circle cx="22" cy="15" r="1.8" fill="#c1c1c6"/>
+                  <circle cx="25.5" cy="18.5" r="1.8" fill="#c1c1c6"/>
                 </svg>
               </div>
               <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '26px', fontWeight: 700, color: '#c1c1c6', marginBottom: '4px' }}>Ranchadapp</h1>

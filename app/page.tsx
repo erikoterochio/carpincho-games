@@ -3,17 +3,17 @@ import { createClient } from '@/lib/supabase/server'
 import SessionBridge from '@/components/SessionBridge'
 
 const FEATURED = [
-  { name: 'El Impostor', href: '/impostor.html', color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',   href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'El Impostor', href: '/impostor', color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',   href: '/berenjena', color: '#110736', img: '/images/berenjena.png' },
 ]
 
 const MULTIPLAYER = [
-  { name: 'El Impostor',       href: '/impostor.html',  color: '#0b2659', img: '/images/impostor.png' },
-  { name: 'Berenjena',         href: '/berenjena.html', color: '#110736', img: '/images/berenjena.png' },
-  { name: 'Tabú',              href: '/tabu.html',      color: '#065c6c', img: '/images/tabu.png' },
-  { name: 'Dígalo con mímica', href: '/mimica.html',    color: '#055074', img: '/images/mimica.png' },
-  { name: 'Truco',             href: '/truco.html',     color: '#110736', img: '/images/truco.png' },
-  { name: 'Generala',          href: '/generala.html',  color: '#0b2659', img: '/images/generala.png' },
+  { name: 'El Impostor',       href: '/impostor',  color: '#0b2659', img: '/images/impostor.png' },
+  { name: 'Berenjena',         href: '/berenjena', color: '#110736', img: '/images/berenjena.png' },
+  { name: 'Tabú',              href: '/tabu',      color: '#065c6c', img: '/images/tabu.png' },
+  { name: 'Dígalo con mímica', href: '/mimica',    color: '#055074', img: '/images/mimica.png' },
+  { name: 'Truco',             href: '/truco',     color: '#110736', img: '/images/truco.png' },
+  { name: 'Generala',          href: '/generala',  color: '#0b2659', img: '/images/generala.png' },
 ]
 
 const TOOLS = [
@@ -26,6 +26,14 @@ export default async function HomePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : null
+
+  let ranchadaCount = 0
+  if (user) {
+    const { count } = await supabase
+      .from('ranchadas')
+      .select('id', { count: 'exact', head: true })
+    ranchadaCount = count ?? 0
+  }
 
   return (
     <>
@@ -91,7 +99,7 @@ export default async function HomePage() {
 
           {/* Tarjeta de ranchadas */}
           {user ? (
-            <Link href="/cuenta" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+            <Link href="/ranchadas" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
               <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#c1c1c6" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#c1c1c6" strokeWidth="1.8"/></svg>
@@ -99,11 +107,11 @@ export default async function HomePage() {
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>0</span>
-                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntadas</span>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>{ranchadaCount}</span>
+                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntada{ranchadaCount !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver perfil →</span>
+                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver todas →</span>
               </div>
             </Link>
           ) : (
@@ -122,20 +130,20 @@ export default async function HomePage() {
           )}
 
           {/* Hero: Prode Mundial */}
-          <div style={{ border: '1px solid #04447b', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px' }}>
+          <Link href="/prode" style={{ border: '1px solid #D4AF37', borderRadius: '16px', marginBottom: '22px', overflow: 'hidden', display: 'flex', minHeight: '160px', textDecoration: 'none' }}>
             <div style={{ flex: '0 0 55%', background: '#0b2659', padding: '18px 16px 18px 18px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative' }}>
               <div style={{ position: 'absolute', top: 0, right: -20, width: 40, height: '100%', background: 'linear-gradient(to right, #0b2659, transparent)', zIndex: 1, pointerEvents: 'none' }} />
-              <div style={{ display: 'inline-block', background: '#055074', color: '#c1c1c6', fontSize: '9px', fontWeight: 700, letterSpacing: '1px', padding: '3px 9px', borderRadius: '20px', marginBottom: '10px', width: 'fit-content' }}>
+              <div style={{ display: 'inline-block', background: '#D4AF37', color: '#01050F', fontSize: '9px', fontWeight: 700, letterSpacing: '1px', padding: '3px 9px', borderRadius: '20px', marginBottom: '10px', width: 'fit-content' }}>
                 MUNDIAL 2026
               </div>
               <div style={{ fontSize: '17px', fontWeight: 700, color: '#c1c1c6', marginBottom: '5px', lineHeight: 1.3 }}>Prode del Mundial con tus amigos</div>
               <div style={{ fontSize: '11px', color: '#8aa8cc', marginBottom: '14px', lineHeight: 1.5 }}>Predecí resultados y ganá el ranking</div>
-              <button style={{ background: '#c1c1c6', color: '#01050F', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'not-allowed', opacity: 0.6, width: 'fit-content' }}>
-                Próximamente
-              </button>
+              <div style={{ background: '#D4AF37', color: '#01050F', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, padding: '8px 16px', borderRadius: '9px', width: 'fit-content' }}>
+                ¡Jugar ahora!
+              </div>
             </div>
             <div style={{ flex: '0 0 45%', backgroundImage: 'url(/images/prode.png)', backgroundSize: 'cover', backgroundPosition: 'center' }} />
-          </div>
+          </Link>
 
           {/* Destacados */}
           <div className="sep"><div className="sep-line" /><span className="sep-text">Destacados</span><div className="sep-line" /></div>

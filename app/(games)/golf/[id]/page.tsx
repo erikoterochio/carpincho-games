@@ -40,6 +40,8 @@ type Format    = { id: string; format_type: string; display_name: string; handic
 type Round     = { id: string; round_number: number; status: string; date: string | null }
 type HoleScore = { id: string; round_id: string; player_id: string; hole_number: number; gross: number | null; updated_at: string }
 type CompUnit  = { id: string; name: string; unit_type: string; format_id: string; golf_competition_unit_members: { player_id: string }[] }
+type Contest   = { id: string; contest_type: 'long_drive' | 'best_approach'; hole_number: number; display_name: string }
+type ContestEntry = { contest_id: string; player_id: string; tee_distance_m: number; distance_to_pin_m: number; qualifies: boolean }
 
 type PlayerCalc = {
   player: Player; courseHcp: number; playingHcp: number; strokes: Record<number, number>
@@ -56,10 +58,10 @@ type LeaderboardRow = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
-  eagle: '#fbbf24', birdie: '#22c55e', par: '#c1c1c6',
-  bogey: '#f97316', double: '#ef4444',
+  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
+  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
+  eagle: '#92400e', birdie: '#15803d', par: '#374151',
+  bogey: '#c2410c', double: '#b91c1c',
 } as const
 
 const FORMAT_COLORS: Record<string, string> = {
@@ -69,7 +71,7 @@ const FORMAT_COLORS: Record<string, string> = {
 }
 
 const TEE_HEX: Record<string, string> = {
-  black: '#222', blue: '#1d4ed8', white: '#d1d5db', yellow: '#d97706', red: '#dc2626',
+  black: '#222', blue: '#1d4ed8', white: '#9ca3af', yellow: '#d97706', red: '#dc2626',
 }
 
 // ─────────────────────────────────────────────
@@ -401,6 +403,8 @@ export default function TournamentPage() {
   const [round,      setRound]      = useState<Round | null>(null)
   const [scores,     setScores]     = useState<HoleScore[]>([])
   const [compUnits,  setCompUnits]  = useState<CompUnit[]>([])
+  const [contests,   setContests]   = useState<Contest[]>([])
+  const [contestEntries, setContestEntries] = useState<ContestEntry[]>([])
 
   useEffect(() => {
     const load = async () => {
@@ -437,9 +441,19 @@ export default function TournamentPage() {
       const activeRound = (rndRes.data ?? []).find(r => r.status === 'active') ?? (rndRes.data ?? [])[0] ?? null
       setRound(activeRound)
 
+      const { data: ctRes } = await supabase.from('golf_contests').select('id,contest_type,hole_number,display_name').eq('tournament_id', id).order('hole_number')
+      const contestList = ctRes ?? []
+      setContests(contestList)
+
       if (activeRound) {
-        const { data: sc } = await supabase.from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id)
-        setScores(sc ?? [])
+        const [scRes, ceRes] = await Promise.all([
+          supabase.from('golf_hole_scores').select('id,round_id,player_id,hole_number,gross,updated_at').eq('round_id', activeRound.id),
+          contestList.length > 0
+            ? supabase.from('golf_contest_entries').select('contest_id,player_id,tee_distance_m,distance_to_pin_m,qualifies').in('contest_id', contestList.map((c: Contest) => c.id)).eq('round_id', activeRound.id)
+            : Promise.resolve({ data: [] }),
+        ])
+        setScores(scRes.data ?? [])
+        setContestEntries((ceRes as any).data ?? [])
       }
 
       setLoading(false)
@@ -494,9 +508,23 @@ export default function TournamentPage() {
 
   const copyCode = () => {
     if (!tournament?.invite_code) return
-    navigator.clipboard.writeText(tournament.invite_code)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    const shareData = { title: tournament.name, text: `Unite con el código: ${tournament.invite_code}` }
+    if (typeof navigator.share !== 'undefined') {
+      navigator.share(shareData).catch(() => {})
+    } else {
+      navigator.clipboard.writeText(tournament.invite_code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  const handleScoreChange = (pid: string, hn: number, gross: number | null) => {
+    setScores(prev => {
+      if (gross === null) return prev.filter(s => !(s.player_id === pid && s.hole_number === hn))
+      const existing = prev.find(s => s.player_id === pid && s.hole_number === hn)
+      if (existing) return prev.map(s => s.player_id === pid && s.hole_number === hn ? { ...s, gross, updated_at: new Date().toISOString() } : s)
+      return [...prev, { id: `local-${pid}-${hn}`, round_id: round?.id ?? '', player_id: pid, hole_number: hn, gross, updated_at: new Date().toISOString() }]
+    })
   }
 
   if (loading) return (
@@ -526,11 +554,11 @@ export default function TournamentPage() {
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         ::-webkit-scrollbar { height: 3px; width: 3px; }
-        ::-webkit-scrollbar-thumb { background: #1e1736; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: #c8d8ec; border-radius: 3px; }
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
       `}</style>
 
-      <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 80 }}>
+      <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, color: C.text, paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}>
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
@@ -540,13 +568,20 @@ export default function TournamentPage() {
                 <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </Link>
-            <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {tournament.name}
-            </span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {tournament.num_rounds > 1 ? `${tournament.name} · Fecha #${round?.round_number ?? '—'}` : tournament.name}
+              </div>
+              {round?.date && (
+                <div style={{ fontSize: 11, color: C.muted }}>
+                  {new Date(round.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                </div>
+              )}
+            </div>
             {isActive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#0a2a1a', border: '1px solid #14532d', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: 3, background: '#4ade80', animation: 'pulse 2s infinite' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#4ade80' }}>EN VIVO</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
+                <div style={{ width: 6, height: 6, borderRadius: 3, background: '#15803d', animation: 'pulse 2s infinite' }} />
+                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d' }}>EN VIVO</span>
               </div>
             )}
             <div style={{ position: 'relative' }}>
@@ -559,9 +594,9 @@ export default function TournamentPage() {
                 </svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#111124', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.5)' }}
+                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#ffffff', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
                   onClick={() => setShowMenu(false)}>
-                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Scorear" />
+                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Anotar" />
                   <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
                   <MenuItem href={`/golf/canchas`}               icon="⛳" label="Ver canchas" />
                   {isActive && <MenuItem href={`/golf/${id}/cerrar-ronda`} icon="🏁" label="Cerrar ronda" danger />}
@@ -577,38 +612,42 @@ export default function TournamentPage() {
               {' · '}
               {tournament.holes_config === '18' ? '18 hoyos' : tournament.holes_config === 'front9' ? 'Primeros 9' : 'Segundos 9'}
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 5 }}>
               {formats.map(f => (
                 <span key={f.id} style={{ fontSize: 10, fontWeight: 700, color: FORMAT_COLORS[f.format_type] ?? C.muted, background: (FORMAT_COLORS[f.format_type] ?? C.muted) + '18', border: `1px solid ${(FORMAT_COLORS[f.format_type] ?? C.muted)}40`, borderRadius: 5, padding: '2px 8px' }}>
                   {f.display_name}
                 </span>
               ))}
+              <button onClick={copyCode} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', border: `1px solid ${C.border}`, borderRadius: 20, background: 'none', cursor: 'pointer', fontFamily: FONT, fontSize: 11, fontWeight: 600, color: copied ? C.primary : C.muted }}>
+                {copied ? (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke={C.primary} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                ) : (
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/><polyline points="16 6 12 2 8 6" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="2" x2="12" y2="15" stroke={C.muted} strokeWidth="1.8" strokeLinecap="round"/></svg>
+                )}
+                {copied ? 'Copiado' : tournament.invite_code}
+              </button>
             </div>
-            <button onClick={copyCode}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, background: C.card, border: `1px solid ${C.border}`, borderRadius: 9, padding: '8px 14px', cursor: 'pointer', width: '100%' }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><rect x="9" y="9" width="13" height="13" rx="2" stroke={C.muted} strokeWidth="1.8"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" stroke={C.muted} strokeWidth="1.8"/></svg>
-              <span style={{ fontSize: 11, color: C.muted }}>Código:</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: C.text, letterSpacing: 2 }}>{tournament.invite_code}</span>
-              <span style={{ marginLeft: 'auto', fontSize: 11, color: copied ? '#4ade80' : C.muted }}>{copied ? 'Copiado ✓' : 'Copiar'}</span>
-            </button>
           </div>
 
           {/* Tabs principales */}
-          <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 53, background: C.bg, zIndex: 9 }}>
-            {(['leaderboard', 'scorecard'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                style={{ flex: 1, padding: '11px', background: 'none', border: 'none', borderBottom: `2px solid ${tab === t ? C.primary : 'transparent'}`, cursor: 'pointer', fontSize: 13, fontWeight: tab === t ? 700 : 500, color: tab === t ? C.text : C.muted, marginBottom: -1, fontFamily: FONT }}>
-                {t === 'leaderboard' ? 'Leaderboard' : 'Scorecard'}
-              </button>
-            ))}
+          <div style={{ display: 'flex', gap: 8, padding: '10px 18px', position: 'sticky', top: 53, background: C.bg, zIndex: 9, borderBottom: `1px solid ${C.border}` }}>
+            {(['leaderboard', 'scorecard'] as const).map(t => {
+              const active = tab === t
+              return (
+                <button key={t} onClick={() => setTab(t)}
+                  style={{ flex: 1, padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${active ? C.primary : C.border}`, background: active ? C.primary : 'transparent', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: active ? '#ffffff' : C.muted, fontFamily: FONT, transition: 'all 0.15s' }}>
+                  {t === 'leaderboard' ? 'Posiciones' : 'Tarjetas'}
+                </button>
+              )
+            })}
           </div>
 
           {/* Tabs de formato */}
           {formats.length > 1 && (
-            <div style={{ display: 'flex', gap: 6, padding: '10px 18px', overflowX: 'auto', borderBottom: `1px solid ${C.border}` }}>
+            <div style={{ display: 'flex', gap: 8, padding: '10px 18px', overflowX: 'auto', borderBottom: `1px solid ${C.border}` }}>
               {formats.map((f, i) => (
                 <button key={f.id} onClick={() => setFmtTab(i)}
-                  style={{ padding: '5px 12px', borderRadius: 20, border: `1px solid ${fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : C.border}`, background: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) + '20' : 'transparent', color: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.text) : C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: FONT }}>
+                  style={{ padding: '8px 18px', borderRadius: 20, border: `1.5px solid ${fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : C.border}`, background: fmtTab === i ? (FORMAT_COLORS[f.format_type] ?? C.primary) : 'transparent', color: fmtTab === i ? '#ffffff' : C.muted, fontSize: 14, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: FONT }}>
                   {f.display_name}
                 </button>
               ))}
@@ -648,35 +687,45 @@ export default function TournamentPage() {
                     </div>
                   ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '6px 12px' }}>
-                        {['#','JUGADOR', fmt?.format_type === 'stableford' ? 'PTS' : 'NETT','VS PAR','H'].map((h, i) => (
-                          <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
+                      <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 56px 50px 44px', gap: 6, padding: '4px 12px' }}>
+                        {(['#', 'JUGADOR', 'HCP', fmt?.format_type === 'stableford' ? 'PTS' : 'NETO', 'VS PAR', 'HOYO'] as const).map((h, i) => (
+                          <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i === 0 || i > 1 ? 'center' : 'left' }}>{h}</span>
                         ))}
                       </div>
                       {leaderboard.map((row, i) => {
                         const isStbf  = fmt?.format_type === 'stableford'
                         const vpColor = row.vsParDisplay === 'E' ? C.par : row.vsParDisplay.startsWith('-') ? C.birdie : C.bogey
+                        const initials = row.player.display_name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+                        const teeColor = TEE_HEX[row.player.tee_color] ?? '#888'
                         return (
-                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 50px 36px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-                            <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
-                                <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{row.player.display_name}</span>
+                          <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 56px 50px 44px', gap: 6, padding: '10px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 12, alignItems: 'center' }}>
+                            {/* # */}
+                            <div style={{ fontSize: 20, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center', lineHeight: 1 }}>{row.pos}</div>
+                            {/* JUGADOR */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                              <div style={{ width: 34, height: 34, borderRadius: 17, background: teeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{initials}</span>
                               </div>
-                              <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
+                              <span style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.player.display_name}</span>
                             </div>
+                            {/* HCP */}
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 16, fontWeight: 700, color: i === 0 ? '#4ade80' : C.text }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.playingHcp}</span>
+                            </div>
+                            {/* PTS / NETO */}
+                            <div style={{ textAlign: 'center' }}>
+                              <span style={{ fontSize: 18, fontWeight: 700, color: i === 0 ? '#15803d' : C.text, lineHeight: 1 }}>{row.holesPlayed === 0 ? '—' : row.value}</span>
                               {isStbf && row.holesPlayed > 0 && <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>}
                             </div>
+                            {/* VS PAR */}
                             <div style={{ textAlign: 'center' }}>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: row.holesPlayed === 0 ? C.muted : vpColor }}>
+                              <span style={{ fontSize: 14, fontWeight: 700, color: row.holesPlayed === 0 ? C.muted : vpColor }}>
                                 {row.holesPlayed === 0 ? '—' : row.vsParDisplay}
                               </span>
                             </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <span style={{ fontSize: 11, color: C.muted }}>{row.holesPlayed}/{totalHoles}</span>
+                            {/* HOYO */}
+                            <div style={{ textAlign: 'center' }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.holesPlayed}</span>
                             </div>
                           </div>
                         )
@@ -685,29 +734,20 @@ export default function TournamentPage() {
                   )}
                 </div>
               )}
+
+              {contests.length > 0 && (
+                <ContestsSection contests={contests} entries={contestEntries} players={players} />
+              )}
             </>
           )}
 
           {/* SCORECARD */}
           {tab === 'scorecard' && (
-            <ScorecardView players={players} holes={playedHoles} scores={scores} playerCalcs={playerCalcs} format={fmt ?? null} />
+            <ScorecardView players={players} holes={playedHoles} scores={scores} playerCalcs={playerCalcs} format={fmt ?? null} roundId={round?.id ?? null} isActive={isActive} onScoreChange={handleScoreChange} />
           )}
         </div>
       </div>
 
-      {/* FAB Scorear */}
-      {isActive && round && (
-        <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 20 }}>
-          <Link href={`/golf/${id}/scorear`}
-            style={{ display: 'flex', alignItems: 'center', gap: 9, background: C.primary, color: C.text, borderRadius: 28, padding: '14px 22px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT, boxShadow: '0 4px 24px rgba(5,80,116,0.5)' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-              <path d="M12 20h9" stroke={C.text} strokeWidth="2" strokeLinecap="round"/>
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" stroke={C.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Scorear
-          </Link>
-        </div>
-      )}
     </>
   )
 }
@@ -750,73 +790,176 @@ function MatchLeaderboard({ format, players, holes, scores, playerCalcs, units, 
         </p>
       )}
       {pairs.map(([a, b], i) => (
-        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball, maxDiff)} holes={holes} />
+        <MatchCard key={i} state={buildMatchState(a, b, holes, scores, isFourball, maxDiff)} holes={holes} scores={scores} />
       ))}
     </div>
   )
 }
 
-function MatchCard({ state, holes }: { state: MatchState; holes: Hole[] }) {
+function MatchCard({ state, holes, scores }: { state: MatchState; holes: Hole[]; scores: HoleScore[] }) {
   const [expanded, setExpanded] = useState(false)
-  const { unitA, unitB, status, upDown, isFinished } = state
-  const statusColor = isFinished ? '#4ade80' : upDown === 0 ? C.muted : upDown > 0 ? '#5b9bd5' : '#e07b4f'
+  const { unitA, unitB, status, upDown, isFinished, holeResults } = state
+  const aLeads = upDown > 0; const bLeads = upDown < 0
+  const statusColor = isFinished ? C.primary : upDown === 0 ? C.muted : upDown > 0 ? C.primary : C.bogey
+
+  // Posición acumulada por hoyo
+  let running = 0
+  const runByHole: Record<number, number> = {}
+  holes.forEach(h => {
+    const r = holeResults[h.hole_number]
+    if (r === 'win') running++; else if (r === 'loss') running--
+    runByHole[h.hole_number] = running
+  })
+
+  const colW = { label: 60, hole: 34 }
+  const tableW = colW.label + holes.length * colW.hole
 
   return (
-    <div style={{ background: C.card, border: `1px solid ${isFinished ? '#166534' : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ padding: '14px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: upDown > 0 ? C.text : C.muted }}>{unitA.name}</div>
-            <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitA.teamPlayingHcp}</div>
+    <div style={{ background: C.card, border: `1px solid ${isFinished ? C.primary : C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+
+      {/* ── Cabecera equipos */}
+      <div style={{ padding: '14px 16px 10px' }}>
+        {/* Equipo A */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 16, background: aLeads ? C.primary : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{unitA.name.charAt(0)}</span>
           </div>
-          <div style={{ flexShrink: 0, textAlign: 'center', padding: '0 12px' }}>
-            <div style={{ fontSize: 20, fontWeight: 700, color: statusColor }}>{status}</div>
-            <div style={{ fontSize: 9, color: C.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>
-              {isFinished ? 'Finalizado' : `${state.holesRemaining} rest.`}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: aLeads ? C.text : C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{unitA.name}</div>
+            <div style={{ fontSize: 11, color: C.muted }}>{unitA.players.map(p => p.display_name.split(' ')[0]).join(' & ')} · HCP {unitA.teamPlayingHcp}</div>
+          </div>
+          {aLeads && (
+            <div style={{ background: '#dcfce7', border: `1px solid #86efac`, borderRadius: 8, padding: '4px 10px', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>{status}</span>
             </div>
-          </div>
-          <div style={{ flex: 1, textAlign: 'right' }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: upDown < 0 ? C.text : C.muted }}>{unitB.name}</div>
-            <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name).join(' & ')}</div>
-            <div style={{ fontSize: 10, color: '#4a4a55' }}>HCP {unitB.teamPlayingHcp}</div>
-          </div>
+          )}
         </div>
-        {/* Barra */}
-        <div style={{ position: 'relative', height: 6, background: '#111124', borderRadius: 3, overflow: 'hidden', marginBottom: 10 }}>
-          <div style={{ position: 'absolute', top: 0, bottom: 0, left: '50%', width: 2, background: '#2a2a3a', transform: 'translateX(-50%)', zIndex: 1 }} />
-          {upDown !== 0 && (() => {
-            const played = holes.length - state.holesRemaining
-            const pct    = played > 0 ? Math.min(0.5, Math.abs(upDown) / Math.max(played, 1) * 0.5) : 0
-            return (
-              <div style={{ position: 'absolute', top: 0, bottom: 0, borderRadius: 3, width: `${pct * 100}%`, left: upDown > 0 ? `${50 - pct * 100}%` : '50%', background: upDown > 0 ? '#5b9bd5' : '#e07b4f' }} />
-            )
-          })()}
+
+        {/* Separador */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+          <div style={{ flex: 1, height: 1, background: C.border }} />
+          {!aLeads && !bLeads && <span style={{ fontSize: 12, fontWeight: 700, color: C.muted, padding: '0 4px' }}>{status}</span>}
+          <div style={{ flex: 1, height: 1, background: C.border }} />
         </div>
-        <button onClick={() => setExpanded(!expanded)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.muted, fontFamily: FONT, padding: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-          {expanded ? '▲' : '▼'} Hoyo a hoyo
-        </button>
+
+        {/* Equipo B */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 16, background: bLeads ? C.bogey : C.border, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{unitB.name.charAt(0)}</span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: bLeads ? C.text : C.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{unitB.name}</div>
+            <div style={{ fontSize: 11, color: C.muted }}>{unitB.players.map(p => p.display_name.split(' ')[0]).join(' & ')} · HCP {unitB.teamPlayingHcp}</div>
+          </div>
+          {bLeads && (
+            <div style={{ background: '#fee2e2', border: `1px solid #fca5a5`, borderRadius: 8, padding: '4px 10px', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700, color: C.bogey }}>{status}</span>
+            </div>
+          )}
+        </div>
+
+        {isFinished && (
+          <div style={{ marginTop: 10, padding: '6px 10px', background: '#dcfce7', borderRadius: 8, textAlign: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: C.primary }}>
+              {upDown > 0 ? unitA.name : unitB.name} ganó {status}
+            </span>
+          </div>
+        )}
       </div>
+
+      {/* ── Botón expandir */}
+      <button onClick={() => setExpanded(!expanded)}
+        style={{ width: '100%', padding: '9px 16px', background: C.bg, border: 'none', borderTop: `1px solid ${C.border}`, cursor: 'pointer', fontSize: 11, color: C.muted, fontFamily: FONT, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ transform: expanded ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+          <path d="M6 9l6 6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        {expanded ? 'Cerrar' : 'Ver hoyo a hoyo'}
+      </button>
+
+      {/* ── Tabla hoyo a hoyo */}
       {expanded && (
-        <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 16px', overflowX: 'auto' }}>
-          <div style={{ display: 'flex', gap: 4, minWidth: 'fit-content' }}>
-            {holes.map(h => {
-              const res   = state.holeResults[h.hole_number] ?? 'pending'
-              const bg    = res === 'win' ? '#0a2040' : res === 'loss' ? '#2a0a0a' : res === 'halved' ? '#111124' : '#0a0a14'
-              const color = res === 'win' ? '#5b9bd5' : res === 'loss' ? '#e07b4f' : res === 'halved' ? C.muted : '#2a2a3a'
-              const label = res === 'win' ? 'A' : res === 'loss' ? 'B' : res === 'halved' ? '—' : '·'
-              return (
-                <div key={h.hole_number} style={{ textAlign: 'center', minWidth: 26 }}>
-                  <div style={{ fontSize: 9, color: C.muted, marginBottom: 2 }}>{h.hole_number}</div>
-                  <div style={{ width: 26, height: 26, borderRadius: 6, background: bg, border: `1px solid ${color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color }}>{label}</div>
-                </div>
-              )
-            })}
-          </div>
+        <div style={{ borderTop: `1px solid ${C.border}`, overflowX: 'auto' }}>
+          <table style={{ borderCollapse: 'collapse', minWidth: tableW, width: '100%', fontFamily: FONT }}>
+            <thead>
+              <tr style={{ background: C.primary }}>
+                <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.primary, width: colW.label, padding: '7px 8px', textAlign: 'left', fontSize: 10, color: 'rgba(255,255,255,0.55)', fontWeight: 400, borderRight: `1px solid rgba(255,255,255,0.15)` }}>
+                  Hoyo
+                </th>
+                {holes.map(h => (
+                  <th key={h.hole_number} style={{ width: colW.hole, textAlign: 'center', fontSize: 11, color: '#fff', fontWeight: 700, padding: '7px 2px' }}>
+                    {h.hole_number}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {/* Par */}
+              <tr style={{ background: C.bg }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '4px 8px', fontSize: 10, color: C.muted, borderRight: `1px solid ${C.border}` }}>Par</td>
+                {holes.map(h => <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.muted, padding: '4px 2px' }}>{h.par}</td>)}
+              </tr>
+              {/* Hcp */}
+              <tr style={{ background: C.bg }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '3px 8px', fontSize: 10, color: C.border, borderRight: `1px solid ${C.border}` }}>Hcp</td>
+                {holes.map(h => <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.border, padding: '3px 2px' }}>{h.stroke_index}</td>)}
+              </tr>
+              {/* Equipo A label */}
+              <tr style={{ background: '#dcfce7' }}>
+                <td colSpan={holes.length + 1} style={{ padding: '4px 8px', fontSize: 10, fontWeight: 700, color: C.primary }}>{unitA.name}</td>
+              </tr>
+              {unitA.players.map(p => (
+                <MatchScoreRow key={p.id} player={p} holes={holes} scores={scores} bg={aLeads ? '#f0fdf4' : C.card} colW={colW} />
+              ))}
+              {/* Equipo B label */}
+              <tr style={{ background: '#f5f5f5' }}>
+                <td colSpan={holes.length + 1} style={{ padding: '4px 8px', fontSize: 10, fontWeight: 700, color: C.muted }}>{unitB.name}</td>
+              </tr>
+              {unitB.players.map(p => (
+                <MatchScoreRow key={p.id} player={p} holes={holes} scores={scores} bg={bLeads ? '#fff7ed' : C.card} colW={colW} />
+              ))}
+              {/* Posición acumulada */}
+              <tr style={{ background: C.bg, borderTop: `1.5px solid ${C.border}` }}>
+                <td style={{ position: 'sticky', left: 0, background: C.bg, padding: '6px 8px', fontSize: 10, fontWeight: 700, color: C.muted, borderRight: `1px solid ${C.border}` }}>Pos</td>
+                {holes.map(h => {
+                  if (holeResults[h.hole_number] === 'pending' || holeResults[h.hole_number] === undefined)
+                    return <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 10, color: C.border }}>·</td>
+                  const pos = runByHole[h.hole_number]
+                  const label = pos === 0 ? 'AS' : pos > 0 ? `${pos}UP` : `${Math.abs(pos)}DN`
+                  const color = pos === 0 ? C.muted : pos > 0 ? C.primary : C.bogey
+                  return <td key={h.hole_number} style={{ textAlign: 'center', fontSize: 9, fontWeight: 700, color, padding: '6px 1px' }}>{label}</td>
+                })}
+              </tr>
+            </tbody>
+          </table>
         </div>
       )}
     </div>
+  )
+}
+
+function MatchScoreRow({ player, holes, scores, bg, colW }: {
+  player: Player; holes: Hole[]; scores: HoleScore[]
+  bg: string; colW: { label: number; hole: number }
+}) {
+  return (
+    <tr style={{ background: bg }}>
+      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: bg, padding: '5px 8px', borderRight: `1px solid ${C.border}` }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <div style={{ width: 6, height: 6, borderRadius: 3, background: TEE_HEX[player.tee_color] ?? '#888', flexShrink: 0 }} />
+          <span style={{ fontSize: 11, fontWeight: 600, color: C.text, whiteSpace: 'nowrap' }}>{player.display_name.split(' ')[0]}</span>
+        </div>
+      </td>
+      {holes.map(h => {
+        const gross = scores.find(s => s.player_id === player.id && s.hole_number === h.hole_number)?.gross ?? null
+        return (
+          <td key={h.hole_number} style={{ textAlign: 'center', padding: '4px 2px' }}>
+            {gross !== null
+              ? <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{gross}</span>
+              : <span style={{ fontSize: 12, color: C.border }}>·</span>}
+          </td>
+        )
+      })}
+    </tr>
   )
 }
 
@@ -861,8 +1004,8 @@ function FourballAmericanoLB({ players, holes, scores, playerCalcs, units }: {
     <div style={{ padding: '14px 18px', display: 'flex', flexDirection: 'column', gap: 18 }}>
       <LBSection title="Ranking parejas">
         {pairRows.map((r, i) => (
-          <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{i + 1}</span>
+          <div key={r.unit.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 50px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center' }}>{i + 1}</span>
             <div>
               <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{r.unit.name}</div>
               <div style={{ fontSize: 11, color: C.muted }}>{r.players.map(p => p.display_name).join(' & ')}</div>
@@ -897,7 +1040,7 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
 
   return (
     <div style={{ padding: '14px 18px' }}>
-      <div style={{ background: '#0a0a14', border: '1px solid #1e1736', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+      <div style={{ background: '#e8f0fa', border: '1px solid #c8d8ec', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
         <p style={{ fontSize: 11, color: C.muted, lineHeight: 1.5, margin: 0 }}>
           6 puntos por hoyo · 4-2-0 · Empates: top2→3-3-0 · bottom2→4-1-1 · todos→2-2-2 · HCP al 85%
         </p>
@@ -909,25 +1052,31 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '6px 12px' }}>
-            {['#', 'JUGADOR', 'PUNTOS', 'H'].map((h, i) => (
-              <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i > 1 ? 'center' : 'left' }}>{h}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 60px 40px', gap: 6, padding: '4px 12px' }}>
+            {(['#', 'JUGADOR', 'HCP', 'PUNTOS', 'HOYO'] as const).map((h, i) => (
+              <span key={h} style={{ fontSize: 10, color: C.muted, fontWeight: 700, textAlign: i === 0 || i > 1 ? 'center' : 'left' }}>{h}</span>
             ))}
           </div>
-          {rows.map((row, i) => (
-            <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 60px 40px', gap: 8, padding: '11px 12px', background: i === 0 ? '#0d1a0d' : C.card, border: `1px solid ${i === 0 ? '#166534' : C.border}`, borderRadius: 10, alignItems: 'center' }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? '#4ade80' : C.muted, textAlign: 'center' }}>{row.pos}</div>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: TEE_HEX[row.player.tee_color] ?? '#888', flexShrink: 0 }} />
-                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text }}>{row.player.display_name}</span>
+          {rows.map((row, i) => {
+            const initials = row.player.display_name.split(' ').map((w: string) => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()
+            const teeColor = TEE_HEX[row.player.tee_color] ?? '#888'
+            return (
+              <div key={row.player.id} style={{ display: 'grid', gridTemplateColumns: '28px 1fr 36px 60px 40px', gap: 6, padding: '10px 12px', background: i === 0 ? '#dcfce7' : C.card, border: `1px solid ${i === 0 ? '#86efac' : C.border}`, borderRadius: 12, alignItems: 'center' }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, textAlign: 'center', lineHeight: 1 }}>{row.pos}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                  <div style={{ width: 34, height: 34, borderRadius: 17, background: teeColor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{initials}</span>
+                  </div>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{row.player.display_name}</span>
                 </div>
-                <span style={{ fontSize: 11, color: C.muted, paddingLeft: 14 }}>HCP {row.playingHcp}</span>
+                <div style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.muted }}>{row.playingHcp}</span>
+                </div>
+                <PtsCell pts={row.value} first={i === 0} />
+                <span style={{ fontSize: 11, color: C.muted, textAlign: 'center' }}>{row.holesPlayed}</span>
               </div>
-              <PtsCell pts={row.value} first={i === 0} />
-              <span style={{ fontSize: 11, color: C.muted, textAlign: 'right' }}>{row.holesPlayed}</span>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -935,19 +1084,115 @@ function FourTwoZeroLB({ players, holes, scores, playerCalcs }: {
 }
 
 // ─────────────────────────────────────────────
-// SCORECARD
+// CONCURSOS — Tarjetas desplegables
 // ─────────────────────────────────────────────
 
-function ScorecardView({ players, holes, scores, playerCalcs, format }: {
+function ContestsSection({ contests, entries, players }: {
+  contests: Contest[]; entries: ContestEntry[]; players: Player[]
+}) {
+  return (
+    <div style={{ padding: '0 18px 4px' }}>
+      <div style={{ fontSize: 10, fontWeight: 700, color: C.muted, letterSpacing: 1.5, textTransform: 'uppercase', padding: '14px 0 8px' }}>
+        Concursos
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {contests.map(c => (
+          <ContestCard key={c.id} contest={c} entries={entries.filter(e => e.contest_id === c.id)} players={players} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ContestCard({ contest, entries, players }: {
+  contest: Contest; entries: ContestEntry[]; players: Player[]
+}) {
+  const [open, setOpen] = useState(false)
+  const isLD = contest.contest_type === 'long_drive'
+  const icon = isLD ? '🏌️' : '📍'
+
+  const ranking = entries
+    .filter(e => e.qualifies)
+    .map(e => {
+      const player = players.find(p => p.id === e.player_id)
+      const metric = isLD ? e.tee_distance_m - e.distance_to_pin_m : e.distance_to_pin_m
+      return { player, metric, e }
+    })
+    .filter(r => r.player)
+    .sort((a, b) => isLD ? b.metric - a.metric : a.metric - b.metric)
+
+  const leader = ranking[0]
+
+  return (
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 14, overflow: 'hidden' }}>
+      <button onClick={() => setOpen(v => !v)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FONT }}>
+        <span style={{ fontSize: 18 }}>{icon}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{contest.display_name}</div>
+          <div style={{ fontSize: 11, color: C.muted }}>
+            {leader
+              ? `${leader.player!.display_name} · ${isLD ? `${leader.metric}m` : `${leader.metric}m al pin`}`
+              : 'Sin datos aún'}
+          </div>
+        </div>
+        {leader && (
+          <span style={{ fontSize: 11, fontWeight: 700, color: C.primary, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 6, padding: '2px 8px', flexShrink: 0 }}>
+            {isLD ? `${leader.metric}m` : `${leader.metric}m`}
+          </span>
+        )}
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <path d="M6 9l6 6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div style={{ borderTop: `1px solid ${C.border}`, padding: '10px 16px 14px' }}>
+          {ranking.length === 0 ? (
+            <p style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '8px 0' }}>Sin datos aún</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {ranking.map((r, i) => (
+                <div key={r.e.player_id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: i === 0 ? '#15803d' : C.muted, width: 18, textAlign: 'center' }}>{i + 1}</span>
+                  <div style={{ width: 7, height: 7, borderRadius: 4, background: TEE_HEX[(r.player as Player).tee_color] ?? '#888', flexShrink: 0 }} />
+                  <span style={{ flex: 1, fontSize: 13, color: C.text, fontWeight: i === 0 ? 700 : 500 }}>{(r.player as Player).display_name}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: i === 0 ? C.primary : C.muted }}>
+                    {isLD ? `${r.metric}m` : `${r.metric}m`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// SCORECARD  (hoyos = filas, jugadores = columnas)
+// ─────────────────────────────────────────────
+
+function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, isActive, onScoreChange }: {
   players: Player[]; holes: Hole[]; scores: HoleScore[]
   playerCalcs: PlayerCalc[]; format: Format | null
+  roundId: string | null; isActive: boolean
+  onScoreChange: (pid: string, hn: number, gross: number | null) => void
 }) {
   const isStableford = format?.format_type === 'stableford'
-  const getScore   = (pid: string, h: number) => scores.find(s => s.player_id === pid && s.hole_number === h)?.gross ?? null
-  const getStrokes = (pid: string, h: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[h] ?? 0
-  const subTotals  = (pid: string, holeSet: Hole[]) => {
-    let gross = 0; let pts = 0; let par = 0; let count = 0
+  const [front9Open, setFront9Open] = useState(true)
+  const [back9Open,  setBack9Open]  = useState(true)
+  const [editing, setEditing] = useState<{ playerId: string; playerName: string; teeColor: string; holeNumber: number; holePar: number; strokes: number; value: number } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const supabase = createClient()
+
+  const getScore   = (pid: string, hn: number) => scores.find(s => s.player_id === pid && s.hole_number === hn)?.gross ?? null
+  const getStrokes = (pid: string, hn: number) => playerCalcs.find(c => c.player.id === pid)?.strokes[hn] ?? 0
+
+  const subTotal = (pid: string, holeSet: Hole[]) => {
     const calc = playerCalcs.find(c => c.player.id === pid)
+    let gross = 0, pts = 0, par = 0, count = 0
     holeSet.forEach(h => {
       const g = getScore(pid, h.hole_number)
       if (!g) return
@@ -956,78 +1201,215 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
     })
     return { gross: count > 0 ? gross : null, pts: count > 0 ? pts : null, par }
   }
-  const show18 = holes.some(h => h.hole_number >= 10)
+
+  const saveScore = async (gross: number | null) => {
+    if (!editing || !roundId || saving) return
+    setSaving(true)
+    const { playerId, holeNumber } = editing
+    if (gross === null) {
+      await supabase.from('golf_hole_scores').delete()
+        .eq('round_id', roundId).eq('player_id', playerId).eq('hole_number', holeNumber)
+    } else {
+      await supabase.from('golf_hole_scores')
+        .upsert({ round_id: roundId, player_id: playerId, hole_number: holeNumber, gross },
+                 { onConflict: 'round_id,player_id,hole_number' })
+    }
+    onScoreChange(playerId, holeNumber, gross)
+    setSaving(false)
+    setEditing(null)
+  }
+
+  const front9 = holes.filter(h => h.hole_number <= 9)
+  const back9  = holes.filter(h => h.hole_number >= 10)
+  const playerColW = players.length <= 2 ? 80 : players.length === 3 ? 68 : players.length === 4 ? 60 : 54
+  const colW   = { hole: 38, par: 30, hcp: 28, player: playerColW }
+  const tableW = colW.hole + colW.par + colW.hcp + players.length * colW.player
+  const RB     = C.primary
+  const div    = `1px solid ${C.border}`
+  const rbt    = `1px solid rgba(255,255,255,0.15)`
+
+  const renderHoleRow = (h: Hole) => {
+    const canEdit = isActive && !!roundId
+    return (
+      <tr key={h.hole_number}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderBottom: div }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', padding: '11px 4px' }}>{h.hole_number}</div>
+        </td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: '#021B1A', background: '#3FAF7C', borderBottom: div }}>{h.par}</td>
+        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: '#021B1A', background: '#C2E5CE', borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
+        {players.map(p => {
+          const strokes = getStrokes(p.id, h.hole_number)
+          const gross   = getScore(p.id, h.hole_number)
+          let color: string | null = null
+          if (gross !== null) {
+            if (isStableford) {
+              const pts = stablefordPts(gross, h.par, strokes)
+              color = pts >= 3 ? C.birdie : pts === 2 ? C.par : pts === 1 ? C.bogey : C.double
+            } else {
+              color = scoreColor((gross - strokes) - h.par)
+            }
+          }
+          return (
+            <td key={p.id}
+              onClick={canEdit ? () => setEditing({ playerId: p.id, playerName: p.display_name, teeColor: p.tee_color, holeNumber: h.hole_number, holePar: h.par, strokes, value: gross ?? h.par }) : undefined}
+              style={{ width: colW.player, textAlign: 'center', padding: '5px 4px', borderBottom: div, background: C.card, cursor: canEdit ? 'pointer' : 'default' }}>
+              <div style={{ width: 46, height: 42, borderRadius: 9, margin: '0 auto', background: gross !== null ? color! + '1c' : 'transparent', border: `1.5px solid ${gross !== null ? color! + '70' : C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+                {strokes > 0 && <div style={{ position: 'absolute', top: 3, right: 3, width: 5, height: 5, borderRadius: 3, background: C.primary + '70' }} />}
+                {gross !== null
+                  ? <span style={{ fontSize: 18, fontWeight: 700, color: color!, lineHeight: 1 }}>{gross}</span>
+                  : <span style={{ fontSize: 16, color: C.border }}>·</span>}
+              </div>
+            </td>
+          )
+        })}
+      </tr>
+    )
+  }
+
+  const renderSectionRow = (label: string, holeSet: Hole[], open: boolean, toggle: () => void) => {
+    return (
+      <tr key={label} onClick={toggle} style={{ cursor: 'pointer' }}>
+        <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, borderTop: rbt, borderBottom: rbt }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '11px 8px' }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" style={{ transform: open ? 'none' : 'rotate(-90deg)', transition: 'transform 0.2s', flexShrink: 0 }}>
+              <path d="M6 9l6 6 6-6" stroke="rgba(255,255,255,0.5)" strokeWidth="2.2" strokeLinecap="round"/>
+            </svg>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{label}</span>
+          </div>
+        </td>
+        <td style={{ background: RB, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.7)', borderTop: rbt, borderBottom: rbt }}>
+          {holeSet.reduce((a, h) => a + h.par, 0)}
+        </td>
+        <td style={{ background: RB, borderTop: rbt, borderBottom: rbt, borderRight: div }} />
+        {players.map(p => {
+          const sub   = subTotal(p.id, holeSet)
+          const val   = isStableford ? sub.pts : sub.gross
+          const vsPar = sub.gross != null ? sub.gross - sub.par : null
+          const vpc   = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.55)') : null
+          return (
+            <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px', background: RB, borderTop: rbt, borderBottom: rbt }}>
+              {val != null ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  {!isStableford && vsPar != null
+                    ? <><span style={{ fontSize: 14, fontWeight: 700, color: vpc!, lineHeight: 1 }}>{vsParStr(vsPar)}</span><span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>{val}</span></>
+                    : <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>}
+                </div>
+              ) : <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)' }}>—</span>}
+            </td>
+          )
+        })}
+      </tr>
+    )
+  }
+
+  const renderTotalRow = () => (
+    <tr key="total">
+      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: RB, width: colW.hole, padding: '11px 8px', fontSize: 13, fontWeight: 700, color: '#fff', borderBottom: rbt }}>
+        TOT
+      </td>
+      <td style={{ background: RB, textAlign: 'center', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.7)', borderBottom: rbt }}>
+        {holes.reduce((a, h) => a + h.par, 0)}
+      </td>
+      <td style={{ background: RB, borderBottom: rbt, borderRight: div }} />
+      {players.map(p => {
+        const tots  = subTotal(p.id, holes)
+        const val   = isStableford ? tots.pts : tots.gross
+        const vsPar = tots.gross != null ? tots.gross - tots.par : null
+        const vpc   = vsPar != null ? (vsPar > 0 ? '#fca5a5' : vsPar < 0 ? '#86efac' : 'rgba(255,255,255,0.65)') : null
+        return (
+          <td key={p.id} style={{ textAlign: 'center', padding: '6px 2px', background: RB, borderBottom: rbt }}>
+            {val != null ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                {!isStableford && vsPar != null
+                  ? <><span style={{ fontSize: 15, fontWeight: 700, color: vpc!, lineHeight: 1 }}>{vsParStr(vsPar)}</span><span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', lineHeight: 1.3 }}>{val}</span></>
+                  : <span style={{ fontSize: 14, fontWeight: 700, color: '#fff' }}>{val}</span>}
+              </div>
+            ) : <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.25)' }}>—</span>}
+          </td>
+        )
+      })}
+    </tr>
+  )
 
   return (
-    <div style={{ overflowX: 'auto', paddingBottom: 16 }}>
-      <table style={{ borderCollapse: 'collapse', minWidth: '100%', fontSize: 12, fontFamily: FONT }}>
-        <thead>
-          <tr>
-            <td style={stickyCell}>—</td>
-            {holes.map(h => <td key={h.hole_number} style={{ ...hdrCell, fontSize: 10 }}>{h.hole_number}</td>)}
-            {show18 && <td style={{ ...hdrCell, fontSize: 10, minWidth: 36 }}>TOT</td>}
-          </tr>
-          <tr>
-            <td style={{ ...stickyCell, fontSize: 10, color: C.muted }}>PAR</td>
-            {holes.map(h => <td key={h.hole_number} style={{ ...hdrCell, fontSize: 10 }}>{h.par}</td>)}
-            {show18 && <td style={hdrCell}>{holes.reduce((s, h) => s + h.par, 0)}</td>}
-          </tr>
-        </thead>
-        <tbody>
-          {players.map(p => {
-            const calc   = playerCalcs.find(c => c.player.id === p.id)
-            const totAll = subTotals(p.id, holes)
-            return (
-              <tr key={p.id}>
-                <td style={{ ...stickyCell, whiteSpace: 'nowrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 7, height: 7, borderRadius: 4, background: TEE_HEX[p.tee_color] ?? '#888', flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{p.display_name}</span>
-                  </div>
-                  <span style={{ fontSize: 10, color: C.muted, paddingLeft: 12 }}>{calc ? `hcp ${calc.playingHcp}` : ''}</span>
-                </td>
-                {holes.map(h => {
-                  const gross   = getScore(p.id, h.hole_number)
-                  const strokes = getStrokes(p.id, h.hole_number)
-                  const nett    = gross !== null ? gross - strokes : null
-                  const vspar   = gross !== null ? (isStableford ? stablefordPts(gross, h.par, strokes) : gross - h.par) : null
-                  const color   = vspar !== null
-                    ? (isStableford ? vspar >= 3 ? C.birdie : vspar === 2 ? C.par : vspar === 1 ? C.bogey : C.double : scoreColor(vspar))
-                    : C.muted
-                  return (
-                    <td key={h.hole_number} style={{ ...scoreCell, position: 'relative' }}>
-                      {strokes > 0 && (
-                        <div style={{ position: 'absolute', top: 3, right: 3, display: 'flex', gap: 1 }}>
-                          {Array.from({ length: Math.min(strokes, 2) }).map((_, i) => (
-                            <div key={i} style={{ width: 4, height: 4, borderRadius: 2, background: C.primary }} />
-                          ))}
-                        </div>
-                      )}
-                      {gross !== null ? (
-                        <div style={{ lineHeight: 1.1 }}>
-                          <div style={{ fontSize: 13, fontWeight: 700, color }}>{gross}</div>
-                          {strokes > 0 && nett !== null && <div style={{ fontSize: 9, color: C.muted }}>/{nett}</div>}
-                        </div>
-                      ) : <span style={{ color: C.border, fontSize: 11 }}>·</span>}
-                    </td>
-                  )
-                })}
-                {show18 && (
-                  <td style={{ ...scoreCell, background: '#111124', minWidth: 36 }}>
-                    {totAll.gross !== null ? (
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.text }}>{isStableford ? totAll.pts : totAll.gross}</div>
-                        {!isStableford && calc && <div style={{ fontSize: 9, color: C.muted }}>/{totAll.gross! - calc.playingHcp}</div>}
-                      </div>
-                    ) : <span style={{ color: C.border }}>·</span>}
-                  </td>
-                )}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div style={{ overflow: 'auto', margin: '0 10px 16px' }}>
+        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: tableW, fontFamily: FONT }}>
+          <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+            <tr>
+              <th style={{ position: 'sticky', left: 0, zIndex: 2, background: C.card, width: colW.hole, padding: '9px 4px', fontSize: 11, color: C.text, textAlign: 'center', fontWeight: 700, borderRight: div, borderBottom: div }}>Hoyo</th>
+              <th style={{ width: colW.par, padding: '9px 4px', fontSize: 11, color: C.muted, background: C.card, textAlign: 'center', fontWeight: 500, borderBottom: div }}>Par</th>
+              <th style={{ width: colW.hcp, padding: '9px 4px', fontSize: 10, color: C.muted, background: C.card, textAlign: 'center', fontWeight: 400, borderRight: div, borderBottom: div }}>Hcp</th>
+              {players.map(p => {
+                const phcp = playerCalcs.find(c => c.player.id === p.id)?.playingHcp
+                return (
+                  <th key={p.id} style={{ width: colW.player, padding: '7px 2px', textAlign: 'center', background: C.primary }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                      <div style={{ width: 9, height: 9, borderRadius: 5, background: TEE_HEX[p.tee_color] ?? '#888', border: '1.5px solid rgba(255,255,255,0.4)' }} />
+                      <span style={{ fontSize: 11, fontWeight: 700, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: colW.player - 6 }}>
+                        {p.display_name.split(' ')[0]}
+                      </span>
+                      {phcp != null && <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.65)' }}>H: {phcp}</span>}
+                    </div>
+                  </th>
+                )
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            {front9.length > 0 && back9.length > 0 && renderTotalRow()}
+            {front9.length > 0 && renderSectionRow('IDA', front9, front9Open, () => setFront9Open(v => !v))}
+            {front9Open && front9.map(h => renderHoleRow(h))}
+            {back9.length > 0  && renderSectionRow('VTA', back9,  back9Open,  () => setBack9Open(v => !v))}
+            {back9Open  && back9.map(h  => renderHoleRow(h))}
+          </tbody>
+        </table>
+      </div>
+
+      {editing && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          onClick={() => !saving && setEditing(null)}>
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,27,26,0.5)' }} />
+          <div style={{ position: 'relative', background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 24px calc(32px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 480, fontFamily: FONT }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ width: 36, height: 4, borderRadius: 2, background: C.border, margin: '0 auto 18px' }} />
+            <div style={{ textAlign: 'center', marginBottom: 22 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <div style={{ width: 28, height: 28, borderRadius: 14, background: TEE_HEX[editing.teeColor] ?? '#888', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>{editing.playerName.split(' ').map(w => w[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}</span>
+                </div>
+                <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>{editing.playerName}</span>
+              </div>
+              <div style={{ fontSize: 12, color: C.muted }}>
+                Hoyo {editing.holeNumber} · Par {editing.holePar}
+                {editing.strokes > 0 ? ` · ${editing.strokes} golpe${editing.strokes > 1 ? 's' : ''} de ventaja` : ''}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28, marginBottom: 28 }}>
+              <button onClick={() => setEditing(e => e && e.value > 1 ? { ...e, value: e.value - 1 } : e)}
+                style={{ width: 52, height: 52, borderRadius: 26, border: `1.5px solid ${C.border}`, background: 'none', fontSize: 28, cursor: 'pointer', color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                −
+              </button>
+              <span style={{ fontSize: 52, fontWeight: 700, color: C.text, minWidth: 70, textAlign: 'center', lineHeight: 1 }}>{editing.value}</span>
+              <button onClick={() => setEditing(e => e ? { ...e, value: e.value + 1 } : e)}
+                style={{ width: 52, height: 52, borderRadius: 26, border: `1.5px solid ${C.border}`, background: 'none', fontSize: 28, cursor: 'pointer', color: C.text, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                +
+              </button>
+            </div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button onClick={() => saveScore(null)} disabled={saving}
+                style={{ flex: 1, padding: '13px', border: `1.5px solid ${C.border}`, borderRadius: 11, background: 'none', color: C.muted, fontFamily: FONT, fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>
+                Borrar
+              </button>
+              <button onClick={() => saveScore(editing.value)} disabled={saving}
+                style={{ flex: 2, padding: '13px', border: 'none', borderRadius: 11, background: C.primary, color: '#fff', fontFamily: FONT, fontSize: 15, fontWeight: 700, cursor: 'pointer', opacity: saving ? 0.7 : 1 }}>
+                {saving ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -1037,7 +1419,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format }: {
 
 function MenuItem({ href, icon, label, danger }: { href: string; icon: string; label: string; danger?: boolean }) {
   return (
-    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: danger ? '#f87171' : C.text, fontSize: 14, fontWeight: 500, fontFamily: FONT }}>
+    <Link href={href} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px', borderRadius: 8, textDecoration: 'none', color: danger ? '#be123c' : C.text, fontSize: 14, fontWeight: 500, fontFamily: FONT }}>
       <span>{icon}</span><span>{label}</span>
     </Link>
   )
@@ -1055,12 +1437,9 @@ function LBSection({ title, children }: { title: string; children: React.ReactNo
 function PtsCell({ pts, first }: { pts: number; first: boolean }) {
   return (
     <div style={{ textAlign: 'center' }}>
-      <span style={{ fontSize: 16, fontWeight: 700, color: first ? '#4ade80' : C.text }}>{pts}</span>
+      <span style={{ fontSize: 16, fontWeight: 700, color: first ? '#15803d' : C.text }}>{pts}</span>
       <span style={{ fontSize: 10, color: C.muted, display: 'block' }}>pts</span>
     </div>
   )
 }
 
-const stickyCell: React.CSSProperties = { position: 'sticky', left: 0, background: '#080812', zIndex: 2, padding: '8px 12px', borderRight: `1px solid #1e1736`, minWidth: 110 }
-const hdrCell: React.CSSProperties   = { textAlign: 'center', padding: '6px 4px', background: '#0a0a14', color: '#706c7e', minWidth: 32, fontWeight: 700, borderRight: '1px solid #0d0d1a' }
-const scoreCell: React.CSSProperties = { textAlign: 'center', padding: '6px 4px', background: '#0d0d1a', minWidth: 32, borderRight: '1px solid #080812', borderBottom: '1px solid #080812' }
