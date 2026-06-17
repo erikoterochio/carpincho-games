@@ -1739,10 +1739,10 @@ export default function TournamentPage() {
                   </span>
                 )}
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: isLive ? '#059669' : '#9ca3af' }}>
-                  {(isLive ? !expandedPicksMatches.has(m.id) : expandedPicksMatches.has(m.id)) ? '▲' : '▼'}
+                  {(!isDone ? !expandedPicksMatches.has(m.id) : expandedPicksMatches.has(m.id)) ? '▲' : '▼'}
                 </span>
               </div>
-              <div style={{ background: isLive ? '#f7fef9' : '#fff', paddingBottom: 4, display: (isLive ? !expandedPicksMatches.has(m.id) : expandedPicksMatches.has(m.id)) ? 'block' : 'none' }}>
+              <div style={{ background: isLive ? '#f7fef9' : '#fff', paddingBottom: 4, display: (!isDone ? !expandedPicksMatches.has(m.id) : expandedPicksMatches.has(m.id)) ? 'block' : 'none' }}>
                 {rows.map((row, i) => {
                   const ptColor = row.pts === null ? MUTED : row.pts >= 12 ? '#10b981' : row.pts >= 7 ? '#0ea5e9' : row.pts >= 5 ? '#d97706' : row.pts >= 2 ? '#f97316' : RED
                   return (
