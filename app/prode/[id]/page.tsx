@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
+import { computeGroupStandings, computeBestThirds, computeThirdSlots } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
 import { WC26_PLAYERS, WC26_TEAMS_ES } from '@/lib/wc26-players'
 
@@ -131,7 +131,7 @@ type Standing = {
   goal_diff: number
   points: number
 }
-type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string }
+type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string; ko_lock_date?: string | null }
 type Participant = {
   user_id: string; paid: boolean; late_join?: boolean
   profiles: { username: string; nombre?: string; apellido?: string } | null
@@ -1179,6 +1179,8 @@ export default function TournamentPage() {
   }, [matches, myEditPicks])
 
   const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
+  const thirdSlots = useMemo(() => computeThirdSlots(allGroupStandings, FIFA_RANKS), [allGroupStandings])
+  const isKoLocked = !!tournament?.ko_lock_date && Date.now() >= new Date(tournament.ko_lock_date).getTime()
 
   const homeMatches = useMemo(() => {
     const tz = 'America/Argentina/Buenos_Aires'
@@ -1195,7 +1197,7 @@ export default function TournamentPage() {
 
   const bracketData = useMemo(() => {
     const getGrp = (pos: 1|2, grp: string): TeamStat | null => allGroupStandings[grp]?.[pos-1] ?? null
-    const get3rd = (idx: number): TeamStat | null => bestThirds[idx] ?? null
+    const get3rd = (idx: number): TeamStat | null => thirdSlots[idx] ?? null
 
     const getWinner = (id: string, home: TeamStat | null, away: TeamStat | null): TeamStat | null => {
       if (!home || !away) return null
@@ -1290,7 +1292,7 @@ export default function TournamentPage() {
     matchLabels.set(final.id, 'FINAL')
 
     return { r32, r16, qf, sf, third, final, matchLabels }
-  }, [allGroupStandings, bestThirds, koEditPicks, matches])
+  }, [allGroupStandings, thirdSlots, koEditPicks, matches])
 
   // Keep bracketNodeByIdRef in sync so saveAll can read predicted teams without stale closure
   useEffect(() => {
@@ -1442,13 +1444,13 @@ export default function TournamentPage() {
           </div>
           <input type="text" inputMode="numeric" className="grp-inp"
             value={pick.h} onChange={e => handleKoPick(m.id, 'h', e.target.value)}
-            disabled={noTeams} placeholder="—"
+            disabled={noTeams || isKoLocked} placeholder="—"
             style={{ borderColor: filled ? NAVY : BORDER, color: filled ? NAVY : TEXT }}
           />
           <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
           <input type="text" inputMode="numeric" className="grp-inp"
             value={pick.a} onChange={e => handleKoPick(m.id, 'a', e.target.value)}
-            disabled={noTeams} placeholder="—"
+            disabled={noTeams || isKoLocked} placeholder="—"
             style={{ borderColor: filled ? NAVY : BORDER, color: filled ? NAVY : TEXT }}
           />
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
@@ -2036,6 +2038,17 @@ export default function TournamentPage() {
           {/* ── HOME ── */}
           {tab === 'home' && (
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
+              {tournament?.ko_lock_date && !isKoLocked && koPickCount === 0 && isGroupPicksLocked && (
+                <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '12px 16px', marginBottom: 18, fontFamily: FONT_NORMAL }}>
+                  <div style={{ fontSize: 14, color: RED, fontWeight: 900, fontFamily: FONT_BLACK, marginBottom: 4 }}>Completá la fase de eliminación</div>
+                  <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
+                    Tenés que ir a la pestaña <strong>Predecir</strong> y completar los cruces de 16vos en adelante. El plazo cierra a las 00:00 (hora argentina).
+                  </div>
+                  <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 6, fontStyle: 'italic' }}>
+                    "Yo me equivoqué y pagué, pero el prode no se mancha"
+                  </div>
+                </div>
+              )}
               {homeMatches.length === 0 ? (
                 <Card style={{ textAlign: 'center', padding: 40 }}>
                   <div style={{ fontSize: 40, marginBottom: 12 }}>📅</div>
@@ -2302,7 +2315,7 @@ export default function TournamentPage() {
                   </div>
                   <button
                     onClick={saveAll}
-                    disabled={saveStatus === 'saving' || ((isGroupPicksLocked && !isLateJoin) ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)}
+                    disabled={saveStatus === 'saving' || isKoLocked || ((isGroupPicksLocked && !isLateJoin) ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)}
                     style={{
                       padding: '10px 22px',
                       background: saveStatus === 'saved' ? '#10b981' : TEXT,
@@ -2310,7 +2323,7 @@ export default function TournamentPage() {
                       fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
                       cursor: saveStatus === 'saving' ? 'wait' : 'pointer',
                       transition: 'background 0.25s',
-                      opacity: (isGroupPicksLocked && !isLateJoin ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0) ? 0.35 : 1,
+                      opacity: (isKoLocked || (isGroupPicksLocked && !isLateJoin ? koPickCount === 0 : myPickCount === 0 && koPickCount === 0)) ? 0.35 : 1,
                     }}
                   >
                     {saveStatus === 'saving' ? 'Guardando...' : saveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
