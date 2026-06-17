@@ -1708,8 +1708,8 @@ export default function TournamentPage() {
           </div>
         )}
 
-        {/* ── ALL PICKS (LIVE / DONE) ── */}
-        {(isLive || isDone) && participants.length > 0 && (() => {
+        {/* ── ALL PICKS ── */}
+        {participants.length > 0 && (() => {
           const picksSource = predAllPicks
           const pickKey = m.stage === 'group' ? m.id : (() => {
             const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
