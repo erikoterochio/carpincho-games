@@ -2038,7 +2038,7 @@ export default function TournamentPage() {
           {/* ── HOME ── */}
           {tab === 'home' && (
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
-              {tournament?.ko_lock_date && !isKoLocked && koPickCount === 0 && isParticipant && (
+              {tournament?.ko_lock_date && !isKoLocked && koPickCount < koMatches.length && (
                 <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '12px 16px', marginBottom: 18, fontFamily: FONT_NORMAL }}>
                   <div style={{ fontSize: 14, color: RED, fontWeight: 900, fontFamily: FONT_BLACK, marginBottom: 4 }}>Completá la fase de eliminación</div>
                   <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.6 }}>
