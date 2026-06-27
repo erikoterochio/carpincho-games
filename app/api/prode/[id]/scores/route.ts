@@ -65,7 +65,7 @@ export async function GET(
       .select('id, home_team, away_team, home_flag, away_flag, home_score, away_score, status, stage, group_name, sort_order')
       .order('sort_order'),
     admin.from('prode_standings')
-      .select('group_name, rank, team_name')
+      .select('group_name, rank, team_name, played, win, draw, lose, goals_for, goals_against, goal_diff, points')
       .order('group_name').order('rank'),
   ])
   if (matchesRes.error) return NextResponse.json({ error: matchesRes.error.message }, { status: 500 })
@@ -120,8 +120,17 @@ export async function GET(
   const finalMs = koByStage('final')
   const thirdMs = koByStage('3rd')
 
-  // Real teams confirmed at each KO stage
-  const realR32Set = new Set<string>(r32Ms.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
+  // Build realR32Set from prode_standings (reliable — R32 match teams may still be placeholders)
+  const realStMap: Record<string, any[]> = {}
+  for (const s of allStandings) {
+    if (!s.group_name) continue
+    if (!realStMap[s.group_name]) realStMap[s.group_name] = []
+    realStMap[s.group_name].push({ name: s.team_name, flag: '', pts: s.points, pj: s.played, pg: s.win, pe: s.draw, pp: s.lose, gf: s.goals_for, gc: s.goals_against, dg: s.goal_diff })
+  }
+  const realTopTwo = allStandings.filter((s: any) => s.rank <= 2).map((s: any) => s.team_name as string)
+  const allGroupsInSt = GROUPS.every(g => (realStMap[g]?.length ?? 0) >= 4)
+  const realThirdsFromSt: string[] = allGroupsInSt ? computeBestThirds(realStMap, FIFA_RANKS, 8).map((t: any) => t.name) : []
+  const realR32Set = new Set<string>([...realTopTwo, ...realThirdsFromSt])
   const realR16Set = new Set<string>(r16Ms.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
   const realQfSet  = new Set<string>(qfMs.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
   const realSfSet  = new Set<string>(sfMs.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
