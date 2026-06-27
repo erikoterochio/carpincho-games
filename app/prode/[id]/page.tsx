@@ -410,8 +410,7 @@ export default function TournamentPage() {
   const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
   const [e2Picks, setE2Picks] = useState<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
   const e2PicksRef = useRef<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
-  const [e2SaveState, setE2SaveState] = useState<Record<string, 'saving'|'saved'|'error'>>({})
-  const e2SaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+  const [e2SaveStatus, setE2SaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -1120,7 +1119,7 @@ export default function TournamentPage() {
     const updated = { ...current, [side]: cleaned }
     e2PicksRef.current[matchId] = updated
     setE2Picks(prev => ({ ...prev, [matchId]: updated }))
-    scheduleE2Save(matchId)
+    setE2SaveStatus('idle')
   }
 
   const handleE2Pen = (matchId: string, pen: 'h'|'a') => {
@@ -1128,28 +1127,26 @@ export default function TournamentPage() {
     const updated = { ...current, pen: current.pen === pen ? undefined : pen }
     e2PicksRef.current[matchId] = updated
     setE2Picks(prev => ({ ...prev, [matchId]: updated }))
-    scheduleE2Save(matchId)
+    setE2SaveStatus('idle')
   }
 
-  const scheduleE2Save = (matchId: string) => {
-    if (e2SaveTimers.current[matchId]) clearTimeout(e2SaveTimers.current[matchId])
-    setE2SaveState(prev => ({ ...prev, [matchId]: 'saving' }))
-    e2SaveTimers.current[matchId] = setTimeout(async () => {
-      const pick = e2PicksRef.current[matchId]
-      if (!pick || pick.h === '' || pick.a === '') {
-        setE2SaveState(prev => { const n = { ...prev }; delete n[matchId]; return n })
-        return
-      }
-      const { error } = await supabase.from('prode_stage2_picks').upsert({
+  const saveE2Picks = async () => {
+    const rows = Object.entries(e2PicksRef.current)
+      .filter(([, p]) => p.h !== '' && p.a !== '')
+      .map(([matchId, p]) => ({
         tournament_id: id,
         user_id: user!.id,
         match_id: matchId,
-        home_score: parseInt(pick.h),
-        away_score: parseInt(pick.a),
-        pen_winner: pick.pen ?? null,
-      }, { onConflict: 'tournament_id,user_id,match_id' })
-      setE2SaveState(prev => ({ ...prev, [matchId]: error ? 'error' : 'saved' }))
-    }, 800)
+        home_score: parseInt(p.h),
+        away_score: parseInt(p.a),
+        pen_winner: p.pen ?? null,
+      }))
+    if (!rows.length) return
+    setE2SaveStatus('saving')
+    const { error } = await supabase
+      .from('prode_stage2_picks')
+      .upsert(rows, { onConflict: 'tournament_id,user_id,match_id' })
+    setE2SaveStatus(error ? 'error' : 'saved')
   }
 
   const handleBonusSave = useCallback(async (b: Record<string, string>) => {
@@ -2042,7 +2039,6 @@ export default function TournamentPage() {
     const deadlineMs = new Date(m.kickoff).getTime() - 3600000
     const isLocked = deadlineMs <= Date.now() || isDone || isLive
     const pick = e2Picks[m.id]
-    const saveSt = e2SaveState[m.id]
     const h = pick?.h ?? ''
     const a = pick?.a ?? ''
     const isTied = h !== '' && a !== '' && parseInt(h) === parseInt(a)
@@ -2127,15 +2123,10 @@ export default function TournamentPage() {
           </div>
           {/* Status row */}
           {teamsKnown && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
+            <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
               <span style={{ fontSize: 10, fontFamily: FONT_NORMAL, color: MUTED }}>
                 {isDone ? `Final: ${m.home_score} - ${m.away_score}` : isLive ? `🔴 En vivo: ${m.home_score ?? 0} - ${m.away_score ?? 0}` : isLocked ? '🔒 Cerrado' : `Abierto hasta ${deadlineStr} HS`}
               </span>
-              {saveSt && (
-                <span style={{ fontSize: 10, fontFamily: FONT_NORMAL, color: saveSt === 'saved' ? '#10b981' : saveSt === 'error' ? RED : MUTED }}>
-                  {saveSt === 'saving' ? '⏳' : saveSt === 'saved' ? '✓ Guardado' : '⚠ Error al guardar'}
-                </span>
-              )}
             </div>
           )}
         </div>
@@ -2697,6 +2688,34 @@ export default function TournamentPage() {
                   )}
                 </div>
               )}
+              {/* Barra sticky Etapa II */}
+              {isParticipant && predecirEtapa === 'e2' && (() => {
+                const e2Count = Object.values(e2PicksRef.current).filter(p => p.h !== '' && p.a !== '').length
+                return (
+                  <div style={{
+                    position: 'fixed', bottom: 0, left: 0, right: 0,
+                    background: 'rgba(255,255,255,0.97)', borderTop: `1px solid ${BORDER}`,
+                    padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 99,
+                  }}>
+                    <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                      {e2Count > 0 ? `${e2Count} prediccion${e2Count !== 1 ? 'es' : ''} de eliminación` : 'Etapa II — sin predicciones aún'}
+                    </div>
+                    <button
+                      onClick={saveE2Picks}
+                      disabled={e2SaveStatus === 'saving' || e2Count === 0}
+                      style={{
+                        padding: '10px 22px', background: e2SaveStatus === 'saved' ? '#10b981' : TEXT,
+                        color: '#fff', border: 'none', borderRadius: 8,
+                        fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
+                        cursor: e2SaveStatus === 'saving' || e2Count === 0 ? 'default' : 'pointer',
+                        transition: 'background 0.25s', opacity: e2Count === 0 ? 0.35 : 1,
+                      }}
+                    >
+                      {e2SaveStatus === 'saving' ? 'Guardando...' : e2SaveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
+                    </button>
+                  </div>
+                )
+              })()}
             </div>
           )}
 
