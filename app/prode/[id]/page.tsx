@@ -114,7 +114,7 @@ const ABBREV: Record<string, string> = {
 }
 function abbrev(name: string) { return ABBREV[name] ?? name.substring(0, 3).toUpperCase() }
 
-type Tab = 'home' | 'predecir' | 'fixture' | 'posiciones' | 'tabla' | 'reglamento' | 'info' | 'admin' | 'predicciones'
+type Tab = 'home' | 'predecir' | 'fixture' | 'posiciones' | 'puntajes' | 'mis-puntos' | 'reglamento' | 'info' | 'admin' | 'predicciones'
 
 type Standing = {
   group_name: string
@@ -405,6 +405,7 @@ export default function TournamentPage() {
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
   const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
+  const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -1143,9 +1144,10 @@ export default function TournamentPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'home', label: 'Home' },
+    ...(isParticipant ? [{ key: 'mis-puntos' as Tab, label: 'Mis Puntos' }] : []),
+    { key: 'puntajes', label: 'Puntajes' },
     ...(isParticipant ? [{ key: 'predicciones' as Tab, label: 'Predicciones' }] : []),
     { key: 'predecir', label: 'Predecir' },
-    { key: 'tabla', label: 'Tabla' },
     { key: 'posiciones', label: 'Posiciones' },
     { key: 'fixture', label: 'Fixture' },
     { key: 'info', label: 'Info' },
@@ -1180,6 +1182,152 @@ export default function TournamentPage() {
 
   const bestThirds = useMemo(() => computeBestThirds(allGroupStandings, FIFA_RANKS), [allGroupStandings])
   const thirdSlots = useMemo(() => computeThirdSlots(allGroupStandings, FIFA_RANKS), [allGroupStandings])
+
+  const myScoreBreakdown = useMemo(() => {
+    if (!user?.id || !predAllPicks.length) return null
+    const DONE_ST = new Set(['FT', 'AET', 'PEN'])
+    const isReal = (t: string) => !!t && !t.match(/winner|runner[\s-]up|gan[.\s]|3rd\s+group|\?/i)
+    const myPicks = predAllPicks.filter(pk => pk.user_id === user.id)
+    if (!myPicks.length) return null
+    const groupMs = matches.filter(m => m.stage === 'group')
+    const groupMatchIds = new Set(groupMs.map(m => m.id))
+    const myPicksMap: Record<string, { h: string; a: string }> = {}
+    for (const pk of myPicks) {
+      if (groupMatchIds.has(pk.match_id))
+        myPicksMap[pk.match_id] = { h: String(pk.home_score), a: String(pk.away_score) }
+    }
+    let groupMatchPts = 0
+    for (const pk of myPicks) {
+      if (!groupMatchIds.has(pk.match_id)) continue
+      const m = matches.find(mx => mx.id === pk.match_id)
+      if (!m || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) continue
+      groupMatchPts += calcScore(pk, m) ?? 0
+    }
+    let koMatchPts = 0
+    for (const stage of ['r32','r16','qf','sf','3rd','final'] as const) {
+      const stageMs = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
+      stageMs.forEach((m, i) => {
+        const slotId = stage === '3rd' ? 'ko-3rd' : stage === 'final' ? 'ko-final' : `ko-${stage}-${i}`
+        const pk = myPicks.find(p => p.match_id === slotId)
+        if (!pk || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) return
+        koMatchPts += calcScore(pk, m) ?? 0
+      })
+    }
+    const myAllGroupSt: Record<string, ReturnType<typeof computeGroupStandings>> = {}
+    for (const g of GROUPS) {
+      const gms = groupMs.filter(m => m.group_name === g)
+      if (gms.length) myAllGroupSt[g] = computeGroupStandings(gms, myPicksMap, FIFA_RANKS)
+    }
+    const realGroupOrder: Record<string, string[]> = {}
+    for (const g of GROUPS) {
+      const ranked = standings.filter(s => s.group_name === g).sort((a, b) => a.rank - b.rank)
+      if (ranked.length) realGroupOrder[g] = ranked.map(s => s.team_name)
+    }
+    const finishedGroups = new Set<string>()
+    for (const g of GROUPS) {
+      if (groupMs.filter(m => m.group_name === g && DONE_ST.has(m.status)).length >= 6)
+        finishedGroups.add(g)
+    }
+    let groupOrderPts = 0
+    const groupBonuses: Record<string, number> = {}
+    for (const g of GROUPS) {
+      const predicted = myAllGroupSt[g]?.map(t => t.name) ?? []
+      const actual = realGroupOrder[g] ?? []
+      const bonus = finishedGroups.has(g) && actual.length === 4 && predicted.length === 4
+        && actual.every((t, i) => t === predicted[i]) ? 6 : 0
+      groupBonuses[g] = bonus
+      groupOrderPts += bonus
+    }
+    const firsts  = GROUPS.map(g => myAllGroupSt[g]?.[0]?.name ?? null)
+    const seconds = GROUPS.map(g => myAllGroupSt[g]?.[1]?.name ?? null)
+    const myThirds = computeBestThirds(myAllGroupSt, FIFA_RANKS, 8).map((t: any) => t.name)
+    const myR32Set = new Set<string>([
+      ...(firsts.filter(Boolean) as string[]),
+      ...(seconds.filter(Boolean) as string[]),
+      ...myThirds,
+    ])
+    const realR32Set = new Set<string>(
+      matches.filter(m => m.stage === 'r32').flatMap(m => [m.home_team, m.away_team]).filter(isReal)
+    )
+    let r32Pts = 0
+    for (const t of myR32Set) if (realR32Set.has(t)) r32Pts += 6
+    const myBracket = new Map<string, string>()
+    const addWinner = (slotId: string) => {
+      const pk = myPicks.find(p => p.match_id === slotId)
+      if (!pk?.predicted_home || !pk?.predicted_away) return
+      const home = pk.predicted_home, away = pk.predicted_away
+      let winner: string | null = null
+      if      (pk.home_score > pk.away_score) winner = home
+      else if (pk.away_score > pk.home_score) winner = away
+      else if (pk.pen_winner === 'h') winner = home
+      else if (pk.pen_winner === 'a') winner = away
+      if (!winner) return
+      myBracket.set(slotId, winner)
+      if (slotId === 'ko-final') myBracket.set('ko-final-runner', winner === home ? away : home)
+    }
+    for (let i = 0; i < 16; i++) addWinner(`ko-r32-${i}`)
+    for (let i = 0; i < 8;  i++) addWinner(`ko-r16-${i}`)
+    for (let i = 0; i < 4;  i++) addWinner(`ko-qf-${i}`)
+    for (let i = 0; i < 2;  i++) addWinner(`ko-sf-${i}`)
+    addWinner('ko-3rd'); addWinner('ko-final')
+    const r32Ms2 = matches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order)
+    const r16Ms2 = matches.filter(m => m.stage === 'r16').sort((a, b) => a.sort_order - b.sort_order)
+    const qfMs2  = matches.filter(m => m.stage === 'qf').sort((a, b) => a.sort_order - b.sort_order)
+    const sfMs2  = matches.filter(m => m.stage === 'sf').sort((a, b) => a.sort_order - b.sort_order)
+    const realR16Set = new Set<string>(r16Ms2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
+    const realQfSet  = new Set<string>(qfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
+    const realSfSet  = new Set<string>(sfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
+    const myR16Teams = r32Ms2.map((_, i) => myBracket.get(`ko-r32-${i}`)).filter(Boolean) as string[]
+    const myQfTeams  = r16Ms2.map((_, i) => myBracket.get(`ko-r16-${i}`)).filter(Boolean) as string[]
+    const mySfTeams  = qfMs2.map((_, i) => myBracket.get(`ko-qf-${i}`)).filter(Boolean) as string[]
+    let r16Pts = 0, qfPts = 0, sfPts = 0
+    for (const t of myR16Teams) if (realR16Set.has(t)) r16Pts += 10
+    for (const t of myQfTeams)  if (realQfSet.has(t))  qfPts += 14
+    for (const t of mySfTeams)  if (realSfSet.has(t))  sfPts += 18
+    const finalM2 = matches.find(m => m.stage === 'final')
+    const thirdM2 = matches.find(m => m.stage === '3rd')
+    const realChampion = finalM2 && DONE_ST.has(finalM2.status) && finalM2.home_score !== null && finalM2.away_score !== null
+      && isReal(finalM2.home_team) && isReal(finalM2.away_team)
+      ? (finalM2.home_score > finalM2.away_score ? finalM2.home_team : finalM2.away_score > finalM2.home_score ? finalM2.away_team : null)
+      : null
+    const realRunnerUp = realChampion && finalM2
+      ? (realChampion === finalM2.home_team ? finalM2.away_team : finalM2.home_team) : null
+    const realThird = thirdM2 && DONE_ST.has(thirdM2.status) && thirdM2.home_score !== null && thirdM2.away_score !== null
+      && isReal(thirdM2.home_team) && isReal(thirdM2.away_team)
+      ? (thirdM2.home_score > thirdM2.away_score ? thirdM2.home_team : thirdM2.away_score > thirdM2.home_score ? thirdM2.away_team : null)
+      : null
+    const realFourth = realThird && thirdM2 ? (realThird === thirdM2.home_team ? thirdM2.away_team : thirdM2.home_team) : null
+    const uChampion = myBracket.get('ko-final') ?? null
+    const sf0Win    = myBracket.get('ko-sf-0') ?? null
+    const sf1Win    = myBracket.get('ko-sf-1') ?? null
+    const uRunnerUp = uChampion
+      ? ((sf0Win === uChampion ? sf1Win : sf0Win) ?? myBracket.get('ko-final-runner') ?? null) : null
+    const uThird    = myBracket.get('ko-3rd') ?? null
+    const qf0Win    = myBracket.get('ko-qf-0') ?? null
+    const qf1Win    = myBracket.get('ko-qf-1') ?? null
+    const qf2Win    = myBracket.get('ko-qf-2') ?? null
+    const qf3Win    = myBracket.get('ko-qf-3') ?? null
+    const sf0Loser  = sf0Win ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
+    const sf1Loser  = sf1Win ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
+    const uFourth   = uThird ? (uThird === sf0Loser ? sf1Loser : sf0Loser) : null
+    let finalPosPts = 0
+    if (realChampion && uChampion === realChampion) finalPosPts += 40
+    if (realRunnerUp && uRunnerUp === realRunnerUp) finalPosPts += 35
+    if (realThird    && uThird    === realThird)    finalPosPts += 30
+    if (realFourth   && uFourth   === realFourth)   finalPosPts += 25
+    const total = groupMatchPts + koMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
+    return {
+      groupMatchPts, koMatchPts, groupOrderPts,
+      r32Pts, r16Pts, qfPts, sfPts, finalPosPts, total,
+      groupBonuses, myAllGroupSt, realGroupOrder, finishedGroups,
+      myR32Set, realR32Set,
+      myR16Teams, realR16Set, r32Ms2,
+      myQfTeams, realQfSet, r16Ms2,
+      mySfTeams, realSfSet, qfMs2, sfMs2,
+      uChampion, uRunnerUp, uThird, uFourth,
+      realChampion, realRunnerUp, realThird, realFourth,
+    }
+  }, [predAllPicks, user?.id, matches, standings])
   const isKoLocked = !!tournament?.ko_lock_date && Date.now() >= new Date(tournament.ko_lock_date).getTime()
 
   const homeMatches = useMemo(() => {
@@ -2462,14 +2610,277 @@ export default function TournamentPage() {
             )
           })()}
 
-          {/* ── TABLA ── */}
-          {tab === 'tabla' && (
+          {/* ── MIS PUNTOS ── */}
+          {tab === 'mis-puntos' && (() => {
+            const bd = myScoreBreakdown
+            const MIS_SUBTABS = [
+              { key: 'total' as const,        label: 'Tabla total' },
+              { key: 'grupos' as const,        label: 'Grupos' },
+              { key: 'eliminatorias' as const, label: 'Eliminatorias y extras' },
+            ]
+            const SubNav = () => (
+              <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f0f2f5', borderRadius: 10, padding: 4 }}>
+                {MIS_SUBTABS.map(st => (
+                  <button key={st.key} onClick={() => setMisptosTab(st.key)} style={{
+                    flex: 1, padding: '8px 4px', border: 'none', cursor: 'pointer', borderRadius: 7,
+                    background: misptosTab === st.key ? '#fff' : 'transparent',
+                    boxShadow: misptosTab === st.key ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+                    fontWeight: misptosTab === st.key ? 900 : 400,
+                    fontFamily: misptosTab === st.key ? FONT_BLACK : FONT_NORMAL,
+                    fontSize: 12, color: misptosTab === st.key ? TEXT : MUTED, transition: 'all .15s',
+                  }}>{st.label}</button>
+                ))}
+              </div>
+            )
+
+            return (
+              <div style={{ maxWidth: 820, margin: '0 auto' }}>
+                <SubNav />
+
+                {!bd && (
+                  <Card style={{ textAlign: 'center', padding: 32 }}>
+                    <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>
+                      {!isGroupPicksLocked
+                        ? 'Los puntos se calculan a partir del inicio del torneo.'
+                        : predAllPicks.length === 0 ? 'Cargando...' : 'Sin predicciones todavía.'}
+                    </div>
+                  </Card>
+                )}
+
+                {/* ── Sub-tab: Tabla total ── */}
+                {misptosTab === 'total' && bd && (
+                  <Card style={{ padding: 0, overflow: 'hidden', maxWidth: 520, margin: '0 auto' }}>
+                    <div style={{ padding: '12px 18px', background: TEXT }}>
+                      <div style={{ color: '#fff', fontSize: 16, fontWeight: 900, fontFamily: FONT_BLACK }}>Mis Puntos · Etapa I</div>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <tbody>
+                        {[
+                          { label: 'Partidos (fase grupos)',      pts: bd.groupMatchPts },
+                          { label: 'Partidos (eliminatorias)',    pts: bd.koMatchPts },
+                          { label: 'Posición de grupos',         pts: bd.groupOrderPts },
+                          { label: 'Clasificados a 16avos',      pts: bd.r32Pts },
+                          { label: 'Clasificados a 8vos',        pts: bd.r16Pts },
+                          { label: 'Clasificados a Cuartos',     pts: bd.qfPts },
+                          { label: 'Clasificados a Semis',       pts: bd.sfPts },
+                          { label: 'Posiciones finales',         pts: bd.finalPosPts },
+                        ].map(({ label, pts }) => (
+                          <tr key={label} style={{ borderTop: `1px solid ${BORDER}` }}>
+                            <td style={{ padding: '10px 18px', fontFamily: FONT_NORMAL, fontSize: 13, color: TEXT }}>{label}</td>
+                            <td style={{ padding: '10px 18px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: pts > 0 ? '#10b981' : MUTED }}>
+                              {pts > 0 ? `+${pts}` : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                        <tr style={{ borderTop: `2px solid ${TEXT}` }}>
+                          <td style={{ padding: '12px 18px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: TEXT }}>TOTAL E I</td>
+                          <td style={{ padding: '12px 18px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 22, color: RED }}>{bd.total}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </Card>
+                )}
+
+                {/* ── Sub-tab: Grupos ── */}
+                {misptosTab === 'grupos' && bd && (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+                    {GROUPS.map(g => {
+                      const predicted = bd.myAllGroupSt[g]?.map(t => t.name) ?? []
+                      const actual    = bd.realGroupOrder[g] ?? []
+                      const bonus     = bd.groupBonuses[g] ?? 0
+                      const finished  = bd.finishedGroups.has(g)
+                      if (!predicted.length) return null
+                      return (
+                        <Card key={g} style={{ padding: 0, overflow: 'hidden' }}>
+                          <div style={{ padding: '8px 14px', background: GROUP_COLORS[g] ?? NAVY, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#fff', fontWeight: 900, fontFamily: FONT_BLACK, fontSize: 13 }}>GRUPO {g}</span>
+                            {finished && <span style={{ color: bonus > 0 ? GOLD : '#aaa', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12 }}>
+                              {bonus > 0 ? `+${bonus} pts` : '0 pts'}
+                            </span>}
+                          </div>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                            <thead>
+                              <tr style={{ background: '#f7f8fa' }}>
+                                <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Mi pred.</th>
+                                <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Real</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[0, 1, 2, 3].map(i => {
+                                const pred  = predicted[i] ?? '—'
+                                const real  = actual[i]    ?? '—'
+                                const match = pred !== '—' && real !== '—' && pred === real
+                                return (
+                                  <tr key={i} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                    <td style={{ padding: '7px 10px', fontFamily: FONT_NORMAL, color: TEXT }}>
+                                      <span style={{ color: MUTED, fontSize: 10, marginRight: 5 }}>{i + 1}°</span>
+                                      {pred === '—' ? <span style={{ color: MUTED }}>—</span> : abbrev(pred)}
+                                    </td>
+                                    <td style={{ padding: '7px 10px', fontFamily: FONT_NORMAL, color: TEXT }}>
+                                      <span style={{ color: MUTED, fontSize: 10, marginRight: 5 }}>{i + 1}°</span>
+                                      {real === '—'
+                                        ? <span style={{ color: MUTED }}>—</span>
+                                        : <>{abbrev(real)}<span style={{ marginLeft: 6, fontSize: 11 }}>{match ? '✓' : '✗'}</span></>
+                                      }
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                          {finished && (
+                            <div style={{ padding: '6px 10px', borderTop: `1px solid ${BORDER}`, textAlign: 'center', fontSize: 11, fontFamily: FONT_NORMAL, color: bonus > 0 ? '#10b981' : MUTED }}>
+                              {bonus > 0 ? '✨ Orden completo correcto' : 'Orden incompleto o incorrecto'}
+                            </div>
+                          )}
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {/* ── Sub-tab: Eliminatorias y extras ── */}
+                {misptosTab === 'eliminatorias' && bd && (() => {
+                  type RoundRow = { team: string; qualified: boolean; pts: number }
+                  const mkRows = (myTeams: string[], realSet: Set<string>, unitPts: number): RoundRow[] =>
+                    myTeams.map(t => ({ team: t, qualified: realSet.has(t), pts: realSet.has(t) ? unitPts : 0 }))
+
+                  const r32Rows = [...bd.myR32Set].map(t => ({ team: t, qualified: bd.realR32Set.has(t), pts: bd.realR32Set.has(t) ? 6 : 0 }))
+                  const r16Rows = mkRows(bd.myR16Teams, bd.realR16Set, 10)
+                  const qfRows  = mkRows(bd.myQfTeams,  bd.realQfSet,  14)
+                  const sfRows  = mkRows(bd.mySfTeams,  bd.realSfSet,  18)
+
+                  const RoundSection = ({ title, rows, knownSize, showIfEmpty }: { title: string; rows: RoundRow[]; knownSize: number; showIfEmpty?: boolean }) => {
+                    if (!rows.length && !showIfEmpty) return null
+                    const total   = rows.reduce((s, r) => s + r.pts, 0)
+                    const correct = rows.filter(r => r.qualified).length
+                    return (
+                      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 12 }}>
+                        <div style={{ padding: '10px 14px', background: '#1e293b', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13 }}>{title}</span>
+                          {knownSize > 0 && rows.length > 0 && (
+                            <span style={{ color: total > 0 ? GOLD : '#aaa', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12 }}>
+                              {correct}/{rows.length} · +{total} pts
+                            </span>
+                          )}
+                        </div>
+                        {rows.length === 0
+                          ? <div style={{ padding: '14px 16px', fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>Sin predicciones todavía.</div>
+                          : (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: 10 }}>
+                            {rows.map(({ team, qualified, pts }) => {
+                              const bg     = !knownSize ? '#f0f2f5'                  : qualified ? 'rgba(16,185,129,0.12)' : 'rgba(220,38,38,0.08)'
+                              const border = !knownSize ? BORDER                     : qualified ? 'rgba(16,185,129,0.4)'  : 'rgba(220,38,38,0.25)'
+                              const clr    = !knownSize ? TEXT                       : qualified ? '#059669'               : '#dc2626'
+                              return (
+                                <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 20, background: bg, border: `1px solid ${border}` }}>
+                                  <span style={{ fontSize: 12, fontFamily: FONT_NORMAL, color: clr }}>{abbrev(team)}</span>
+                                  {!!knownSize && pts > 0 && <span style={{ fontSize: 10, fontFamily: FONT_BLACK, fontWeight: 900, color: '#059669' }}>+{pts}</span>}
+                                  {!!knownSize && !qualified && <span style={{ fontSize: 10, color: '#dc2626' }}>✗</span>}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )}
+                      </Card>
+                    )
+                  }
+
+                  const FinalPosRow = ({ label, myPick, realPick, pts, ptsPossible }: { label: string; myPick: string | null; realPick: string | null; pts: number; ptsPossible: number }) => {
+                    const correct = myPick && realPick && myPick === realPick
+                    return (
+                      <tr style={{ borderTop: `1px solid ${BORDER}` }}>
+                        <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED, whiteSpace: 'nowrap' }}>{label}</td>
+                        <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: myPick ? TEXT : MUTED }}>{myPick ? abbrev(myPick) : '—'}</td>
+                        <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: realPick ? TEXT : MUTED }}>{realPick ? abbrev(realPick) : '—'}</td>
+                        <td style={{ padding: '9px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13,
+                          color: !realPick ? MUTED : correct ? '#10b981' : '#dc2626' }}>
+                          {!realPick ? `+${ptsPossible}?` : correct ? `+${pts}` : '✗'}
+                        </td>
+                      </tr>
+                    )
+                  }
+
+                  const goleadaMatch = bonus.goleada_match_id ? matches.find(m => m.id === bonus.goleada_match_id) : null
+
+                  return (
+                    <>
+                      <RoundSection title="16avos · Clasificados de grupos (+6 c/u)" rows={r32Rows} knownSize={bd.realR32Set.size} showIfEmpty />
+                      <RoundSection title="8vos · Ganadores de 16avos (+10 c/u)"    rows={r16Rows} knownSize={bd.realR16Set.size} showIfEmpty={!!bd.r32Ms2.length} />
+                      <RoundSection title="Cuartos · Ganadores de 8vos (+14 c/u)"   rows={qfRows}  knownSize={bd.realQfSet.size}  showIfEmpty={!!bd.r16Ms2.length} />
+                      <RoundSection title="Semis · Ganadores de Cuartos (+18 c/u)"  rows={sfRows}  knownSize={bd.realSfSet.size}  showIfEmpty={!!bd.qfMs2.length} />
+
+                      <Card style={{ padding: 0, overflow: 'hidden', marginBottom: 12 }}>
+                        <div style={{ padding: '10px 14px', background: '#1e293b' }}>
+                          <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13 }}>Posiciones finales</span>
+                        </div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ background: '#f7f8fa' }}>
+                              <th style={{ padding: '5px 14px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Puesto</th>
+                              <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Mi pred.</th>
+                              <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Real</th>
+                              <th style={{ padding: '5px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Pts</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <FinalPosRow label="Campeón"     myPick={bd.uChampion}  realPick={bd.realChampion}  pts={40} ptsPossible={40} />
+                            <FinalPosRow label="Sub-campeón" myPick={bd.uRunnerUp}  realPick={bd.realRunnerUp}  pts={35} ptsPossible={35} />
+                            <FinalPosRow label="3er puesto"  myPick={bd.uThird}     realPick={bd.realThird}     pts={30} ptsPossible={30} />
+                            <FinalPosRow label="4to puesto"  myPick={bd.uFourth}    realPick={bd.realFourth}    pts={25} ptsPossible={25} />
+                          </tbody>
+                        </table>
+                      </Card>
+
+                      <Card style={{ padding: 0, overflow: 'hidden' }}>
+                        <div style={{ padding: '10px 14px', background: '#1e293b' }}>
+                          <span style={{ color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13 }}>Premios FIFA (+15 c/u)</span>
+                        </div>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <thead>
+                            <tr style={{ background: '#f7f8fa' }}>
+                              <th style={{ padding: '5px 14px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Premio</th>
+                              <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Mi elección</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              { key: 'balon_oro',  label: 'Balón de Oro' },
+                              { key: 'guante_oro', label: 'Guante de Oro' },
+                              { key: 'botin_oro',  label: 'Botín de Oro' },
+                              { key: 'fair_play',  label: 'Fair Play' },
+                              { key: 'revelacion', label: 'Revelación' },
+                            ].map(({ key, label }) => (
+                              <tr key={key} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED }}>{label}</td>
+                                <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: bonus[key] ? TEXT : MUTED }}>{bonus[key] || '—'}</td>
+                              </tr>
+                            ))}
+                            <tr style={{ borderTop: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED }}>Mayor Goleada</td>
+                              <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: goleadaMatch ? TEXT : MUTED }}>
+                                {goleadaMatch ? `${abbrev(goleadaMatch.home_team)} vs ${abbrev(goleadaMatch.away_team)}` : '—'}
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </Card>
+                    </>
+                  )
+                })()}
+              </div>
+            )
+          })()}
+
+          {/* ── PUNTAJES ── */}
+          {tab === 'puntajes' && (
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
               <Card style={{ padding: 0, overflow: 'hidden' }}>
                 <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
                   <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
                   <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
-                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: isGroupPicksLocked ? '#ffcc00' : '#fff', fontFamily: FONT_BLACK }}>PTS</div>
+                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>E I</div>
+                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>TOTAL</div>
                 </div>
                 {leaderboard.length === 0 ? (
                   <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
@@ -2495,11 +2906,14 @@ export default function TournamentPage() {
                         <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
                           {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'flex-end', width: 60 }}>
-                          <div style={{ width: 42, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                          <div style={{ width: 46, textAlign: 'center', fontSize: 13, fontWeight: 900, color: isGroupPicksLocked ? MUTED : MUTED, fontFamily: FONT_COND }}>
                             {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
                           </div>
-                          <span style={{ fontSize: 10, color: MUTED, lineHeight: 1 }}>{isExpanded ? '▲' : '▼'}</span>
+                          <div style={{ width: 46, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                            {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
+                          </div>
+                          <span style={{ fontSize: 10, color: MUTED, lineHeight: 1, marginLeft: 2 }}>{isExpanded ? '▲' : '▼'}</span>
                         </div>
                       </div>
 
