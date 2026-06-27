@@ -2564,7 +2564,7 @@ export default function TournamentPage() {
               </Card>
             )
             const thirds = standings
-              .filter(s => s.rank === 3)
+              .filter(s => s.rank === 3 && GROUPS.includes(s.group_name))
               .sort((a, b) => {
                 if (b.points !== a.points) return b.points - a.points
                 if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff
