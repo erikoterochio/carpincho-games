@@ -136,6 +136,8 @@ export function computeGroupStandings(
   return result
 }
 
+import { ANNEX_C } from './annex-c'
+
 /**
  * Given all 12 group standings, return the best N third-place teams.
  * FIFA tiebreaker: pts → GD → GF → FIFA rank → alphabetical.
@@ -160,4 +162,39 @@ export function computeBestThirds(
       return a.name.localeCompare(b.name)
     })
     .slice(0, topN)
+}
+
+/**
+ * Returns the 8 third-place teams assigned to specific R32 slots (idx 0-7) per FIFA Annex C.
+ * Slot idx mapping: 0→P74(vsE), 1→P77(vsI), 2→P79(vsA), 3→P80(vsL),
+ *                   4→P81(vsD), 5→P82(vsG), 6→P85(vsB), 7→P87(vsK)
+ */
+export function computeThirdSlots(
+  allStandings: Record<string, TeamStat[]>,
+  fifaRanks: Record<string, number> = {}
+): (TeamStat | null)[] {
+  // Map group letter → its third-place team stat
+  const thirdByGroup: Record<string, TeamStat> = {}
+  for (const [grp, st] of Object.entries(allStandings)) {
+    if (st.length >= 3) thirdByGroup[grp] = st[2]
+  }
+
+  // Pick the best 8 thirds and sort to determine which groups qualify
+  const ranked = Object.entries(thirdByGroup)
+    .sort(([, a], [, b]) => {
+      if (b.pts !== a.pts) return b.pts - a.pts
+      if (b.dg  !== a.dg)  return b.dg  - a.dg
+      if (b.gf  !== a.gf)  return b.gf  - a.gf
+      const ra = fifaRanks[a.name] ?? 999
+      const rb = fifaRanks[b.name] ?? 999
+      if (ra !== rb) return ra - rb
+      return a.name.localeCompare(b.name)
+    })
+    .slice(0, 8)
+
+  const qualifyingGroups = ranked.map(([grp]) => grp).sort().join('')
+  const annexSlots = ANNEX_C[qualifyingGroups]
+  if (!annexSlots) return Array(8).fill(null)
+
+  return annexSlots.map(srcGrp => thirdByGroup[srcGrp] ?? null)
 }
