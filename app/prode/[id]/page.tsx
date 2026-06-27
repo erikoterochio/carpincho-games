@@ -1247,9 +1247,17 @@ export default function TournamentPage() {
       ...(seconds.filter(Boolean) as string[]),
       ...myThirds,
     ])
-    const realR32Set = new Set<string>(
-      matches.filter(m => m.stage === 'r32').flatMap(m => [m.home_team, m.away_team]).filter(isReal)
-    )
+    // Build from prode_standings (reliable once groups sync — R32 match teams may still be placeholders)
+    const realStMap: Record<string, TeamStat[]> = {}
+    for (const s of standings) {
+      if (!s.group_name) continue
+      if (!realStMap[s.group_name]) realStMap[s.group_name] = []
+      realStMap[s.group_name].push({ name: s.team_name, flag: s.team_logo ?? '', pts: s.points, pj: s.played, pg: s.win, pe: s.draw, pp: s.lose, gf: s.goals_for, gc: s.goals_against, dg: s.goal_diff })
+    }
+    const realTopTwo = standings.filter(s => s.rank <= 2).map(s => s.team_name)
+    const allGroupsInSt = GROUPS.every(g => (realStMap[g]?.length ?? 0) >= 4)
+    const realThirdsFromSt = allGroupsInSt ? computeBestThirds(realStMap, FIFA_RANKS, 8).map((t: any) => t.name) : []
+    const realR32Set = new Set<string>([...realTopTwo, ...realThirdsFromSt])
     let r32Pts = 0
     for (const t of myR32Set) if (realR32Set.has(t)) r32Pts += 6
     // Teams predicted in each KO stage: read directly from predicted_home/away of that stage's picks
@@ -1676,7 +1684,7 @@ export default function TournamentPage() {
     return new Date(y, mo - 1, d).toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
   }
 
-  const HomeMatchCard = ({ m }: { m: Match }) => {
+  const HomeMatchCard = ({ m, hidePicks }: { m: Match; hidePicks?: boolean }) => {
     const isLive = LIVE_STATUSES.has(m.status)
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
     const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
@@ -1826,7 +1834,7 @@ export default function TournamentPage() {
         </div>
 
         {/* ── PREDICTION ── */}
-        {user && isParticipant && (
+        {user && isParticipant && !hidePicks && (
           <div className="hm-pred-section" style={{ background: '#fff', display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 10, borderTop: `1px solid ${BORDER}` }}>
             <div style={{ fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: 0.4, flexShrink: 0 }}>
               Tu predicción
@@ -1852,7 +1860,7 @@ export default function TournamentPage() {
         )}
 
         {/* ── ALL PICKS ── */}
-        {participants.length > 0 && (() => {
+        {participants.length > 0 && !hidePicks && (() => {
           const picksSource = predAllPicks
           const pickKey = m.stage === 'group' ? m.id : (() => {
             const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
@@ -2522,7 +2530,7 @@ export default function TournamentPage() {
                     </div>
                   ))}
 
-                  {/* Knockout stages — HomeMatchCard so picks/scores are visible */}
+                  {/* Knockout stages — no Etapa 1 picks shown (Etapa 2 will have them) */}
                   {(['r32','r16','qf','sf','3rd','final'] as const).map(stage => {
                     const ms = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
                     if (!ms.length) return null
@@ -2532,7 +2540,7 @@ export default function TournamentPage() {
                           🏆 {STAGE_LABEL[stage]}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                          {ms.map(m => <HomeMatchCard key={m.id} m={m} />)}
+                          {ms.map(m => <HomeMatchCard key={m.id} m={m} hidePicks />)}
                         </div>
                       </div>
                     )
