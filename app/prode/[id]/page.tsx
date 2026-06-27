@@ -406,6 +406,7 @@ export default function TournamentPage() {
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
   const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
+  const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -1251,39 +1252,45 @@ export default function TournamentPage() {
     )
     let r32Pts = 0
     for (const t of myR32Set) if (realR32Set.has(t)) r32Pts += 6
-    const myBracket = new Map<string, string>()
-    const addWinner = (slotId: string) => {
-      const pk = myPicks.find(p => p.match_id === slotId)
-      if (!pk?.predicted_home || !pk?.predicted_away) return
-      const home = pk.predicted_home, away = pk.predicted_away
-      let winner: string | null = null
-      if      (pk.home_score > pk.away_score) winner = home
-      else if (pk.away_score > pk.home_score) winner = away
-      else if (pk.pen_winner === 'h') winner = home
-      else if (pk.pen_winner === 'a') winner = away
-      if (!winner) return
-      myBracket.set(slotId, winner)
-      if (slotId === 'ko-final') myBracket.set('ko-final-runner', winner === home ? away : home)
+    // Teams predicted in each KO stage: read directly from predicted_home/away of that stage's picks
+    const pickTeams = (slots: string[]) => {
+      const s = new Set<string>()
+      for (const id of slots) {
+        const pk = myPicks.find(p => p.match_id === id)
+        if (pk?.predicted_home && isReal(pk.predicted_home)) s.add(pk.predicted_home)
+        if (pk?.predicted_away && isReal(pk.predicted_away)) s.add(pk.predicted_away)
+      }
+      return s
     }
-    for (let i = 0; i < 16; i++) addWinner(`ko-r32-${i}`)
-    for (let i = 0; i < 8;  i++) addWinner(`ko-r16-${i}`)
-    for (let i = 0; i < 4;  i++) addWinner(`ko-qf-${i}`)
-    for (let i = 0; i < 2;  i++) addWinner(`ko-sf-${i}`)
-    addWinner('ko-3rd'); addWinner('ko-final')
-    const r32Ms2 = matches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order)
+    const myR16Set = pickTeams(Array.from({ length: 8  }, (_, i) => `ko-r16-${i}`))
+    const myQfSet  = pickTeams(Array.from({ length: 4  }, (_, i) => `ko-qf-${i}`))
+    const mySfSet  = pickTeams(Array.from({ length: 2  }, (_, i) => `ko-sf-${i}`))
+
     const r16Ms2 = matches.filter(m => m.stage === 'r16').sort((a, b) => a.sort_order - b.sort_order)
     const qfMs2  = matches.filter(m => m.stage === 'qf').sort((a, b) => a.sort_order - b.sort_order)
     const sfMs2  = matches.filter(m => m.stage === 'sf').sort((a, b) => a.sort_order - b.sort_order)
+    const r32Ms2 = matches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order)
     const realR16Set = new Set<string>(r16Ms2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
     const realQfSet  = new Set<string>(qfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
     const realSfSet  = new Set<string>(sfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
-    const myR16Teams = r32Ms2.map((_, i) => myBracket.get(`ko-r32-${i}`)).filter(Boolean) as string[]
-    const myQfTeams  = r16Ms2.map((_, i) => myBracket.get(`ko-r16-${i}`)).filter(Boolean) as string[]
-    const mySfTeams  = qfMs2.map((_, i) => myBracket.get(`ko-qf-${i}`)).filter(Boolean) as string[]
     let r16Pts = 0, qfPts = 0, sfPts = 0
-    for (const t of myR16Teams) if (realR16Set.has(t)) r16Pts += 10
-    for (const t of myQfTeams)  if (realQfSet.has(t))  qfPts += 14
-    for (const t of mySfTeams)  if (realSfSet.has(t))  sfPts += 18
+    for (const t of myR16Set) if (realR16Set.has(t)) r16Pts += 10
+    for (const t of myQfSet)  if (realQfSet.has(t))  qfPts += 14
+    for (const t of mySfSet)  if (realSfSet.has(t))  sfPts += 18
+
+    // Final positions — read directly from ko-final and ko-3rd picks
+    const finalPk = myPicks.find(p => p.match_id === 'ko-final')
+    const thirdPk = myPicks.find(p => p.match_id === 'ko-3rd')
+    const pickWinner = (pk: UserPick | undefined) => {
+      if (!pk?.predicted_home || !pk?.predicted_away) return { winner: null, loser: null }
+      const [h, a] = [pk.predicted_home, pk.predicted_away]
+      if (pk.home_score > pk.away_score || pk.pen_winner === 'h') return { winner: h, loser: a }
+      if (pk.away_score > pk.home_score || pk.pen_winner === 'a') return { winner: a, loser: h }
+      return { winner: null, loser: null }
+    }
+    const { winner: uChampion, loser: uRunnerUp } = pickWinner(finalPk)
+    const { winner: uThird,    loser: uFourth   } = pickWinner(thirdPk)
+
     const finalM2 = matches.find(m => m.stage === 'final')
     const thirdM2 = matches.find(m => m.stage === '3rd')
     const realChampion = finalM2 && DONE_ST.has(finalM2.status) && finalM2.home_score !== null && finalM2.away_score !== null
@@ -1297,19 +1304,7 @@ export default function TournamentPage() {
       ? (thirdM2.home_score > thirdM2.away_score ? thirdM2.home_team : thirdM2.away_score > thirdM2.home_score ? thirdM2.away_team : null)
       : null
     const realFourth = realThird && thirdM2 ? (realThird === thirdM2.home_team ? thirdM2.away_team : thirdM2.home_team) : null
-    const uChampion = myBracket.get('ko-final') ?? null
-    const sf0Win    = myBracket.get('ko-sf-0') ?? null
-    const sf1Win    = myBracket.get('ko-sf-1') ?? null
-    const uRunnerUp = uChampion
-      ? ((sf0Win === uChampion ? sf1Win : sf0Win) ?? myBracket.get('ko-final-runner') ?? null) : null
-    const uThird    = myBracket.get('ko-3rd') ?? null
-    const qf0Win    = myBracket.get('ko-qf-0') ?? null
-    const qf1Win    = myBracket.get('ko-qf-1') ?? null
-    const qf2Win    = myBracket.get('ko-qf-2') ?? null
-    const qf3Win    = myBracket.get('ko-qf-3') ?? null
-    const sf0Loser  = sf0Win ? (sf0Win === qf0Win ? qf1Win : qf0Win) : null
-    const sf1Loser  = sf1Win ? (sf1Win === qf2Win ? qf3Win : qf2Win) : null
-    const uFourth   = uThird ? (uThird === sf0Loser ? sf1Loser : sf0Loser) : null
+
     let finalPosPts = 0
     if (realChampion && uChampion === realChampion) finalPosPts += 40
     if (realRunnerUp && uRunnerUp === realRunnerUp) finalPosPts += 35
@@ -1321,9 +1316,9 @@ export default function TournamentPage() {
       r32Pts, r16Pts, qfPts, sfPts, finalPosPts, total,
       groupBonuses, myAllGroupSt, realGroupOrder, finishedGroups,
       myR32Set, realR32Set,
-      myR16Teams, realR16Set, r32Ms2,
-      myQfTeams, realQfSet, r16Ms2,
-      mySfTeams, realSfSet, qfMs2, sfMs2,
+      myR16Set, realR16Set, r32Ms2,
+      myQfSet,  realQfSet,  r16Ms2,
+      mySfSet,  realSfSet,  qfMs2, sfMs2,
       uChampion, uRunnerUp, uThird, uFourth,
       realChampion, realRunnerUp, realThird, realFourth,
     }
@@ -2633,8 +2628,29 @@ export default function TournamentPage() {
               </div>
             )
 
+            const EtapaNav = () => (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {(['e1', 'e2'] as const).map(key => (
+                  <button key={key} onClick={() => key !== 'e2' && setMisptosEtapa(key)} style={{
+                    padding: '6px 16px', border: 'none', borderRadius: 8,
+                    cursor: key === 'e2' ? 'default' : 'pointer',
+                    fontFamily: misptosEtapa === key ? FONT_BLACK : FONT_NORMAL,
+                    fontWeight: misptosEtapa === key ? 900 : 400, fontSize: 13,
+                    background: misptosEtapa === key ? TEXT : '#e5e7eb',
+                    color: misptosEtapa === key ? '#fff' : MUTED,
+                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II (próximamente)'}</button>
+                ))}
+              </div>
+            )
             return (
               <div style={{ maxWidth: 820, margin: '0 auto' }}>
+                <EtapaNav />
+                {misptosEtapa === 'e2' && (
+                  <Card style={{ textAlign: 'center', padding: 32 }}>
+                    <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>Etapa II próximamente.</div>
+                  </Card>
+                )}
+                {misptosEtapa === 'e1' && <>
                 <SubNav />
 
                 {!bd && (
@@ -2694,7 +2710,7 @@ export default function TournamentPage() {
                         <Card key={g} style={{ padding: 0, overflow: 'hidden' }}>
                           <div style={{ padding: '8px 14px', background: GROUP_COLORS[g] ?? NAVY, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ color: '#fff', fontWeight: 900, fontFamily: FONT_BLACK, fontSize: 13 }}>GRUPO {g}</span>
-                            {finished && <span style={{ color: bonus > 0 ? GOLD : '#aaa', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12 }}>
+                            {finished && <span style={{ background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: 10, color: bonus > 0 ? GOLD : '#ddd', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 11 }}>
                               {bonus > 0 ? `+${bonus} pts` : '0 pts'}
                             </span>}
                           </div>
@@ -2712,11 +2728,11 @@ export default function TournamentPage() {
                                 const match = pred !== '—' && real !== '—' && pred === real
                                 return (
                                   <tr key={i} style={{ borderTop: `1px solid ${BORDER}` }}>
-                                    <td style={{ padding: '7px 10px', fontFamily: FONT_NORMAL, color: TEXT }}>
-                                      <span style={{ color: MUTED, fontSize: 10, marginRight: 5 }}>{i + 1}°</span>
+                                    <td style={{ padding: '5px 8px', fontFamily: FONT_NORMAL, color: TEXT, fontSize: 12 }}>
+                                      <span style={{ color: MUTED, fontSize: 9, marginRight: 4 }}>{i + 1}°</span>
                                       {pred === '—' ? <span style={{ color: MUTED }}>—</span> : abbrev(pred)}
                                     </td>
-                                    <td style={{ padding: '7px 10px', fontFamily: FONT_NORMAL, color: TEXT }}>
+                                    <td style={{ padding: '5px 8px', fontFamily: FONT_NORMAL, color: TEXT, fontSize: 12 }}>
                                       <span style={{ color: MUTED, fontSize: 10, marginRight: 5 }}>{i + 1}°</span>
                                       {real === '—'
                                         ? <span style={{ color: MUTED }}>—</span>
@@ -2746,9 +2762,9 @@ export default function TournamentPage() {
                     myTeams.map(t => ({ team: t, qualified: realSet.has(t), pts: realSet.has(t) ? unitPts : 0 }))
 
                   const r32Rows = [...bd.myR32Set].map(t => ({ team: t, qualified: bd.realR32Set.has(t), pts: bd.realR32Set.has(t) ? 6 : 0 }))
-                  const r16Rows = mkRows(bd.myR16Teams, bd.realR16Set, 10)
-                  const qfRows  = mkRows(bd.myQfTeams,  bd.realQfSet,  14)
-                  const sfRows  = mkRows(bd.mySfTeams,  bd.realSfSet,  18)
+                  const r16Rows = mkRows([...bd.myR16Set], bd.realR16Set, 10)
+                  const qfRows  = mkRows([...bd.myQfSet],  bd.realQfSet,  14)
+                  const sfRows  = mkRows([...bd.mySfSet],  bd.realSfSet,  18)
 
                   const RoundSection = ({ title, rows, knownSize, showIfEmpty }: { title: string; rows: RoundRow[]; knownSize: number; showIfEmpty?: boolean }) => {
                     if (!rows.length && !showIfEmpty) return null
@@ -2868,6 +2884,7 @@ export default function TournamentPage() {
                     </>
                   )
                 })()}
+                </>}
               </div>
             )
           })()}
