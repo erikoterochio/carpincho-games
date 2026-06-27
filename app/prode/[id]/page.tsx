@@ -2563,7 +2563,18 @@ export default function TournamentPage() {
                 </div>
               </Card>
             )
+            const thirds = standings
+              .filter(s => s.rank === 3)
+              .sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points
+                if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff
+                if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for
+                const ra = FIFA_RANKS[a.team_name] ?? 999, rb = FIFA_RANKS[b.team_name] ?? 999
+                if (ra !== rb) return ra - rb
+                return a.team_name.localeCompare(b.team_name)
+              })
             return (
+              <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 12 }}>
                 {groups.map(g => {
                   const rows = standings.filter(s => s.group_name === g)
@@ -2610,6 +2621,57 @@ export default function TournamentPage() {
                   )
                 })}
               </div>
+
+              {thirds.length > 0 && (
+                <Card style={{ padding: 0, overflow: 'hidden', marginTop: 16 }}>
+                  <div style={{ background: NAVY, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK, letterSpacing: 1 }}>MEJORES TERCEROS</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: FONT_NORMAL }}>— top 8 clasifican a 16avos</span>
+                  </div>
+                  <table className="st-table">
+                    <thead>
+                      <tr style={{ background: TEXT }}>
+                        <th style={{ width: 28 }}>#</th>
+                        <th style={{ minWidth: 32, textAlign: 'left' }}>Gr.</th>
+                        <th style={{ minWidth: 130 }}>Equipo</th>
+                        <th>J</th><th>G</th><th>E</th><th>P</th>
+                        <th>GF</th><th>GC</th><th>DG</th>
+                        <th style={{ color: GOLD }}>Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {thirds.map((s, i) => {
+                        const qualifies = i < 8
+                        return (
+                          <tr key={s.team_id} style={{ background: qualifies ? 'rgba(16,185,129,0.06)' : undefined }}>
+                            <td style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: qualifies ? '#059669' : MUTED, fontSize: 12 }}>{i + 1}</td>
+                            <td style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: qualifies ? TEXT : MUTED, fontSize: 12 }}>{s.group_name}</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                {s.team_logo && (
+                                  <img src={s.team_logo} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                )}
+                                <span style={{ fontWeight: qualifies ? 900 : 400, fontFamily: qualifies ? FONT_BLACK : FONT_NORMAL, color: qualifies ? TEXT : MUTED }}>{s.team_name}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.played}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.win}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.draw}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.lose}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.goals_for}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.goals_against}</td>
+                            <td style={{ color: s.goal_diff > 0 ? '#10b981' : s.goal_diff < 0 ? RED : (qualifies ? TEXT : MUTED) }}>
+                              {s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}
+                            </td>
+                            <td style={{ fontWeight: 900, fontFamily: FONT_BLACK, color: qualifies ? TEXT : MUTED }}>{s.points}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </Card>
+              )}
+              </>
             )
           })()}
 
