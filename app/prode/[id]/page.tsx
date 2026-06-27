@@ -407,6 +407,11 @@ export default function TournamentPage() {
   const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
+  const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
+  const [e2Picks, setE2Picks] = useState<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
+  const e2PicksRef = useRef<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
+  const [e2SaveState, setE2SaveState] = useState<Record<string, 'saving'|'saved'|'error'>>({})
+  const e2SaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -470,6 +475,20 @@ export default function TournamentPage() {
         }
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
+
+        // Load Etapa 2 picks (real KO match predictions, keyed by match UUID)
+        const { data: e2p } = await supabase
+          .from('prode_stage2_picks')
+          .select('match_id,home_score,away_score,pen_winner')
+          .eq('tournament_id', id)
+          .eq('user_id', user.id)
+        const e2m: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
+        for (const p of (e2p ?? [])) {
+          const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner as 'h'|'a' : undefined
+          e2m[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
+        }
+        setE2Picks(e2m)
+        e2PicksRef.current = e2m
 
         // Load user's own specials (overwrites localStorage data if present)
         const { data: mySpecials } = await supabase
@@ -1091,6 +1110,46 @@ export default function TournamentPage() {
     const updated = { ...current, pen }
     koPicksRef.current[matchId] = updated
     setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
+  }
+
+  const isRealTeam = (t: string) => !!t && !t.match(/winner|runner[\s-]up|gan[.\s]|3rd\s+group|\?/i)
+
+  const handleE2Pick = (matchId: string, side: 'h'|'a', value: string) => {
+    const cleaned = value.replace(/\D/g, '').slice(0, 2)
+    const current = e2PicksRef.current[matchId] ?? { h: '', a: '' }
+    const updated = { ...current, [side]: cleaned }
+    e2PicksRef.current[matchId] = updated
+    setE2Picks(prev => ({ ...prev, [matchId]: updated }))
+    scheduleE2Save(matchId)
+  }
+
+  const handleE2Pen = (matchId: string, pen: 'h'|'a') => {
+    const current = e2PicksRef.current[matchId] ?? { h: '', a: '' }
+    const updated = { ...current, pen: current.pen === pen ? undefined : pen }
+    e2PicksRef.current[matchId] = updated
+    setE2Picks(prev => ({ ...prev, [matchId]: updated }))
+    scheduleE2Save(matchId)
+  }
+
+  const scheduleE2Save = (matchId: string) => {
+    if (e2SaveTimers.current[matchId]) clearTimeout(e2SaveTimers.current[matchId])
+    setE2SaveState(prev => ({ ...prev, [matchId]: 'saving' }))
+    e2SaveTimers.current[matchId] = setTimeout(async () => {
+      const pick = e2PicksRef.current[matchId]
+      if (!pick || pick.h === '' || pick.a === '') {
+        setE2SaveState(prev => { const n = { ...prev }; delete n[matchId]; return n })
+        return
+      }
+      const { error } = await supabase.from('prode_stage2_picks').upsert({
+        tournament_id: id,
+        user_id: user!.id,
+        match_id: matchId,
+        home_score: parseInt(pick.h),
+        away_score: parseInt(pick.a),
+        pen_winner: pick.pen ?? null,
+      }, { onConflict: 'tournament_id,user_id,match_id' })
+      setE2SaveState(prev => ({ ...prev, [matchId]: error ? 'error' : 'saved' }))
+    }, 800)
   }
 
   const handleBonusSave = useCallback(async (b: Record<string, string>) => {
@@ -1973,6 +2032,117 @@ export default function TournamentPage() {
     )
   }
 
+  const E2MatchCard = ({ m }: { m: Match }) => {
+    const DONE_ST = new Set(['FT', 'AET', 'PEN'])
+    const isDone = DONE_ST.has(m.status)
+    const isLive = LIVE_STATUSES.has(m.status)
+    const homeReal = isRealTeam(m.home_team)
+    const awayReal = isRealTeam(m.away_team)
+    const teamsKnown = homeReal && awayReal
+    const deadlineMs = new Date(m.kickoff).getTime() - 3600000
+    const isLocked = deadlineMs <= Date.now() || isDone || isLive
+    const pick = e2Picks[m.id]
+    const saveSt = e2SaveState[m.id]
+    const h = pick?.h ?? ''
+    const a = pick?.a ?? ''
+    const isTied = h !== '' && a !== '' && parseInt(h) === parseInt(a)
+    const stageColor = STAGE_COLORS[m.stage] ?? NAVY
+    const dateStr = new Date(m.kickoff).toLocaleDateString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short', day: 'numeric', month: 'short',
+    })
+    const timeStr = new Date(m.kickoff).toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
+    })
+    const deadlineStr = new Date(deadlineMs).toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
+    }) + ' del ' + new Date(deadlineMs).toLocaleDateString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'short',
+    })
+
+    return (
+      <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.10)' }}>
+        <div style={{ background: stageColor, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ color: '#fff', fontSize: 11, fontFamily: FONT_BLACK, fontWeight: 900 }}>{STAGE_LABEL[m.stage]?.toUpperCase()}</span>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontFamily: FONT_NORMAL }}>{dateStr} · {timeStr} HS</span>
+        </div>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            {/* Home */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, minWidth: 0 }}>
+              <span style={{ fontSize: 13, fontFamily: FONT_BLACK, fontWeight: 900, color: teamsKnown ? TEXT : MUTED, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {teamsKnown ? abbrev(m.home_team) : '?'}
+              </span>
+              {m.home_flag && teamsKnown && (
+                <img src={m.home_flag} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              )}
+            </div>
+            {/* Center: inputs / result / placeholder */}
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+              {!teamsKnown ? (
+                <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, padding: '4px 12px', background: '#f0f2f5', borderRadius: 8 }}>Por definirse</span>
+              ) : isLocked ? (
+                pick
+                  ? <div style={{ background: '#f0f2f5', borderRadius: 8, padding: '5px 12px', fontFamily: FONT_BLACK, fontSize: 14, color: TEXT }}>
+                      {h} – {a}{pick.pen ? ` (P:${pick.pen === 'h' ? abbrev(m.home_team) : abbrev(m.away_team)})` : ''}
+                    </div>
+                  : <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                    <input type="number" inputMode="numeric" min={0} max={99} value={h}
+                      onChange={e => handleE2Pick(m.id, 'h', e.target.value)}
+                      style={{ width: 40, textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 16, fontWeight: 900, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: '5px 2px', background: '#fff', color: TEXT, outline: 'none' }}
+                    />
+                    <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: MUTED }}>-</span>
+                    <input type="number" inputMode="numeric" min={0} max={99} value={a}
+                      onChange={e => handleE2Pick(m.id, 'a', e.target.value)}
+                      style={{ width: 40, textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 16, fontWeight: 900, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: '5px 2px', background: '#fff', color: TEXT, outline: 'none' }}
+                    />
+                  </div>
+                  {isTied && (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, textTransform: 'uppercase' }}>Penales</span>
+                      {(['h', 'a'] as const).map(side => (
+                        <button key={side} onClick={() => handleE2Pen(m.id, side)} style={{
+                          padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: FONT_BLACK, fontWeight: 900,
+                          border: `1.5px solid ${pick?.pen === side ? stageColor : BORDER}`,
+                          background: pick?.pen === side ? stageColor : '#fff',
+                          color: pick?.pen === side ? '#fff' : TEXT, cursor: 'pointer',
+                        }}>{side === 'h' ? abbrev(m.home_team) : abbrev(m.away_team)}</button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            {/* Away */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              {m.away_flag && teamsKnown && (
+                <img src={m.away_flag} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              )}
+              <span style={{ fontSize: 13, fontFamily: FONT_BLACK, fontWeight: 900, color: teamsKnown ? TEXT : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {teamsKnown ? abbrev(m.away_team) : '?'}
+              </span>
+            </div>
+          </div>
+          {/* Status row */}
+          {teamsKnown && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
+              <span style={{ fontSize: 10, fontFamily: FONT_NORMAL, color: MUTED }}>
+                {isDone ? `Final: ${m.home_score} - ${m.away_score}` : isLive ? `🔴 En vivo: ${m.home_score ?? 0} - ${m.away_score ?? 0}` : isLocked ? '🔒 Cerrado' : `Abierto hasta ${deadlineStr} HS`}
+              </span>
+              {saveSt && (
+                <span style={{ fontSize: 10, fontFamily: FONT_NORMAL, color: saveSt === 'saved' ? '#10b981' : saveSt === 'error' ? RED : MUTED }}>
+                  {saveSt === 'saving' ? '⏳' : saveSt === 'saved' ? '✓ Guardado' : '⚠ Error al guardar'}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <style>{`
@@ -2261,6 +2431,20 @@ export default function TournamentPage() {
                 </Card>
               ) : (
                 <>
+                  {/* Etapa I / Etapa II nav */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                    {(['e1', 'e2'] as const).map(key => (
+                      <button key={key} onClick={() => setPredecirEtapa(key)} style={{
+                        padding: '7px 18px', border: 'none', borderRadius: 8, cursor: 'pointer',
+                        fontFamily: predecirEtapa === key ? FONT_BLACK : FONT_NORMAL,
+                        fontWeight: predecirEtapa === key ? 900 : 400, fontSize: 13,
+                        background: predecirEtapa === key ? TEXT : '#e5e7eb',
+                        color: predecirEtapa === key ? '#fff' : MUTED,
+                      }}>{key === 'e1' ? 'Etapa I — Grupos' : 'Etapa II — Eliminación'}</button>
+                    ))}
+                  </div>
+
+                  {predecirEtapa === 'e1' && <>
                   {/* Progress */}
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -2430,10 +2614,37 @@ export default function TournamentPage() {
                       )}
                     </div>
                   )}
+                  </>}
+
+                  {predecirEtapa === 'e2' && (
+                    <div>
+                      {(['r32','r16','qf','sf','3rd','final'] as const).map(stage => {
+                        const ms = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
+                        if (!ms.length) return null
+                        return (
+                          <div key={stage} style={{ marginBottom: 18 }}>
+                            <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 8 }}>
+                              🏆 {STAGE_LABEL[stage]}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {ms.map(m => <E2MatchCard key={m.id} m={m} />)}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {!matches.some(m => ['r32','r16','qf','sf','3rd','final'].includes(m.stage)) && (
+                        <Card style={{ textAlign: 'center', padding: 32 }}>
+                          <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>
+                            Los partidos de eliminación se habilitan cuando el torneo avance a esa fase.
+                          </div>
+                        </Card>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
-              {/* Barra sticky de guardado */}
-              {isParticipant && (
+              {/* Barra sticky de guardado — solo Etapa I */}
+              {isParticipant && predecirEtapa === 'e1' && (
                 <div style={{
                   position: 'fixed', bottom: 0, left: 0, right: 0,
                   background: 'rgba(255,255,255,0.97)',
