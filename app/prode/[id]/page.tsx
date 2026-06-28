@@ -381,6 +381,7 @@ export default function TournamentPage() {
   const [allPicks, setAllPicks] = useState<UserPick[]>([])
   const [adminAllPicks, setAdminAllPicks] = useState<UserPick[]>([])
   const [predAllPicks, setPredAllPicks] = useState<UserPick[]>([])
+  const [allE2Picks, setAllE2Picks] = useState<UserPick[]>([])
   const [serverScores, setServerScores] = useState<Map<string, number> | null>(null)
   const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
@@ -522,6 +523,12 @@ export default function TournamentPage() {
               setAdminAllPicks(allServicePicks)
             }
           })
+          .catch(() => {})
+
+        // Fetch all E2 picks (KO stage real-match predictions)
+        fetch(`/api/prode/${id}/e2-picks`)
+          .then(r => r.ok ? r.json() : [])
+          .then((e2All: UserPick[]) => { if (Array.isArray(e2All)) setAllE2Picks(e2All) })
           .catch(() => {})
 
         // Fetch server-computed scores (admin client — same for all users regardless of RLS)
@@ -1213,10 +1220,10 @@ export default function TournamentPage() {
 
   const TABS: { key: Tab; label: string }[] = [
     { key: 'home', label: 'Home' },
+    { key: 'predecir', label: 'Predecir' },
     ...(isParticipant ? [{ key: 'mis-puntos' as Tab, label: 'Mis Puntos' }] : []),
     { key: 'puntajes', label: 'Puntajes' },
     ...(isParticipant ? [{ key: 'predicciones' as Tab, label: 'Predicciones' }] : []),
-    { key: 'predecir', label: 'Predecir' },
     { key: 'posiciones', label: 'Posiciones' },
     { key: 'fixture', label: 'Fixture' },
     { key: 'info', label: 'Info' },
@@ -1756,8 +1763,11 @@ export default function TournamentPage() {
     const isLive = LIVE_STATUSES.has(m.status)
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
     const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
-    // Use admin-client picks when loaded (bypasses RLS); fall back to anon-client picks
-    const myPick = (myServerPicks.size > 0 ? myServerPicks.get(m.id) : null) ?? myEditPicks[m.id]
+    const isKo = m.stage !== 'group'
+    // KO matches: use E2 picks (real match predictions). Group matches: use E1 picks.
+    const myPick = isKo
+      ? (e2Picks[m.id] ?? null)
+      : ((myServerPicks.size > 0 ? myServerPicks.get(m.id) : null) ?? myEditPicks[m.id])
     const hasPick = !!(myPick && myPick.h !== '' && myPick.a !== '')
     const pickScore = hasPick
       ? calcScore({ match_id: m.id, home_score: parseInt(myPick.h), away_score: parseInt(myPick.a), user_id: '' }, m)
@@ -1929,12 +1939,10 @@ export default function TournamentPage() {
 
         {/* ── ALL PICKS ── */}
         {participants.length > 0 && !hidePicks && (() => {
-          const picksSource = predAllPicks
-          const pickKey = m.stage === 'group' ? m.id : (() => {
-            const stageMs = matches.filter(x => x.stage === m.stage).sort((a, b) => a.sort_order - b.sort_order)
-            const idx = stageMs.findIndex(x => x.id === m.id)
-            return idx >= 0 ? koSlotId(m.stage, idx) : m.id
-          })()
+          // KO matches: use E2 picks (real match score predictions) with real match UUID
+          // Group matches: use E1 picks with match UUID
+          const picksSource = isKo ? allE2Picks : predAllPicks
+          const pickKey = m.id
           const rows = participants.map(p => {
             const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
             const pk = picksSource.find(pk => pk.user_id === p.user_id && pk.match_id === pickKey)
