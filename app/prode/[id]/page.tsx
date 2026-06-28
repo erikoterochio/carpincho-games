@@ -3776,7 +3776,8 @@ export default function TournamentPage() {
                       ? userPicksList.reduce((acc, pk) => { const m = matches.find(m => m.id === pk.match_id); return acc + (m ? (calcScore(pk, m) ?? 0) : 0) }, 0)
                       : null
                     const groupPickCount = userPicksList.filter(pk => groupMatchIds.has(pk.match_id)).length
-                    const koPickCount    = userPicksList.filter(pk => koMatchIds.has(pk.match_id)).length
+                    const e2UserPicks    = allE2Picks.filter(pk => pk.user_id === p.user_id)
+                    const koPickCount    = e2UserPicks.filter(pk => koMatchIds.has(pk.match_id)).length
                     const special        = adminSpecials.find(s => s.user_id === p.user_id)
                     const bonusFilled    = special ? SPECIAL_LABELS.filter(f => (special as any)[f.key]).length : 0
                     return (
@@ -4251,16 +4252,14 @@ export default function TournamentPage() {
                                   {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
                                 </td>
                                 {participants.map(p => {
-                                  const pk = adminAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === slotId)
-                                  const bracket = perParticipantBracket.get(p.user_id)
-                                  const winner = bracket?.get(slotId)
-                                  const matchScore = pk && hasResult ? calcScore(pk, m) : null
+                                  const e2pk = allE2Picks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                  const matchScore = e2pk && hasResult ? calcScore(e2pk, m) : null
                                   const color = matchScore !== null
                                     ? (matchScore >= 12 ? '#15803d' : matchScore >= 7 ? '#16a34a' : matchScore >= 5 ? '#ca8a04' : matchScore >= 2 ? '#f97316' : RED)
-                                    : (winner ? TEXT : MUTED)
+                                    : MUTED
                                   return (
                                     <td key={p.user_id} style={{ padding: '5px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 11, color, whiteSpace: 'nowrap' }}>
-                                      {!pk ? '—' : winner ? abbrev(winner) : `${pk.home_score}-${pk.away_score}`}
+                                      {e2pk ? `${e2pk.home_score}-${e2pk.away_score}` : '—'}
                                     </td>
                                   )
                                 })}
