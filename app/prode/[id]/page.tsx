@@ -1566,13 +1566,13 @@ export default function TournamentPage() {
           {/* Marcadores */}
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.h} onChange={e => handlePickChange(m.id, 'h', e.target.value)}
-            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime() - 1800000)} placeholder="—"
+            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime() - 600000)} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           <span style={{ color: MUTED, fontFamily: FONT_NORMAL, fontSize: 10, flexShrink: 0 }}>-</span>
           <input type="text" inputMode="numeric" className="grp-inp"
             value={p.a} onChange={e => handlePickChange(m.id, 'a', e.target.value)}
-            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime() - 1800000)} placeholder="—"
+            disabled={(isGroupPicksLocked && !isLateJoin) || (isLateJoin && Date.now() >= new Date(m.kickoff).getTime() - 600000)} placeholder="—"
             style={{ borderColor: filled ? RED : BORDER, color: filled ? RED : TEXT }}
           />
           {/* Visitante: bandera + nombre */}
@@ -1767,7 +1767,7 @@ export default function TournamentPage() {
     const isKo = m.stage !== 'group'
     // Picks of other users are only revealed once the prediction window is closed for this match
     const picksVisible = isDone || isLive
-      || (isKo ? Date.now() >= new Date(m.kickoff).getTime() - 1800000 : isGroupPicksLocked)
+      || (isKo ? Date.now() >= new Date(m.kickoff).getTime() - 600000 : isGroupPicksLocked)
     // KO matches: use E2 picks (real match predictions). Group matches: use E1 picks.
     const myPick = isKo
       ? (e2Picks[m.id] ?? null)
@@ -2066,7 +2066,7 @@ export default function TournamentPage() {
     const homeReal = isRealTeam(m.home_team)
     const awayReal = isRealTeam(m.away_team)
     const teamsKnown = homeReal && awayReal
-    const deadlineMs = new Date(m.kickoff).getTime() - 1800000
+    const deadlineMs = new Date(m.kickoff).getTime() - 600000
     const isLocked = deadlineMs <= Date.now() || isDone || isLive
     const pick = e2Picks[m.id]
     const h = pick?.h ?? ''
