@@ -407,6 +407,13 @@ export default function TournamentPage() {
   const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
+  const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
+  const [puntajesTab, setPuntajesTab] = useState<'total'|'grupos'|'clasificados'|'partidos-grupos'>('total')
+  const [puntajesEtapa, setPuntajesEtapa] = useState<'e1'|'e2'>('e1')
+  const [e2Picks, setE2Picks] = useState<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
+  const e2PicksRef = useRef<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
+  const [e2SaveStatus, setE2SaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [e2SaveError, setE2SaveError] = useState<string|null>(null)
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -470,6 +477,17 @@ export default function TournamentPage() {
         }
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
+
+        // Load Etapa 2 picks via API route (admin client bypasses RLS issues)
+        const e2Res = await fetch(`/api/prode/${id}/e2-picks`)
+        const e2pArr = e2Res.ok ? await e2Res.json() : []
+        const e2m: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
+        for (const p of (e2pArr ?? [])) {
+          const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner as 'h'|'a' : undefined
+          e2m[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
+        }
+        setE2Picks(e2m)
+        e2PicksRef.current = e2m
 
         // Load user's own specials (overwrites localStorage data if present)
         const { data: mySpecials } = await supabase
@@ -1091,6 +1109,56 @@ export default function TournamentPage() {
     const updated = { ...current, pen }
     koPicksRef.current[matchId] = updated
     setKoEditPicks(prev => ({ ...prev, [matchId]: { ...(prev[matchId] ?? { h:'', a:'' }), pen } }))
+  }
+
+  const isRealTeam = (t: string) => !!t && !t.match(/winner|runner[\s-]up|gan[.\s]|3rd\s+group|\?/i)
+
+  const handleE2Pick = (matchId: string, side: 'h'|'a', value: string) => {
+    const cleaned = value.replace(/\D/g, '').slice(0, 2)
+    const current = e2PicksRef.current[matchId] ?? { h: '', a: '' }
+    const updated = { ...current, [side]: cleaned }
+    e2PicksRef.current[matchId] = updated
+    setE2Picks(prev => ({ ...prev, [matchId]: updated }))
+    setE2SaveStatus('idle')
+  }
+
+  const handleE2Pen = (matchId: string, pen: 'h'|'a') => {
+    const current = e2PicksRef.current[matchId] ?? { h: '', a: '' }
+    const updated = { ...current, pen: current.pen === pen ? undefined : pen }
+    e2PicksRef.current[matchId] = updated
+    setE2Picks(prev => ({ ...prev, [matchId]: updated }))
+    setE2SaveStatus('idle')
+  }
+
+  const saveE2Picks = async () => {
+    const picks = Object.entries(e2PicksRef.current)
+      .filter(([, p]) => p.h !== '' && p.a !== '')
+      .map(([matchId, p]) => ({
+        match_id: matchId,
+        home_score: parseInt(p.h),
+        away_score: parseInt(p.a),
+        pen_winner: p.pen ?? null,
+      }))
+    if (!picks.length) return
+    setE2SaveStatus('saving')
+    setE2SaveError(null)
+    try {
+      const res = await fetch(`/api/prode/${id}/e2-picks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ picks }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setE2SaveStatus('error')
+        setE2SaveError(data.error ?? 'Error desconocido')
+      } else {
+        setE2SaveStatus('saved')
+      }
+    } catch (err) {
+      setE2SaveStatus('error')
+      setE2SaveError('Error de red')
+    }
   }
 
   const handleBonusSave = useCallback(async (b: Record<string, string>) => {
@@ -1973,6 +2041,111 @@ export default function TournamentPage() {
     )
   }
 
+  const E2MatchCard = ({ m }: { m: Match }) => {
+    const DONE_ST = new Set(['FT', 'AET', 'PEN'])
+    const isDone = DONE_ST.has(m.status)
+    const isLive = LIVE_STATUSES.has(m.status)
+    const homeReal = isRealTeam(m.home_team)
+    const awayReal = isRealTeam(m.away_team)
+    const teamsKnown = homeReal && awayReal
+    const deadlineMs = new Date(m.kickoff).getTime() - 3600000
+    const isLocked = deadlineMs <= Date.now() || isDone || isLive
+    const pick = e2Picks[m.id]
+    const h = pick?.h ?? ''
+    const a = pick?.a ?? ''
+    const isTied = h !== '' && a !== '' && parseInt(h) === parseInt(a)
+    const stageColor = STAGE_COLORS[m.stage] ?? NAVY
+    const dateStr = new Date(m.kickoff).toLocaleDateString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', weekday: 'short', day: 'numeric', month: 'short',
+    })
+    const timeStr = new Date(m.kickoff).toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
+    })
+    const deadlineStr = new Date(deadlineMs).toLocaleTimeString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', hour: '2-digit', minute: '2-digit', hour12: false,
+    }) + ' del ' + new Date(deadlineMs).toLocaleDateString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'short',
+    })
+
+    return (
+      <div style={{ background: '#fff', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 10px rgba(0,0,0,0.10)' }}>
+        <div style={{ background: stageColor, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ color: '#fff', fontSize: 11, fontFamily: FONT_BLACK, fontWeight: 900 }}>{STAGE_LABEL[m.stage]?.toUpperCase()}</span>
+          <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontFamily: FONT_NORMAL }}>{dateStr} · {timeStr} HS</span>
+        </div>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+            {/* Home */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, minWidth: 0 }}>
+              <span style={{ fontSize: 13, fontFamily: FONT_BLACK, fontWeight: 900, color: teamsKnown ? TEXT : MUTED, textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {teamsKnown ? abbrev(m.home_team) : '?'}
+              </span>
+              {m.home_flag && teamsKnown && (
+                <img src={m.home_flag} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              )}
+            </div>
+            {/* Center: inputs / result / placeholder */}
+            <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5 }}>
+              {!teamsKnown ? (
+                <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, padding: '4px 12px', background: '#f0f2f5', borderRadius: 8 }}>Por definirse</span>
+              ) : isLocked ? (
+                pick
+                  ? <div style={{ background: '#f0f2f5', borderRadius: 8, padding: '5px 12px', fontFamily: FONT_BLACK, fontSize: 14, color: TEXT }}>
+                      {h} – {a}{pick.pen ? ` (P:${pick.pen === 'h' ? abbrev(m.home_team) : abbrev(m.away_team)})` : ''}
+                    </div>
+                  : <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL, fontStyle: 'italic' }}>Sin predicción</span>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                    <input type="number" inputMode="numeric" min={0} max={99} value={h}
+                      onChange={e => handleE2Pick(m.id, 'h', e.target.value)}
+                      style={{ width: 40, textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 16, fontWeight: 900, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: '5px 2px', background: '#fff', color: TEXT, outline: 'none' }}
+                    />
+                    <span style={{ fontFamily: FONT_NORMAL, fontSize: 12, color: MUTED }}>-</span>
+                    <input type="number" inputMode="numeric" min={0} max={99} value={a}
+                      onChange={e => handleE2Pick(m.id, 'a', e.target.value)}
+                      style={{ width: 40, textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 16, fontWeight: 900, border: `1.5px solid ${BORDER}`, borderRadius: 7, padding: '5px 2px', background: '#fff', color: TEXT, outline: 'none' }}
+                    />
+                  </div>
+                  {isTied && (
+                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                      <span style={{ fontSize: 9, color: MUTED, fontFamily: FONT_NORMAL, textTransform: 'uppercase' }}>Penales</span>
+                      {(['h', 'a'] as const).map(side => (
+                        <button key={side} onClick={() => handleE2Pen(m.id, side)} style={{
+                          padding: '2px 8px', borderRadius: 6, fontSize: 10, fontFamily: FONT_BLACK, fontWeight: 900,
+                          border: `1.5px solid ${pick?.pen === side ? stageColor : BORDER}`,
+                          background: pick?.pen === side ? stageColor : '#fff',
+                          color: pick?.pen === side ? '#fff' : TEXT, cursor: 'pointer',
+                        }}>{side === 'h' ? abbrev(m.home_team) : abbrev(m.away_team)}</button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+            {/* Away */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              {m.away_flag && teamsKnown && (
+                <img src={m.away_flag} alt="" style={{ width: 26, height: 26, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              )}
+              <span style={{ fontSize: 13, fontFamily: FONT_BLACK, fontWeight: 900, color: teamsKnown ? TEXT : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {teamsKnown ? abbrev(m.away_team) : '?'}
+              </span>
+            </div>
+          </div>
+          {/* Status row */}
+          {teamsKnown && (
+            <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 6 }}>
+              <span style={{ fontSize: 10, fontFamily: FONT_NORMAL, color: MUTED }}>
+                {isDone ? `Final: ${m.home_score} - ${m.away_score}` : isLive ? `🔴 En vivo: ${m.home_score ?? 0} - ${m.away_score ?? 0}` : isLocked ? '🔒 Cerrado' : `Abierto hasta ${deadlineStr} HS`}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <style>{`
@@ -2261,6 +2434,20 @@ export default function TournamentPage() {
                 </Card>
               ) : (
                 <>
+                  {/* Etapa I / Etapa II nav */}
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 16 }}>
+                    {(['e1', 'e2'] as const).map(key => (
+                      <button key={key} onClick={() => setPredecirEtapa(key)} style={{
+                        padding: '7px 18px', border: 'none', borderRadius: 8, cursor: 'pointer',
+                        fontFamily: predecirEtapa === key ? FONT_BLACK : FONT_NORMAL,
+                        fontWeight: predecirEtapa === key ? 900 : 400, fontSize: 13,
+                        background: predecirEtapa === key ? TEXT : '#e5e7eb',
+                        color: predecirEtapa === key ? '#fff' : MUTED,
+                      }}>{key === 'e1' ? 'Etapa I — Grupos' : 'Etapa II — Eliminación'}</button>
+                    ))}
+                  </div>
+
+                  {predecirEtapa === 'e1' && <>
                   {/* Progress */}
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -2430,10 +2617,37 @@ export default function TournamentPage() {
                       )}
                     </div>
                   )}
+                  </>}
+
+                  {predecirEtapa === 'e2' && (
+                    <div>
+                      {(['r32','r16','qf','sf','3rd','final'] as const).map(stage => {
+                        const ms = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
+                        if (!ms.length) return null
+                        return (
+                          <div key={stage} style={{ marginBottom: 18 }}>
+                            <div style={{ fontSize: 11, fontWeight: 900, color: TEXT, letterSpacing: 1, textTransform: 'uppercase', fontFamily: FONT_BLACK, marginBottom: 8 }}>
+                              🏆 {STAGE_LABEL[stage]}
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                              {ms.map(m => <E2MatchCard key={m.id} m={m} />)}
+                            </div>
+                          </div>
+                        )
+                      })}
+                      {!matches.some(m => ['r32','r16','qf','sf','3rd','final'].includes(m.stage)) && (
+                        <Card style={{ textAlign: 'center', padding: 32 }}>
+                          <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>
+                            Los partidos de eliminación se habilitan cuando el torneo avance a esa fase.
+                          </div>
+                        </Card>
+                      )}
+                    </div>
+                  )}
                 </>
               )}
-              {/* Barra sticky de guardado */}
-              {isParticipant && (
+              {/* Barra sticky de guardado — solo Etapa I */}
+              {isParticipant && predecirEtapa === 'e1' && (
                 <div style={{
                   position: 'fixed', bottom: 0, left: 0, right: 0,
                   background: 'rgba(255,255,255,0.97)',
@@ -2486,6 +2700,40 @@ export default function TournamentPage() {
                   )}
                 </div>
               )}
+              {/* Barra sticky Etapa II */}
+              {isParticipant && predecirEtapa === 'e2' && (() => {
+                const e2Count = Object.values(e2PicksRef.current).filter(p => p.h !== '' && p.a !== '').length
+                return (
+                  <div style={{
+                    position: 'fixed', bottom: 0, left: 0, right: 0,
+                    background: 'rgba(255,255,255,0.97)', borderTop: `1px solid ${BORDER}`,
+                    padding: '10px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 99,
+                  }}>
+                    <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
+                      {e2Count > 0 ? `${e2Count} prediccion${e2Count !== 1 ? 'es' : ''} de eliminación` : 'Etapa II — sin predicciones aún'}
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <button
+                        onClick={saveE2Picks}
+                        disabled={e2SaveStatus === 'saving' || e2Count === 0}
+                        style={{
+                          padding: '10px 22px',
+                          background: e2SaveStatus === 'saved' ? '#10b981' : e2SaveStatus === 'error' ? '#dc2626' : TEXT,
+                          color: '#fff', border: 'none', borderRadius: 8,
+                          fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
+                          cursor: e2SaveStatus === 'saving' || e2Count === 0 ? 'default' : 'pointer',
+                          transition: 'background 0.25s', opacity: e2Count === 0 ? 0.35 : 1,
+                        }}
+                      >
+                        {e2SaveStatus === 'saving' ? 'Guardando...' : e2SaveStatus === 'saved' ? '✓ Guardado' : e2SaveStatus === 'error' ? 'Error — reintentar' : 'Guardar'}
+                      </button>
+                      {e2SaveStatus === 'error' && e2SaveError && (
+                        <span style={{ fontSize: 10, color: '#dc2626', fontFamily: FONT_NORMAL }}>{e2SaveError}</span>
+                      )}
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 
@@ -2563,7 +2811,18 @@ export default function TournamentPage() {
                 </div>
               </Card>
             )
+            const thirds = standings
+              .filter(s => s.rank === 3 && GROUPS.includes(s.group_name))
+              .sort((a, b) => {
+                if (b.points !== a.points) return b.points - a.points
+                if (b.goal_diff !== a.goal_diff) return b.goal_diff - a.goal_diff
+                if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for
+                const ra = FIFA_RANKS[a.team_name] ?? 999, rb = FIFA_RANKS[b.team_name] ?? 999
+                if (ra !== rb) return ra - rb
+                return a.team_name.localeCompare(b.team_name)
+              })
             return (
+              <>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 12 }}>
                 {groups.map(g => {
                   const rows = standings.filter(s => s.group_name === g)
@@ -2610,6 +2869,57 @@ export default function TournamentPage() {
                   )
                 })}
               </div>
+
+              {thirds.length > 0 && (
+                <Card style={{ padding: 0, overflow: 'hidden', marginTop: 16 }}>
+                  <div style={{ background: NAVY, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ fontSize: 12, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK, letterSpacing: 1 }}>MEJORES TERCEROS</span>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.55)', fontFamily: FONT_NORMAL }}>— top 8 clasifican a 16avos</span>
+                  </div>
+                  <table className="st-table">
+                    <thead>
+                      <tr style={{ background: TEXT }}>
+                        <th style={{ width: 28 }}>#</th>
+                        <th style={{ minWidth: 32, textAlign: 'left' }}>Gr.</th>
+                        <th style={{ minWidth: 130 }}>Equipo</th>
+                        <th>J</th><th>G</th><th>E</th><th>P</th>
+                        <th>GF</th><th>GC</th><th>DG</th>
+                        <th style={{ color: GOLD }}>Pts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {thirds.map((s, i) => {
+                        const qualifies = i < 8
+                        return (
+                          <tr key={s.team_id} style={{ background: qualifies ? 'rgba(16,185,129,0.06)' : undefined }}>
+                            <td style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: qualifies ? '#059669' : MUTED, fontSize: 12 }}>{i + 1}</td>
+                            <td style={{ fontFamily: FONT_BLACK, fontWeight: 900, color: qualifies ? TEXT : MUTED, fontSize: 12 }}>{s.group_name}</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                                {s.team_logo && (
+                                  <img src={s.team_logo} alt="" style={{ width: 18, height: 18, borderRadius: '50%', objectFit: 'cover', border: `1px solid ${BORDER}`, flexShrink: 0 }} onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                                )}
+                                <span style={{ fontWeight: qualifies ? 900 : 400, fontFamily: qualifies ? FONT_BLACK : FONT_NORMAL, color: qualifies ? TEXT : MUTED }}>{s.team_name}</span>
+                              </div>
+                            </td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.played}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.win}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.draw}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.lose}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.goals_for}</td>
+                            <td style={{ color: qualifies ? TEXT : MUTED }}>{s.goals_against}</td>
+                            <td style={{ color: s.goal_diff > 0 ? '#10b981' : s.goal_diff < 0 ? RED : (qualifies ? TEXT : MUTED) }}>
+                              {s.goal_diff > 0 ? `+${s.goal_diff}` : s.goal_diff}
+                            </td>
+                            <td style={{ fontWeight: 900, fontFamily: FONT_BLACK, color: qualifies ? TEXT : MUTED }}>{s.points}</td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </Card>
+              )}
+              </>
             )
           })()}
 
@@ -2898,113 +3208,378 @@ export default function TournamentPage() {
           })()}
 
           {/* ── PUNTAJES ── */}
-          {tab === 'puntajes' && (
-            <div style={{ maxWidth: 680, margin: '0 auto' }}>
-              <Card style={{ padding: 0, overflow: 'hidden' }}>
-                <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
-                  <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
-                  <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
-                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>E I</div>
-                  <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>TOTAL</div>
-                </div>
-                {leaderboard.length === 0 ? (
-                  <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
-                ) : leaderboard.map((p, i) => {
-                  const isExpanded = expandedUserId === p.user_id
-                  const userPicks = predAllPicks.filter(pk => pk.user_id === p.user_id)
-                  const pickMatchIds = new Set(userPicks.map(pk => pk.match_id))
-                  const DONE_ST = new Set(['FT','AET','PEN'])
-                  // Only finished matches, sorted by sort_order
-                  const relevantMatches = matches
-                    .filter(m => DONE_ST.has(m.status))
-                    .sort((a, b) => a.sort_order - b.sort_order)
-                  return (
-                    <div key={p.user_id}>
-                      <div
-                        className="lb-row"
-                        onClick={() => setExpandedUserId(isExpanded ? null : p.user_id)}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
-                          {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
-                        </div>
-                        <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
-                          {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
-                          <div style={{ width: 46, textAlign: 'center', fontSize: 13, fontWeight: 900, color: isGroupPicksLocked ? MUTED : MUTED, fontFamily: FONT_COND }}>
-                            {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
-                          </div>
-                          <div style={{ width: 46, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                            {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
-                          </div>
-                          <span style={{ fontSize: 10, color: MUTED, lineHeight: 1, marginLeft: 2 }}>{isExpanded ? '▲' : '▼'}</span>
-                        </div>
-                      </div>
+          {tab === 'puntajes' && (() => {
+            const PUNTAJES_SUBTABS = [
+              { key: 'total' as const,           label: 'Tabla total' },
+              { key: 'partidos-grupos' as const,  label: 'Partidos grupos' },
+              { key: 'grupos' as const,           label: 'Grupos' },
+              { key: 'clasificados' as const,     label: 'Clasificados' },
+            ]
+            const PSubNav = () => (
+              <div style={{ display: 'flex', gap: 4, marginBottom: 16, background: '#f0f2f5', borderRadius: 10, padding: 4 }}>
+                {PUNTAJES_SUBTABS.map(st => (
+                  <button key={st.key} onClick={() => setPuntajesTab(st.key)} style={{
+                    flex: 1, padding: '8px 4px', border: 'none', cursor: 'pointer', borderRadius: 7,
+                    background: puntajesTab === st.key ? '#fff' : 'transparent',
+                    boxShadow: puntajesTab === st.key ? '0 1px 4px rgba(0,0,0,0.10)' : 'none',
+                    fontWeight: puntajesTab === st.key ? 900 : 400,
+                    fontFamily: puntajesTab === st.key ? FONT_BLACK : FONT_NORMAL,
+                    fontSize: 12, color: puntajesTab === st.key ? TEXT : MUTED, transition: 'all .15s',
+                  }}>{st.label}</button>
+                ))}
+              </div>
+            )
+            const PEtapaNav = () => (
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {(['e1', 'e2'] as const).map(key => (
+                  <button key={key} onClick={() => key !== 'e2' && setPuntajesEtapa(key)} style={{
+                    padding: '6px 16px', border: 'none', borderRadius: 8,
+                    cursor: key === 'e2' ? 'default' : 'pointer',
+                    fontFamily: puntajesEtapa === key ? FONT_BLACK : FONT_NORMAL,
+                    fontWeight: puntajesEtapa === key ? 900 : 400, fontSize: 13,
+                    background: puntajesEtapa === key ? TEXT : '#e5e7eb',
+                    color: puntajesEtapa === key ? '#fff' : MUTED,
+                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II (próximamente)'}</button>
+                ))}
+              </div>
+            )
+            const DONE_ST = new Set(['FT','AET','PEN'])
+            const groupMs = matches.filter(m => m.stage === 'group')
+            const realGroupOrderAll: Record<string, string[]> = {}
+            for (const g of GROUPS) {
+              const ranked = standings.filter(s => s.group_name === g).sort((a, b) => a.rank - b.rank)
+              if (ranked.length) realGroupOrderAll[g] = ranked.map(s => s.team_name)
+            }
+            const finishedGroupsAll = new Set<string>()
+            for (const g of GROUPS) {
+              if (groupMs.filter(m => m.group_name === g && DONE_ST.has(m.status)).length >= 6)
+                finishedGroupsAll.add(g)
+            }
+            return (
+              <div style={{ maxWidth: 820, margin: '0 auto' }}>
+                <PEtapaNav />
+                {puntajesEtapa === 'e2' && (
+                  <Card style={{ textAlign: 'center', padding: 32 }}>
+                    <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>Etapa II próximamente.</div>
+                  </Card>
+                )}
+                {puntajesEtapa === 'e1' && <>
+                  <PSubNav />
 
-                      {isExpanded && (
-                        <div style={{ background: '#f7f8fa', borderTop: `1px solid ${BORDER}`, padding: '10px 14px 14px' }}>
-                          {predAllPicks.length === 0 ? (
-                            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Cargando...</div>
-                          ) : relevantMatches.length === 0 ? (
-                            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Sin predicciones todavía.</div>
-                          ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                              <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 11 }}>
-                                <thead>
-                                  <tr style={{ color: MUTED, fontFamily: FONT_BLACK, fontSize: 9, textTransform: 'uppercase' }}>
-                                    <th style={{ textAlign: 'left',   padding: '4px 6px 6px 0',  fontWeight: 900, whiteSpace: 'nowrap' }}>Partido</th>
-                                    <th style={{ textAlign: 'center', padding: '4px 6px 6px',     fontWeight: 900 }}>Real</th>
-                                    <th style={{ textAlign: 'center', padding: '4px 6px 6px',     fontWeight: 900 }}>Pred.</th>
-                                    <th style={{ textAlign: 'center', padding: '4px 0  6px 6px',  fontWeight: 900 }}>Pts</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {relevantMatches.map(m => {
-                                    const pk = userPicks.find(pk => pk.match_id === m.id)
-                                    const isDone = DONE_ST.has(m.status)
-                                    const hasResult = isDone && m.home_score !== null && m.away_score !== null
-                                    const score = pk && hasResult
-                                      ? calcScore(pk, m)
-                                      : null
-                                    const scoreColor = score === null ? MUTED
-                                      : score >= 12 ? '#10b981'
-                                      : score >= 7  ? '#0ea5e9'
-                                      : score >= 5  ? '#d97706'
-                                      : score >= 2  ? '#f97316'
-                                      : '#dc2626'
-                                    return (
-                                      <tr key={m.id} style={{ borderTop: `1px solid ${BORDER}` }}>
-                                        <td style={{ padding: '5px 6px 5px 0', fontFamily: FONT_NORMAL, color: TEXT, whiteSpace: 'nowrap' }}>
-                                          {abbrev(m.home_team)} <span style={{ color: MUTED }}>vs</span> {abbrev(m.away_team)}
-                                        </td>
-                                        <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: hasResult ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
-                                          {hasResult ? `${m.home_score}-${m.away_score}` : '—'}
-                                        </td>
-                                        <td style={{ padding: '5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: pk ? '#20298b' : MUTED, whiteSpace: 'nowrap' }}>
-                                          {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
-                                        </td>
-                                        <td style={{ padding: '5px 0 5px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, color: scoreColor, whiteSpace: 'nowrap' }}>
-                                          {score !== null ? (score > 0 ? `+${score}` : '0') : '—'}
-                                        </td>
-                                      </tr>
-                                    )
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                  {/* ── Sub-tab: Tabla total ── */}
+                  {puntajesTab === 'total' && (
+                    <div>
+                      <Card style={{ padding: 0, overflow: 'hidden' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
+                          <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
+                          <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
+                          <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>E I</div>
+                          <div style={{ width: 52, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>TOTAL</div>
                         </div>
+                        {leaderboard.length === 0 ? (
+                          <div style={{ padding: '24px 18px', textAlign: 'center', color: MUTED, fontSize: 13, fontFamily: FONT_NORMAL }}>Nadie se unió todavía.</div>
+                        ) : leaderboard.map((p, i) => {
+                          const isExpanded = expandedUserId === p.user_id
+                          const userPicks = predAllPicks.filter(pk => pk.user_id === p.user_id)
+                          return (
+                            <div key={p.user_id}>
+                              <div className="lb-row" onClick={() => setExpandedUserId(isExpanded ? null : p.user_id)} style={{ cursor: 'pointer' }}>
+                                <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
+                                  {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                                </div>
+                                <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
+                                  {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                                  <div style={{ width: 46, textAlign: 'center', fontSize: 13, fontWeight: 900, color: MUTED, fontFamily: FONT_COND }}>
+                                    {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
+                                  </div>
+                                  <div style={{ width: 46, textAlign: 'center', fontSize: 15, fontWeight: 900, color: isGroupPicksLocked ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                                    {isGroupPicksLocked ? (serverScores !== null ? (p.pts ?? 0) : '·') : '—'}
+                                  </div>
+                                  <span style={{ fontSize: 10, color: MUTED, lineHeight: 1, marginLeft: 2 }}>{isExpanded ? '▲' : '▼'}</span>
+                                </div>
+                              </div>
+                              {isExpanded && (
+                                <div style={{ background: '#f7f8fa', borderTop: `1px solid ${BORDER}`, padding: '10px 14px 14px' }}>
+                                  {predAllPicks.length === 0 ? (
+                                    <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Cargando...</div>
+                                  ) : (() => {
+                                    const groupMatchIds = new Set(groupMs.map(m => m.id))
+                                    let groupMatchPts = 0
+                                    for (const pk of userPicks) {
+                                      if (!groupMatchIds.has(pk.match_id)) continue
+                                      const m = matches.find(mx => mx.id === pk.match_id)
+                                      if (!m || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) continue
+                                      groupMatchPts += calcScore(pk, m) ?? 0
+                                    }
+                                    let koMatchPts = 0
+                                    for (const stage of ['r32','r16','qf','sf','3rd','final'] as const) {
+                                      const stMs = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
+                                      stMs.forEach((m, idx) => {
+                                        const slotId = stage === '3rd' ? 'ko-3rd' : stage === 'final' ? 'ko-final' : `ko-${stage}-${idx}`
+                                        const pk = userPicks.find(up => up.match_id === slotId)
+                                        if (!pk || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) return
+                                        koMatchPts += calcScore(pk, m) ?? 0
+                                      })
+                                    }
+                                    const gs = adminGroupStandings.get(p.user_id)
+                                    let groupOrderPts = 0
+                                    for (const g of GROUPS) {
+                                      const predicted = gs?.get(g)?.map(t => t.name) ?? []
+                                      const actual = realGroupOrderAll[g] ?? []
+                                      if (finishedGroupsAll.has(g) && actual.length === 4 && predicted.length === 4 && actual.every((t, k) => t === predicted[k]))
+                                        groupOrderPts += 6
+                                    }
+                                    const classified = perParticipantClassified.get(p.user_id)
+                                    const bracket = perParticipantBracket.get(p.user_id)
+                                    const pfinals = perParticipantFinals.get(p.user_id) ?? { champion: null, runnerUp: null, third: null, fourth: null }
+                                    const uR32Set = classified ? new Set<string>([...(classified.firsts.filter(Boolean) as string[]), ...(classified.seconds.filter(Boolean) as string[]), ...(classified.thirds.filter(Boolean) as string[])]) : new Set<string>()
+                                    let r32Pts = 0; for (const t of uR32Set) if (realR32Set.has(t)) r32Pts += 6
+                                    const uR16Set = bracket ? new Set<string>(r32Ms.map((_, i2) => bracket.get(`ko-r32-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    let r16Pts = 0; for (const t of uR16Set) if (realR16Set.has(t)) r16Pts += 10
+                                    const uQfSet = bracket ? new Set<string>(r16Ms.map((_, i2) => bracket.get(`ko-r16-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    let qfPts = 0; for (const t of uQfSet) if (realQfSet.has(t)) qfPts += 14
+                                    const uSfSet = bracket ? new Set<string>(qfMs.map((_, i2) => bracket.get(`ko-qf-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    let sfPts = 0; for (const t of uSfSet) if (realSfSet.has(t)) sfPts += 18
+                                    let finalPosPts = 0
+                                    if (realFinals.champion && pfinals.champion === realFinals.champion) finalPosPts += 40
+                                    if (realFinals.runnerUp && pfinals.runnerUp === realFinals.runnerUp) finalPosPts += 35
+                                    if (realFinals.third    && pfinals.third    === realFinals.third)    finalPosPts += 30
+                                    if (realFinals.fourth   && pfinals.fourth   === realFinals.fourth)   finalPosPts += 25
+                                    const bdRows = [
+                                      { label: 'Partidos (fase grupos)',     pts: groupMatchPts },
+                                      { label: 'Posición de grupos',         pts: groupOrderPts },
+                                      { label: 'Clasificados 16avos',        pts: r32Pts },
+                                      { label: 'Partidos (eliminatorias)',    pts: koMatchPts },
+                                      { label: 'Clasificados 8vos',          pts: r16Pts },
+                                      { label: 'Clasificados Cuartos',       pts: qfPts },
+                                      { label: 'Clasificados Semis',         pts: sfPts },
+                                      { label: 'Posiciones finales',         pts: finalPosPts },
+                                    ]
+                                    const bdTotal = bdRows.reduce((s, r) => s + r.pts, 0)
+                                    return (
+                                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                        <tbody>
+                                          {bdRows.map(({ label, pts }) => (
+                                            <tr key={label} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                              <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, color: TEXT }}>{label}</td>
+                                              <td style={{ padding: '6px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, color: pts > 0 ? '#10b981' : MUTED }}>
+                                                {pts > 0 ? `+${pts}` : '—'}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                          <tr style={{ borderTop: `2px solid ${TEXT}` }}>
+                                            <td style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E I</td>
+                                            <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{bdTotal}</td>
+                                          </tr>
+                                        </tbody>
+                                      </table>
+                                    )
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </Card>
+                      {!isGroupPicksLocked && (
+                        <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los puntos se calculan a partir del 11 de junio.</div>
                       )}
                     </div>
-                  )
-                })}
-              </Card>
-              {!isGroupPicksLocked && (
-                <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los puntos se calculan a partir del 11 de junio.</div>
-              )}
-            </div>
-          )}
+                  )}
+
+                  {/* ── Sub-tab: Partidos grupos ── */}
+                  {puntajesTab === 'partidos-grupos' && (() => {
+                    const groupMatchIds = new Set(groupMs.map(m => m.id))
+                    const rows = leaderboard.map(p => {
+                      const userPks = predAllPicks.filter(pk => pk.user_id === p.user_id)
+                      const groupPts: Record<string, number> = {}
+                      let total = 0
+                      for (const g of GROUPS) {
+                        let pts = 0
+                        for (const m of groupMs.filter(m => m.group_name === g)) {
+                          if (!DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) continue
+                          const pk = userPks.find(pk => pk.match_id === m.id)
+                          if (pk) pts += calcScore(pk, m) ?? 0
+                        }
+                        groupPts[g] = pts
+                        total += pts
+                      }
+                      return { userId: p.user_id, name: p.name, groupPts, total }
+                    }).sort((a, b) => b.total - a.total)
+                    return (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 560 }}>
+                          <thead>
+                            <tr style={{ background: TEXT }}>
+                              <th style={{ position: 'sticky', left: 0, background: TEXT, padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK, whiteSpace: 'nowrap', zIndex: 2 }}>JUGADOR</th>
+                              {GROUPS.map(g => (
+                                <th key={g} style={{ padding: '10px 6px', textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK, minWidth: 30 }}>
+                                  <span style={{ display: 'inline-block', width: 20, height: 20, borderRadius: 4, background: GROUP_COLORS[g] ?? NAVY, lineHeight: '20px', textAlign: 'center', fontSize: 9, color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900 }}>{g}</span>
+                                </th>
+                              ))}
+                              <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK, whiteSpace: 'nowrap' }}>TOTAL</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.map((row, i) => {
+                              const rowBg = i % 2 === 0 ? '#fff' : '#fafbfc'
+                              return (
+                                <tr key={row.userId} style={{ borderTop: `1px solid ${BORDER}`, background: rowBg }}>
+                                  <td style={{ position: 'sticky', left: 0, background: rowBg, padding: '8px 14px', fontFamily: row.userId === user?.id ? FONT_BLACK : FONT_NORMAL, fontWeight: row.userId === user?.id ? 900 : 400, fontSize: 13, color: row.userId === user?.id ? RED : TEXT, whiteSpace: 'nowrap', zIndex: 1 }}>
+                                    {row.name}{row.userId === user?.id ? ' (vos)' : ''}
+                                  </td>
+                                  {GROUPS.map(g => {
+                                    const pts = row.groupPts[g] ?? 0
+                                    const finished = finishedGroupsAll.has(g)
+                                    return (
+                                      <td key={g} style={{ padding: '8px 4px', textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 12, color: !finished ? '#d1d5db' : pts > 0 ? TEXT : '#d1d5db' }}>
+                                        {!finished ? '·' : pts}
+                                      </td>
+                                    )
+                                  })}
+                                  <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: row.total > 0 ? RED : MUTED }}>
+                                    {row.total > 0 ? `+${row.total}` : '—'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  })()}
+
+                  {/* ── Sub-tab: Grupos ── */}
+                  {puntajesTab === 'grupos' && (
+                    <div>
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 560 }}>
+                          <thead>
+                            <tr style={{ background: TEXT }}>
+                              <th style={{ position: 'sticky', left: 0, background: TEXT, padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK, whiteSpace: 'nowrap', zIndex: 2 }}>JUGADOR</th>
+                              {GROUPS.map(g => (
+                                <th key={g} style={{ padding: '10px 6px', textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK, minWidth: 30 }}>
+                                  <span style={{ display: 'inline-block', width: 20, height: 20, borderRadius: 4, background: GROUP_COLORS[g] ?? NAVY, lineHeight: '20px', textAlign: 'center', fontSize: 9, color: '#fff', fontFamily: FONT_BLACK, fontWeight: 900 }}>{g}</span>
+                                </th>
+                              ))}
+                              <th style={{ padding: '10px 14px', textAlign: 'right', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK, whiteSpace: 'nowrap' }}>PTS</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {leaderboard.map((p, i) => {
+                              const gs = adminGroupStandings.get(p.user_id)
+                              let totalGroupPts = 0
+                              const bonuses: Record<string, boolean> = {}
+                              for (const g of GROUPS) {
+                                const predicted = gs?.get(g)?.map(t => t.name) ?? []
+                                const actual = realGroupOrderAll[g] ?? []
+                                const ok = finishedGroupsAll.has(g) && actual.length === 4 && predicted.length === 4
+                                  && actual.every((t, k) => t === predicted[k])
+                                bonuses[g] = ok
+                                if (ok) totalGroupPts += 6
+                              }
+                              const rowBg = i % 2 === 0 ? '#fff' : '#fafbfc'
+                              return (
+                                <tr key={p.user_id} style={{ borderTop: `1px solid ${BORDER}`, background: rowBg }}>
+                                  <td style={{ position: 'sticky', left: 0, background: rowBg, padding: '8px 14px', fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL, fontWeight: p.user_id === user?.id ? 900 : 400, fontSize: 13, color: p.user_id === user?.id ? RED : TEXT, whiteSpace: 'nowrap', zIndex: 1 }}>
+                                    {p.name}{p.user_id === user?.id ? ' (vos)' : ''}
+                                  </td>
+                                  {GROUPS.map(g => {
+                                    const finished = finishedGroupsAll.has(g)
+                                    const ok = bonuses[g]
+                                    return (
+                                      <td key={g} style={{ padding: '8px 4px', textAlign: 'center', fontSize: 14 }}>
+                                        {!finished
+                                          ? <span style={{ color: '#e5e7eb', fontSize: 10 }}>·</span>
+                                          : ok
+                                            ? <span style={{ color: '#10b981' }}>✓</span>
+                                            : <span style={{ color: '#e5e7eb' }}>✗</span>}
+                                      </td>
+                                    )
+                                  })}
+                                  <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: totalGroupPts > 0 ? '#10b981' : MUTED }}>
+                                    {totalGroupPts > 0 ? `+${totalGroupPts}` : '—'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      {finishedGroupsAll.size === 0 && (
+                        <div style={{ fontSize: 11, color: MUTED, textAlign: 'center', marginTop: 12, fontFamily: FONT_NORMAL }}>Los bonos de grupo se muestran cuando terminan los 6 partidos de cada grupo.</div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* ── Sub-tab: Clasificados ── */}
+                  {puntajesTab === 'clasificados' && (
+                    <Card style={{ padding: 0, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', background: TEXT }}>
+                        <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
+                        <div style={{ width: 44, textAlign: 'center', fontSize: 9, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>16VOS</div>
+                        <div style={{ width: 44, textAlign: 'center', fontSize: 9, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>8VOS</div>
+                        <div style={{ width: 44, textAlign: 'center', fontSize: 9, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>4TOS</div>
+                        <div style={{ width: 44, textAlign: 'center', fontSize: 9, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>SEMIS</div>
+                        <div style={{ width: 44, textAlign: 'center', fontSize: 9, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>FINAL</div>
+                      </div>
+                      {leaderboard.map((p, i) => {
+                        const classified = perParticipantClassified.get(p.user_id)
+                        const bracket = perParticipantBracket.get(p.user_id)
+                        const finals = perParticipantFinals.get(p.user_id) ?? { champion: null, runnerUp: null, third: null, fourth: null }
+                        const userR32Set = classified ? new Set<string>([
+                          ...(classified.firsts.filter(Boolean) as string[]),
+                          ...(classified.seconds.filter(Boolean) as string[]),
+                          ...(classified.thirds.filter(Boolean) as string[]),
+                        ]) : new Set<string>()
+                        let r32Pts = 0
+                        for (const t of userR32Set) if (realR32Set.has(t)) r32Pts += 6
+                        const userR16Set = bracket
+                          ? new Set<string>(r32Ms.map((_, i2) => bracket.get(`ko-r32-${i2}`)).filter(Boolean) as string[])
+                          : new Set<string>()
+                        let r16Pts = 0
+                        for (const t of userR16Set) if (realR16Set.has(t)) r16Pts += 10
+                        const userQfSet = bracket
+                          ? new Set<string>(r16Ms.map((_, i2) => bracket.get(`ko-r16-${i2}`)).filter(Boolean) as string[])
+                          : new Set<string>()
+                        let qfPts = 0
+                        for (const t of userQfSet) if (realQfSet.has(t)) qfPts += 14
+                        const userSfSet = bracket
+                          ? new Set<string>(qfMs.map((_, i2) => bracket.get(`ko-qf-${i2}`)).filter(Boolean) as string[])
+                          : new Set<string>()
+                        let sfPts = 0
+                        for (const t of userSfSet) if (realSfSet.has(t)) sfPts += 18
+                        let finalPts = 0
+                        if (realFinals.champion && finals.champion === realFinals.champion) finalPts += 40
+                        if (realFinals.runnerUp && finals.runnerUp === realFinals.runnerUp) finalPts += 35
+                        if (realFinals.third    && finals.third    === realFinals.third)    finalPts += 30
+                        if (realFinals.fourth   && finals.fourth   === realFinals.fourth)   finalPts += 25
+                        const PtsCell = ({ pts, known }: { pts: number; known: boolean }) => (
+                          <div style={{ width: 44, textAlign: 'center', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: !known ? MUTED : pts > 0 ? '#10b981' : '#9ca3af' }}>
+                            {!known ? '—' : pts > 0 ? `+${pts}` : '0'}
+                          </div>
+                        )
+                        return (
+                          <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', padding: '10px 14px', borderTop: `1px solid ${BORDER}`, background: i % 2 === 0 ? '#fff' : '#fafbfc' }}>
+                            <div style={{ flex: 1, fontSize: 13, fontWeight: p.user_id === user?.id ? 900 : 400, color: p.user_id === user?.id ? RED : TEXT, fontFamily: p.user_id === user?.id ? FONT_BLACK : FONT_NORMAL }}>
+                              {p.name}{p.user_id === user?.id ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
+                            </div>
+                            <PtsCell pts={r32Pts}    known={realR32Set.size > 0} />
+                            <PtsCell pts={r16Pts}    known={realR16Set.size > 0} />
+                            <PtsCell pts={qfPts}     known={realQfSet.size > 0} />
+                            <PtsCell pts={sfPts}     known={realSfSet.size > 0} />
+                            <PtsCell pts={finalPts}  known={!!realFinals.champion} />
+                          </div>
+                        )
+                      })}
+                    </Card>
+                  )}
+                </>}
+              </div>
+            )
+          })()}
 
           {/* ── REGLAMENTO ── */}
           {tab === 'reglamento' && (
