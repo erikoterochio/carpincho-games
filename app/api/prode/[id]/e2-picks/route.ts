@@ -9,6 +9,7 @@ function adminDB() {
   )
 }
 
+// Returns all users' E2 picks for the tournament (same authz pattern as all-picks)
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -21,9 +22,8 @@ export async function GET(
   const admin = adminDB()
   const { data, error } = await admin
     .from('prode_stage2_picks')
-    .select('match_id,home_score,away_score,pen_winner')
+    .select('user_id,match_id,home_score,away_score,pen_winner')
     .eq('tournament_id', id)
-    .eq('user_id', user.id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data ?? [])
@@ -44,14 +44,18 @@ export async function POST(
     return NextResponse.json({ error: 'No picks provided' }, { status: 400 })
   }
 
-  const rows = picks.map(p => ({
-    tournament_id: id,
-    user_id: user.id,
-    match_id: p.match_id,
-    home_score: p.home_score,
-    away_score: p.away_score,
-    pen_winner: p.pen_winner ?? null,
-  }))
+  // Omit pen_winner when null — avoids PostgREST schema cache errors if column doesn't exist yet
+  const rows = picks.map(p => {
+    const row: Record<string, unknown> = {
+      tournament_id: id,
+      user_id: user.id,
+      match_id: p.match_id,
+      home_score: p.home_score,
+      away_score: p.away_score,
+    }
+    if (p.pen_winner != null) row.pen_winner = p.pen_winner
+    return row
+  })
 
   const admin = adminDB()
   const { error } = await admin
