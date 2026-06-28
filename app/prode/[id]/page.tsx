@@ -484,6 +484,7 @@ export default function TournamentPage() {
         const e2pArr = e2Res.ok ? await e2Res.json() : []
         const e2m: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
         for (const p of (e2pArr ?? [])) {
+          if (p.user_id !== user.id) continue
           const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner as 'h'|'a' : undefined
           e2m[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
         }
