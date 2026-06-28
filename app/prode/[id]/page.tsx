@@ -1280,16 +1280,6 @@ export default function TournamentPage() {
       if (!m || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) continue
       groupMatchPts += calcScore(pk, m) ?? 0
     }
-    let koMatchPts = 0
-    for (const stage of ['r32','r16','qf','sf','3rd','final'] as const) {
-      const stageMs = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
-      stageMs.forEach((m, i) => {
-        const slotId = stage === '3rd' ? 'ko-3rd' : stage === 'final' ? 'ko-final' : `ko-${stage}-${i}`
-        const pk = myPicks.find(p => p.match_id === slotId)
-        if (!pk || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) return
-        koMatchPts += calcScore(pk, m) ?? 0
-      })
-    }
     const myAllGroupSt: Record<string, ReturnType<typeof computeGroupStandings>> = {}
     for (const g of GROUPS) {
       const gms = groupMs.filter(m => m.group_name === g)
@@ -1394,9 +1384,9 @@ export default function TournamentPage() {
     if (realRunnerUp && uRunnerUp === realRunnerUp) finalPosPts += 35
     if (realThird    && uThird    === realThird)    finalPosPts += 30
     if (realFourth   && uFourth   === realFourth)   finalPosPts += 25
-    const total = groupMatchPts + koMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
+    const total = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
     return {
-      groupMatchPts, koMatchPts, groupOrderPts,
+      groupMatchPts, groupOrderPts,
       r32Pts, r16Pts, qfPts, sfPts, finalPosPts, total,
       groupBonuses, myAllGroupSt, realGroupOrder, finishedGroups,
       myR32Set, realR32Set,
@@ -3009,7 +2999,6 @@ export default function TournamentPage() {
                       <tbody>
                         {[
                           { label: 'Partidos (fase grupos)',      pts: bd.groupMatchPts },
-                          { label: 'Partidos (eliminatorias)',    pts: bd.koMatchPts },
                           { label: 'Posición de grupos',         pts: bd.groupOrderPts },
                           { label: 'Clasificados a 16avos',      pts: bd.r32Pts },
                           { label: 'Clasificados a 8vos',        pts: bd.r16Pts },
@@ -3331,16 +3320,6 @@ export default function TournamentPage() {
                                       if (!m || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) continue
                                       groupMatchPts += calcScore(pk, m) ?? 0
                                     }
-                                    let koMatchPts = 0
-                                    for (const stage of ['r32','r16','qf','sf','3rd','final'] as const) {
-                                      const stMs = matches.filter(m => m.stage === stage).sort((a, b) => a.sort_order - b.sort_order)
-                                      stMs.forEach((m, idx) => {
-                                        const slotId = stage === '3rd' ? 'ko-3rd' : stage === 'final' ? 'ko-final' : `ko-${stage}-${idx}`
-                                        const pk = userPicks.find(up => up.match_id === slotId)
-                                        if (!pk || !DONE_ST.has(m.status) || m.home_score === null || m.away_score === null) return
-                                        koMatchPts += calcScore(pk, m) ?? 0
-                                      })
-                                    }
                                     const gs = adminGroupStandings.get(p.user_id)
                                     let groupOrderPts = 0
                                     for (const g of GROUPS) {
@@ -3369,7 +3348,6 @@ export default function TournamentPage() {
                                       { label: 'Partidos (fase grupos)',     pts: groupMatchPts },
                                       { label: 'Posición de grupos',         pts: groupOrderPts },
                                       { label: 'Clasificados 16avos',        pts: r32Pts },
-                                      { label: 'Partidos (eliminatorias)',    pts: koMatchPts },
                                       { label: 'Clasificados 8vos',          pts: r16Pts },
                                       { label: 'Clasificados Cuartos',       pts: qfPts },
                                       { label: 'Clasificados Semis',         pts: sfPts },
