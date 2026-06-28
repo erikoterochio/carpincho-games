@@ -188,7 +188,7 @@ export default function PredecirPage() {
   const handlePickChange = (matchId: string, side: 'h'|'a', value: string) => {
     const match = matches.find(m => m.id === matchId)
     if (!match) return
-    if (new Date() >= new Date(match.kickoff) || (match.stage === 'group' && isDeadlinePast)) return
+    if (Date.now() >= new Date(match.kickoff).getTime() - 1800000 || (match.stage === 'group' && isDeadlinePast)) return
     const cleaned = value.replace(/\D/g, '').slice(0, 2)
     const updated = { ...(picksRef.current[matchId] ?? { h: '', a: '' }), [side]: cleaned }
     picksRef.current[matchId] = updated
@@ -288,7 +288,7 @@ export default function PredecirPage() {
   const GroupMatchRow = ({ m }: { m: Match }) => {
     const p = picks[m.id] ?? { h: '', a: '' }
     const filled = p.h !== '' && p.a !== ''
-    const started = new Date() >= new Date(m.kickoff)
+    const started = Date.now() >= new Date(m.kickoff).getTime() - 1800000
     const locked = isDeadlinePast || started
     return (
       <div className="gmr">
@@ -365,7 +365,7 @@ export default function PredecirPage() {
   const MatchCard = ({ m }: { m: Match }) => {
     const pick = picks[m.id] ?? { h: '', a: '' }
     const filled = pick.h !== '' && pick.a !== ''
-    const matchLocked = new Date() >= new Date(m.kickoff) || (m.stage === 'group' && isDeadlinePast)
+    const matchLocked = Date.now() >= new Date(m.kickoff).getTime() - 1800000 || (m.stage === 'group' && isDeadlinePast)
     const { label: homeLabel, sub: homeSub } = resolveTeam(m.home_team)
     const { label: awayLabel, sub: awaySub } = resolveTeam(m.away_team)
     return (
