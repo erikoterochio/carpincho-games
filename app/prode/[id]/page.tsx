@@ -1764,6 +1764,9 @@ export default function TournamentPage() {
     const isDone = ['FT', 'AET', 'PEN'].includes(m.status)
     const liveLabel = m.status === 'HT' ? 'ET' : m.status === 'ET' ? 'PRÓRROGA' : m.status === 'BT' ? 'PENALES' : 'EN VIVO'
     const isKo = m.stage !== 'group'
+    // Picks of other users are only revealed once the prediction window is closed for this match
+    const picksVisible = isDone || isLive
+      || (isKo ? Date.now() >= new Date(m.kickoff).getTime() - 1800000 : isGroupPicksLocked)
     // KO matches: use E2 picks (real match predictions). Group matches: use E1 picks.
     const myPick = isKo
       ? (e2Picks[m.id] ?? null)
@@ -1938,7 +1941,13 @@ export default function TournamentPage() {
         )}
 
         {/* ── ALL PICKS ── */}
-        {participants.length > 0 && !hidePicks && (() => {
+        {participants.length > 0 && !hidePicks && !picksVisible && (
+          <div style={{ borderTop: '1px solid #e5e7eb', padding: '9px 20px', background: '#f8fafc', display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ fontSize: 13 }}>🔒</span>
+            <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_NORMAL }}>Las predicciones se revelan cuando cierra la ventana</span>
+          </div>
+        )}
+        {participants.length > 0 && !hidePicks && picksVisible && (() => {
           // KO matches: use E2 picks (real match score predictions) with real match UUID
           // Group matches: use E1 picks with match UUID
           const picksSource = isKo ? allE2Picks : predAllPicks
