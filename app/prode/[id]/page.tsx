@@ -413,6 +413,7 @@ export default function TournamentPage() {
   const [e2Picks, setE2Picks] = useState<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
   const e2PicksRef = useRef<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
   const [e2SaveStatus, setE2SaveStatus] = useState<'idle'|'saving'|'saved'|'error'>('idle')
+  const [e2SaveError, setE2SaveError] = useState<string|null>(null)
   const [bonusVersion, setBonusVersion] = useState(0)
   const [openRounds, setOpenRounds] = useState<Set<string>>(new Set())
   const [matchEvents, setMatchEvents] = useState<Record<string, MatchEvent[]>>({})
@@ -477,14 +478,11 @@ export default function TournamentPage() {
         setKoEditPicks(kopm)
         koPicksRef.current = kopm
 
-        // Load Etapa 2 picks (real KO match predictions, keyed by match UUID)
-        const { data: e2p } = await supabase
-          .from('prode_stage2_picks')
-          .select('match_id,home_score,away_score,pen_winner')
-          .eq('tournament_id', id)
-          .eq('user_id', user.id)
+        // Load Etapa 2 picks via API route (admin client bypasses RLS issues)
+        const e2Res = await fetch(`/api/prode/${id}/e2-picks`)
+        const e2pArr = e2Res.ok ? await e2Res.json() : []
         const e2m: Record<string, {h:string;a:string;pen?:'h'|'a'}> = {}
-        for (const p of (e2p ?? [])) {
+        for (const p of (e2pArr ?? [])) {
           const pen = (p.pen_winner === 'h' || p.pen_winner === 'a') ? p.pen_winner as 'h'|'a' : undefined
           e2m[p.match_id] = { h: String(p.home_score ?? ''), a: String(p.away_score ?? ''), ...(pen ? { pen } : {}) }
         }
@@ -1133,22 +1131,34 @@ export default function TournamentPage() {
   }
 
   const saveE2Picks = async () => {
-    const rows = Object.entries(e2PicksRef.current)
+    const picks = Object.entries(e2PicksRef.current)
       .filter(([, p]) => p.h !== '' && p.a !== '')
       .map(([matchId, p]) => ({
-        tournament_id: id,
-        user_id: user!.id,
         match_id: matchId,
         home_score: parseInt(p.h),
         away_score: parseInt(p.a),
         pen_winner: p.pen ?? null,
       }))
-    if (!rows.length) return
+    if (!picks.length) return
     setE2SaveStatus('saving')
-    const { error } = await supabase
-      .from('prode_stage2_picks')
-      .upsert(rows, { onConflict: 'tournament_id,user_id,match_id' })
-    setE2SaveStatus(error ? 'error' : 'saved')
+    setE2SaveError(null)
+    try {
+      const res = await fetch(`/api/prode/${id}/e2-picks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ picks }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setE2SaveStatus('error')
+        setE2SaveError(data.error ?? 'Error desconocido')
+      } else {
+        setE2SaveStatus('saved')
+      }
+    } catch (err) {
+      setE2SaveStatus('error')
+      setE2SaveError('Error de red')
+    }
   }
 
   const handleBonusSave = useCallback(async (b: Record<string, string>) => {
@@ -2702,19 +2712,25 @@ export default function TournamentPage() {
                     <div style={{ fontSize: 12, color: TEXT, fontFamily: FONT_NORMAL, fontWeight: 600 }}>
                       {e2Count > 0 ? `${e2Count} prediccion${e2Count !== 1 ? 'es' : ''} de eliminación` : 'Etapa II — sin predicciones aún'}
                     </div>
-                    <button
-                      onClick={saveE2Picks}
-                      disabled={e2SaveStatus === 'saving' || e2Count === 0}
-                      style={{
-                        padding: '10px 22px', background: e2SaveStatus === 'saved' ? '#10b981' : TEXT,
-                        color: '#fff', border: 'none', borderRadius: 8,
-                        fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
-                        cursor: e2SaveStatus === 'saving' || e2Count === 0 ? 'default' : 'pointer',
-                        transition: 'background 0.25s', opacity: e2Count === 0 ? 0.35 : 1,
-                      }}
-                    >
-                      {e2SaveStatus === 'saving' ? 'Guardando...' : e2SaveStatus === 'saved' ? '✓ Guardado' : 'Guardar'}
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                      <button
+                        onClick={saveE2Picks}
+                        disabled={e2SaveStatus === 'saving' || e2Count === 0}
+                        style={{
+                          padding: '10px 22px',
+                          background: e2SaveStatus === 'saved' ? '#10b981' : e2SaveStatus === 'error' ? '#dc2626' : TEXT,
+                          color: '#fff', border: 'none', borderRadius: 8,
+                          fontFamily: FONT_NORMAL, fontSize: 13, fontWeight: 600,
+                          cursor: e2SaveStatus === 'saving' || e2Count === 0 ? 'default' : 'pointer',
+                          transition: 'background 0.25s', opacity: e2Count === 0 ? 0.35 : 1,
+                        }}
+                      >
+                        {e2SaveStatus === 'saving' ? 'Guardando...' : e2SaveStatus === 'saved' ? '✓ Guardado' : e2SaveStatus === 'error' ? 'Error — reintentar' : 'Guardar'}
+                      </button>
+                      {e2SaveStatus === 'error' && e2SaveError && (
+                        <span style={{ fontSize: 10, color: '#dc2626', fontFamily: FONT_NORMAL }}>{e2SaveError}</span>
+                      )}
+                    </div>
                   </div>
                 )
               })()}
