@@ -173,9 +173,10 @@ export async function GET(
   for (const [userId, picks] of Object.entries(picksByUser)) {
     let pts = 0
 
-    // 1. Match-by-match score (group + KO)
+    // 1. Group match scores only — KO match scores are Etapa 2, not E1
     for (const pk of picks) {
-      const m = matchById.get(pk.match_id) ?? slotMatchMap.get(pk.match_id)
+      if (!groupMatchIds.has(pk.match_id)) continue
+      const m = matchById.get(pk.match_id)
       if (!m || !DONE.has(m.status) || m.home_score === null || m.away_score === null) continue
       pts += calcMatchScore(pk.home_score, pk.away_score, m.home_score, m.away_score)
     }
