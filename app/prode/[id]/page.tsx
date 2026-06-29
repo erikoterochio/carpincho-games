@@ -4396,157 +4396,121 @@ export default function TournamentPage() {
                 </Card>
               )}
 
-              {/* ── Bracket — equipos predichos por ronda ── */}
+              {/* ── Bracket — equipos predichos por jugador por ronda ── */}
               {predTab === 'eliminatorias' && (() => {
-                const getUserR32Set = (uid: string): Set<string> => {
+                const getTeamsR32 = (uid: string): string[] => {
                   const c = perParticipantClassified.get(uid)
-                  if (!c) return new Set()
-                  return new Set([...c.firsts, ...c.seconds, ...c.thirds].filter(Boolean) as string[])
+                  if (!c) return []
+                  return [...new Set([...c.firsts, ...c.seconds, ...c.thirds].filter(Boolean) as string[])]
                 }
-                const getUserR16Set = (uid: string): Set<string> => new Set(
+                const getTeamsR16 = (uid: string): string[] =>
                   Array.from({length: 16}, (_, i) => perParticipantBracket.get(uid)?.get(`ko-r32-${i}`)).filter(Boolean) as string[]
-                )
-                const getUserQfSet = (uid: string): Set<string> => new Set(
-                  Array.from({length: 8}, (_, i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[]
-                )
-                const getUserSfSet = (uid: string): Set<string> => new Set(
-                  Array.from({length: 4}, (_, i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[]
-                )
+                const getTeamsQf = (uid: string): string[] =>
+                  Array.from({length: 8},  (_, i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[]
+                const getTeamsSf = (uid: string): string[] =>
+                  Array.from({length: 4},  (_, i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[]
 
-                const rounds: { title: string; realSet: Set<string>; getUserSet: (uid: string) => Set<string> }[] = [
-                  { title: '16avos — Clasificados de Grupos',   realSet: realR32Set, getUserSet: getUserR32Set },
-                  { title: '8vos — Ganadores de 16avos',        realSet: realR16Set, getUserSet: getUserR16Set },
-                  { title: 'Cuartos — Ganadores de 8vos',       realSet: realQfSet,  getUserSet: getUserQfSet  },
-                  { title: 'Semis — Ganadores de Cuartos',      realSet: realSfSet,  getUserSet: getUserSfSet  },
+                const rounds: { title: string; realSet: Set<string>; getTeams: (uid: string) => string[] }[] = [
+                  { title: '16avos — Clasificados de Grupos', realSet: realR32Set, getTeams: getTeamsR32 },
+                  { title: '8vos — Ganadores de 16avos',      realSet: realR16Set, getTeams: getTeamsR16 },
+                  { title: 'Cuartos — Ganadores de 8vos',     realSet: realQfSet,  getTeams: getTeamsQf  },
+                  { title: 'Semis — Ganadores de Cuartos',    realSet: realSfSet,  getTeams: getTeamsSf  },
                 ]
 
-                const finalRows: { label: string; getValue: (uid: string) => string|null; realVal: string|null }[] = [
-                  { label: 'Campeón 🏆',  getValue: uid => perParticipantFinals.get(uid)?.champion  ?? null, realVal: realFinals.champion  },
-                  { label: 'Sub-Campeón', getValue: uid => perParticipantFinals.get(uid)?.runnerUp  ?? null, realVal: realFinals.runnerUp  },
-                  { label: '3er Puesto',  getValue: uid => perParticipantFinals.get(uid)?.third     ?? null, realVal: realFinals.third     },
-                  { label: '4to Puesto',  getValue: uid => perParticipantFinals.get(uid)?.fourth    ?? null, realVal: realFinals.fourth    },
-                ]
-
-                const thTxt = (isMe: boolean) => ({
-                  padding: '8px 4px', textAlign: 'center' as const, color: isMe ? RED : '#fff',
-                  fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap' as const, minWidth: 48, textTransform: 'uppercase' as const,
-                })
-                const stickyTh = { padding: '8px 10px', textAlign: 'left' as const, color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky' as const, left: 0, background: TEXT, whiteSpace: 'nowrap' as const, minWidth: 100 }
+                const thStyle = { padding: '8px 12px', textAlign: 'left' as const, color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap' as const }
 
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    {rounds.map(({ title, realSet, getUserSet }) => {
-                      const allTeams = new Set<string>([...realSet])
-                      for (const p of orderedParticipants) for (const t of getUserSet(p.user_id)) allTeams.add(t)
-                      const teamList = [...allTeams].sort((a, b) => {
-                        const aR = realSet.has(a), bR = realSet.has(b)
-                        if (aR !== bR) return aR ? -1 : 1
-                        return a.localeCompare(b)
-                      })
+                    {rounds.map(({ title, realSet, getTeams }) => {
                       const roundKnown = realSet.size > 0
                       return (
                         <Card key={title}>
                           <SectionTitle>{title}</SectionTitle>
-                          {teamList.length === 0 ? (
-                            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, padding: '12px 0' }}>
-                              {roundKnown ? 'Cargando...' : 'Pendiente'}
-                            </div>
-                          ) : (
-                            <div style={{ overflowX: 'auto' }}>
-                              <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
-                                <thead>
-                                  <tr style={{ background: TEXT }}>
-                                    <th style={stickyTh}>Equipo</th>
-                                    <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
-                                    {orderedParticipants.map(p => (
-                                      <th key={p.user_id} style={thTxt(p.user_id === user?.id)}>
-                                        {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
-                                        {p.user_id === user?.id ? ' ★' : ''}
-                                      </th>
-                                    ))}
+                          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                            <thead>
+                              <tr style={{ background: TEXT }}>
+                                <th style={{ ...thStyle, minWidth: 80 }}>Jugador</th>
+                                <th style={{ ...thStyle, color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9 }}>Equipos predichos</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderedParticipants.map(p => {
+                                const teams = getTeams(p.user_id)
+                                const isMe = p.user_id === user?.id
+                                const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
+                                return (
+                                  <tr key={p.user_id} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                                    <td style={{ padding: '8px 12px', fontFamily: FONT_BLACK, fontSize: 10, color: isMe ? RED : TEXT, whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                                      {name}{isMe ? ' ★' : ''}
+                                    </td>
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 8px' }}>
+                                        {teams.length === 0
+                                          ? <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>—</span>
+                                          : teams.map(t => (
+                                              <span key={t} style={{ fontSize: 10, fontFamily: FONT_NORMAL, fontWeight: 600, color: roundKnown ? (realSet.has(t) ? '#16a34a' : RED) : '#ca8a04' }}>
+                                                {abbrev(t)}
+                                              </span>
+                                            ))
+                                        }
+                                      </div>
+                                    </td>
                                   </tr>
-                                </thead>
-                                <tbody>
-                                  {teamList.map((team, i) => {
-                                    const isReal = realSet.has(team)
-                                    const rowBg = isReal
-                                      ? (i % 2 === 0 ? '#f0fdf4' : '#dcfce7')
-                                      : (i % 2 === 0 ? '#fff' : '#f9f9f9')
-                                    return (
-                                      <tr key={team} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
-                                        <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, fontSize: 10, color: isReal ? '#15803d' : MUTED, fontWeight: isReal ? 600 : 400, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
-                                          {abbrev(team)}
-                                        </td>
-                                        <td style={{ padding: '6px 6px', textAlign: 'center', fontSize: 10, color: isReal ? '#15803d' : MUTED }}>
-                                          {isReal ? '✓' : '—'}
-                                        </td>
-                                        {orderedParticipants.map(p => {
-                                          const predicted = getUserSet(p.user_id).has(team)
-                                          const color = predicted
-                                            ? (roundKnown ? (isReal ? '#16a34a' : RED) : '#ca8a04')
-                                            : MUTED
-                                          return (
-                                            <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 12, color, fontWeight: p.user_id === user?.id ? 700 : 400 }}>
-                                              {predicted ? '✓' : '—'}
-                                            </td>
-                                          )
-                                        })}
-                                      </tr>
-                                    )
-                                  })}
-                                </tbody>
-                              </table>
-                            </div>
-                          )}
+                                )
+                              })}
+                            </tbody>
+                          </table>
                         </Card>
                       )
                     })}
 
                     <Card>
                       <SectionTitle>Posiciones Finales</SectionTitle>
-                      <div style={{ overflowX: 'auto' }}>
-                        <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
-                          <thead>
-                            <tr style={{ background: TEXT }}>
-                              <th style={stickyTh}>Posición</th>
-                              <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
-                              {orderedParticipants.map(p => (
-                                <th key={p.user_id} style={thTxt(p.user_id === user?.id)}>
-                                  {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
-                                  {p.user_id === user?.id ? ' ★' : ''}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {finalRows.map(({ label, getValue, realVal }, i) => {
-                              const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
-                              return (
-                                <tr key={label} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
-                                  <td style={{ padding: '6px 10px', fontFamily: FONT_BLACK, fontSize: 10, color: TEXT, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap' }}>
-                                    {label}
-                                  </td>
-                                  <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: realVal ? TEXT : MUTED, whiteSpace: 'nowrap' }}>
-                                    {realVal ? abbrev(realVal) : '—'}
-                                  </td>
-                                  {orderedParticipants.map(p => {
-                                    const predicted = getValue(p.user_id)
-                                    const isCorrect = realVal && predicted ? predicted === realVal : null
-                                    const color = predicted
-                                      ? (isCorrect === true ? '#16a34a' : isCorrect === false ? RED : '#ca8a04')
-                                      : MUTED
-                                    return (
-                                      <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
-                                        {predicted ? abbrev(predicted) : '—'}
-                                      </td>
-                                    )
-                                  })}
-                                </tr>
-                              )
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                        <thead>
+                          <tr style={{ background: TEXT }}>
+                            <th style={{ ...thStyle, minWidth: 80 }}>Jugador</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: '#fbbf24', minWidth: 60 }}>Campeón</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.7)', minWidth: 60 }}>Sub</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.6)', minWidth: 60 }}>3ero</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.5)', minWidth: 60 }}>4to</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ background: '#f8fafc', borderBottom: `2px solid ${BORDER}` }}>
+                            <td style={{ padding: '6px 12px', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED }}>REAL</td>
+                            {([realFinals.champion, realFinals.runnerUp, realFinals.third, realFinals.fourth] as const).map((v, i) => (
+                              <td key={i} style={{ padding: '6px 8px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: v ? TEXT : MUTED }}>
+                                {v ? abbrev(v) : '—'}
+                              </td>
+                            ))}
+                          </tr>
+                          {orderedParticipants.map(p => {
+                            const pf = perParticipantFinals.get(p.user_id)
+                            const vals = [pf?.champion ?? null, pf?.runnerUp ?? null, pf?.third ?? null, pf?.fourth ?? null]
+                            const realVals = [realFinals.champion, realFinals.runnerUp, realFinals.third, realFinals.fourth]
+                            const isMe = p.user_id === user?.id
+                            const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
+                            return (
+                              <tr key={p.user_id} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '8px 12px', fontFamily: FONT_BLACK, fontSize: 10, color: isMe ? RED : TEXT, whiteSpace: 'nowrap' }}>
+                                  {name}{isMe ? ' ★' : ''}
+                                </td>
+                                {vals.map((v, i) => {
+                                  const real = realVals[i]
+                                  const isCorrect = real && v ? v === real : null
+                                  const color = v ? (isCorrect === true ? '#16a34a' : isCorrect === false ? RED : '#ca8a04') : MUTED
+                                  return (
+                                    <td key={i} style={{ padding: '6px 8px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, fontWeight: isMe ? 700 : 400 }}>
+                                      {v ? abbrev(v) : '—'}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
                     </Card>
                   </div>
                 )
