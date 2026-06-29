@@ -409,7 +409,7 @@ export default function TournamentPage() {
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
   const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
-  const [puntajesTab, setPuntajesTab] = useState<'total'|'grupos'|'clasificados'|'partidos-grupos'>('total')
+  const [puntajesTab, setPuntajesTab] = useState<'total'|'grupos'|'clasificados'|'partidos-grupos'|'partidos-detalle'>('total')
   const [puntajesEtapa, setPuntajesEtapa] = useState<'e1'|'e2'>('e1')
   const [e2Picks, setE2Picks] = useState<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
   const e2PicksRef = useRef<Record<string, {h:string;a:string;pen?:'h'|'a'}>>({})
@@ -3259,8 +3259,9 @@ export default function TournamentPage() {
           {/* ── PUNTAJES ── */}
           {tab === 'puntajes' && (() => {
             const PUNTAJES_SUBTABS = [
-              { key: 'total' as const,           label: 'Tabla total' },
+              { key: 'total' as const,            label: 'Tabla total' },
               { key: 'partidos-grupos' as const,  label: 'Partidos grupos' },
+              { key: 'partidos-detalle' as const, label: 'Detalle' },
               { key: 'grupos' as const,           label: 'Grupos' },
               { key: 'clasificados' as const,     label: 'Clasificados' },
             ]
@@ -3334,12 +3335,10 @@ export default function TournamentPage() {
                         const isMe = p.user_id === user?.id
                         const name = p.profiles?.nombre || p.profiles?.username || '?'
                         const isExpanded = expandedUserId === p.user_id
-                        const matchRows = koOrdered2
-                          .filter(m => myPicks.some(pk => pk.match_id === m.id) || DONE_ST2.has(m.status))
+                        const matchRows = doneKoMs
                           .map(m => {
                             const pk = myPicks.find(pk => pk.match_id === m.id)
-                            const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
-                            const score = pk && hasResult ? calcScore(pk, m) : null
+                            const score = pk ? calcScore(pk, m) : null
                             return { m, pk, score }
                           })
                         return (
@@ -3366,21 +3365,19 @@ export default function TournamentPage() {
                                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                                     <tbody>
                                       {matchRows.map(({ m, pk, score }) => {
-                                        const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
                                         const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
                                         return (
                                           <tr key={m.id} style={{ borderTop: `1px solid ${BORDER}` }}>
                                             <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, whiteSpace: 'nowrap' }}>{stageLabel2[m.stage] ?? m.stage}</td>
                                             <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, color: TEXT }}>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</td>
+                                            <td style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: TEXT, whiteSpace: 'nowrap' }}>{m.home_score}-{m.away_score}</td>
                                             <td style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: pk ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{pk ? `${pk.home_score}-${pk.away_score}` : '—'}</td>
-                                            <td style={{ padding: '6px 2px', textAlign: 'center', color: MUTED, fontSize: 10 }}>→</td>
-                                            <td style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: hasResult ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{hasResult ? `${m.home_score}-${m.away_score}` : '—'}</td>
                                             <td style={{ padding: '6px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, color, whiteSpace: 'nowrap' }}>{score !== null ? `+${score}` : '—'}</td>
                                           </tr>
                                         )
                                       })}
                                       <tr style={{ borderTop: `2px solid ${TEXT}` }}>
-                                        <td colSpan={5} style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E II</td>
+                                        <td colSpan={4} style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E II</td>
                                         <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{total}</td>
                                       </tr>
                                     </tbody>
@@ -3562,6 +3559,61 @@ export default function TournamentPage() {
                                   <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: row.total > 0 ? RED : MUTED }}>
                                     {row.total > 0 ? `+${row.total}` : '—'}
                                   </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )
+                  })()}
+
+                  {/* ── Sub-tab: Detalle de partidos ── */}
+                  {puntajesTab === 'partidos-detalle' && (() => {
+                    const doneGroupMs = groupMs
+                      .filter(m => DONE_ST.has(m.status) && m.home_score !== null && m.away_score !== null)
+                      .sort((a, b) => a.sort_order - b.sort_order)
+                    const lb = leaderboard
+                    return (
+                      <div style={{ overflowX: 'auto' }}>
+                        <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                          <thead>
+                            <tr style={{ background: TEXT }}>
+                              <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Grp</th>
+                              <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Partido</th>
+                              <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
+                              {lb.map(p => (
+                                <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
+                                  {p.name.split(' ')[0]}{p.user_id === user?.id ? ' ★' : ''}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {doneGroupMs.map((m, i) => {
+                              const grpColor = GROUP_COLORS[m.group_name ?? ''] ?? TEXT
+                              const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
+                              return (
+                                <tr key={m.id} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                                  <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, color: '#fff', background: grpColor, whiteSpace: 'nowrap' }}>
+                                    {m.group_name ?? ''}
+                                  </td>
+                                  <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: rowBg, whiteSpace: 'nowrap', fontSize: 10 }}>
+                                    {abbrev(m.home_team)} vs {abbrev(m.away_team)}
+                                  </td>
+                                  <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap', color: TEXT }}>
+                                    {m.home_score}-{m.away_score}
+                                  </td>
+                                  {lb.map(p => {
+                                    const pk = predAllPicks.find(pk => pk.user_id === p.user_id && pk.match_id === m.id)
+                                    const score = pk ? calcScore(pk, m) : null
+                                    const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
+                                    return (
+                                      <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
+                                        {pk ? `${pk.home_score}-${pk.away_score}` : '—'}
+                                      </td>
+                                    )
+                                  })}
                                 </tr>
                               )
                             })}
