@@ -3497,11 +3497,11 @@ export default function TournamentPage() {
                                     const pfinals = perParticipantFinals.get(p.user_id) ?? { champion: null, runnerUp: null, third: null, fourth: null }
                                     const uR32Set = classified ? new Set<string>([...(classified.firsts.filter(Boolean) as string[]), ...(classified.seconds.filter(Boolean) as string[]), ...(classified.thirds.filter(Boolean) as string[])]) : new Set<string>()
                                     let r32Pts = 0; for (const t of uR32Set) if (realR32Set.has(t)) r32Pts += 6
-                                    const uR16Set = bracket ? new Set<string>(r32Ms.map((_, i2) => bracket.get(`ko-r32-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    const uR16Set = bracket ? new Set<string>(Array.from({length:16}, (_, i2) => bracket.get(`ko-r32-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
                                     let r16Pts = 0; for (const t of uR16Set) if (realR16Set.has(t)) r16Pts += 10
-                                    const uQfSet = bracket ? new Set<string>(r16Ms.map((_, i2) => bracket.get(`ko-r16-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    const uQfSet = bracket ? new Set<string>(Array.from({length:8},  (_, i2) => bracket.get(`ko-r16-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
                                     let qfPts = 0; for (const t of uQfSet) if (realQfSet.has(t)) qfPts += 14
-                                    const uSfSet = bracket ? new Set<string>(qfMs.map((_, i2) => bracket.get(`ko-qf-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
+                                    const uSfSet = bracket ? new Set<string>(Array.from({length:4},  (_, i2) => bracket.get(`ko-qf-${i2}`)).filter(Boolean) as string[]) : new Set<string>()
                                     let sfPts = 0; for (const t of uSfSet) if (realSfSet.has(t)) sfPts += 18
                                     let finalPosPts = 0
                                     if (realFinals.champion && pfinals.champion === realFinals.champion) finalPosPts += 40
