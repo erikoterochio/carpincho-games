@@ -3469,33 +3469,146 @@ export default function TournamentPage() {
                                     if (realFinals.runnerUp && pfinals.runnerUp === realFinals.runnerUp) finalPosPts += 35
                                     if (realFinals.third    && pfinals.third    === realFinals.third)    finalPosPts += 30
                                     if (realFinals.fourth   && pfinals.fourth   === realFinals.fourth)   finalPosPts += 25
-                                    const bdRows = [
-                                      { label: 'Partidos (fase grupos)',     pts: groupMatchPts },
-                                      { label: 'Posición de grupos',         pts: groupOrderPts },
-                                      { label: 'Clasificados 16avos',        pts: r32Pts },
-                                      { label: 'Clasificados 8vos',          pts: r16Pts },
-                                      { label: 'Clasificados Cuartos',       pts: qfPts },
-                                      { label: 'Clasificados Semis',         pts: sfPts },
-                                      { label: 'Posiciones finales',         pts: finalPosPts },
-                                    ]
-                                    const bdTotal = bdRows.reduce((s, r) => s + r.pts, 0)
+                                    const bdTotal = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
+                                    const auditPill = (team: string, inReal: boolean, pending: boolean) => (
+                                      <span key={team} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: FONT_NORMAL,
+                                        background: pending ? '#f3f4f6' : inReal ? '#dcfce7' : '#fee2e2',
+                                        color: pending ? MUTED : inReal ? '#15803d' : '#dc2626' }}>
+                                        {abbrev(team)}
+                                      </span>
+                                    )
+                                    const doneGroupWithPick = groupMs
+                                      .filter(m => DONE_ST.has(m.status) && m.home_score !== null && userPicks.some(pk => pk.match_id === m.id))
+                                      .sort((a, b) => a.sort_order - b.sort_order)
                                     return (
-                                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                                        <tbody>
-                                          {bdRows.map(({ label, pts }) => (
-                                            <tr key={label} style={{ borderTop: `1px solid ${BORDER}` }}>
-                                              <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, color: TEXT }}>{label}</td>
-                                              <td style={{ padding: '6px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, color: pts > 0 ? '#10b981' : MUTED }}>
-                                                {pts > 0 ? `+${pts}` : '—'}
-                                              </td>
-                                            </tr>
-                                          ))}
-                                          <tr style={{ borderTop: `2px solid ${TEXT}` }}>
-                                            <td style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E I</td>
-                                            <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{bdTotal}</td>
-                                          </tr>
-                                        </tbody>
-                                      </table>
+                                      <div style={{ fontSize: 12, fontFamily: FONT_NORMAL }}>
+                                        {/* Group matches */}
+                                        <div style={{ marginBottom: 10 }}>
+                                          <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>PARTIDOS GRUPOS</span>
+                                            <span style={{ color: groupMatchPts > 0 ? '#10b981' : MUTED }}>+{groupMatchPts}</span>
+                                          </div>
+                                          {doneGroupWithPick.length > 0 ? (
+                                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                              <tbody>
+                                                {doneGroupWithPick.map(m => {
+                                                  const pk = userPicks.find(pk => pk.match_id === m.id)!
+                                                  const score = calcScore(pk, m) ?? 0
+                                                  const sc = score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#65a30d' : score >= 2 ? '#d97706' : '#ef4444'
+                                                  return (
+                                                    <tr key={m.id}>
+                                                      <td style={{ padding: '1px 4px 1px 0', color: MUTED, whiteSpace: 'nowrap', width: '30%' }}>{abbrev(m.home_team)}-{abbrev(m.away_team)}</td>
+                                                      <td style={{ padding: '1px 4px', color: TEXT, whiteSpace: 'nowrap' }}>{m.home_score}-{m.away_score}</td>
+                                                      <td style={{ padding: '1px 4px', color: MUTED, whiteSpace: 'nowrap' }}>{pk.home_score}-{pk.away_score}</td>
+                                                      <td style={{ padding: '1px 0 1px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, color: sc, whiteSpace: 'nowrap' }}>{score > 0 ? `+${score}` : '—'}</td>
+                                                    </tr>
+                                                  )
+                                                })}
+                                              </tbody>
+                                            </table>
+                                          ) : <span style={{ color: MUTED, fontSize: 11 }}>—</span>}
+                                        </div>
+
+                                        {/* Posición de grupos */}
+                                        {groupOrderPts > 0 && (
+                                          <div style={{ marginBottom: 10 }}>
+                                            <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                              <span>POSICIÓN DE GRUPOS</span>
+                                              <span style={{ color: '#10b981' }}>+{groupOrderPts}</span>
+                                            </div>
+                                            {GROUPS.filter(g => {
+                                              const predicted = gs?.get(g)?.map(t => t.name) ?? []
+                                              const actual = realGroupOrderAll[g] ?? []
+                                              return finishedGroupsAll.has(g) && actual.length === 4 && predicted.length === 4 && actual.every((t, k) => t === predicted[k])
+                                            }).map(g => (
+                                              <div key={g} style={{ fontSize: 11, color: '#15803d' }}>Grupo {g} ✓ +6</div>
+                                            ))}
+                                          </div>
+                                        )}
+
+                                        {/* Clasificados 16avos */}
+                                        <div style={{ marginBottom: 10 }}>
+                                          <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>CLASIFICADOS 16AVOS</span>
+                                            <span style={{ color: r32Pts > 0 ? '#10b981' : MUTED }}>+{r32Pts}</span>
+                                          </div>
+                                          {uR32Set.size > 0 ? (
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                              {Array.from(uR32Set).map(t => auditPill(t, realR32Set.has(t), realR32Set.size === 0))}
+                                            </div>
+                                          ) : <span style={{ color: MUTED, fontSize: 11 }}>—</span>}
+                                        </div>
+
+                                        {/* 8vos */}
+                                        {uR16Set.size > 0 && (
+                                          <div style={{ marginBottom: 10 }}>
+                                            <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                              <span>CLASIF. 8VOS</span>
+                                              <span style={{ color: r16Pts > 0 ? '#10b981' : MUTED }}>+{r16Pts}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                              {Array.from(uR16Set).map(t => auditPill(t, realR16Set.has(t), realR16Set.size === 0))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Cuartos */}
+                                        {uQfSet.size > 0 && (
+                                          <div style={{ marginBottom: 10 }}>
+                                            <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                              <span>CLASIF. CUARTOS</span>
+                                              <span style={{ color: qfPts > 0 ? '#10b981' : MUTED }}>+{qfPts}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                              {Array.from(uQfSet).map(t => auditPill(t, realQfSet.has(t), realQfSet.size === 0))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Semis */}
+                                        {uSfSet.size > 0 && (
+                                          <div style={{ marginBottom: 10 }}>
+                                            <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                              <span>CLASIF. SEMIS</span>
+                                              <span style={{ color: sfPts > 0 ? '#10b981' : MUTED }}>+{sfPts}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                                              {Array.from(uSfSet).map(t => auditPill(t, realSfSet.has(t), realSfSet.size === 0))}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Posiciones finales */}
+                                        {(pfinals.champion || pfinals.runnerUp || pfinals.third || pfinals.fourth) && (
+                                          <div style={{ marginBottom: 10 }}>
+                                            <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                              <span>POSICIONES FINALES</span>
+                                              <span style={{ color: finalPosPts > 0 ? '#10b981' : MUTED }}>+{finalPosPts}</span>
+                                            </div>
+                                            {([
+                                              { label: '🥇', pred: pfinals.champion, real: realFinals.champion, pts: 40 },
+                                              { label: '🥈', pred: pfinals.runnerUp, real: realFinals.runnerUp, pts: 35 },
+                                              { label: '🥉', pred: pfinals.third,    real: realFinals.third,    pts: 30 },
+                                              { label: '4°', pred: pfinals.fourth,   real: realFinals.fourth,   pts: 25 },
+                                            ] as const).filter(r => r.pred).map(r => {
+                                              const match = r.real && r.pred === r.real
+                                              return (
+                                                <div key={r.label} style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '1px 0', fontSize: 11 }}>
+                                                  <span style={{ width: 20 }}>{r.label}</span>
+                                                  <span style={{ color: r.real ? (match ? '#15803d' : '#dc2626') : TEXT }}>{abbrev(r.pred!) ?? '?'}</span>
+                                                  {r.real ? <span style={{ color: MUTED, fontSize: 9 }}>→ {abbrev(r.real!)} {match ? `✓ +${r.pts}` : '✗'}</span> : <span style={{ color: MUTED, fontSize: 9 }}>pendiente</span>}
+                                                </div>
+                                              )
+                                            })}
+                                          </div>
+                                        )}
+
+                                        {/* Total */}
+                                        <div style={{ borderTop: `2px solid ${TEXT}`, paddingTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                          <span style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E I</span>
+                                          <span style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{bdTotal}</span>
+                                        </div>
+                                      </div>
                                     )
                                   })()}
                                 </div>
