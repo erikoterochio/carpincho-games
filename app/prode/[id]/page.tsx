@@ -3310,6 +3310,8 @@ export default function TournamentPage() {
                 {puntajesEtapa === 'e2' && (() => {
                   const DONE_ST2 = new Set(['FT', 'AET', 'PEN'])
                   const doneKoMs = koMatches.filter(m => DONE_ST2.has(m.status) && m.home_score !== null)
+                  const koOrdered2 = [...r32Ms, ...r16Ms, ...qfMs, ...sfMs, ...thirdMs, ...finalMs]
+                  const stageLabel2: Record<string, string> = { r32: '16avos', r16: '8vos', qf: 'QF', sf: 'Semi', '3rd': '3°', final: 'Final' }
                   const e2Totals = [...participants]
                     .map(p => {
                       const myPicks = allE2Picks.filter(pk => pk.user_id === p.user_id)
@@ -3318,7 +3320,7 @@ export default function TournamentPage() {
                         const pk = myPicks.find(pk => pk.match_id === m.id)
                         if (pk) total += calcScore(pk, m) ?? 0
                       }
-                      return { p, total }
+                      return { p, total, myPicks }
                     })
                     .sort((a, b) => b.total - a.total)
                   return (
@@ -3328,20 +3330,64 @@ export default function TournamentPage() {
                         <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
                         <div style={{ width: 60, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>E II</div>
                       </div>
-                      {e2Totals.map(({ p, total }, i) => {
+                      {e2Totals.map(({ p, total, myPicks }, i) => {
                         const isMe = p.user_id === user?.id
-                        const name = p.profiles?.nombre ?? p.profiles?.username ?? '?'
+                        const name = p.profiles?.nombre || p.profiles?.username || '?'
+                        const isExpanded = expandedUserId === p.user_id
+                        const matchRows = koOrdered2
+                          .filter(m => myPicks.some(pk => pk.match_id === m.id) || DONE_ST2.has(m.status))
+                          .map(m => {
+                            const pk = myPicks.find(pk => pk.match_id === m.id)
+                            const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
+                            const score = pk && hasResult ? calcScore(pk, m) : null
+                            return { m, pk, score }
+                          })
                         return (
-                          <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${BORDER}`, background: isMe ? '#fff8f8' : '#fff' }}>
-                            <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
-                              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                          <div key={p.user_id}>
+                            <div className="lb-row" onClick={() => setExpandedUserId(isExpanded ? null : p.user_id)} style={{ cursor: 'pointer' }}>
+                              <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
+                                {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                              </div>
+                              <div style={{ flex: 1, fontSize: 13, fontWeight: isMe ? 900 : 400, color: isMe ? RED : TEXT, fontFamily: isMe ? FONT_BLACK : FONT_NORMAL }}>
+                                {name}{isMe ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+                                <div style={{ width: 52, textAlign: 'center', fontSize: 15, fontWeight: 900, color: doneKoMs.length > 0 ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                                  {doneKoMs.length === 0 ? '—' : total}
+                                </div>
+                                <span style={{ fontSize: 10, color: MUTED, lineHeight: 1, marginLeft: 2 }}>{isExpanded ? '▲' : '▼'}</span>
+                              </div>
                             </div>
-                            <div style={{ flex: 1, fontSize: 13, fontWeight: isMe ? 900 : 400, color: isMe ? RED : TEXT, fontFamily: isMe ? FONT_BLACK : FONT_NORMAL }}>
-                              {name}{isMe ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
-                            </div>
-                            <div style={{ width: 60, textAlign: 'center', fontSize: 15, fontWeight: 900, color: doneKoMs.length > 0 ? TEXT : MUTED, fontFamily: FONT_COND }}>
-                              {doneKoMs.length === 0 ? '—' : total}
-                            </div>
+                            {isExpanded && (
+                              <div style={{ background: '#f7f8fa', borderTop: `1px solid ${BORDER}`, padding: '10px 14px 14px' }}>
+                                {matchRows.length === 0 ? (
+                                  <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Sin predicciones</div>
+                                ) : (
+                                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                    <tbody>
+                                      {matchRows.map(({ m, pk, score }) => {
+                                        const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
+                                        const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
+                                        return (
+                                          <tr key={m.id} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                            <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, whiteSpace: 'nowrap' }}>{stageLabel2[m.stage] ?? m.stage}</td>
+                                            <td style={{ padding: '6px 4px', fontFamily: FONT_NORMAL, color: TEXT }}>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</td>
+                                            <td style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: pk ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{pk ? `${pk.home_score}-${pk.away_score}` : '—'}</td>
+                                            <td style={{ padding: '6px 2px', textAlign: 'center', color: MUTED, fontSize: 10 }}>→</td>
+                                            <td style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, color: hasResult ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{hasResult ? `${m.home_score}-${m.away_score}` : '—'}</td>
+                                            <td style={{ padding: '6px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, color, whiteSpace: 'nowrap' }}>{score !== null ? `+${score}` : '—'}</td>
+                                          </tr>
+                                        )
+                                      })}
+                                      <tr style={{ borderTop: `2px solid ${TEXT}` }}>
+                                        <td colSpan={5} style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E II</td>
+                                        <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{total}</td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )
                       })}
