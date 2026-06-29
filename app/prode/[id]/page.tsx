@@ -405,7 +405,7 @@ export default function TournamentPage() {
   const wasLiveRef = useRef(false)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
-  const [predTab, setPredTab] = useState<'partidos'|'grupos'>('partidos')
+  const [predTab, setPredTab] = useState<'partidos'|'grupos'|'eliminatorias'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
   const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
@@ -4319,7 +4319,7 @@ export default function TournamentPage() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               {/* Sub-tab nav */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                {(['partidos', 'grupos'] as const).map(k => (
+                {(['partidos', 'grupos', 'eliminatorias'] as const).map(k => (
                   <button
                     key={k}
                     onClick={() => setPredTab(k)}
@@ -4329,7 +4329,7 @@ export default function TournamentPage() {
                       borderRadius: 20, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer',
                     }}
                   >
-                    {{ partidos: 'Partidos', grupos: 'Orden de grupos' }[k]}
+                    {{ partidos: 'Partidos', grupos: 'Orden de grupos', eliminatorias: 'Bracket' }[k]}
                   </button>
                 ))}
               </div>
@@ -4395,6 +4395,126 @@ export default function TournamentPage() {
                   )}
                 </Card>
               )}
+
+              {/* ── Bracket — equipos predichos por jugador por ronda ── */}
+              {predTab === 'eliminatorias' && (() => {
+                const getTeamsR32 = (uid: string): string[] => {
+                  const c = perParticipantClassified.get(uid)
+                  if (!c) return []
+                  return [...new Set([...c.firsts, ...c.seconds, ...c.thirds].filter(Boolean) as string[])]
+                }
+                const getTeamsR16 = (uid: string): string[] =>
+                  Array.from({length: 16}, (_, i) => perParticipantBracket.get(uid)?.get(`ko-r32-${i}`)).filter(Boolean) as string[]
+                const getTeamsQf = (uid: string): string[] =>
+                  Array.from({length: 8},  (_, i) => perParticipantBracket.get(uid)?.get(`ko-r16-${i}`)).filter(Boolean) as string[]
+                const getTeamsSf = (uid: string): string[] =>
+                  Array.from({length: 4},  (_, i) => perParticipantBracket.get(uid)?.get(`ko-qf-${i}`)).filter(Boolean) as string[]
+
+                const rounds: { title: string; realSet: Set<string>; getTeams: (uid: string) => string[] }[] = [
+                  { title: '16avos — Clasificados de Grupos', realSet: realR32Set, getTeams: getTeamsR32 },
+                  { title: '8vos — Ganadores de 16avos',      realSet: realR16Set, getTeams: getTeamsR16 },
+                  { title: 'Cuartos — Ganadores de 8vos',     realSet: realQfSet,  getTeams: getTeamsQf  },
+                  { title: 'Semis — Ganadores de Cuartos',    realSet: realSfSet,  getTeams: getTeamsSf  },
+                ]
+
+                const thStyle = { padding: '8px 12px', textAlign: 'left' as const, color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, whiteSpace: 'nowrap' as const }
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {rounds.map(({ title, realSet, getTeams }) => {
+                      const roundKnown = realSet.size > 0
+                      return (
+                        <Card key={title}>
+                          <SectionTitle>{title}</SectionTitle>
+                          <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                            <thead>
+                              <tr style={{ background: TEXT }}>
+                                <th style={{ ...thStyle, minWidth: 80 }}>Jugador</th>
+                                <th style={{ ...thStyle, color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9 }}>Equipos predichos</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderedParticipants.map(p => {
+                                const teams = getTeams(p.user_id)
+                                const isMe = p.user_id === user?.id
+                                const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
+                                return (
+                                  <tr key={p.user_id} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                                    <td style={{ padding: '8px 12px', fontFamily: FONT_BLACK, fontSize: 10, color: isMe ? RED : TEXT, whiteSpace: 'nowrap', verticalAlign: 'top' }}>
+                                      {name}{isMe ? ' ★' : ''}
+                                    </td>
+                                    <td style={{ padding: '8px 12px' }}>
+                                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 8px' }}>
+                                        {teams.length === 0
+                                          ? <span style={{ fontSize: 10, color: MUTED, fontFamily: FONT_NORMAL }}>—</span>
+                                          : teams.map(t => (
+                                              <span key={t} style={{ fontSize: 10, fontFamily: FONT_NORMAL, fontWeight: 600, color: roundKnown ? (realSet.has(t) ? '#16a34a' : RED) : '#ca8a04' }}>
+                                                {abbrev(t)}
+                                              </span>
+                                            ))
+                                        }
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )
+                              })}
+                            </tbody>
+                          </table>
+                        </Card>
+                      )
+                    })}
+
+                    <Card>
+                      <SectionTitle>Posiciones Finales</SectionTitle>
+                      <table style={{ borderCollapse: 'collapse', width: '100%' }}>
+                        <thead>
+                          <tr style={{ background: TEXT }}>
+                            <th style={{ ...thStyle, minWidth: 80 }}>Jugador</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: '#fbbf24', minWidth: 60 }}>Campeón</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.7)', minWidth: 60 }}>Sub</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.6)', minWidth: 60 }}>3ero</th>
+                            <th style={{ ...thStyle, textAlign: 'center' as const, color: 'rgba(255,255,255,0.5)', minWidth: 60 }}>4to</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ background: '#f8fafc', borderBottom: `2px solid ${BORDER}` }}>
+                            <td style={{ padding: '6px 12px', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED }}>REAL</td>
+                            {([realFinals.champion, realFinals.runnerUp, realFinals.third, realFinals.fourth] as const).map((v, i) => (
+                              <td key={i} style={{ padding: '6px 8px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: v ? TEXT : MUTED }}>
+                                {v ? abbrev(v) : '—'}
+                              </td>
+                            ))}
+                          </tr>
+                          {orderedParticipants.map(p => {
+                            const pf = perParticipantFinals.get(p.user_id)
+                            const vals = [pf?.champion ?? null, pf?.runnerUp ?? null, pf?.third ?? null, pf?.fourth ?? null]
+                            const realVals = [realFinals.champion, realFinals.runnerUp, realFinals.third, realFinals.fourth]
+                            const isMe = p.user_id === user?.id
+                            const name = p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')
+                            return (
+                              <tr key={p.user_id} style={{ background: '#fff', borderBottom: `1px solid ${BORDER}` }}>
+                                <td style={{ padding: '8px 12px', fontFamily: FONT_BLACK, fontSize: 10, color: isMe ? RED : TEXT, whiteSpace: 'nowrap' }}>
+                                  {name}{isMe ? ' ★' : ''}
+                                </td>
+                                {vals.map((v, i) => {
+                                  const real = realVals[i]
+                                  const isCorrect = real && v ? v === real : null
+                                  const color = v ? (isCorrect === true ? '#16a34a' : isCorrect === false ? RED : '#ca8a04') : MUTED
+                                  return (
+                                    <td key={i} style={{ padding: '6px 8px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, fontWeight: isMe ? 700 : 400 }}>
+                                      {v ? abbrev(v) : '—'}
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </Card>
+                  </div>
+                )
+              })()}
 
               {/* ── Grupos — orden predicho por jugador ── */}
               {predTab === 'grupos' && (
