@@ -868,11 +868,40 @@ export default function TournamentPage() {
     return !name.match(/winner|runner[\s-]up|gan[.\s]|gan\s+p\d|3rd\s+group|\?/i)
   }
 
-  // Real teams confirmed at each KO stage (only available after each round is scheduled/played)
+  // Real teams confirmed at each KO stage — derived from both:
+  // 1. completed previous-round match results (works even when next-round fixture names are still placeholders)
+  // 2. actual next-round fixture team names (handles PEN advancement once synced)
   const realR32Set = useMemo(() => new Set(r32Ms.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName)), [r32Ms])
-  const realR16Set = useMemo(() => new Set(r16Ms.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName)), [r16Ms])
-  const realQfSet  = useMemo(() => new Set(qfMs.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName)),  [qfMs])
-  const realSfSet  = useMemo(() => new Set(sfMs.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName)),  [sfMs])
+  const realR16Set = useMemo(() => {
+    const DONE_KO = new Set(['FT','AET','PEN'])
+    const s = new Set<string>(r16Ms.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName))
+    for (const m of r32Ms) {
+      if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
+      if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
+      else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+    }
+    return s
+  }, [r32Ms, r16Ms])
+  const realQfSet  = useMemo(() => {
+    const DONE_KO = new Set(['FT','AET','PEN'])
+    const s = new Set<string>(qfMs.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName))
+    for (const m of r16Ms) {
+      if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
+      if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
+      else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+    }
+    return s
+  }, [r16Ms, qfMs])
+  const realSfSet  = useMemo(() => {
+    const DONE_KO = new Set(['FT','AET','PEN'])
+    const s = new Set<string>(sfMs.flatMap(m => [m.home_team, m.away_team]).filter(isRealTeamName))
+    for (const m of qfMs) {
+      if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
+      if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
+      else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+    }
+    return s
+  }, [qfMs, sfMs])
 
   // Team → flag URL map, built from all match data
   const teamFlagMap = useMemo(() => {
@@ -1344,9 +1373,19 @@ export default function TournamentPage() {
     const qfMs2  = matches.filter(m => m.stage === 'qf').sort((a, b) => a.sort_order - b.sort_order)
     const sfMs2  = matches.filter(m => m.stage === 'sf').sort((a, b) => a.sort_order - b.sort_order)
     const r32Ms2 = matches.filter(m => m.stage === 'r32').sort((a, b) => a.sort_order - b.sort_order)
-    const realR16Set = new Set<string>(r16Ms2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
-    const realQfSet  = new Set<string>(qfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
-    const realSfSet  = new Set<string>(sfMs2.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
+    const DONE_KO2 = new Set(['FT','AET','PEN'])
+    const buildRealKoSet = (prevMs: typeof matches, nextMs: typeof matches) => {
+      const s = new Set<string>(nextMs.flatMap(m => [m.home_team, m.away_team]).filter(isReal))
+      for (const m of prevMs) {
+        if (!DONE_KO2.has(m.status) || m.home_score === null || m.away_score === null) continue
+        if (m.home_score > m.away_score && isReal(m.home_team)) s.add(m.home_team)
+        else if (m.away_score > m.home_score && isReal(m.away_team)) s.add(m.away_team)
+      }
+      return s
+    }
+    const realR16Set = buildRealKoSet(r32Ms2, r16Ms2)
+    const realQfSet  = buildRealKoSet(r16Ms2, qfMs2)
+    const realSfSet  = buildRealKoSet(qfMs2, sfMs2)
     let r16Pts = 0, qfPts = 0, sfPts = 0
     for (const t of myR16Set) if (realR16Set.has(t)) r16Pts += 10
     for (const t of myQfSet)  if (realQfSet.has(t))  qfPts += 14
