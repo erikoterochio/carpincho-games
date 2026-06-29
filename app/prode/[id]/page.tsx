@@ -2957,25 +2957,67 @@ export default function TournamentPage() {
             const EtapaNav = () => (
               <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                 {(['e1', 'e2'] as const).map(key => (
-                  <button key={key} onClick={() => key !== 'e2' && setMisptosEtapa(key)} style={{
+                  <button key={key} onClick={() => setMisptosEtapa(key)} style={{
                     padding: '6px 16px', border: 'none', borderRadius: 8,
-                    cursor: key === 'e2' ? 'default' : 'pointer',
+                    cursor: 'pointer',
                     fontFamily: misptosEtapa === key ? FONT_BLACK : FONT_NORMAL,
                     fontWeight: misptosEtapa === key ? 900 : 400, fontSize: 13,
                     background: misptosEtapa === key ? TEXT : '#e5e7eb',
                     color: misptosEtapa === key ? '#fff' : MUTED,
-                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II (próximamente)'}</button>
+                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II'}</button>
                 ))}
               </div>
             )
             return (
               <div style={{ maxWidth: 820, margin: '0 auto' }}>
                 <EtapaNav />
-                {misptosEtapa === 'e2' && (
-                  <Card style={{ textAlign: 'center', padding: 32 }}>
-                    <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>Etapa II próximamente.</div>
-                  </Card>
-                )}
+                {misptosEtapa === 'e2' && (() => {
+                  const DONE_ST2 = new Set(['FT', 'AET', 'PEN'])
+                  const myE2 = allE2Picks.filter(pk => pk.user_id === user?.id)
+                  const koOrdered = [...r32Ms, ...r16Ms, ...qfMs, ...sfMs, ...thirdMs, ...finalMs]
+                  const stageLabel2: Record<string, string> = { r32: '16avos', r16: '8vos', qf: 'QF', sf: 'Semi', '3rd': '3°', final: 'Final' }
+                  let totalE2 = 0
+                  const rows = koOrdered.filter(m => myE2.some(pk => pk.match_id === m.id) || DONE_ST2.has(m.status))
+                    .map(m => {
+                      const pk = myE2.find(p => p.match_id === m.id)
+                      const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
+                      const score = pk && hasResult ? calcScore(pk, m) : null
+                      if (score !== null) totalE2 += score
+                      return { m, pk, score }
+                    })
+                  return (
+                    <Card style={{ padding: 0, overflow: 'hidden', maxWidth: 520, margin: '0 auto' }}>
+                      <div style={{ padding: '12px 18px', background: TEXT }}>
+                        <div style={{ color: '#fff', fontSize: 16, fontWeight: 900, fontFamily: FONT_BLACK }}>Mis Puntos · Etapa II</div>
+                      </div>
+                      {rows.length === 0 ? (
+                        <div style={{ padding: '24px', textAlign: 'center', fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>Sin predicciones de eliminación todavía.</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                          <tbody>
+                            {rows.map(({ m, pk, score }) => {
+                              const hasResult = DONE_ST2.has(m.status) && m.home_score !== null
+                              const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
+                              return (
+                                <tr key={m.id} style={{ borderTop: `1px solid ${BORDER}` }}>
+                                  <td style={{ padding: '8px 12px', fontFamily: FONT_NORMAL, fontSize: 10, color: MUTED, whiteSpace: 'nowrap' }}>{stageLabel2[m.stage] ?? m.stage}</td>
+                                  <td style={{ padding: '8px 4px', fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT }}>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: pk ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{pk ? `${pk.home_score}-${pk.away_score}` : '—'}</td>
+                                  <td style={{ padding: '8px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 11, color: hasResult ? TEXT : MUTED, whiteSpace: 'nowrap' }}>{hasResult ? `${m.home_score}-${m.away_score}` : '—'}</td>
+                                  <td style={{ padding: '8px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color, whiteSpace: 'nowrap' }}>{score !== null ? `+${score}` : '—'}</td>
+                                </tr>
+                              )
+                            })}
+                            <tr style={{ borderTop: `2px solid ${TEXT}` }}>
+                              <td colSpan={4} style={{ padding: '12px 18px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 14, color: TEXT }}>TOTAL E II</td>
+                              <td style={{ padding: '12px 18px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 22, color: RED }}>{totalE2}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      )}
+                    </Card>
+                  )
+                })()}
                 {misptosEtapa === 'e1' && <>
                 <SubNav />
 
@@ -3239,14 +3281,14 @@ export default function TournamentPage() {
             const PEtapaNav = () => (
               <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                 {(['e1', 'e2'] as const).map(key => (
-                  <button key={key} onClick={() => key !== 'e2' && setPuntajesEtapa(key)} style={{
+                  <button key={key} onClick={() => setPuntajesEtapa(key)} style={{
                     padding: '6px 16px', border: 'none', borderRadius: 8,
-                    cursor: key === 'e2' ? 'default' : 'pointer',
+                    cursor: 'pointer',
                     fontFamily: puntajesEtapa === key ? FONT_BLACK : FONT_NORMAL,
                     fontWeight: puntajesEtapa === key ? 900 : 400, fontSize: 13,
                     background: puntajesEtapa === key ? TEXT : '#e5e7eb',
                     color: puntajesEtapa === key ? '#fff' : MUTED,
-                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II (próximamente)'}</button>
+                  }}>{key === 'e1' ? 'Etapa I' : 'Etapa II'}</button>
                 ))}
               </div>
             )
@@ -3265,11 +3307,47 @@ export default function TournamentPage() {
             return (
               <div style={{ maxWidth: 820, margin: '0 auto' }}>
                 <PEtapaNav />
-                {puntajesEtapa === 'e2' && (
-                  <Card style={{ textAlign: 'center', padding: 32 }}>
-                    <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_NORMAL }}>Etapa II próximamente.</div>
-                  </Card>
-                )}
+                {puntajesEtapa === 'e2' && (() => {
+                  const DONE_ST2 = new Set(['FT', 'AET', 'PEN'])
+                  const doneKoMs = koMatches.filter(m => DONE_ST2.has(m.status) && m.home_score !== null)
+                  const e2Totals = [...participants]
+                    .map(p => {
+                      const myPicks = allE2Picks.filter(pk => pk.user_id === p.user_id)
+                      let total = 0
+                      for (const m of doneKoMs) {
+                        const pk = myPicks.find(pk => pk.match_id === m.id)
+                        if (pk) total += calcScore(pk, m) ?? 0
+                      }
+                      return { p, total }
+                    })
+                    .sort((a, b) => b.total - a.total)
+                  return (
+                    <Card style={{ padding: 0, overflow: 'hidden' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', padding: '10px 18px', background: TEXT }}>
+                        <div style={{ width: 32, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>#</div>
+                        <div style={{ flex: 1, fontSize: 10, fontWeight: 900, color: '#fff', fontFamily: FONT_BLACK }}>JUGADOR</div>
+                        <div style={{ width: 60, textAlign: 'center', fontSize: 10, fontWeight: 900, color: '#aaa', fontFamily: FONT_BLACK }}>E II</div>
+                      </div>
+                      {e2Totals.map(({ p, total }, i) => {
+                        const isMe = p.user_id === user?.id
+                        const name = p.profiles?.nombre ?? p.profiles?.username ?? '?'
+                        return (
+                          <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', padding: '12px 18px', borderTop: `1px solid ${BORDER}`, background: isMe ? '#fff8f8' : '#fff' }}>
+                            <div style={{ width: 32, fontSize: 14, fontWeight: 900, fontFamily: FONT_COND, color: i === 0 ? GOLD : i < 3 ? MUTED : '#ccc' }}>
+                              {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}
+                            </div>
+                            <div style={{ flex: 1, fontSize: 13, fontWeight: isMe ? 900 : 400, color: isMe ? RED : TEXT, fontFamily: isMe ? FONT_BLACK : FONT_NORMAL }}>
+                              {name}{isMe ? ' (vos)' : ''}{p.user_id === tournament?.admin_id ? ' 👑' : ''}
+                            </div>
+                            <div style={{ width: 60, textAlign: 'center', fontSize: 15, fontWeight: 900, color: doneKoMs.length > 0 ? TEXT : MUTED, fontFamily: FONT_COND }}>
+                              {doneKoMs.length === 0 ? '—' : total}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </Card>
+                  )
+                })()}
                 {puntajesEtapa === 'e1' && <>
                   <PSubNav />
 
