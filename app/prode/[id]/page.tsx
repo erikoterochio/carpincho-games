@@ -3363,6 +3363,14 @@ export default function TournamentPage() {
                                   <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, textAlign: 'center', padding: '8px 0' }}>Sin predicciones</div>
                                 ) : (
                                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                                    <thead>
+                                      <tr style={{ borderBottom: `1px solid ${BORDER}` }}>
+                                        <th style={{ padding: '4px 4px', fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, textAlign: 'left', fontWeight: 400 }} colSpan={2}></th>
+                                        <th style={{ padding: '4px 4px', fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, textAlign: 'center', fontWeight: 400, whiteSpace: 'nowrap' }}>Real</th>
+                                        <th style={{ padding: '4px 4px', fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, textAlign: 'center', fontWeight: 400, whiteSpace: 'nowrap' }}>Predicho</th>
+                                        <th style={{ padding: '4px 4px', fontFamily: FONT_NORMAL, fontSize: 9, color: MUTED, textAlign: 'right', fontWeight: 400, whiteSpace: 'nowrap' }}>Pts</th>
+                                      </tr>
+                                    </thead>
                                     <tbody>
                                       {matchRows.map(({ m, pk, score }) => {
                                         const color = score === null ? MUTED : score >= 12 ? '#15803d' : score >= 7 ? '#16a34a' : score >= 5 ? '#ca8a04' : score >= 2 ? '#f97316' : RED
@@ -3376,10 +3384,6 @@ export default function TournamentPage() {
                                           </tr>
                                         )
                                       })}
-                                      <tr style={{ borderTop: `2px solid ${TEXT}` }}>
-                                        <td colSpan={4} style={{ padding: '8px 4px', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT }}>TOTAL E II</td>
-                                        <td style={{ padding: '8px 4px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 18, color: RED }}>{total}</td>
-                                      </tr>
                                     </tbody>
                                   </table>
                                 )}
