@@ -131,9 +131,18 @@ export async function GET(
   const allGroupsInSt = GROUPS.every(g => (realStMap[g]?.length ?? 0) >= 4)
   const realThirdsFromSt: string[] = allGroupsInSt ? computeBestThirds(realStMap, FIFA_RANKS, 8).map((t: any) => t.name) : []
   const realR32Set = new Set<string>([...realTopTwo, ...realThirdsFromSt])
-  const realR16Set = new Set<string>(r16Ms.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
-  const realQfSet  = new Set<string>(qfMs.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
-  const realSfSet  = new Set<string>(sfMs.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
+  const buildRealKoSet = (prevRound: any[], nextRound: any[]) => {
+    const s = new Set<string>(nextRound.flatMap((m: any) => [m.home_team, m.away_team]).filter(isRealTeamName))
+    for (const m of prevRound) {
+      if (!DONE.has(m.status) || m.home_score === null || m.away_score === null) continue
+      if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
+      else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+    }
+    return s
+  }
+  const realR16Set = buildRealKoSet(r32Ms, r16Ms)
+  const realQfSet  = buildRealKoSet(r16Ms, qfMs)
+  const realSfSet  = buildRealKoSet(qfMs, sfMs)
 
   // Real final positions
   const finalM = finalMs[0]
