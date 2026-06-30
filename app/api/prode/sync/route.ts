@@ -117,6 +117,8 @@ export async function POST() {
       group_name,
       home_score:   f.goals.home ?? null,
       away_score:   f.goals.away ?? null,
+      pen_home:     f.score?.penalty?.home ?? null,
+      pen_away:     f.score?.penalty?.away ?? null,
       status:       f.fixture.status.short,
       venue:        f.fixture.venue?.name
         ? `${f.fixture.venue.name}${f.fixture.venue.city ? `, (${f.fixture.venue.city})` : ''}`

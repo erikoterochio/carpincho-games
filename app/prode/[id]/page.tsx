@@ -142,6 +142,7 @@ type Match = {
   home_team_id: number; away_team_id: number
   kickoff: string; stage: string; group_name: string | null; sort_order: number
   home_score: number | null; away_score: number | null; status: string
+  pen_home: number | null; pen_away: number | null
   venue: string | null; elapsed?: number | null
 }
 type MatchEvent = {
@@ -879,6 +880,10 @@ export default function TournamentPage() {
       if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
       if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
       else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+      else if (m.status === 'PEN' && m.pen_home != null && m.pen_away != null) {
+        if (m.pen_home > m.pen_away && isRealTeamName(m.home_team)) s.add(m.home_team)
+        else if (m.pen_away > m.pen_home && isRealTeamName(m.away_team)) s.add(m.away_team)
+      }
     }
     return s
   }, [r32Ms, r16Ms])
@@ -889,6 +894,10 @@ export default function TournamentPage() {
       if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
       if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
       else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+      else if (m.status === 'PEN' && m.pen_home != null && m.pen_away != null) {
+        if (m.pen_home > m.pen_away && isRealTeamName(m.home_team)) s.add(m.home_team)
+        else if (m.pen_away > m.pen_home && isRealTeamName(m.away_team)) s.add(m.away_team)
+      }
     }
     return s
   }, [r16Ms, qfMs])
@@ -899,6 +908,10 @@ export default function TournamentPage() {
       if (!DONE_KO.has(m.status) || m.home_score === null || m.away_score === null) continue
       if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
       else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+      else if (m.status === 'PEN' && m.pen_home != null && m.pen_away != null) {
+        if (m.pen_home > m.pen_away && isRealTeamName(m.home_team)) s.add(m.home_team)
+        else if (m.pen_away > m.pen_home && isRealTeamName(m.away_team)) s.add(m.away_team)
+      }
     }
     return s
   }, [qfMs, sfMs])
@@ -1380,6 +1393,10 @@ export default function TournamentPage() {
         if (!DONE_KO2.has(m.status) || m.home_score === null || m.away_score === null) continue
         if (m.home_score > m.away_score && isReal(m.home_team)) s.add(m.home_team)
         else if (m.away_score > m.home_score && isReal(m.away_team)) s.add(m.away_team)
+        else if (m.status === 'PEN' && m.pen_home != null && m.pen_away != null) {
+          if (m.pen_home > m.pen_away && isReal(m.home_team)) s.add(m.home_team)
+          else if (m.pen_away > m.pen_home && isReal(m.away_team)) s.add(m.away_team)
+        }
       }
       return s
     }
