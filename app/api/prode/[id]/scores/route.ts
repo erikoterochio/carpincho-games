@@ -62,7 +62,7 @@ export async function GET(
 
   const [matchesRes, standingsRes] = await Promise.all([
     admin.from('prode_matches')
-      .select('id, home_team, away_team, home_flag, away_flag, home_score, away_score, status, stage, group_name, sort_order')
+      .select('id, home_team, away_team, home_flag, away_flag, home_score, away_score, pen_home, pen_away, status, stage, group_name, sort_order')
       .order('sort_order'),
     admin.from('prode_standings')
       .select('group_name, rank, team_name, played, win, draw, lose, goals_for, goals_against, goal_diff, points')
@@ -137,6 +137,10 @@ export async function GET(
       if (!DONE.has(m.status) || m.home_score === null || m.away_score === null) continue
       if (m.home_score > m.away_score && isRealTeamName(m.home_team)) s.add(m.home_team)
       else if (m.away_score > m.home_score && isRealTeamName(m.away_team)) s.add(m.away_team)
+      else if (m.status === 'PEN' && m.pen_home != null && m.pen_away != null) {
+        if (m.pen_home > m.pen_away && isRealTeamName(m.home_team)) s.add(m.home_team)
+        else if (m.pen_away > m.pen_home && isRealTeamName(m.away_team)) s.add(m.away_team)
+      }
     }
     return s
   }

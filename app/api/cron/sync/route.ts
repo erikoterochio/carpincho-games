@@ -88,6 +88,8 @@ export async function GET(request: NextRequest) {
       group_name,
       home_score:   f.goals.home ?? null,
       away_score:   f.goals.away ?? null,
+      pen_home:     f.score?.penalty?.home ?? null,
+      pen_away:     f.score?.penalty?.away ?? null,
       status:       f.fixture.status.short,
       venue:        f.fixture.venue?.name ?? null,
       sort_order:   sort_base + i,
