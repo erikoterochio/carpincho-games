@@ -721,6 +721,11 @@ export default function TournamentPage() {
     if (json.synced != null) {
       const parts = [`✓ ${json.synced} partidos`]
       if (json.standingsSynced) parts.push(`${json.standingsSynced} posiciones`)
+      if (json.stageBreakdown) {
+        const b = json.stageBreakdown as Record<string, number>
+        const ko = ['r32','r16','qf','sf','3rd','final'].filter(s => b[s]).map(s => `${s}:${b[s]}`).join(' ')
+        if (ko) parts.push(`[${ko}]`)
+      }
       setSyncMsg(parts.join(' · ') + ' sincronizados')
       const [{ data: ms }, { data: st }, { data: freshPicks }] = await Promise.all([
         supabase.from('prode_matches').select('*').order('sort_order'),

@@ -17,10 +17,10 @@ function parseRound(round: string, group?: string): { stage: string; group_name:
     if (m) return { stage: 'group', group_name: m[1].toUpperCase(), sort_base: 0 }
   }
   if (/Group Stage/i.test(round)) return { stage: 'group', group_name: null, sort_base: 0 }
-  if (/Round of 32/i.test(round))  return { stage: 'r32',   group_name: null, sort_base: 1000 }
-  if (/Round of 16/i.test(round))  return { stage: 'r16',   group_name: null, sort_base: 2000 }
-  if (/Quarter.final/i.test(round)) return { stage: 'qf',   group_name: null, sort_base: 3000 }
-  if (/Semi.final/i.test(round))   return { stage: 'sf',    group_name: null, sort_base: 4000 }
+  if (/Round of 32/i.test(round) || /1\/16.finals?/i.test(round))  return { stage: 'r32',   group_name: null, sort_base: 1000 }
+  if (/Round of 16/i.test(round) || /1\/8.finals?/i.test(round) || /last.?16/i.test(round))  return { stage: 'r16',   group_name: null, sort_base: 2000 }
+  if (/Quarter.final/i.test(round) || /1\/4.finals?/i.test(round)) return { stage: 'qf',   group_name: null, sort_base: 3000 }
+  if (/Semi.final/i.test(round) || /1\/2.finals?/i.test(round))   return { stage: 'sf',    group_name: null, sort_base: 4000 }
   if (/3rd place/i.test(round))    return { stage: '3rd',   group_name: null, sort_base: 5000 }
   if (/Final/i.test(round))        return { stage: 'final', group_name: null, sort_base: 6000 }
   return { stage: 'other', group_name: null, sort_base: 9000 }
