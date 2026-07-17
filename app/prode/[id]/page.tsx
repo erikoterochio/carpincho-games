@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { computeGroupStandings, computeBestThirds, computeThirdSlots } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
-import { REAL_SPECIALS } from '@/lib/prode-specials'
+import { REAL_SPECIALS, SPECIAL_PTS } from '@/lib/prode-specials'
 import { WC26_PLAYERS, WC26_TEAMS_ES } from '@/lib/wc26-players'
 
 const RED = '#D4001A'
@@ -169,6 +169,17 @@ const SPECIAL_LABELS: Array<{ key: string; label: string }> = [
   { key: 'revelacion',       label: 'Revelación' },
   { key: 'goleada_match_id', label: 'Mayor Goleada' },
 ]
+const SPECIALS_ONLY_LABELS: Record<string, string> = Object.fromEntries(
+  SPECIAL_LABELS.filter(f => f.key in REAL_SPECIALS).map(f => [f.key, f.label])
+)
+function specialDisplayValue(key: string, raw: string | null, matches: Match[]): string | null {
+  if (!raw) return null
+  if (key === 'goleada_match_id') {
+    const gm = matches.find(m => m.id === raw)
+    return gm ? `${abbrev(gm.home_team)} vs ${abbrev(gm.away_team)}` : raw
+  }
+  return raw
+}
 type KoMatchNode = {
   id: string; home: TeamStat | null; away: TeamStat | null
   homeLabel: string; awayLabel: string
@@ -1427,10 +1438,21 @@ export default function TournamentPage() {
     if (realRunnerUp && uRunnerUp === realRunnerUp) finalPosPts += 35
     if (realThird    && uThird    === realThird)    finalPosPts += 30
     if (realFourth   && uFourth   === realFourth)   finalPosPts += 25
-    const total = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
+
+    // Special awards (Balón de Oro, Botín de Oro, Revelación, etc.)
+    const mySpecials = allSpecials.find(s => s.user_id === user.id)
+    let specialsPts = 0
+    const specialsDetail = Object.entries(REAL_SPECIALS).map(([key, realValue]) => {
+      const myValue = mySpecials ? ((mySpecials as any)[key] as string | null | undefined) ?? null : null
+      const earned = !!(realValue && myValue === realValue)
+      if (earned) specialsPts += SPECIAL_PTS
+      return { key, myValue, realValue, earned: realValue ? earned : null }
+    })
+
+    const total = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts + specialsPts
     return {
       groupMatchPts, groupOrderPts,
-      r32Pts, r16Pts, qfPts, sfPts, finalPosPts, total,
+      r32Pts, r16Pts, qfPts, sfPts, finalPosPts, specialsPts, total,
       groupBonuses, myAllGroupSt, realGroupOrder, finishedGroups,
       myR32Set, realR32Set,
       myR16Set, realR16Set, r32Ms2,
@@ -1438,8 +1460,9 @@ export default function TournamentPage() {
       mySfSet,  realSfSet,  qfMs2, sfMs2,
       uChampion, uRunnerUp, uThird, uFourth,
       realChampion, realRunnerUp, realThird, realFourth,
+      specialsDetail,
     }
-  }, [predAllPicks, user?.id, matches, standings])
+  }, [predAllPicks, user?.id, matches, standings, allSpecials])
   const isKoLocked = !!tournament?.ko_lock_date && Date.now() >= new Date(tournament.ko_lock_date).getTime()
 
   const homeMatches = useMemo(() => {
@@ -3090,6 +3113,7 @@ export default function TournamentPage() {
                           { label: 'Clasificados a Cuartos',     pts: bd.qfPts },
                           { label: 'Clasificados a Semis',       pts: bd.sfPts },
                           { label: 'Posiciones finales',         pts: bd.finalPosPts },
+                          { label: 'Premios especiales',         pts: bd.specialsPts },
                         ].map(({ label, pts }) => (
                           <tr key={label} style={{ borderTop: `1px solid ${BORDER}` }}>
                             <td style={{ padding: '10px 18px', fontFamily: FONT_NORMAL, fontSize: 13, color: TEXT }}>{label}</td>
@@ -3227,8 +3251,6 @@ export default function TournamentPage() {
                     )
                   }
 
-                  const goleadaMatch = bonus.goleada_match_id ? matches.find(m => m.id === bonus.goleada_match_id) : null
-
                   return (
                     <>
                       <RoundSection title="16avos · Clasificados de grupos (+6 c/u)" rows={r32Rows} knownSize={bd.realR32Set.size} showIfEmpty />
@@ -3267,27 +3289,25 @@ export default function TournamentPage() {
                             <tr style={{ background: '#f7f8fa' }}>
                               <th style={{ padding: '5px 14px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Premio</th>
                               <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Mi elección</th>
+                              <th style={{ padding: '5px 10px', textAlign: 'left', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Real</th>
+                              <th style={{ padding: '5px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontSize: 9, color: MUTED, fontWeight: 900, textTransform: 'uppercase' }}>Pts</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {[
-                              { key: 'balon_oro',  label: 'Balón de Oro' },
-                              { key: 'guante_oro', label: 'Guante de Oro' },
-                              { key: 'botin_oro',  label: 'Botín de Oro' },
-                              { key: 'fair_play',  label: 'Fair Play' },
-                              { key: 'revelacion', label: 'Revelación' },
-                            ].map(({ key, label }) => (
-                              <tr key={key} style={{ borderTop: `1px solid ${BORDER}` }}>
-                                <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED }}>{label}</td>
-                                <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: bonus[key] ? TEXT : MUTED }}>{bonus[key] || '—'}</td>
-                              </tr>
-                            ))}
-                            <tr style={{ borderTop: `1px solid ${BORDER}` }}>
-                              <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED }}>Mayor Goleada</td>
-                              <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: goleadaMatch ? TEXT : MUTED }}>
-                                {goleadaMatch ? `${abbrev(goleadaMatch.home_team)} vs ${abbrev(goleadaMatch.away_team)}` : '—'}
-                              </td>
-                            </tr>
+                            {bd.specialsDetail.map(({ key, myValue, realValue, earned }) => {
+                              const pending = realValue === null
+                              return (
+                                <tr key={key} style={{ borderTop: `1px solid ${BORDER}`, opacity: pending ? 0.55 : 1 }}>
+                                  <td style={{ padding: '9px 14px', fontFamily: FONT_NORMAL, fontSize: 13, color: MUTED, whiteSpace: 'nowrap' }}>{SPECIALS_ONLY_LABELS[key]}</td>
+                                  <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: myValue ? TEXT : MUTED }}>{specialDisplayValue(key, myValue, matches) || '—'}</td>
+                                  <td style={{ padding: '9px 10px', fontFamily: FONT_NORMAL, fontSize: 13, color: pending ? MUTED : TEXT }}>{pending ? 'Pendiente' : specialDisplayValue(key, realValue, matches)}</td>
+                                  <td style={{ padding: '9px 14px', textAlign: 'right', fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13,
+                                    color: pending ? MUTED : earned ? '#10b981' : '#dc2626' }}>
+                                    {pending ? `+${SPECIAL_PTS}?` : earned ? `+${SPECIAL_PTS}` : '✗'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table>
                       </Card>
@@ -3512,7 +3532,15 @@ export default function TournamentPage() {
                                     if (realFinals.runnerUp && pfinals.runnerUp === realFinals.runnerUp) finalPosPts += 35
                                     if (realFinals.third    && pfinals.third    === realFinals.third)    finalPosPts += 30
                                     if (realFinals.fourth   && pfinals.fourth   === realFinals.fourth)   finalPosPts += 25
-                                    const bdTotal = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts
+                                    const pSpecials = allSpecials.find(s => s.user_id === p.user_id)
+                                    let specialsPts = 0
+                                    const specialsDetail = Object.entries(REAL_SPECIALS).map(([key, realValue]) => {
+                                      const myValue = pSpecials ? ((pSpecials as any)[key] as string | null | undefined) ?? null : null
+                                      const earned = !!(realValue && myValue === realValue)
+                                      if (earned) specialsPts += SPECIAL_PTS
+                                      return { key, myValue, realValue, earned: realValue ? earned : null }
+                                    })
+                                    const bdTotal = groupMatchPts + groupOrderPts + r32Pts + r16Pts + qfPts + sfPts + finalPosPts + specialsPts
                                     const auditPill = (team: string, inReal: boolean, pending: boolean) => (
                                       <span key={team} style={{ fontSize: 10, padding: '1px 5px', borderRadius: 3, fontFamily: FONT_NORMAL,
                                         background: pending ? '#f3f4f6' : inReal ? '#dcfce7' : '#fee2e2',
@@ -3645,6 +3673,25 @@ export default function TournamentPage() {
                                             })}
                                           </div>
                                         )}
+
+                                        {/* Premios especiales */}
+                                        <div style={{ marginBottom: 10 }}>
+                                          <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 10, color: MUTED, marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>PREMIOS ESPECIALES</span>
+                                            <span style={{ color: specialsPts > 0 ? '#10b981' : MUTED }}>+{specialsPts}</span>
+                                          </div>
+                                          {specialsDetail.map(({ key, myValue, realValue, earned }) => {
+                                            const pending = realValue === null
+                                            const display = specialDisplayValue(key, myValue, matches)
+                                            return (
+                                              <div key={key} style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '1px 0', fontSize: 11, opacity: pending ? 0.55 : 1 }}>
+                                                <span style={{ width: 80, color: MUTED }}>{SPECIALS_ONLY_LABELS[key]}</span>
+                                                <span style={{ color: display ? (pending ? TEXT : earned ? '#15803d' : '#dc2626') : MUTED }}>{display ?? '—'}</span>
+                                                {pending ? <span style={{ color: MUTED, fontSize: 9 }}>pendiente</span> : <span style={{ color: MUTED, fontSize: 9 }}>{earned ? `✓ +${SPECIAL_PTS}` : '✗'}</span>}
+                                              </div>
+                                            )
+                                          })}
+                                        </div>
 
                                         {/* Total */}
                                         <div style={{ borderTop: `2px solid ${TEXT}`, paddingTop: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -4944,7 +4991,16 @@ export default function TournamentPage() {
                           const realRaw = fromBracket
                             ? ({ champion: realFinals.champion, runner_up: realFinals.runnerUp, third_place: realFinals.third, fourth_place: realFinals.fourth } as Record<string, string|null|undefined>)[f.key] ?? null
                             : (REAL_SPECIALS[f.key] ?? null)
-                          const realDisplay = realRaw ? (fromBracket ? abbrev(realRaw) : realRaw) : ''
+                          const displayFor = (raw: string | null) => {
+                            if (!raw) return ''
+                            if (fromBracket) return abbrev(raw)
+                            if (f.key === 'goleada_match_id') {
+                              const gm = matches.find(m => m.id === raw)
+                              return gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : raw
+                            }
+                            return raw
+                          }
+                          const realDisplay = displayFor(realRaw)
                           return (
                             <tr key={f.key} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
                               <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: rowBg, fontSize: 10, whiteSpace: 'nowrap' }}>
@@ -4969,13 +5025,7 @@ export default function TournamentPage() {
                                   const sp = allSpecials.find(s => s.user_id === p.user_id)
                                   rawVal = sp ? ((sp as any)[f.key] as string | null | undefined) ?? null : null
                                 }
-                                const val = rawVal
-                                  ? (fromBracket
-                                      ? abbrev(rawVal)
-                                      : f.key === 'goleada_match_id'
-                                        ? (() => { const gm = matches.find(m => m.id === rawVal); return gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : rawVal! })()
-                                        : rawVal)
-                                  : ''
+                                const val = displayFor(rawVal)
                                 const isCorrect = realRaw && rawVal ? rawVal === realRaw : null
                                 const color = isCorrect === true ? '#16a34a' : isCorrect === false ? RED : (val ? TEXT : MUTED)
                                 return (

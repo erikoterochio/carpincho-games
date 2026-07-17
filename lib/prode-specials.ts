@@ -6,7 +6,7 @@ export const REAL_SPECIALS: Record<string, string | null> = {
   botin_oro: null,
   fair_play: null,
   revelacion: 'Cabo Verde',
-  goleada_match_id: null,
+  goleada_match_id: '1489387', // Canada 6-0 Qatar (fase de grupos)
 }
 
 export const SPECIAL_PTS = 15
