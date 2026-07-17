@@ -19,25 +19,21 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: tournament } = await supabase
-    .from('prode_tournaments')
-    .select('admin_id')
-    .eq('id', id)
-    .maybeSingle()
-
-  if (!tournament || tournament.admin_id !== user.id) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  }
-
   const admin = adminDB()
 
   // Fetch by participant user IDs (tournament_id may be null in legacy rows)
-  const { data: parts } = await admin
-    .from('prode_participants')
-    .select('user_id')
-    .eq('tournament_id', id)
+  const [{ data: tournament }, { data: parts }] = await Promise.all([
+    admin.from('prode_tournaments').select('admin_id').eq('id', id).maybeSingle(),
+    admin.from('prode_participants').select('user_id').eq('tournament_id', id),
+  ])
 
   const userIds = ((parts ?? []) as any[]).map(p => p.user_id)
+  const isParticipant = userIds.includes(user.id)
+
+  if (!tournament || (!isParticipant && tournament.admin_id !== user.id)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
   if (userIds.length === 0) return NextResponse.json([])
 
   const { data, error } = await admin

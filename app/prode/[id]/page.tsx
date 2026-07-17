@@ -383,7 +383,7 @@ export default function TournamentPage() {
   const [predAllPicks, setPredAllPicks] = useState<UserPick[]>([])
   const [allE2Picks, setAllE2Picks] = useState<UserPick[]>([])
   const [serverScores, setServerScores] = useState<Map<string, number> | null>(null)
-  const [adminSpecials, setAdminSpecials] = useState<AdminSpecial[]>([])
+  const [allSpecials, setAllSpecials] = useState<AdminSpecial[]>([])
   const [myEditPicks, setMyEditPicks] = useState<Record<string, {h:string;a:string}>>({})
   const [saveStatus, setSaveStatus] = useState<'idle'|'saving'|'saved'>('idle')
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -405,7 +405,7 @@ export default function TournamentPage() {
   const wasLiveRef = useRef(false)
   const [bonus, setBonus] = useState<Record<string, string>>({})
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
-  const [predTab, setPredTab] = useState<'partidos'|'grupos'|'eliminatorias'>('partidos')
+  const [predTab, setPredTab] = useState<'partidos'|'grupos'|'eliminatorias'|'premios'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
   const [misptosEtapa, setMisptosEtapa] = useState<'e1'|'e2'>('e1')
   const [predecirEtapa, setPredecirEtapa] = useState<'e1'|'e2'>('e1')
@@ -540,15 +540,13 @@ export default function TournamentPage() {
           })
           .catch(() => setServerScores(new Map()))
 
-        if ((t as any)?.admin_id === user.id) {
-          fetch(`/api/prode/${id}/all-specials`)
-            .then(r => r.json())
-            .then((data: unknown) => {
-              if (Array.isArray(data)) setAdminSpecials(data as AdminSpecial[])
-              else console.error('[all-specials]', data)
-            })
-            .catch(console.error)
-        }
+        fetch(`/api/prode/${id}/all-specials`)
+          .then(r => r.json())
+          .then((data: unknown) => {
+            if (Array.isArray(data)) setAllSpecials(data as AdminSpecial[])
+            else console.error('[all-specials]', data)
+          })
+          .catch(console.error)
       } else {
         setParticipants((ps ?? []) as any[])
       }
@@ -4094,7 +4092,7 @@ export default function TournamentPage() {
                     const groupPickCount = userPicksList.filter(pk => groupMatchIds.has(pk.match_id)).length
                     const e2UserPicks    = allE2Picks.filter(pk => pk.user_id === p.user_id)
                     const koPickCount    = e2UserPicks.filter(pk => koMatchIds.has(pk.match_id)).length
-                    const special        = adminSpecials.find(s => s.user_id === p.user_id)
+                    const special        = allSpecials.find(s => s.user_id === p.user_id)
                     const bonusFilled    = special ? SPECIAL_LABELS.filter(f => (special as any)[f.key]).length : 0
                     return (
                       <div key={p.user_id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: `1px solid ${BORDER}` }}>
@@ -4627,7 +4625,7 @@ export default function TournamentPage() {
                                   }
                                   val = mapped[f.key] ? abbrev(mapped[f.key]!) : ''
                                 } else {
-                                  const sp = adminSpecials.find(s => s.user_id === p.user_id)
+                                  const sp = allSpecials.find(s => s.user_id === p.user_id)
                                   val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
                                   if (f.key === 'goleada_match_id' && val) {
                                     const gm = matches.find(m => m.id === val)
@@ -4656,7 +4654,7 @@ export default function TournamentPage() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
               {/* Sub-tab nav */}
               <div style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap' }}>
-                {(['partidos', 'grupos', 'eliminatorias'] as const).map(k => (
+                {(['partidos', 'grupos', 'eliminatorias', 'premios'] as const).map(k => (
                   <button
                     key={k}
                     onClick={() => setPredTab(k)}
@@ -4666,7 +4664,7 @@ export default function TournamentPage() {
                       borderRadius: 20, fontFamily: FONT_BLACK, fontSize: 11, cursor: 'pointer',
                     }}
                   >
-                    {{ partidos: 'Partidos', grupos: 'Orden de grupos', eliminatorias: 'Bracket' }[k]}
+                    {{ partidos: 'Partidos', grupos: 'Orden de grupos', eliminatorias: 'Bracket', premios: 'Premios' }[k]}
                   </button>
                 ))}
               </div>
@@ -4917,6 +4915,67 @@ export default function TournamentPage() {
                       </table>
                     </div>
                   )}
+                </Card>
+              )}
+
+              {/* ── Premios — pronósticos especiales por jugador ── */}
+              {predTab === 'premios' && (
+                <Card>
+                  <SectionTitle>Premios y adicionales</SectionTitle>
+                  <div style={{ overflowX: 'auto' }}>
+                    <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
+                      <thead>
+                        <tr style={{ background: TEXT }}>
+                          <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Adicional</th>
+                          {orderedParticipants.map(p => (
+                            <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
+                              {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
+                              {p.user_id === user?.id ? ' ★' : ''}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {SPECIAL_LABELS.map((f, i) => {
+                          const fromBracket = ['champion','runner_up','third_place','fourth_place'].includes(f.key)
+                          const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
+                          return (
+                            <tr key={f.key} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
+                              <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: rowBg, fontSize: 10, whiteSpace: 'nowrap' }}>
+                                {f.label}
+                                {fromBracket && <span style={{ fontSize: 8, color: MUTED, fontWeight: 400, marginLeft: 4 }}>(bracket)</span>}
+                              </td>
+                              {orderedParticipants.map(p => {
+                                let val = ''
+                                if (fromBracket) {
+                                  const finals = perParticipantFinals.get(p.user_id)
+                                  const mapped: Record<string, string|null|undefined> = {
+                                    champion:    finals?.champion,
+                                    runner_up:   finals?.runnerUp,
+                                    third_place: finals?.third,
+                                    fourth_place: finals?.fourth,
+                                  }
+                                  val = mapped[f.key] ? abbrev(mapped[f.key]!) : ''
+                                } else {
+                                  const sp = allSpecials.find(s => s.user_id === p.user_id)
+                                  val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
+                                  if (f.key === 'goleada_match_id' && val) {
+                                    const gm = matches.find(m => m.id === val)
+                                    val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
+                                  }
+                                }
+                                return (
+                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
+                                    {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
+                                  </td>
+                                )
+                              })}
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
                 </Card>
               )}
             </div>
