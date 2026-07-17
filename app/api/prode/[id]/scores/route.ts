@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
+import { REAL_SPECIALS, SPECIAL_PTS } from '@/lib/prode-specials'
 
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 const DONE   = new Set(['FT','AET','PEN'])
@@ -60,19 +61,21 @@ export async function GET(
 
   const admin = adminDB()
 
-  const [matchesRes, standingsRes] = await Promise.all([
+  const [matchesRes, standingsRes, specialsRes] = await Promise.all([
     admin.from('prode_matches')
       .select('id, home_team, away_team, home_flag, away_flag, home_score, away_score, status, stage, group_name, sort_order')
       .order('sort_order'),
     admin.from('prode_standings')
       .select('group_name, rank, team_name, played, win, draw, lose, goals_for, goals_against, goal_diff, points')
       .order('group_name').order('rank'),
+    admin.from('prode_stage1_specials').select('*').eq('tournament_id', id),
   ])
   if (matchesRes.error) return NextResponse.json({ error: matchesRes.error.message }, { status: 500 })
   if (standingsRes.error) return NextResponse.json({ error: standingsRes.error.message }, { status: 500 })
 
   const allMatches = (matchesRes.data ?? []) as any[]
   const allStandings = (standingsRes.data ?? []) as any[]
+  const specialsByUser = new Map<string, any>((specialsRes.data ?? []).map((s: any) => [s.user_id, s]))
 
   // Paginated picks
   const allPicks: any[] = []
@@ -281,6 +284,14 @@ export async function GET(
     if (realRunnerUp && uRunnerUp === realRunnerUp) pts += 35
     if (realThird    && uThird    === realThird)    pts += 30
     if (realFourth   && uFourth   === realFourth)   pts += 25
+
+    // 9. Special awards (Balón de Oro, Botín de Oro, Revelación, etc.)
+    const userSpecial = specialsByUser.get(userId)
+    if (userSpecial) {
+      for (const [key, realValue] of Object.entries(REAL_SPECIALS)) {
+        if (realValue && userSpecial[key] === realValue) pts += SPECIAL_PTS
+      }
+    }
 
     result.push({ user_id: userId, pts })
   }

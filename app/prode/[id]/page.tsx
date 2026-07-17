@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { computeGroupStandings, computeBestThirds, computeThirdSlots } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
+import { REAL_SPECIALS } from '@/lib/prode-specials'
 import { WC26_PLAYERS, WC26_TEAMS_ES } from '@/lib/wc26-players'
 
 const RED = '#D4001A'
@@ -4927,6 +4928,7 @@ export default function TournamentPage() {
                       <thead>
                         <tr style={{ background: TEXT }}>
                           <th style={{ padding: '8px 10px', textAlign: 'left', color: '#fff', fontFamily: FONT_BLACK, fontSize: 10, position: 'sticky', left: 0, background: TEXT, whiteSpace: 'nowrap', minWidth: 110 }}>Adicional</th>
+                          <th style={{ padding: '8px 6px', textAlign: 'center', color: 'rgba(255,255,255,0.6)', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap' }}>Real</th>
                           {orderedParticipants.map(p => (
                             <th key={p.user_id} style={{ padding: '8px 4px', textAlign: 'center', color: p.user_id === user?.id ? RED : '#fff', fontFamily: FONT_BLACK, fontSize: 9, whiteSpace: 'nowrap', minWidth: 52, textTransform: 'uppercase' }}>
                               {p.profiles?.nombre ? p.profiles.nombre.split(' ')[0] : (p.profiles?.username ?? '?')}
@@ -4939,14 +4941,21 @@ export default function TournamentPage() {
                         {SPECIAL_LABELS.map((f, i) => {
                           const fromBracket = ['champion','runner_up','third_place','fourth_place'].includes(f.key)
                           const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
+                          const realRaw = fromBracket
+                            ? ({ champion: realFinals.champion, runner_up: realFinals.runnerUp, third_place: realFinals.third, fourth_place: realFinals.fourth } as Record<string, string|null|undefined>)[f.key] ?? null
+                            : (REAL_SPECIALS[f.key] ?? null)
+                          const realDisplay = realRaw ? (fromBracket ? abbrev(realRaw) : realRaw) : ''
                           return (
                             <tr key={f.key} style={{ background: rowBg, borderBottom: `1px solid ${BORDER}` }}>
                               <td style={{ padding: '6px 10px', fontFamily: FONT_NORMAL, color: TEXT, fontWeight: 600, position: 'sticky', left: 0, background: rowBg, fontSize: 10, whiteSpace: 'nowrap' }}>
                                 {f.label}
                                 {fromBracket && <span style={{ fontSize: 8, color: MUTED, fontWeight: 400, marginLeft: 4 }}>(bracket)</span>}
                               </td>
+                              <td style={{ padding: '6px 6px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 9, whiteSpace: 'nowrap', color: realDisplay ? TEXT : MUTED }}>
+                                {realDisplay || '—'}
+                              </td>
                               {orderedParticipants.map(p => {
-                                let val = ''
+                                let rawVal: string | null = null
                                 if (fromBracket) {
                                   const finals = perParticipantFinals.get(p.user_id)
                                   const mapped: Record<string, string|null|undefined> = {
@@ -4955,17 +4964,22 @@ export default function TournamentPage() {
                                     third_place: finals?.third,
                                     fourth_place: finals?.fourth,
                                   }
-                                  val = mapped[f.key] ? abbrev(mapped[f.key]!) : ''
+                                  rawVal = mapped[f.key] ?? null
                                 } else {
                                   const sp = allSpecials.find(s => s.user_id === p.user_id)
-                                  val = sp ? ((sp as any)[f.key] as string | null | undefined) ?? '' : ''
-                                  if (f.key === 'goleada_match_id' && val) {
-                                    const gm = matches.find(m => m.id === val)
-                                    val = gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : val
-                                  }
+                                  rawVal = sp ? ((sp as any)[f.key] as string | null | undefined) ?? null : null
                                 }
+                                const val = rawVal
+                                  ? (fromBracket
+                                      ? abbrev(rawVal)
+                                      : f.key === 'goleada_match_id'
+                                        ? (() => { const gm = matches.find(m => m.id === rawVal); return gm ? `${abbrev(gm.home_team)}-${abbrev(gm.away_team)}` : rawVal! })()
+                                        : rawVal)
+                                  : ''
+                                const isCorrect = realRaw && rawVal ? rawVal === realRaw : null
+                                const color = isCorrect === true ? '#16a34a' : isCorrect === false ? RED : (val ? TEXT : MUTED)
                                 return (
-                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color: val ? TEXT : MUTED, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
+                                  <td key={p.user_id} style={{ padding: '6px 4px', textAlign: 'center', fontFamily: FONT_NORMAL, fontSize: 10, color, whiteSpace: 'nowrap', fontWeight: p.user_id === user?.id ? 700 : 400 }}>
                                     {val ? (val.length > 14 ? val.substring(0, 13) + '…' : val) : '—'}
                                   </td>
                                 )
