@@ -6,7 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { computeGroupStandings, computeBestThirds, computeThirdSlots } from '@/lib/prode-standings'
 import type { TeamStat } from '@/lib/prode-standings'
-import { REAL_SPECIALS, SPECIAL_PTS } from '@/lib/prode-specials'
+import { DEFAULT_REAL_SPECIALS, SPECIAL_KEYS, SPECIAL_PTS } from '@/lib/prode-specials'
 import { WC26_PLAYERS, WC26_TEAMS_ES } from '@/lib/wc26-players'
 
 const RED = '#D4001A'
@@ -132,7 +132,7 @@ type Standing = {
   goal_diff: number
   points: number
 }
-type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string; ko_lock_date?: string | null }
+type Tournament = { id: string; name: string; code: string; stage1_deadline: string; admin_id: string; ko_lock_date?: string | null; podium_revealed?: boolean | null }
 type Participant = {
   user_id: string; paid: boolean; late_join?: boolean
   profiles: { username: string; nombre?: string; apellido?: string } | null
@@ -170,7 +170,7 @@ const SPECIAL_LABELS: Array<{ key: string; label: string }> = [
   { key: 'goleada_match_id', label: 'Mayor Goleada' },
 ]
 const SPECIALS_ONLY_LABELS: Record<string, string> = Object.fromEntries(
-  SPECIAL_LABELS.filter(f => f.key in REAL_SPECIALS).map(f => [f.key, f.label])
+  SPECIAL_LABELS.filter(f => (SPECIAL_KEYS as readonly string[]).includes(f.key)).map(f => [f.key, f.label])
 )
 function specialDisplayValue(key: string, raw: string | null, matches: Match[]): string | null {
   if (!raw) return null
@@ -381,6 +381,136 @@ function BonusSection({ initialBonus, bonusVersion, groupMatches, onSave }: {
   )
 }
 
+// Admin-only: carga los ganadores REALES de los premios especiales y dispara
+// el recálculo de puntajes (guarda en prode_real_specials + refresca serverScores).
+function AdminRealSpecialsSection({ initialValues, groupMatches, onSave }: {
+  initialValues: Record<string, string | null>
+  groupMatches: Match[]
+  onSave: (values: Record<string, string>) => Promise<boolean>
+}) {
+  const [local, setLocal] = React.useState<Record<string, string>>(() =>
+    Object.fromEntries(Object.entries(initialValues).map(([k, v]) => [k, v ?? '']))
+  )
+  const [status, setStatus] = React.useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+
+  const upd = (key: string, val: string) => setLocal(p => ({ ...p, [key]: val }))
+
+  const handleSave = async () => {
+    setStatus('saving')
+    const ok = await onSave(local)
+    setStatus(ok ? 'saved' : 'error')
+    if (ok) setTimeout(() => setStatus('idle'), 2000)
+  }
+
+  return (
+    <Card style={{ padding: '12px 16px', marginBottom: 14, border: `1.5px solid ${RED}` }}>
+      <div style={{ fontFamily: FONT_BLACK, fontWeight: 900, fontSize: 13, color: TEXT, marginBottom: 2 }}>🏆 Ganadores reales — Premios especiales</div>
+      <div style={{ fontFamily: FONT_NORMAL, fontSize: 11, color: MUTED, marginBottom: 8 }}>Cargá el resultado oficial de cada premio y guardá para recalcular los puntajes de todos.</div>
+      <datalist id="admin-players-list">{WC26_PLAYERS.map(p => <option key={p} value={p} />)}</datalist>
+      <datalist id="admin-teams-list">{WC26_TEAMS_ES.map(t => <option key={t} value={t} />)}</datalist>
+      <datalist id="admin-revelation-list">{REVELATION_TEAMS_ES.map(t => <option key={t} value={t} />)}</datalist>
+      {BONUS_FIELDS.map(f => (
+        <div key={f.key} style={{ padding: '9px 0', borderBottom: `1px solid ${BORDER}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, color: TEXT }}>{f.label}</div>
+            </div>
+            {f.type === 'match' ? (
+              <select
+                value={local[f.key] ?? ''}
+                onChange={e => upd(f.key, e.target.value)}
+                style={{ width: 200, padding: '6px 10px', border: `1.5px solid ${local[f.key] ? RED : BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 11, color: local[f.key] ? TEXT : MUTED, outline: 'none', background: '#fafafa' }}
+              >
+                <option value="">— Elegir partido —</option>
+                {groupMatches.map(m => (
+                  <option key={m.id} value={m.id}>{abbrev(m.home_team)} vs {abbrev(m.away_team)}</option>
+                ))}
+              </select>
+            ) : (
+              <input
+                list={f.type === 'player' ? 'admin-players-list' : f.type === 'revelation' ? 'admin-revelation-list' : 'admin-teams-list'}
+                value={local[f.key] ?? ''}
+                onChange={e => upd(f.key, e.target.value)}
+                placeholder="Buscar..."
+                autoComplete="off"
+                style={{ width: 160, padding: '6px 10px', border: `1.5px solid ${BORDER}`, borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, color: TEXT, outline: 'none', background: '#fafafa' }}
+              />
+            )}
+          </div>
+        </div>
+      ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+        <button
+          onClick={handleSave}
+          disabled={status === 'saving'}
+          style={{ padding: '8px 20px', background: status === 'saved' ? '#10b981' : status === 'error' ? RED : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_NORMAL, fontSize: 12, fontWeight: 600, cursor: status === 'saving' ? 'default' : 'pointer', transition: 'background 0.25s' }}
+        >{status === 'saving' ? 'Guardando...' : status === 'saved' ? '✓ Guardado y calculado' : status === 'error' ? '✕ Error — reintentar' : 'Guardar y calcular puntajes'}</button>
+      </div>
+    </Card>
+  )
+}
+
+type PodiumEntry = { user_id: string; name: string; pts: number | null }
+
+function PodiumStand({ entry, place, userId }: { entry: PodiumEntry | undefined; place: 1 | 2 | 3; userId?: string }) {
+  const height = place === 1 ? 108 : place === 2 ? 78 : 60
+  const color = place === 1 ? GOLD : place === 2 ? '#9CA3AF' : '#C08A56'
+  const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : '🥉'
+  const isMe = !!entry && entry.user_id === userId
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, minWidth: 0 }}>
+      <div style={{ fontSize: 26, marginBottom: 4 }}>{medal}</div>
+      <div style={{
+        fontSize: 12, fontWeight: 900, fontFamily: FONT_BLACK, color: isMe ? RED : TEXT,
+        textAlign: 'center', maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        marginBottom: 2,
+      }}>
+        {entry ? entry.name : '—'}{isMe ? ' (vos)' : ''}
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 900, fontFamily: FONT_COND, color: MUTED, marginBottom: 8 }}>
+        {entry ? `${entry.pts ?? 0} pts` : ''}
+      </div>
+      <div style={{
+        width: '100%', height, background: color, borderRadius: '8px 8px 0 0',
+        display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 8,
+      }}>
+        <span style={{ fontSize: 22, fontWeight: 900, fontFamily: FONT_BLACK, color: '#fff' }}>{place}</span>
+      </div>
+    </div>
+  )
+}
+
+function PodiumBlock({ title, entries, userId }: { title: string; entries: PodiumEntry[]; userId?: string }) {
+  const [first, second, third] = entries
+  return (
+    <Card style={{ marginBottom: 18 }}>
+      <div style={{ fontSize: 14, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT, marginBottom: 14, textAlign: 'center' }}>{title}</div>
+      {entries.length === 0 ? (
+        <div style={{ textAlign: 'center', color: MUTED, fontSize: 12, fontFamily: FONT_NORMAL, padding: '20px 0' }}>Sin puntajes todavía</div>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, padding: '0 4px' }}>
+          <PodiumStand entry={second} place={2} userId={userId} />
+          <PodiumStand entry={first} place={1} userId={userId} />
+          <PodiumStand entry={third} place={3} userId={userId} />
+        </div>
+      )}
+    </Card>
+  )
+}
+
+function PodiumSection({ e1, e2, userId }: { e1: PodiumEntry[]; e2: PodiumEntry[]; userId?: string }) {
+  return (
+    <div>
+      <div style={{ textAlign: 'center', marginBottom: 18 }}>
+        <div style={{ fontSize: 22, marginBottom: 4 }}>🏆🏆🏆</div>
+        <div style={{ fontSize: 18, fontWeight: 900, fontFamily: FONT_BLACK, color: TEXT }}>¡Podio final!</div>
+      </div>
+      <PodiumBlock title="ETAPA I — Grupos + Bracket" entries={e1.slice(0, 3)} userId={userId} />
+      <PodiumBlock title="ETAPA II — Eliminación" entries={e2.slice(0, 3)} userId={userId} />
+    </div>
+  )
+}
+
 export default function TournamentPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -416,6 +546,7 @@ export default function TournamentPage() {
   const liveRefreshRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const wasLiveRef = useRef(false)
   const [bonus, setBonus] = useState<Record<string, string>>({})
+  const [realSpecials, setRealSpecials] = useState<Record<string, string | null>>(DEFAULT_REAL_SPECIALS)
   const [adminTab, setAdminTab] = useState<'pagos'|'partidos'|'grupos'|'clasificados'|'cruces'|'ko'|'premios'>('pagos')
   const [predTab, setPredTab] = useState<'partidos'|'grupos'|'eliminatorias'|'premios'>('partidos')
   const [misptosTab, setMisptosTab] = useState<'total'|'grupos'|'eliminatorias'>('total')
@@ -456,13 +587,17 @@ export default function TournamentPage() {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser()
       setUser(user)
-      const [{ data: t }, { data: ps }, { data: ms }, { data: st }] = await Promise.all([
+      const [{ data: t }, { data: ps }, { data: ms }, { data: st }, { data: rs }] = await Promise.all([
         supabase.from('prode_tournaments').select('*').eq('id', id).maybeSingle(),
         supabase.from('prode_participants').select('user_id, paid, late_join, profiles(username, nombre, apellido)').eq('tournament_id', id),
         supabase.from('prode_matches').select('*').order('sort_order'),
         supabase.from('prode_standings').select('*').order('group_name').order('rank'),
+        supabase.from('prode_real_specials').select('*').eq('id', 1).maybeSingle(),
       ])
       setTournament(t)
+      if (rs) {
+        setRealSpecials(Object.fromEntries(SPECIAL_KEYS.map(k => [k, (rs as any)[k] ?? null])))
+      }
       const matchList = (ms ?? []) as Match[]
       setMatches(matchList)
       setStandings((st ?? []) as Standing[])
@@ -722,6 +857,17 @@ export default function TournamentPage() {
     stopLiveRefresh()
     doLiveFetch() // immediate first fetch — populates elapsed right away
     liveRefreshRef.current = setInterval(doLiveFetch, 60_000)
+  }
+
+  const handleTogglePodium = async () => {
+    const revealed = !tournament?.podium_revealed
+    setTournament(t => t ? { ...t, podium_revealed: revealed } : t)
+    const res = await fetch(`/api/prode/${id}/podium`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ revealed }),
+    })
+    if (!res.ok) setTournament(t => t ? { ...t, podium_revealed: !revealed } : t)
   }
 
   const handleSync = async () => {
@@ -1252,6 +1398,24 @@ export default function TournamentPage() {
     }).sort((a, b) => (b.pts ?? 0) - (a.pts ?? 0) || (b.pick_count ?? 0) - (a.pick_count ?? 0))
   }, [participants, isGroupPicksLocked, serverScores])
 
+  // Etapa II leaderboard — real KO-match predictions (prode_stage2_picks), same shape as `leaderboard`
+  const e2Leaderboard = useMemo(() => {
+    const DONE_ST2 = new Set(['FT', 'AET', 'PEN'])
+    const doneKoMs = koMatches.filter(m => DONE_ST2.has(m.status) && m.home_score !== null)
+    return participants.map(p => {
+      const name = p.profiles?.nombre
+        ? `${p.profiles.nombre} ${p.profiles.apellido ?? ''}`.trim()
+        : p.profiles?.username ?? 'Jugador'
+      const myPicks = allE2Picks.filter(pk => pk.user_id === p.user_id)
+      let pts = 0
+      for (const m of doneKoMs) {
+        const pk = myPicks.find(pk => pk.match_id === m.id)
+        if (pk) pts += calcScore(pk, m) ?? 0
+      }
+      return { user_id: p.user_id, name, pts }
+    }).sort((a, b) => b.pts - a.pts)
+  }, [participants, allE2Picks, koMatches])
+
   // Current user's picks from admin-client source (bypasses RLS — used in HomeMatchCard)
   const myServerPicks = useMemo(() => {
     if (!user) return new Map<string, { h: string; a: string }>()
@@ -1442,7 +1606,7 @@ export default function TournamentPage() {
     // Special awards (Balón de Oro, Botín de Oro, Revelación, etc.)
     const mySpecials = allSpecials.find(s => s.user_id === user.id)
     let specialsPts = 0
-    const specialsDetail = Object.entries(REAL_SPECIALS).map(([key, realValue]) => {
+    const specialsDetail = Object.entries(realSpecials).map(([key, realValue]) => {
       const myValue = mySpecials ? ((mySpecials as any)[key] as string | null | undefined) ?? null : null
       const earned = !!(realValue && myValue === realValue)
       if (earned) specialsPts += SPECIAL_PTS
@@ -1462,7 +1626,7 @@ export default function TournamentPage() {
       realChampion, realRunnerUp, realThird, realFourth,
       specialsDetail,
     }
-  }, [predAllPicks, user?.id, matches, standings, allSpecials])
+  }, [predAllPicks, user?.id, matches, standings, allSpecials, realSpecials])
   const isKoLocked = !!tournament?.ko_lock_date && Date.now() >= new Date(tournament.ko_lock_date).getTime()
 
   const homeMatches = useMemo(() => {
@@ -2408,6 +2572,14 @@ export default function TournamentPage() {
             </div>
             {isAdmin && (
               <button
+                onClick={handleTogglePodium}
+                style={{ padding: '7px 14px', background: tournament?.podium_revealed ? RED : '#fff', color: tournament?.podium_revealed ? '#fff' : TEXT, border: `1.5px solid ${tournament?.podium_revealed ? RED : BORDER}`, borderRadius: 8, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, cursor: 'pointer', flexShrink: 0 }}
+              >
+                {tournament?.podium_revealed ? '✕ Ocultar Podio' : '🏆 Mostrar Podio'}
+              </button>
+            )}
+            {isAdmin && (
+              <button
                 onClick={handleSync} disabled={syncing}
                 style={{ padding: '7px 14px', background: syncing ? '#eee' : TEXT, color: '#fff', border: 'none', borderRadius: 8, fontFamily: FONT_BLACK, fontSize: 11, fontWeight: 900, cursor: syncing ? 'default' : 'pointer', flexShrink: 0 }}
               >
@@ -2434,7 +2606,13 @@ export default function TournamentPage() {
         <div className="wrap">
 
           {/* ── HOME ── */}
-          {tab === 'home' && (
+          {tab === 'home' && tournament?.podium_revealed && (
+            <div style={{ maxWidth: 480, margin: '0 auto' }}>
+              <PodiumSection e1={leaderboard} e2={e2Leaderboard} userId={user?.id} />
+            </div>
+          )}
+
+          {tab === 'home' && !tournament?.podium_revealed && (
             <div style={{ maxWidth: 680, margin: '0 auto' }}>
               {tournament?.ko_lock_date && !isKoLocked && koPickCount < koMatches.length && (
                 <div style={{ background: '#fff0f1', borderRadius: 10, border: '1px solid #ffc0c5', padding: '12px 16px', marginBottom: 18, fontFamily: FONT_NORMAL }}>
@@ -3534,7 +3712,7 @@ export default function TournamentPage() {
                                     if (realFinals.fourth   && pfinals.fourth   === realFinals.fourth)   finalPosPts += 25
                                     const pSpecials = allSpecials.find(s => s.user_id === p.user_id)
                                     let specialsPts = 0
-                                    const specialsDetail = Object.entries(REAL_SPECIALS).map(([key, realValue]) => {
+                                    const specialsDetail = Object.entries(realSpecials).map(([key, realValue]) => {
                                       const myValue = pSpecials ? ((pSpecials as any)[key] as string | null | undefined) ?? null : null
                                       const earned = !!(realValue && myValue === realValue)
                                       if (earned) specialsPts += SPECIAL_PTS
@@ -4637,7 +4815,28 @@ export default function TournamentPage() {
 
               {/* ── Premios (adicionales) ── */}
               {adminTab === 'premios' && (
-                <Card>
+                <React.Fragment>
+                  <AdminRealSpecialsSection
+                    initialValues={realSpecials}
+                    groupMatches={groupMatches}
+                    onSave={async (values) => {
+                      const res = await fetch(`/api/prode/${id}/real-specials`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(values),
+                      })
+                      if (!res.ok) return false
+                      setRealSpecials(values)
+                      fetch(`/api/prode/${id}/scores`)
+                        .then(r => r.ok ? r.json() : null)
+                        .then((data: { user_id: string; pts: number }[] | null) => {
+                          if (Array.isArray(data)) setServerScores(new Map(data.map(s => [s.user_id, s.pts])))
+                        })
+                        .catch(() => {})
+                      return true
+                    }}
+                  />
+                  <Card>
                   <SectionTitle>Premios y adicionales</SectionTitle>
                   <div style={{ overflowX: 'auto' }}>
                     <table style={{ borderCollapse: 'collapse', fontSize: 11, minWidth: '100%' }}>
@@ -4692,7 +4891,8 @@ export default function TournamentPage() {
                       </tbody>
                     </table>
                   </div>
-                </Card>
+                  </Card>
+                </React.Fragment>
               )}
             </div>
           )}
@@ -4990,7 +5190,7 @@ export default function TournamentPage() {
                           const rowBg = i % 2 === 0 ? '#fff' : '#f9f9f9'
                           const realRaw = fromBracket
                             ? ({ champion: realFinals.champion, runner_up: realFinals.runnerUp, third_place: realFinals.third, fourth_place: realFinals.fourth } as Record<string, string|null|undefined>)[f.key] ?? null
-                            : (REAL_SPECIALS[f.key] ?? null)
+                            : (realSpecials[f.key] ?? null)
                           const displayFor = (raw: string | null) => {
                             if (!raw) return ''
                             if (fromBracket) return abbrev(raw)

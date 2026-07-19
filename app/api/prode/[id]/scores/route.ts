@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { computeGroupStandings, computeBestThirds } from '@/lib/prode-standings'
-import { REAL_SPECIALS, SPECIAL_PTS } from '@/lib/prode-specials'
+import { DEFAULT_REAL_SPECIALS, SPECIAL_PTS, SPECIAL_KEYS } from '@/lib/prode-specials'
 
 const GROUPS = ['A','B','C','D','E','F','G','H','I','J','K','L']
 const DONE   = new Set(['FT','AET','PEN'])
@@ -61,7 +61,7 @@ export async function GET(
 
   const admin = adminDB()
 
-  const [matchesRes, standingsRes, specialsRes] = await Promise.all([
+  const [matchesRes, standingsRes, specialsRes, realSpecialsRes] = await Promise.all([
     admin.from('prode_matches')
       .select('id, home_team, away_team, home_flag, away_flag, home_score, away_score, status, stage, group_name, sort_order')
       .order('sort_order'),
@@ -69,6 +69,7 @@ export async function GET(
       .select('group_name, rank, team_name, played, win, draw, lose, goals_for, goals_against, goal_diff, points')
       .order('group_name').order('rank'),
     admin.from('prode_stage1_specials').select('*').eq('tournament_id', id),
+    admin.from('prode_real_specials').select('*').eq('id', 1).maybeSingle(),
   ])
   if (matchesRes.error) return NextResponse.json({ error: matchesRes.error.message }, { status: 500 })
   if (standingsRes.error) return NextResponse.json({ error: standingsRes.error.message }, { status: 500 })
@@ -76,6 +77,9 @@ export async function GET(
   const allMatches = (matchesRes.data ?? []) as any[]
   const allStandings = (standingsRes.data ?? []) as any[]
   const specialsByUser = new Map<string, any>((specialsRes.data ?? []).map((s: any) => [s.user_id, s]))
+  const realSpecials: Record<string, string | null> = realSpecialsRes.data
+    ? Object.fromEntries(SPECIAL_KEYS.map(k => [k, (realSpecialsRes.data as any)[k] ?? null]))
+    : DEFAULT_REAL_SPECIALS
 
   // Paginated picks
   const allPicks: any[] = []
@@ -288,7 +292,7 @@ export async function GET(
     // 9. Special awards (Balón de Oro, Botín de Oro, Revelación, etc.)
     const userSpecial = specialsByUser.get(userId)
     if (userSpecial) {
-      for (const [key, realValue] of Object.entries(REAL_SPECIALS)) {
+      for (const [key, realValue] of Object.entries(realSpecials)) {
         if (realValue && userSpecial[key] === realValue) pts += SPECIAL_PTS
       }
     }
