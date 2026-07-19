@@ -4218,10 +4218,16 @@ export default function TournamentPage() {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 12, marginBottom: 12 }}>
                 <Card>
                   <SectionTitle>Premios</SectionTitle>
-                  {[['Etapa I (Pozo)','$32.500'],['Etapa II (Pozo)','$17.500'],['Inscripción','$70.000 · alias: erik.ars']].map(([l,v]) => (
-                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: `1px solid ${BORDER}` }}>
-                      <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL }}>{l}</span>
-                      <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK }}>{v}</span>
+                  {[
+                    ['Inscripción', '$70.000 · alias: erik.ars'],
+                    ['Aporte a Etapa I', '$52.500 c/jugador'],
+                    ['Aporte a Etapa II', '$17.500 c/jugador'],
+                    ['Se lleva el ganador de Etapa I', `${participants.length} × $52.500 = $${(participants.length * 52500).toLocaleString('es-AR')}`],
+                    ['Se lleva el ganador de Etapa II', `${participants.length} × $17.500 = $${(participants.length * 17500).toLocaleString('es-AR')}`],
+                  ].map(([l,v]) => (
+                    <div key={l} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, padding: '8px 0', borderBottom: `1px solid ${BORDER}`, alignItems: 'flex-start' }}>
+                      <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_NORMAL, flexShrink: 0 }}>{l}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: TEXT, fontFamily: FONT_BLACK, textAlign: 'right' }}>{v}</span>
                     </div>
                   ))}
                 </Card>
