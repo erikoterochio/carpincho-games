@@ -477,7 +477,11 @@
       const activeIndexes = gameState.players.map((p, i) => i).filter(i => !gameState.eliminated.includes(i));
       gameState.roles = new Array(gameState.players.length).fill('citizen');
       gameState.impostorIndexes = [];
-      const shuffled = [...activeIndexes].sort(() => Math.random() - 0.5);
+      const shuffled = [...activeIndexes];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
       const impostorCount = Math.min(gameState.impostorCount, activeIndexes.length - 1);
       for (let i = 0; i < impostorCount; i++) { const idx = shuffled[i]; gameState.roles[idx] = 'impostor'; gameState.impostorIndexes.push(idx); }
     }
