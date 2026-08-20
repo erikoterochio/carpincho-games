@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import SessionBridge from '@/components/SessionBridge'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const FEATURED = [
   { name: 'El Impostor', href: '/impostor', color: '#0b2659', img: '/images/impostor.png' },
@@ -41,37 +42,38 @@ export default async function HomePage() {
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
         .wrap { max-width: 480px; margin: 0 auto; padding: 16px 18px; }
-        .game-card { position: relative; border-radius: 14px; overflow: hidden; cursor: pointer; border: 1px solid #2a2448; background: #1e1736; transition: border-color 0.2s; aspect-ratio: 1 / 1; display: block; text-decoration: none; }
-        .game-card:hover { border-color: #055074; }
+        .game-card { position: relative; border-radius: 14px; overflow: hidden; cursor: pointer; border: 1px solid var(--border); background: var(--surface); transition: border-color 0.2s; aspect-ratio: 1 / 1; display: block; text-decoration: none; }
+        .game-card:hover { border-color: var(--accent); }
         .game-card-bg { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 1; transition: opacity 0.2s; }
         .game-card:hover .game-card-bg { opacity: 0.9; }
         .game-card-gradient { position: absolute; inset: 0; background: linear-gradient(to top, rgba(1,5,15,0.9) 0%, rgba(1,5,15,0.4) 35%, transparent 60%); }
-        .game-card-name { position: absolute; bottom: 12px; left: 12px; right: 12px; font-family: 'Ubuntu', sans-serif; font-size: 14px; font-weight: 700; color: #c1c1c6; z-index: 1; }
+        .game-card-name { position: absolute; bottom: 12px; left: 12px; right: 12px; font-family: 'Ubuntu', sans-serif; font-size: 14px; font-weight: 700; color: #fff; z-index: 1; }
         .game-card-name.large { font-size: 17px; bottom: 14px; left: 14px; }
         .sep { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
-        .sep-line { flex: 1; height: 1px; background: #1e1736; }
-        .sep-text { font-size: 10px; font-weight: 700; color: #706c7e; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; font-family: 'Ubuntu', sans-serif; }
+        .sep-line { flex: 1; height: 1px; background: var(--border); }
+        .sep-text { font-size: 10px; font-weight: 700; color: var(--text-soft); letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; font-family: 'Ubuntu', sans-serif; }
         .nav-inner { max-width: 480px; margin: 0 auto; padding: 0 18px; display: flex; align-items: center; justify-content: space-between; }
-        .avatar { width: 32px; height: 32px; border-radius: 50%; background: #055074; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #c1c1c6; font-weight: 700; font-family: 'Ubuntu', sans-serif; text-decoration: none; border: 1px solid #04447b; transition: opacity 0.2s; }
+        .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; font-weight: 700; font-family: 'Ubuntu', sans-serif; text-decoration: none; border: 1px solid var(--accent); transition: opacity 0.2s; }
         .avatar:hover { opacity: 0.85; }
       `}</style>
 
-      <div style={{ background: '#01050F', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif" }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif" }}>
 
         {/* Navbar */}
-        <nav style={{ background: '#01050F', borderBottom: '1px solid #1e1736', padding: '12px 0' }}>
+        <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '12px 0' }}>
           <div className="nav-inner">
             <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-              <div style={{ width: '28px', height: '28px', background: '#055074', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#c1c1c6" strokeWidth="2.2"/><path d="M4 15h24" stroke="#c1c1c6" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#c1c1c6"/><circle cx="16" cy="22" r="2" fill="#c1c1c6"/><circle cx="22" cy="22" r="2" fill="#c1c1c6"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#c1c1c6" strokeWidth="2.2" strokeLinecap="round"/></svg>
+              <div style={{ width: '28px', height: '28px', background: 'var(--accent)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#fff" strokeWidth="2.2"/><path d="M4 15h24" stroke="#fff" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#fff"/><circle cx="16" cy="22" r="2" fill="#fff"/><circle cx="22" cy="22" r="2" fill="#fff"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
               </div>
-              <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Ranchadapp</span>
+              <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Ranchadapp</span>
             </div>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <ThemeToggle />
               {user ? (
                 <>
                   <Link href="/amigos">
-                    <button style={{ padding: '7px 12px', background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                    <button style={{ padding: '7px 12px', background: 'transparent', color: 'var(--text-soft)', border: '1px solid var(--border)', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
                       Amigos
                     </button>
                   </Link>
@@ -80,12 +82,12 @@ export default async function HomePage() {
               ) : (
                 <>
                   <Link href="/login">
-                    <button style={{ padding: '7px 14px', background: 'transparent', color: '#706c7e', border: '1px solid #1e1736', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
+                    <button style={{ padding: '7px 14px', background: 'transparent', color: 'var(--text-soft)', border: '1px solid var(--border)', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 500, cursor: 'pointer' }}>
                       Iniciar sesión
                     </button>
                   </Link>
                   <Link href="/login">
-                    <button style={{ padding: '7px 14px', background: '#055074', color: '#c1c1c6', border: 'none', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                    <button style={{ padding: '7px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '8px', fontFamily: "'Ubuntu', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
                       Registrarse
                     </button>
                   </Link>
@@ -100,31 +102,31 @@ export default async function HomePage() {
           {/* Tarjeta de ranchadas */}
           {user ? (
             <Link href="/ranchadas" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
-              <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#c1c1c6" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#c1c1c6" strokeWidth="1.8"/></svg>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', background: 'var(--surface-2)', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="var(--text)" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="var(--text)" strokeWidth="1.8"/></svg>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '11px', color: '#706c7e', marginBottom: '2px' }}>Tus ranchadas</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-soft)', marginBottom: '2px' }}>Tus ranchadas</div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                    <span style={{ fontSize: '20px', fontWeight: 700, color: '#c1c1c6', lineHeight: 1 }}>{ranchadaCount}</span>
-                    <span style={{ fontSize: '11px', color: '#706c7e' }}>juntada{ranchadaCount !== 1 ? 's' : ''}</span>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', lineHeight: 1 }}>{ranchadaCount}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-soft)' }}>juntada{ranchadaCount !== 1 ? 's' : ''}</span>
                   </div>
                 </div>
-                <span style={{ fontSize: '11px', color: '#055074', fontWeight: 600 }}>Ver todas →</span>
+                <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Ver todas →</span>
               </div>
             </Link>
           ) : (
             <Link href="/login" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
-              <div style={{ background: '#1e1736', border: '1px solid #2a2448', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
-                <div style={{ width: '34px', height: '34px', background: '#110736', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="#706c7e" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="#706c7e" strokeWidth="1.8"/></svg>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', background: 'var(--surface-2)', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" stroke="var(--text-soft)" strokeWidth="1.8"/><path d="M9 22V12h6v10" stroke="var(--text-soft)" strokeWidth="1.8"/></svg>
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: '#c1c1c6', fontWeight: 600, marginBottom: '2px' }}>¿Cuántas ranchadas llevás?</div>
-                  <div style={{ fontSize: '11px', color: '#706c7e' }}>Iniciá sesión o creá tu cuenta para llevar la cuenta</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 600, marginBottom: '2px' }}>¿Cuántas ranchadas llevás?</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-soft)' }}>Iniciá sesión o creá tu cuenta para llevar la cuenta</div>
                 </div>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="#706c7e" strokeWidth="2" strokeLinecap="round"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}><path d="M9 18l6-6-6-6" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round"/></svg>
               </div>
             </Link>
           )}
@@ -183,8 +185,8 @@ export default async function HomePage() {
 
         </div>
 
-        <div style={{ padding: '16px', textAlign: 'center', borderTop: '1px solid #1e1736' }}>
-          <p style={{ fontSize: '11px', color: '#706c7e' }}>An app by CarpinchoGames ®</p>
+        <div style={{ padding: '16px', textAlign: 'center', borderTop: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '11px', color: 'var(--text-soft)' }}>An app by CarpinchoGames ®</p>
         </div>
 
       </div>

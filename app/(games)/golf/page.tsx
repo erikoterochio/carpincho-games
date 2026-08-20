@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ─────────────────────────────────────────────
 // Tipos
@@ -34,10 +35,10 @@ const FONT = "'Ubuntu', sans-serif"
 
 const S = {
   page: {
-    background: '#F1F7F6',
+    background: 'var(--bg)',
     minHeight: '100vh',
     fontFamily: FONT,
-    color: '#021B1A',
+    color: 'var(--text)',
   } as React.CSSProperties,
 
   wrap: {
@@ -52,8 +53,8 @@ const S = {
     alignItems: 'center',
     gap: 12,
     padding: '14px 18px',
-    borderBottom: '1px solid #AACBC4',
-    background: '#ffffff',
+    borderBottom: '1px solid var(--border)',
+    background: 'var(--surface)',
   } as React.CSSProperties,
 
   navBack: {
@@ -61,7 +62,7 @@ const S = {
     border: 'none',
     cursor: 'pointer',
     padding: '4px 6px 4px 0',
-    color: '#707D7D',
+    color: 'var(--text-soft)',
     display: 'flex',
     alignItems: 'center',
   } as React.CSSProperties,
@@ -69,7 +70,7 @@ const S = {
   navTitle: {
     fontSize: 18,
     fontWeight: 700,
-    color: '#021B1A',
+    color: 'var(--text)',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -87,7 +88,7 @@ const S = {
   btnPrimary: {
     width: '100%',
     padding: '14px 18px',
-    background: '#03624C',
+    background: 'var(--accent)',
     color: '#ffffff',
     border: 'none',
     borderRadius: 12,
@@ -110,9 +111,9 @@ const S = {
 
   btnSecondary: {
     padding: '12px 14px',
-    background: '#ffffff',
-    color: '#021B1A',
-    border: '1px solid #AACBC4',
+    background: 'var(--surface)',
+    color: 'var(--text)',
+    border: '1px solid var(--border)',
     borderRadius: 12,
     fontFamily: FONT,
     fontSize: 14,
@@ -128,8 +129,8 @@ const S = {
 
   // Invite input
   inviteBox: {
-    background: '#ffffff',
-    border: '1px solid #AACBC4',
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
     borderRadius: 12,
     padding: '12px 14px',
     display: 'flex',
@@ -145,14 +146,14 @@ const S = {
     fontFamily: FONT,
     fontSize: 15,
     fontWeight: 700,
-    color: '#021B1A',
+    color: 'var(--text)',
     letterSpacing: 3,
     textTransform: 'uppercase' as const,
   } as React.CSSProperties,
 
   inviteBtn: {
     padding: '8px 14px',
-    background: '#03624C',
+    background: 'var(--accent)',
     color: '#ffffff',
     border: 'none',
     borderRadius: 8,
@@ -173,13 +174,13 @@ const S = {
   sepLine: {
     flex: 1,
     height: 1,
-    background: '#AACBC4',
+    background: 'var(--border)',
   } as React.CSSProperties,
 
   sepText: {
     fontSize: 10,
     fontWeight: 700,
-    color: '#707D7D',
+    color: 'var(--text-soft)',
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
     fontFamily: FONT,
@@ -190,7 +191,7 @@ const S = {
   tabs: {
     display: 'flex',
     padding: '0 18px',
-    borderBottom: '1px solid #AACBC4',
+    borderBottom: '1px solid var(--border)',
     marginBottom: 4,
   } as React.CSSProperties,
 
@@ -199,7 +200,7 @@ const S = {
     fontFamily: FONT,
     fontSize: 14,
     fontWeight: active ? 700 : 500,
-    color: active ? '#021B1A' : '#707D7D',
+    color: active ? 'var(--text)' : 'var(--text-soft)',
     background: 'none',
     border: 'none',
     borderBottom: active ? '2px solid #04447b' : '2px solid transparent',
@@ -214,7 +215,7 @@ const S = {
     display: n > 0 ? 'flex' : 'none',
     alignItems: 'center',
     justifyContent: 'center',
-    background: '#03624C',
+    background: 'var(--accent)',
     color: '#ffffff',
     fontSize: 10,
     fontWeight: 700,
@@ -226,8 +227,8 @@ const S = {
   // Tarjeta de torneo
   card: (active: boolean): React.CSSProperties => ({
     margin: '0 18px 10px',
-    background: '#ffffff',
-    border: `1px solid ${active ? '#03624C' : '#AACBC4'}`,
+    background: 'var(--surface)',
+    border: `1px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
     borderRadius: 14,
     padding: '14px 16px',
     cursor: 'pointer',
@@ -245,7 +246,7 @@ const S = {
   cardName: {
     fontSize: 16,
     fontWeight: 700,
-    color: '#021B1A',
+    color: 'var(--text)',
     fontFamily: FONT,
     lineHeight: 1.3,
     flex: 1,
@@ -254,7 +255,7 @@ const S = {
 
   cardCourse: {
     fontSize: 12,
-    color: '#707D7D',
+    color: 'var(--text-soft)',
     fontFamily: FONT,
     marginBottom: 10,
   } as React.CSSProperties,
@@ -479,12 +480,12 @@ export default function GolfPage() {
           <div style={S.nav}>
             <Link href="/" style={S.navBack}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke="#5a7898" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M15 18l-6-6 6-6" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
             </Link>
             <div style={S.navTitle}>
               {/* Ícono bandera de golf */}
-              <div style={{ width: 30, height: 30, background: '#03624C', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div style={{ width: 30, height: 30, background: 'var(--accent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                   <line x1="6" y1="3" x2="6" y2="21" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
                   <path d="M6 3l12 4.5L6 12" fill="#ffffff"/>
@@ -494,6 +495,7 @@ export default function GolfPage() {
               </div>
               Golf
             </div>
+            <div style={{ marginLeft: 'auto' }}><ThemeToggle /></div>
           </div>
 
           {/* ── Hero */}
