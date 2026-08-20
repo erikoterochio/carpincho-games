@@ -194,11 +194,15 @@ function TrucoJugar() {
       setShowEnd(true)
     }
   }
-  const undo = () => {
+  const undo = (team?: 'A' | 'B') => {
     if (!history.length || winner) return
-    const last = history[history.length - 1]
-    setHistory(h => h.slice(0, -1))
-    last.team === 'A' ? setScoreA(s => Math.max(0, s - last.pts)) : setScoreB(s => Math.max(0, s - last.pts))
+    const idx = team
+      ? history.map((h, i) => [h, i] as const).reverse().find(([h]) => h.team === team)?.[1]
+      : history.length - 1
+    if (idx === undefined || idx < 0) return
+    const entry = history[idx]
+    setHistory(h => h.filter((_, i) => i !== idx))
+    entry.team === 'A' ? setScoreA(s => Math.max(0, s - entry.pts)) : setScoreB(s => Math.max(0, s - entry.pts))
   }
   const resetScores = () => {
     setScoreA(0); setScoreB(0); setHistory([]); setWinner(null); setShowEnd(false); setShowSave(false)
@@ -245,6 +249,7 @@ function TrucoJugar() {
     const setName = team === 'A' ? setTeamAName : setTeamBName
     const players = team === 'A' ? teamA : teamB
     const score   = team === 'A' ? scoreA : scoreB
+    const canUndo = !winner && history.some(h => h.team === team)
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
@@ -263,8 +268,9 @@ function TrucoJugar() {
           <div style={{ fontSize: 13, color: '#888', fontFamily: FONT }}>puntos</div>
           <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <button
-              onClick={() => undo()}
-              style={{ width: 48, height: 48, borderRadius: '50%', background: '#e5e7eb', border: 'none', fontSize: 22, fontWeight: 700, color: '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              onClick={() => undo(team)}
+              disabled={!canUndo}
+              style={{ width: 48, height: 48, borderRadius: '50%', background: '#e5e7eb', border: 'none', fontSize: 22, fontWeight: 700, color: '#374151', cursor: canUndo ? 'pointer' : 'default', opacity: canUndo ? 1 : 0.4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
               −
             </button>
@@ -311,7 +317,7 @@ function TrucoJugar() {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
         <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>🃏 Truco</span>
-        <button onClick={undo} disabled={!history.length || !!winner} style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: history.length && !winner ? '#c1c1c6' : '#333', cursor: history.length && !winner ? 'pointer' : 'default', fontSize: 12, fontFamily: FONT, padding: '5px 10px' }}>
+        <button onClick={() => undo()} disabled={!history.length || !!winner} style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: history.length && !winner ? '#c1c1c6' : '#333', cursor: history.length && !winner ? 'pointer' : 'default', fontSize: 12, fontFamily: FONT, padding: '5px 10px' }}>
           ↩
         </button>
       </nav>
