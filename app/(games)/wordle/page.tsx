@@ -7,7 +7,7 @@ export default function WordlePage() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT, color: 'var(--text)' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT, color: 'var(--text)', display: 'flex', flexDirection: 'column' }}>
 
         {/* Navbar */}
         <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '12px 0' }}>
@@ -22,7 +22,8 @@ export default function WordlePage() {
           </div>
         </nav>
 
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <div style={{ maxWidth: 480, width: '100%', margin: '0 auto' }}>
 
           {/* Hero */}
           <div style={{
@@ -60,6 +61,7 @@ export default function WordlePage() {
               Próximamente en Ranchadapp
             </div>
 
+          </div>
           </div>
         </div>
       </div>

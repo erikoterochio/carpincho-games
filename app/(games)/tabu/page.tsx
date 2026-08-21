@@ -7,7 +7,7 @@ export default function TabuPage() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
-      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT, color: 'var(--text)' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT, color: 'var(--text)', display: 'flex', flexDirection: 'column' }}>
 
         <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '12px 0' }}>
           <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -21,7 +21,8 @@ export default function TabuPage() {
           </div>
         </nav>
 
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+          <div style={{ maxWidth: 480, width: '100%', margin: '0 auto' }}>
           <div style={{ background: 'linear-gradient(135deg, #0c4a6e 0%, #0284c7 55%, #38bdf8 100%)', padding: '26px 20px 30px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
             <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -44,6 +45,7 @@ export default function TabuPage() {
             <Link href="/registrar-partida?game=tabu" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: 'var(--text-soft)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 20px', textDecoration: 'none', fontSize: 14, fontWeight: 600, fontFamily: FONT }}>
               📋 Registrar partida
             </Link>
+          </div>
           </div>
         </div>
       </div>
