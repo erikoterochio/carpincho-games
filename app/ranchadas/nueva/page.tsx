@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import PlayerPicker, { type PickedPlayer } from '@/components/PlayerPicker'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
+  bg: 'var(--bg)', card: 'var(--surface)', border: 'var(--border)',
+  primary: '#055074', text: 'var(--text)', muted: 'var(--text-soft)',
 } as const
 
 const inp: React.CSSProperties = {
@@ -90,7 +91,10 @@ export default function NuevaRanchadaPage() {
             </div>
             <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Nueva ranchada</span>
           </div>
-          <button onClick={() => router.back()} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Volver</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ThemeToggle size={17} />
+            <button onClick={() => router.back()} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Volver</button>
+          </div>
         </nav>
 
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 18px' }}>

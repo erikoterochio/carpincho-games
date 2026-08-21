@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -31,8 +32,8 @@ type Format    = { format_type: string; handicap_allowance: number | null }
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
-  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
+  bg: 'var(--bg)', card: 'var(--surface)', border: 'var(--border)',
+  primary: 'var(--accent)', text: 'var(--text)', muted: 'var(--text-soft)',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
 } as const
@@ -303,6 +304,7 @@ export default function ScorearPage() {
             </Link>
             <span style={{ fontSize: 15, fontWeight: 700, color: '#ffffff', flex: 1 }}>Scorecard</span>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{holesCompleted}/{playedHoles.length} hoyos</span>
+            <ThemeToggle />
           </div>
 
           {/* ── Leaderboard strip (medal) */}
@@ -472,7 +474,7 @@ export default function ScorearPage() {
             {/* Stepper */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 16, justifyContent: 'center', marginBottom: 14 }}>
               <button onClick={() => adjustEditScore(-1)}
-                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: 'var(--surface-2)', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
                 −
               </button>
 
@@ -488,7 +490,7 @@ export default function ScorearPage() {
               </div>
 
               <button onClick={() => adjustEditScore(+1)}
-                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: '#e0f5e8', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
+                style={{ width: 60, height: 60, borderRadius: 14, border: `1.5px solid ${C.border}`, background: 'var(--surface-2)', color: C.text, fontSize: 30, fontWeight: 300, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT }}>
                 +
               </button>
             </div>
@@ -510,7 +512,7 @@ export default function ScorearPage() {
             <div style={{ display: 'flex', gap: 10 }}>
               {editGross !== null && (
                 <button onClick={() => { saveScore(editCell.playerId, editCell.holeNumber, null); setEditCell(null) }}
-                  style={{ flex: 1, padding: '13px', background: '#e0f5e8', border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 14, color: C.muted, cursor: 'pointer', fontFamily: FONT }}>
+                  style={{ flex: 1, padding: '13px', background: 'var(--surface-2)', border: `1px solid ${C.border}`, borderRadius: 12, fontSize: 14, color: C.muted, cursor: 'pointer', fontFamily: FONT }}>
                   Borrar
                 </button>
               )}

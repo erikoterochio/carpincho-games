@@ -4,11 +4,12 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PlayerPicker, { PickedPlayer } from '@/components/PlayerPicker'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
+  bg: 'var(--bg)', card: 'var(--surface)', border: 'var(--border)',
+  primary: '#055074', text: 'var(--text)', muted: 'var(--text-soft)',
 } as const
 
 const GAMES = [
@@ -154,6 +155,7 @@ function RegistrarForm() {
           <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Registrar partida</div>
           {game && <div style={{ fontSize: 11, color: C.muted }}>{game.emoji} {game.label}</div>}
         </div>
+        <ThemeToggle size={17} />
       </nav>
 
       {/* Progress */}
@@ -201,7 +203,7 @@ function RegistrarForm() {
             />
             <RanchadaOption
               id="none" selected={ranchadaId}
-              icon="—" iconBg="#1e1736" iconBorder={C.border}
+              icon="—" iconBg="var(--border)" iconBorder={C.border}
               label="Sin ranchada" labelColor={C.text} sub="Registrar solo la partida"
               onClick={() => { setRanchadaId('none'); setStep(3) }}
             />
@@ -213,7 +215,7 @@ function RegistrarForm() {
                   <RanchadaOption
                     key={r.id}
                     id={r.id} selected={ranchadaId}
-                    icon="🏠" iconBg="#1e1736" iconBorder={C.border}
+                    icon="🏠" iconBg="var(--border)" iconBorder={C.border}
                     label={r.name || 'Ranchada'} labelColor={C.text} sub={formatDate(r.date)}
                     onClick={() => { setRanchadaId(r.id); setStep(3) }}
                   />
@@ -231,7 +233,7 @@ function RegistrarForm() {
             <PlayerPicker myId={myId} selected={players} onChange={setPlayers} />
             <button
               onClick={() => setStep(4)}
-              style={{ marginTop: 20, width: '100%', padding: '13px', background: C.primary, color: C.text, border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}
+              style={{ marginTop: 20, width: '100%', padding: '13px', background: C.primary, color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}
             >
               Continuar →
             </button>
@@ -315,7 +317,7 @@ export default function RegistrarPartidaPage() {
   return (
     <>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
-      <Suspense fallback={<div style={{ background: '#01050F', minHeight: '100vh' }} />}>
+      <Suspense fallback={<div style={{ background: 'var(--bg)', minHeight: '100vh' }} />}>
         <RegistrarForm />
       </Suspense>
     </>

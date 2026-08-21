@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#01050F', card: '#0d0d1a', border: '#1e1736',
-  primary: '#055074', text: '#c1c1c6', muted: '#706c7e',
+  bg: 'var(--bg)', card: 'var(--surface)', border: 'var(--border)',
+  primary: '#055074', text: 'var(--text)', muted: 'var(--text-soft)',
   success: '#4ade80', danger: '#f87171',
 } as const
 
@@ -149,7 +150,10 @@ export default function RanchadaDetailPage() {
 
         {/* Nav */}
         <nav style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 480, margin: '0 auto' }}>
-          <button onClick={() => router.push('/ranchadas')} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Ranchadas</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => router.push('/ranchadas')} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Ranchadas</button>
+            <ThemeToggle size={17} />
+          </div>
           {isOwner && (
             <button onClick={() => setShowDeleteConfirm(true)} style={{ padding: '6px 12px', background: 'transparent', color: C.danger, border: `1px solid #7f1d1d`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Eliminar</button>
           )}
@@ -195,7 +199,7 @@ export default function RanchadaDetailPage() {
               </div>
               <a
                 href={`/registrar-partida?ranchada=${id}`}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: C.primary, color: C.text, border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none' }}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '5px 12px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT, textDecoration: 'none' }}
               >
                 + Agregar
               </a>
@@ -273,7 +277,7 @@ export default function RanchadaDetailPage() {
         {/* Delete confirm modal */}
         {showDeleteConfirm && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '0 20px' }}>
-            <div style={{ background: '#0d0d1a', border: `1px solid ${C.border}`, borderRadius: 14, padding: 24, maxWidth: 340, width: '100%' }}>
+            <div style={{ background: 'var(--surface)', border: `1px solid ${C.border}`, borderRadius: 14, padding: 24, maxWidth: 340, width: '100%' }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: C.text, marginBottom: 8 }}>¿Eliminar ranchada?</div>
               <div style={{ fontSize: 13, color: C.muted, marginBottom: 20, lineHeight: 1.5 }}>
                 Se eliminarán también todas las partidas y resultados registrados en esta juntada. Esta acción no se puede deshacer.

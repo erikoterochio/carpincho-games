@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const BTN_PRIMARY: React.CSSProperties = {
   width: '100%', padding: '12px', background: '#04447b', color: '#ffffff',
@@ -41,13 +42,13 @@ const LABEL: React.CSSProperties = {
   textTransform: 'uppercase', marginBottom: '6px', display: 'block',
 }
 const INP: React.CSSProperties = {
-  width: '100%', padding: '10px 13px', background: '#f3f6fa', color: '#01050F',
+  width: '100%', padding: '10px 13px', background: '#f3f6fa', color: 'var(--bg)',
   border: '1.5px solid #c8d8ec', borderRadius: '8px', fontSize: '14px',
   fontFamily: "'Ubuntu', sans-serif", marginBottom: '12px', outline: 'none',
   boxSizing: 'border-box',
 }
 const NAV_BTN: React.CSSProperties = {
-  fontSize: '12px', color: '#c1c1c6', border: '1px solid rgba(255,255,255,0.25)',
+  fontSize: '12px', color: 'var(--text-soft)', border: '1px solid var(--border)',
   borderRadius: '8px', padding: '6px 12px', background: 'transparent',
   cursor: 'pointer', fontFamily: "'Ubuntu', sans-serif",
 }
@@ -178,23 +179,24 @@ export default function CuentaPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        input.cuenta-inp { background: #f3f6fa !important; color: #01050F !important; -webkit-text-fill-color: #01050F !important; border: 1.5px solid #c8d8ec !important; }
+        input.cuenta-inp { background: #f3f6fa !important; color: var(--bg) !important; -webkit-text-fill-color: var(--bg) !important; border: 1.5px solid #c8d8ec !important; }
         input.cuenta-inp:focus { border-color: #04447b !important; outline: 2px solid #04447b; outline-offset: 1px; }
         input.cuenta-inp::placeholder { color: #8aaccb !important; -webkit-text-fill-color: #8aaccb !important; }
-        input.cuenta-inp:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #f3f6fa inset !important; -webkit-text-fill-color: #01050F !important; }
+        input.cuenta-inp:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #f3f6fa inset !important; -webkit-text-fill-color: var(--bg) !important; }
       `}</style>
 
-      <div style={{ background: '#0b2659', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' }}>
+      <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' }}>
 
         {/* Navbar */}
-        <nav style={{ background: '#04447b', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-            <div style={{ width: '28px', height: '28px', background: '#055074', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#c1c1c6" strokeWidth="2.2"/><path d="M4 15h24" stroke="#c1c1c6" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#c1c1c6"/><circle cx="16" cy="22" r="2" fill="#c1c1c6"/><circle cx="22" cy="22" r="2" fill="#c1c1c6"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#c1c1c6" strokeWidth="2.2" strokeLinecap="round"/></svg>
+            <div style={{ width: '28px', height: '28px', background: 'var(--accent)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#fff" strokeWidth="2.2"/><path d="M4 15h24" stroke="#fff" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#fff"/><circle cx="16" cy="22" r="2" fill="#fff"/><circle cx="22" cy="22" r="2" fill="#fff"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
             </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: '#c1c1c6' }}>Mi cuenta</span>
+            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Mi cuenta</span>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <ThemeToggle size={17} />
             <button style={NAV_BTN} onClick={() => router.push('/amigos')}>Amigos</button>
             <button style={NAV_BTN} onClick={() => router.push('/')}>← Inicio</button>
           </div>

@@ -3,19 +3,20 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ── Inline style constants ─────────────────────────────────────────
 const S = {
-  page: { background: '#0b2659', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' } as React.CSSProperties,
-  nav: { background: '#04447b', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as React.CSSProperties,
-  navTitle: { fontSize: '15px', fontWeight: 700, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' } as React.CSSProperties,
-  backBtn: { fontSize: '12px', color: '#01050F', background: '#c1c1c6', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontFamily: "'Ubuntu', sans-serif" } as React.CSSProperties,
+  page: { background: 'var(--bg)', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' } as React.CSSProperties,
+  nav: { background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' } as React.CSSProperties,
+  navTitle: { fontSize: '15px', fontWeight: 700, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '8px' } as React.CSSProperties,
+  backBtn: { fontSize: '12px', color: 'var(--bg)', background: 'var(--text)', border: 'none', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontWeight: 700, fontFamily: "'Ubuntu', sans-serif" } as React.CSSProperties,
   content: { maxWidth: '480px', margin: '0 auto', padding: '16px 18px' } as React.CSSProperties,
   section: { background: '#ffffff', border: '2px solid #04447b', borderRadius: '14px', marginBottom: '12px', overflow: 'hidden' } as React.CSSProperties,
   sectionH: { padding: '12px 16px', borderBottom: '1px solid #e6f0fb', background: '#f0f7ff' } as React.CSSProperties,
   sectionT: { fontSize: '13px', fontWeight: 700, color: '#0b2659' } as React.CSSProperties,
   sectionBody: { padding: '14px 16px' } as React.CSSProperties,
-  inp: { width: '100%', padding: '10px 13px', background: '#f3f6fa', color: '#01050F', border: '1.5px solid #c8d8ec', borderRadius: '8px', fontSize: '14px', fontFamily: "'Ubuntu', sans-serif", outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
+  inp: { width: '100%', padding: '10px 13px', background: '#f3f6fa', color: 'var(--bg)', border: '1.5px solid #c8d8ec', borderRadius: '8px', fontSize: '14px', fontFamily: "'Ubuntu', sans-serif", outline: 'none', boxSizing: 'border-box' } as React.CSSProperties,
   userRow: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0', borderBottom: '1px solid #edf2f7' } as React.CSSProperties,
   userRowLast: { display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 0 0' } as React.CSSProperties,
   userInfo: { flex: 1 } as React.CSSProperties,
@@ -153,10 +154,13 @@ export default function AmigosPage() {
         {/* Navbar */}
         <nav style={S.nav}>
           <div style={S.navTitle}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#fff" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#fff" strokeWidth="2"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#fff" strokeWidth="2"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text)" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="var(--text)" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="var(--text)" strokeWidth="2"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text)" strokeWidth="2"/></svg>
             Amigos
           </div>
-          <button style={S.backBtn} onClick={() => router.push('/')}>← Inicio</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <ThemeToggle size={17} />
+            <button style={S.backBtn} onClick={() => router.push('/')}>← Inicio</button>
+          </div>
         </nav>
 
         <div style={S.content}>

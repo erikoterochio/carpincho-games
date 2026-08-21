@@ -106,7 +106,7 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
     style: {
       flex: 1, padding: '8px 4px', textAlign: 'center' as const, fontSize: 12,
       fontWeight: 600, cursor: 'pointer', fontFamily: FONT,
-      color: tab === id ? '#c1c1c6' : '#706c7e',
+      color: tab === id ? 'var(--text)' : 'var(--text-soft)',
       background: 'transparent', border: 'none',
       borderBottom: tab === id ? '2px solid #055074' : '2px solid transparent',
     }
@@ -120,18 +120,18 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
           {selected.map((p, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, background: '#0d1a2e', border: '1px solid #1e3a5f', borderRadius: 20, padding: '4px 10px 4px 6px' }}>
               <Avatar name={p.display_name} size={22} />
-              <span style={{ fontSize: 12, color: '#c1c1c6', fontFamily: FONT }}>{p.display_name}</span>
+              <span style={{ fontSize: 12, color: 'var(--text)', fontFamily: FONT }}>{p.display_name}</span>
               {p.player_type === 'guest' && (
-                <span style={{ fontSize: 9, color: '#706c7e', fontFamily: FONT }}>invitado</span>
+                <span style={{ fontSize: 9, color: 'var(--text-soft)', fontFamily: FONT }}>invitado</span>
               )}
-              <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', color: '#706c7e', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 0 0 2px' }}>×</button>
+              <button onClick={() => remove(i)} style={{ background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: '0 0 0 2px' }}>×</button>
             </div>
           ))}
         </div>
       )}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', borderBottom: '1px solid #1e1736', marginBottom: 10 }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', marginBottom: 10 }}>
         <button {...tabBtn('friends', `Amigos (${friends.length})`)}>Amigos ({friends.length})</button>
         <button {...tabBtn('search', 'Buscar usuario')}>Buscar usuario</button>
         <button {...tabBtn('guest', 'Invitado')}>Invitado</button>
@@ -141,18 +141,18 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
       {tab === 'friends' && (
         <div style={{ maxHeight: 200, overflowY: 'auto' }}>
           {friends.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '16px 0', color: '#706c7e', fontSize: 12, fontFamily: FONT }}>
+            <div style={{ textAlign: 'center', padding: '16px 0', color: 'var(--text-soft)', fontSize: 12, fontFamily: FONT }}>
               No tenés amigos todavía.{' '}
               <a href="/amigos" style={{ color: '#055074' }}>Agregá amigos</a>
             </div>
           ) : friends.map(p => {
             const alreadyIn = selectedIds.has(p.id)
             return (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid #1e1736' }}>
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
                 <Avatar name={profileDisplayName(p)} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#c1c1c6', fontFamily: FONT }}>{profileDisplayName(p)}</div>
-                  <div style={{ fontSize: 11, color: '#706c7e', fontFamily: FONT }}>@{p.username}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: FONT }}>{profileDisplayName(p)}</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-soft)', fontFamily: FONT }}>@{p.username}</div>
                 </div>
                 {alreadyIn
                   ? <span style={{ fontSize: 11, color: '#4ade80', fontFamily: FONT }}>✓ Agregado</span>
@@ -171,18 +171,18 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
             value={searchQuery}
             onChange={e => handleSearch(e.target.value)}
             placeholder="Buscá por nombre de usuario..."
-            style={{ width: '100%', padding: '9px 12px', background: '#080812', border: '1px solid #1e1736', borderRadius: 8, color: '#c1c1c6', fontSize: 13, fontFamily: FONT, boxSizing: 'border-box', outline: 'none' }}
+            style={{ width: '100%', padding: '9px 12px', background: '#080812', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, fontFamily: FONT, boxSizing: 'border-box', outline: 'none' }}
           />
           <div style={{ maxHeight: 160, overflowY: 'auto', marginTop: 6 }}>
             {searchResults.map(p => {
               const alreadyIn = selectedIds.has(p.id)
               const isFriend = friends.some(f => f.id === p.id)
               return (
-                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid #1e1736' }}>
+                <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--border)' }}>
                   <Avatar name={profileDisplayName(p)} />
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#c1c1c6', fontFamily: FONT }}>{profileDisplayName(p)}</div>
-                    <div style={{ fontSize: 11, color: '#706c7e', fontFamily: FONT }}>@{p.username}</div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', fontFamily: FONT }}>{profileDisplayName(p)}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-soft)', fontFamily: FONT }}>@{p.username}</div>
                   </div>
                   {alreadyIn
                     ? <span style={{ fontSize: 11, color: '#4ade80', fontFamily: FONT }}>✓ Agregado</span>
@@ -192,7 +192,7 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
               )
             })}
             {searchQuery.length >= 2 && searchResults.length === 0 && (
-              <div style={{ textAlign: 'center', padding: 12, color: '#706c7e', fontSize: 12, fontFamily: FONT }}>Sin resultados</div>
+              <div style={{ textAlign: 'center', padding: 12, color: 'var(--text-soft)', fontSize: 12, fontFamily: FONT }}>Sin resultados</div>
             )}
           </div>
         </div>
@@ -206,12 +206,12 @@ export default function PlayerPicker({ myId, selected, onChange }: Props) {
             onChange={e => setGuestName(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && addGuest()}
             placeholder="Nombre del invitado..."
-            style={{ flex: 1, padding: '9px 12px', background: '#080812', border: '1px solid #1e1736', borderRadius: 8, color: '#c1c1c6', fontSize: 13, fontFamily: FONT, outline: 'none' }}
+            style={{ flex: 1, padding: '9px 12px', background: '#080812', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, fontFamily: FONT, outline: 'none' }}
           />
           <button
             onClick={addGuest}
             disabled={!guestName.trim()}
-            style={{ padding: '9px 16px', background: guestName.trim() ? '#055074' : '#1e1736', color: guestName.trim() ? '#c1c1c6' : '#706c7e', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: guestName.trim() ? 'pointer' : 'default', fontFamily: FONT }}
+            style={{ padding: '9px 16px', background: guestName.trim() ? '#055074' : 'var(--border)', color: guestName.trim() ? 'var(--text)' : 'var(--text-soft)', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 700, cursor: guestName.trim() ? 'pointer' : 'default', fontFamily: FONT }}
           >
             Agregar
           </button>

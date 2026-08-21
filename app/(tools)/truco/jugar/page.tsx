@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
+import ThemeToggle from '@/components/ThemeToggle'
 
 const FONT = "'Ubuntu', sans-serif"
 const MAX = 30
@@ -257,7 +258,7 @@ function TrucoJugar() {
         <input
           value={name}
           onChange={e => setName(e.target.value)}
-          style={{ background: 'none', border: 'none', outline: 'none', fontSize: 26, fontWeight: 700, color: '#fff', fontFamily: FONT, textAlign: 'center', width: '100%' }}
+          style={{ background: 'none', border: 'none', outline: 'none', fontSize: 26, fontWeight: 700, color: 'var(--text)', fontFamily: FONT, textAlign: 'center', width: '100%' }}
         />
 
         {/* Score card */}
@@ -288,10 +289,10 @@ function TrucoJugar() {
         {players.length > 0 && (
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, justifyContent: 'center', width: '100%' }}>
             {players.map(p => (
-              <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 20, padding: '3px 8px 3px 5px' }}>
+              <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 8px 3px 5px' }}>
                 <Avatar name={p.name} size={18} />
-                <span style={{ fontSize: 11, color: '#c1c1c6', fontFamily: FONT }}>{p.name.split(' ')[0]}</span>
-                <button onClick={() => remove(team, p.key)} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                <span style={{ fontSize: 11, color: 'var(--text)', fontFamily: FONT }}>{p.name.split(' ')[0]}</span>
+                <button onClick={() => remove(team, p.key)} style={{ background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
               </div>
             ))}
           </div>
@@ -301,7 +302,7 @@ function TrucoJugar() {
         {canAdd(team) && (
           <button
             onClick={() => setAddingTo(team)}
-            style={{ width: '100%', padding: '9px', background: 'transparent', color: '#c1c1c6', border: '1px solid #3a3a3a', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}
+            style={{ width: '100%', padding: '9px', background: 'transparent', color: 'var(--text)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: FONT }}
           >
             + agregar jugador
           </button>
@@ -311,15 +312,18 @@ function TrucoJugar() {
   }
 
   return (
-    <div style={{ background: '#01050F', minHeight: '100vh', fontFamily: FONT }}>
-      <nav style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #1a1a1a' }}>
-        <button onClick={() => router.push('/truco')} style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: 4, display: 'flex' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+    <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT }}>
+      <nav style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
+        <button onClick={() => router.push('/truco')} style={{ background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', padding: 4, display: 'flex' }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
         </button>
-        <span style={{ fontSize: 15, fontWeight: 700, color: '#fff' }}>🃏 Truco</span>
-        <button onClick={() => undo()} disabled={!history.length || !!winner} style={{ background: 'none', border: '1px solid #2a2a2a', borderRadius: 8, color: history.length && !winner ? '#c1c1c6' : '#333', cursor: history.length && !winner ? 'pointer' : 'default', fontSize: 12, fontFamily: FONT, padding: '5px 10px' }}>
-          ↩
-        </button>
+        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>🃏 Truco</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <ThemeToggle size={17} />
+          <button onClick={() => undo()} disabled={!history.length || !!winner} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: history.length && !winner ? 'var(--text)' : 'var(--text-faint)', cursor: history.length && !winner ? 'pointer' : 'default', fontSize: 12, fontFamily: FONT, padding: '5px 10px' }}>
+            ↩
+          </button>
+        </div>
       </nav>
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px' }}>
@@ -332,7 +336,7 @@ function TrucoJugar() {
         {/* Reiniciar */}
         <button
           onClick={resetScores}
-          style={{ marginTop: 28, width: '100%', padding: '13px', background: 'transparent', color: '#555', border: '1px solid #2a2a2a', borderRadius: 10, fontSize: 14, cursor: 'pointer', fontFamily: FONT }}
+          style={{ marginTop: 28, width: '100%', padding: '13px', background: 'transparent', color: 'var(--text-soft)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 14, cursor: 'pointer', fontFamily: FONT }}
         >
           Reiniciar marcador
         </button>

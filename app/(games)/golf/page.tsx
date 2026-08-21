@@ -281,7 +281,7 @@ const S = {
 
   metaGrey: {
     fontSize: 11,
-    color: '#707D7D',
+    color: 'var(--text-soft)',
     fontFamily: FONT,
     display: 'flex',
     alignItems: 'center',
@@ -308,7 +308,7 @@ const S = {
   empty: {
     textAlign: 'center' as const,
     padding: '40px 24px',
-    color: '#707D7D',
+    color: 'var(--text-soft)',
     fontFamily: FONT,
   } as React.CSSProperties,
 }
@@ -469,7 +469,7 @@ export default function GolfPage() {
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap');
         * { box-sizing: border-box; }
         a { text-decoration: none; }
-        input::placeholder { color: #4a4a55; }
+        input::placeholder { color: var(--text-faint); }
         input:focus { outline: none; }
       `}</style>
 
@@ -533,22 +533,22 @@ export default function GolfPage() {
               {/* Nuevo torneo — múltiples rondas */}
               <Link href="/golf/nuevo-torneo" style={S.btnSecondary}>
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <path d="M8 21V3M16 21v-8" stroke="#0b2659" strokeWidth="2" strokeLinecap="round"/>
-                  <path d="M4 21h16" stroke="#5a7898" strokeWidth="1.5" strokeLinecap="round"/>
-                  <path d="M8 3l8 5-8 5" stroke="#5a7898" strokeWidth="1.5" strokeLinejoin="round"/>
+                  <path d="M8 21V3M16 21v-8" stroke="var(--text)" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M4 21h16" stroke="var(--text-soft)" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 3l8 5-8 5" stroke="var(--text-soft)" strokeWidth="1.5" strokeLinejoin="round"/>
                 </svg>
                 Nuevo torneo
               </Link>
 
               {/* Unirse con código */}
               <button
-                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #04447b' : '1px solid #AACBC4' }}
+                style={{ ...S.btnSecondary, border: showInvite ? '1px solid #04447b' : '1px solid var(--border)' }}
                 onClick={() => { setShowInvite(!showInvite); setInviteCode(''); setInviteError('') }}
               >
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="#0b2659" strokeWidth="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
-                  <circle cx="12" cy="16" r="1.5" fill="#0b2659"/>
+                  <rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--text)" strokeWidth="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round"/>
+                  <circle cx="12" cy="16" r="1.5" fill="var(--text)"/>
                 </svg>
                 Unirme
               </button>
@@ -559,8 +559,8 @@ export default function GolfPage() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 <div style={S.inviteBox}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-                    <rect x="3" y="11" width="18" height="11" rx="2" stroke="#5a7898" strokeWidth="1.8"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
+                    <rect x="3" y="11" width="18" height="11" rx="2" stroke="var(--text-soft)" strokeWidth="1.8"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="var(--text-soft)" strokeWidth="1.8" strokeLinecap="round"/>
                   </svg>
                   <input
                     style={S.inviteInput}
@@ -619,7 +619,7 @@ export default function GolfPage() {
                     {shown.length === 0 ? (
                       <div style={S.empty}>
                         <div style={{ fontSize: 36, marginBottom: 12 }}>⛳</div>
-                        <p style={{ fontSize: 14, fontWeight: 600, color: '#021B1A', marginBottom: 6 }}>
+                        <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
                           {tab === 'active' ? 'No hay partidas activas' : 'No hay partidas finalizadas'}
                         </p>
                         <p style={{ fontSize: 12 }}>
@@ -635,11 +635,11 @@ export default function GolfPage() {
             </>
           ) : (
             // Usuario no logueado
-            <div style={{ margin: '24px 18px 0', background: '#ffffff', border: '1px solid #AACBC4', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
-              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: '#021B1A', marginBottom: 8 }}>
+            <div style={{ margin: '24px 18px 0', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '20px 18px', textAlign: 'center' }}>
+              <p style={{ fontFamily: FONT, fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 8 }}>
                 Iniciá sesión para guardar tus partidas
               </p>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#707D7D', marginBottom: 16 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: 'var(--text-soft)', marginBottom: 16 }}>
                 Sin cuenta podés jugar, pero los resultados no se guardan
               </p>
               <Link href="/login" style={{ ...S.btnPrimary, display: 'inline-flex', width: 'auto', padding: '10px 24px', fontSize: 14 }}>
@@ -694,8 +694,8 @@ function TournamentCard({ t }: { t: Tournament }) {
       <div style={S.cardMeta}>
         <span style={S.metaGrey}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="9" stroke="#5a7898" strokeWidth="1.8"/>
-            <circle cx="12" cy="12" r="2.5" fill="#5a7898"/>
+            <circle cx="12" cy="12" r="9" stroke="var(--text-soft)" strokeWidth="1.8"/>
+            <circle cx="12" cy="12" r="2.5" fill="var(--text-soft)"/>
           </svg>
           {HOLES_LABEL[t.holes_config] ?? t.holes_config}
         </span>
@@ -703,7 +703,7 @@ function TournamentCard({ t }: { t: Tournament }) {
         {t.num_rounds > 1 && (
           <span style={S.metaGrey}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-              <path d="M8 21V3M16 21v-8" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
+              <path d="M8 21V3M16 21v-8" stroke="var(--text-soft)" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
             {t.num_rounds} rondas
           </span>
@@ -711,13 +711,13 @@ function TournamentCard({ t }: { t: Tournament }) {
 
         <span style={S.metaGrey}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#5a7898" strokeWidth="1.8" strokeLinecap="round"/>
-            <circle cx="9" cy="7" r="4" stroke="#5a7898" strokeWidth="1.8"/>
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text-soft)" strokeWidth="1.8" strokeLinecap="round"/>
+            <circle cx="9" cy="7" r="4" stroke="var(--text-soft)" strokeWidth="1.8"/>
           </svg>
           {t.golf_players.length} jugadores
         </span>
 
-        <span style={{ marginLeft: 'auto', fontSize: 11, color: '#707D7D', fontFamily: FONT }}>
+        <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--text-soft)', fontFamily: FONT }}>
           {formatDate(t.created_at)}
         </span>
       </div>
@@ -733,7 +733,7 @@ function FormatsInfo() {
   const [open, setOpen] = useState(false)
 
   return (
-    <div style={{ margin: '16px 18px 0', background: '#ffffff', border: '1px solid #AACBC4', borderRadius: 12 }}>
+    <div style={{ margin: '16px 18px 0', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12 }}>
       <button
         onClick={() => setOpen(!open)}
         style={{
@@ -748,10 +748,10 @@ function FormatsInfo() {
           fontFamily: FONT,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 600, color: '#021B1A', display: 'flex', alignItems: 'center', gap: 7 }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: 7 }}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="#5a7898" strokeWidth="1.8"/>
-            <path d="M12 8v5M12 16h.01" stroke="#5a7898" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="12" cy="12" r="10" stroke="var(--text-soft)" strokeWidth="1.8"/>
+            <path d="M12 8v5M12 16h.01" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           ¿Cómo se juegan las modalidades?
         </span>
@@ -759,12 +759,12 @@ function FormatsInfo() {
           width="14" height="14" viewBox="0 0 24 24" fill="none"
           style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
         >
-          <path d="M6 9l6 6 6-6" stroke="#5a7898" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M6 9l6 6 6-6" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
 
       {open && (
-        <div style={{ padding: '0 16px 14px', borderTop: '1px solid #AACBC4', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ padding: '0 16px 14px', borderTop: '1px solid var(--border)', paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {Object.entries(FORMAT_MAP).map(([key, fmt]) => (
             <div key={key} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{
@@ -774,7 +774,7 @@ function FormatsInfo() {
               }}>
                 {fmt.label}
               </span>
-              <p style={{ fontFamily: FONT, fontSize: 12, color: '#707D7D', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontFamily: FONT, fontSize: 12, color: 'var(--text-soft)', margin: 0, lineHeight: 1.5 }}>
                 {fmt.desc}
               </p>
             </div>

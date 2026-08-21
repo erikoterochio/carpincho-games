@@ -22,6 +22,15 @@
   --input-placeholder: #8aaccb;
 }
 
+/*
+  El header y la tarjeta blanca se mantienen siempre iguales (es el
+  estilo "papel" de estos juegos). Lo unico que cambia con el toggle
+  es el fondo de la pagina alrededor, para que se pueda usar de dia.
+*/
+[data-theme='light'] {
+  --bg: #F1F7F6;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -79,6 +88,19 @@ body {
 }
 
 .home-btn:hover { background: #ffffff; }
+
+.theme-toggle-btn {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
 
 /* ─── Layout ──────────────────────────────── */
 .container {

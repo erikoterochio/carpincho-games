@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { login, register, forgotPassword } from '@/lib/supabase/actions'
+import ThemeToggle from '@/components/ThemeToggle'
 
 type View = 'login' | 'register' | 'forgot'
 
@@ -58,39 +59,40 @@ export default function LoginPage() {
           -webkit-box-shadow: 0 0 0 1000px #c1c1c6 inset !important;
           -webkit-text-fill-color: #01050F !important;
         }
-        .btn-primary { display: block; width: 100%; padding: 13px; background: #055074; color: #c1c1c6; border: none; border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+        .btn-primary { display: block; width: 100%; padding: 13px; background: #055074; color: #fff; border: none; border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
         .btn-primary:hover { background: #04447b; }
         .btn-primary:disabled { opacity: 0.5; }
-        .btn-secondary { display: block; width: 100%; padding: 13px; background: #1e1736; color: #c1c1c6; border: none; border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
-        .btn-secondary:hover { background: #2a2448; }
-        .btn-outline { display: block; width: 100%; padding: 12px; background: transparent; color: #706c7e; border: 1px solid #1e1736; border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 14px; cursor: pointer; margin-bottom: 8px; text-decoration: none; text-align: center; }
-        .btn-outline:hover { border-color: #706c7e; color: #c1c1c6; }
-        .btn-back { display: block; width: 100%; padding: 8px; background: none; border: none; color: #706c7e; font-family: 'Ubuntu', sans-serif; font-size: 13px; cursor: pointer; }
-        .btn-back:hover { color: #c1c1c6; }
-        .forgot-link { background: none; border: none; color: #706c7e; font-family: 'Ubuntu', sans-serif; font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; float: right; margin-bottom: 20px; }
-        .forgot-link:hover { color: #c1c1c6; }
+        .btn-secondary { display: block; width: 100%; padding: 13px; background: var(--border); color: var(--text); border: none; border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+        .btn-secondary:hover { background: var(--text-faint); }
+        .btn-outline { display: block; width: 100%; padding: 12px; background: transparent; color: var(--text-soft); border: 1px solid var(--border); border-radius: 10px; font-family: 'Ubuntu', sans-serif; font-size: 14px; cursor: pointer; margin-bottom: 8px; text-decoration: none; text-align: center; }
+        .btn-outline:hover { border-color: var(--text-soft); color: var(--text); }
+        .btn-back { display: block; width: 100%; padding: 8px; background: none; border: none; color: var(--text-soft); font-family: 'Ubuntu', sans-serif; font-size: 13px; cursor: pointer; }
+        .btn-back:hover { color: var(--text); }
+        .forgot-link { background: none; border: none; color: var(--text-soft); font-family: 'Ubuntu', sans-serif; font-size: 12px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; float: right; margin-bottom: 20px; }
+        .forgot-link:hover { color: var(--text); }
         .divider { display: flex; align-items: center; gap: 12px; margin: 8px 0 16px; }
-        .divider-line { flex: 1; height: 1px; background: #1e1736; }
-        .divider-text { color: #706c7e; font-family: 'Ubuntu', sans-serif; font-size: 12px; }
+        .divider-line { flex: 1; height: 1px; background: var(--border); }
+        .divider-text { color: var(--text-soft); font-family: 'Ubuntu', sans-serif; font-size: 12px; }
       `}</style>
 
-      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#01050F', padding: '32px 16px' }}>
+      <main style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg)', padding: '32px 16px', position: 'relative' }}>
+        <div style={{ position: 'absolute', top: 16, right: 16 }}><ThemeToggle /></div>
         <div style={{ width: '100%', maxWidth: '400px' }}>
 
-          <div style={{ backgroundColor: '#01050F', border: '1px solid #1e1736', borderRadius: '20px', padding: '40px 32px 32px' }}>
+          <div style={{ backgroundColor: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '20px', padding: '40px 32px 32px' }}>
 
             {/* Header */}
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
               <div style={{ width: '56px', height: '56px', backgroundColor: '#055074', borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
                 <svg width="34" height="34" viewBox="0 0 34 34" fill="none">
-                  <path d="M5 16c0-4 2-7 6-7h12c4 0 6 3 6 7v2c0 4-2 6-6 6h-1l-3 2-3-2h-2c-4 0-6-2-6-6v-2z" stroke="#c1c1c6" strokeWidth="1.8" strokeLinejoin="round"/>
-                  <path d="M11 14v5M8.5 16.5h5" stroke="#c1c1c6" strokeWidth="1.8" strokeLinecap="round"/>
-                  <circle cx="22" cy="15" r="1.8" fill="#c1c1c6"/>
-                  <circle cx="25.5" cy="18.5" r="1.8" fill="#c1c1c6"/>
+                  <path d="M5 16c0-4 2-7 6-7h12c4 0 6 3 6 7v2c0 4-2 6-6 6h-1l-3 2-3-2h-2c-4 0-6-2-6-6v-2z" stroke="#fff" strokeWidth="1.8" strokeLinejoin="round"/>
+                  <path d="M11 14v5M8.5 16.5h5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round"/>
+                  <circle cx="22" cy="15" r="1.8" fill="#fff"/>
+                  <circle cx="25.5" cy="18.5" r="1.8" fill="#fff"/>
                 </svg>
               </div>
-              <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '26px', fontWeight: 700, color: '#c1c1c6', marginBottom: '4px' }}>Ranchadapp</h1>
-              <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '13px', color: '#706c7e' }}>Todo para tus ranchadas</p>
+              <h1 style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '26px', fontWeight: 700, color: 'var(--text)', marginBottom: '4px' }}>Ranchadapp</h1>
+              <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '13px', color: 'var(--text-soft)' }}>Todo para tus ranchadas</p>
             </div>
 
             {error && <div style={{ backgroundColor: '#2a0a0a', color: '#f87171', fontFamily: "'Ubuntu', sans-serif", fontSize: '13px', padding: '12px 16px', borderRadius: '8px', marginBottom: '16px' }}>{error}</div>}
@@ -109,13 +111,13 @@ export default function LoginPage() {
                 <button type="button" className="btn-secondary" onClick={() => switchView('register')}>Crear cuenta nueva</button>
                 <div className="divider"><div className="divider-line"/><span className="divider-text">o</span><div className="divider-line"/></div>
                 <a href="/" className="btn-outline">Continuar sin iniciar sesión</a>
-                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '11px', color: '#706c7e', textAlign: 'center', marginTop: '8px' }}>Sin cuenta no se guardan tus estadísticas ni progreso</p>
+                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '11px', color: 'var(--text-soft)', textAlign: 'center', marginTop: '8px' }}>Sin cuenta no se guardan tus estadísticas ni progreso</p>
               </form>
             )}
 
             {view === 'register' && (
               <form action={handleRegister}>
-                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '19px', fontWeight: 700, color: '#c1c1c6', marginBottom: '20px' }}>Crear cuenta</p>
+                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '19px', fontWeight: 700, color: 'var(--text)', marginBottom: '20px' }}>Crear cuenta</p>
                 <input className="inp" name="username" type="text" placeholder="Nombre de usuario" required />
                 <input className="inp" name="email" type="email" placeholder="Mail" required />
                 <input className="inp" name="password" type="password" placeholder="Contraseña" required />
@@ -127,8 +129,8 @@ export default function LoginPage() {
 
             {view === 'forgot' && (
               <form action={handleForgot}>
-                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '19px', fontWeight: 700, color: '#c1c1c6', marginBottom: '8px' }}>Recuperar contraseña</p>
-                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '13px', color: '#706c7e', marginBottom: '20px' }}>Te mandamos un link a tu mail para resetear tu contraseña.</p>
+                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '19px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>Recuperar contraseña</p>
+                <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '13px', color: 'var(--text-soft)', marginBottom: '20px' }}>Te mandamos un link a tu mail para resetear tu contraseña.</p>
                 <input className="inp" name="email" type="email" placeholder="Mail" required />
                 <button type="submit" className="btn-primary" disabled={isPending}>{isPending ? 'Enviando...' : 'Enviar link'}</button>
                 <button type="button" className="btn-back" onClick={() => switchView('login')}>← Volver al inicio</button>
@@ -137,7 +139,7 @@ export default function LoginPage() {
 
           </div>
 
-          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '11px', color: '#706c7e', textAlign: 'center', marginTop: '16px' }}>An app by CarpinchoGames ®</p>
+          <p style={{ fontFamily: "'Ubuntu', sans-serif", fontSize: '11px', color: 'var(--text-soft)', textAlign: 'center', marginTop: '16px' }}>An app by CarpinchoGames ®</p>
         </div>
       </main>
     </>

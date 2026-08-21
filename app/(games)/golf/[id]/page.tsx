@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -58,8 +59,8 @@ type LeaderboardRow = {
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
-  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
+  bg: 'var(--bg)', card: 'var(--surface)', border: 'var(--border)',
+  primary: 'var(--accent)', text: 'var(--text)', muted: 'var(--text-soft)',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
 } as const
@@ -584,6 +585,7 @@ export default function TournamentPage() {
                 <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d' }}>EN VIVO</span>
               </div>
             )}
+            <ThemeToggle />
             <div style={{ position: 'relative' }}>
               <button onClick={() => setShowMenu(v => !v)}
                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: '4px 6px', display: 'flex', alignItems: 'center' }}>
@@ -594,7 +596,7 @@ export default function TournamentPage() {
                 </svg>
               </button>
               {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: '100%', background: '#ffffff', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
+                <div style={{ position: 'absolute', right: 0, top: '100%', background: 'var(--surface)', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
                   onClick={() => setShowMenu(false)}>
                   <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Anotar" />
                   <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
@@ -1235,8 +1237,8 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
         <td style={{ position: 'sticky', left: 0, zIndex: 1, background: '#1B4D2E', width: colW.hole, textAlign: 'center', borderBottom: div }}>
           <div style={{ fontSize: 15, fontWeight: 700, color: '#fff', padding: '11px 4px' }}>{h.hole_number}</div>
         </td>
-        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: '#021B1A', background: '#3FAF7C', borderBottom: div }}>{h.par}</td>
-        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: '#021B1A', background: '#C2E5CE', borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
+        <td style={{ width: colW.par, textAlign: 'center', fontSize: 14, color: 'var(--text)', background: '#3FAF7C', borderBottom: div }}>{h.par}</td>
+        <td style={{ width: colW.hcp, textAlign: 'center', fontSize: 11, color: 'var(--text)', background: '#C2E5CE', borderRight: div, borderBottom: div }}>{h.stroke_index}</td>
         {players.map(p => {
           const strokes = getStrokes(p.id, h.hole_number)
           const gross   = getScore(p.id, h.hole_number)
@@ -1370,7 +1372,7 @@ function ScorecardView({ players, holes, scores, playerCalcs, format, roundId, i
         <div style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
           onClick={() => !saving && setEditing(null)}>
           <div style={{ position: 'absolute', inset: 0, background: 'rgba(2,27,26,0.5)' }} />
-          <div style={{ position: 'relative', background: '#fff', borderRadius: '20px 20px 0 0', padding: '20px 24px calc(32px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 480, fontFamily: FONT }}
+          <div style={{ position: 'relative', background: 'var(--surface)', borderRadius: '20px 20px 0 0', padding: '20px 24px calc(32px + env(safe-area-inset-bottom))', width: '100%', maxWidth: 480, fontFamily: FONT }}
             onClick={e => e.stopPropagation()}>
             <div style={{ width: 36, height: 4, borderRadius: 2, background: C.border, margin: '0 auto 18px' }} />
             <div style={{ textAlign: 'center', marginBottom: 22 }}>

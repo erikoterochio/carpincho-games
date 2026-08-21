@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import ThemeToggle from '@/components/ThemeToggle'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -42,8 +43,8 @@ type Format    = { format_type: string; display_name: string; handicap_allowance
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
-  bg: '#F1F7F6', card: '#ffffff', border: '#AACBC4',
-  primary: '#03624C', text: '#021B1A', muted: '#707D7D',
+  bg: 'var(--bg)', card: '#ffffff', border: 'var(--border)',
+  primary: '#03624C', text: 'var(--text)', muted: 'var(--text-soft)',
   eagle: '#92400e', birdie: '#15803d', par: '#374151',
   bogey: '#c2410c', double: '#b91c1c',
   success: '#15803d', error: '#b91c1c',
@@ -302,7 +303,8 @@ export default function CerrarRondaPage() {
                 <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
               </svg>
             </Link>
-            <span style={{ fontSize: 16, fontWeight: 700, color: C.text }}>Cerrar ronda {round.round_number}</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1 }}>Cerrar ronda {round.round_number}</span>
+            <ThemeToggle />
           </div>
 
           <div style={{ padding: '20px 18px', display: 'flex', flexDirection: 'column', gap: 20 }}>
@@ -316,7 +318,7 @@ export default function CerrarRondaPage() {
                 </span>
               </div>
               {/* Barra */}
-              <div style={{ height: 8, background: '#e0ebf8', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
+              <div style={{ height: 8, background: 'var(--surface-2)', borderRadius: 4, overflow: 'hidden', marginBottom: 8 }}>
                 <div style={{ height: '100%', width: `${completePct}%`, background: completePct === 100 ? C.success : C.primary, borderRadius: 4, transition: 'width 0.3s' }} />
               </div>
               <div style={{ fontSize: 12, color: C.muted }}>{totalEntered} de {totalExpected} scores ingresados</div>
@@ -350,7 +352,7 @@ export default function CerrarRondaPage() {
               {/* Tabla resumen */}
               <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, overflow: 'hidden' }}>
                 {/* Header */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: '#e0f5e8', borderBottom: `1px solid ${C.border}` }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 44px 44px 44px 50px', gap: 4, padding: '8px 14px', background: 'var(--surface-2)', borderBottom: `1px solid ${C.border}` }}>
                   {['Jugador', 'Gross', 'Neto', 'Pts', '+/−'].map(h => (
                     <span key={h} style={{ fontSize: 10, fontWeight: 700, color: C.muted, textAlign: h === 'Jugador' ? 'left' : 'center' }}>{h}</span>
                   ))}
@@ -430,7 +432,7 @@ export default function CerrarRondaPage() {
               {error && <p style={{ fontSize: 12, color: C.error, marginBottom: 12 }}>⚠️ {error}</p>}
 
               <button onClick={handleClose} disabled={!confirmed || closing}
-                style={{ width: '100%', padding: '14px', background: confirmed && !closing ? '#dcfce7' : '#e0ebf8', border: `1px solid ${confirmed && !closing ? '#86efac' : C.border}`, borderRadius: 11, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: confirmed && !closing ? C.success : C.muted, cursor: confirmed && !closing ? 'pointer' : 'not-allowed' }}>
+                style={{ width: '100%', padding: '14px', background: confirmed && !closing ? '#dcfce7' : 'var(--surface-2)', border: `1px solid ${confirmed && !closing ? '#86efac' : C.border}`, borderRadius: 11, fontFamily: FONT, fontSize: 14, fontWeight: 700, color: confirmed && !closing ? C.success : C.muted, cursor: confirmed && !closing ? 'pointer' : 'not-allowed' }}>
                 {closing ? 'Cerrando...' : '🏁 Cerrar ronda y ver resultados finales'}
               </button>
             </div>
