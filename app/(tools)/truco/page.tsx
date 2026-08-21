@@ -32,9 +32,6 @@ export default function TrucoPage() {
             <Link href="/truco/jugar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#4c1d95', color: '#ffffff', borderRadius: 12, padding: '14px 20px', textDecoration: 'none', fontSize: 15, fontWeight: 700, fontFamily: FONT }}>
               🃏 Nuevo partido
             </Link>
-            <a href="/truco.html" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: 'transparent', color: 'var(--text-soft)', border: '1px solid var(--border)', borderRadius: 12, padding: '11px 20px', textDecoration: 'none', fontSize: 13, fontFamily: FONT }}>
-              Jugar rápido sin guardar
-            </a>
           </div>
           </div>
         </div>
