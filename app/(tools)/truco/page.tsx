@@ -24,8 +24,8 @@ export default function TrucoPage() {
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <div style={{ background: 'linear-gradient(135deg, #110736 0%, #4c1d95 55%, #7c3aed 100%)', padding: '26px 20px 30px', position: 'relative', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', right: -30, top: -30, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,0.05)' }} />
-            <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <span style={{ fontSize: 50 }}>🃏</span>
+            <div style={{ position: 'absolute', right: 20, top: '50%', transform: 'translateY(-50%)', width: 96, height: 96, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', overflow: 'hidden' }}>
+              <img src="/images/truco.png" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
             <div style={{ maxWidth: '58%' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 8, fontFamily: FONT }}>Carpincho Games</div>
