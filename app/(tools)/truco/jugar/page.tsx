@@ -146,7 +146,7 @@ function TrucoJugar() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) { router.push('/login'); return }
+      if (!user) return
       setMyId(user.id)
       const meta = user.user_metadata ?? {}
       const name = meta.nombre ? `${meta.nombre} ${meta.apellido || ''}`.trim() : meta.username || 'Vos'
@@ -162,9 +162,9 @@ function TrucoJugar() {
           if (!data) return
           setFriends(data.map((f: any) => f.requester_id === user.id ? f.addressee : f.requester).filter(Boolean))
         })
+      supabase.from('ranchadas').select('id, name, date').order('date', { ascending: false }).limit(10)
+        .then(({ data }) => setRanchadas(data || []))
     })
-    supabase.from('ranchadas').select('id, name, date').order('date', { ascending: false }).limit(10)
-      .then(({ data }) => setRanchadas(data || []))
   }, [])
 
   const taken = new Set([...teamA, ...teamB].map(p => p.userId).filter(Boolean) as string[])
@@ -367,9 +367,15 @@ function TrucoJugar() {
               ))}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <button onClick={() => setShowSave(true)} style={{ padding: '13px', background: '#4c1d95', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
-                Guardar partida
-              </button>
+              {myId ? (
+                <button onClick={() => setShowSave(true)} style={{ padding: '13px', background: '#4c1d95', color: '#fff', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>
+                  Guardar partida
+                </button>
+              ) : (
+                <button onClick={() => router.push('/login')} style={{ padding: '13px', background: 'transparent', color: '#8aa8cc', border: '1px solid #2a2a2a', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>
+                  Iniciá sesión para guardar esta partida
+                </button>
+              )}
               <button onClick={resetScores} style={{ padding: '12px', background: '#1a1a1a', color: '#c1c1c6', border: '1px solid #2a2a2a', borderRadius: 10, fontSize: 13, cursor: 'pointer', fontFamily: FONT }}>
                 Otra con los mismos jugadores
               </button>
