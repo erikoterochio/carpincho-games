@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -222,15 +222,7 @@ export default function ConcursosPage() {
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, sticky: 'top' } as any}>
-            <Link href={`/golf/${id}`} style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </Link>
-            <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1 }}>Concursos</span>
-            <ThemeToggle />
-          </div>
+          <TopNav backHref={`/golf/${id}`} title="Concursos" sticky />
 
           {/* Tabs de concurso */}
           <div style={{ display: 'flex', borderBottom: `1px solid ${C.border}` }}>

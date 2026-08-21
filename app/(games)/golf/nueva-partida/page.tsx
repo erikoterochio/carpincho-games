@@ -4,7 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -356,17 +356,12 @@ export default function NuevaPartidaPage() {
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, background: C.bg, zIndex: 10 }}>
-            <button onClick={() => step > 0 ? setStep(s => s - 1) : router.push('/golf')}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px 8px 4px 0', color: C.muted, display: 'flex', alignItems: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </button>
-            <span style={{ fontSize: 17, fontWeight: 700, color: C.text }}>Nueva partida</span>
-            <span style={{ marginLeft: 'auto', fontSize: 12, color: C.muted }}>{step + 1} / {STEPS.length}</span>
-            <ThemeToggle />
-          </div>
+          <TopNav
+            onBack={() => step > 0 ? setStep(s => s - 1) : router.push('/golf')}
+            title="Nueva partida"
+            sticky
+            actions={<span style={{ fontSize: 12, color: C.muted, fontFamily: FONT }}>{step + 1} / {STEPS.length}</span>}
+          />
 
           {/* Progress */}
           <div style={{ display: 'flex', gap: 4, padding: '10px 18px 0' }}>

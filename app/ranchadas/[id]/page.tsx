@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useParams } from 'next/navigation'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
@@ -149,15 +149,13 @@ export default function RanchadaDetailPage() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT, paddingBottom: 40 }}>
 
         {/* Nav */}
-        <nav style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 480, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => router.push('/ranchadas')} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Ranchadas</button>
-            <ThemeToggle size={17} />
-          </div>
-          {isOwner && (
+        <TopNav
+          backHref="/ranchadas"
+          title={ranchada.name || 'Ranchada'}
+          actions={isOwner && (
             <button onClick={() => setShowDeleteConfirm(true)} style={{ padding: '6px 12px', background: 'transparent', color: C.danger, border: `1px solid #7f1d1d`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>Eliminar</button>
           )}
-        </nav>
+        />
 
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 18px' }}>
 

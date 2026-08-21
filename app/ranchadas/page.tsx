@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
@@ -101,19 +101,16 @@ export default function RanchadasPage() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT }}>
 
         {/* Nav */}
-        <nav style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 480, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <TopNav
+          backHref="/"
+          title="Ranchadas"
+          icon={
             <div style={{ width: 30, height: 30, background: C.primary, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text)" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="var(--text)" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text)" strokeWidth="2"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#fff" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="#fff" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="#fff" strokeWidth="2"/></svg>
             </div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Ranchadas</span>
-          </div>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <ThemeToggle size={17} />
-            <button onClick={() => router.push('/')} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Inicio</button>
-            <button onClick={() => router.push('/ranchadas/nueva')} style={{ padding: '6px 14px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>+ Nueva</button>
-          </div>
-        </nav>
+          }
+          actions={<button onClick={() => router.push('/ranchadas/nueva')} style={{ padding: '6px 14px', background: C.primary, color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: FONT }}>+ Nueva</button>}
+        />
 
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '16px 18px' }}>
 

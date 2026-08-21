@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import PlayerPicker, { PickedPlayer } from '@/components/PlayerPicker'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
@@ -147,16 +147,15 @@ function RegistrarForm() {
     <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT }}>
 
       {/* Nav */}
-      <nav style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '12px 18px', display: 'flex', alignItems: 'center', gap: 12 }}>
-        <button onClick={goBack} style={{ background: 'none', border: 'none', color: C.muted, cursor: 'pointer', padding: 4, display: 'flex', alignItems: 'center' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke={C.muted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Registrar partida</div>
-          {game && <div style={{ fontSize: 11, color: C.muted }}>{game.emoji} {game.label}</div>}
-        </div>
-        <ThemeToggle size={17} />
-      </nav>
+      <TopNav
+        onBack={goBack}
+        title={
+          <div>
+            <div>Registrar partida</div>
+            {game && <div style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>{game.emoji} {game.label}</div>}
+          </div>
+        }
+      />
 
       {/* Progress */}
       <div style={{ height: 3, background: C.border }}>

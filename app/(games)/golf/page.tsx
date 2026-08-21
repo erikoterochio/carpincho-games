@@ -4,7 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ─────────────────────────────────────────────
 // Tipos
@@ -45,36 +45,6 @@ const S = {
     maxWidth: 480,
     margin: '0 auto',
     padding: '0 0 32px',
-  } as React.CSSProperties,
-
-  // Navbar
-  nav: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 12,
-    padding: '14px 18px',
-    borderBottom: '1px solid var(--border)',
-    background: 'var(--surface)',
-  } as React.CSSProperties,
-
-  navBack: {
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '4px 6px 4px 0',
-    color: 'var(--text-soft)',
-    display: 'flex',
-    alignItems: 'center',
-  } as React.CSSProperties,
-
-  navTitle: {
-    fontSize: 18,
-    fontWeight: 700,
-    color: 'var(--text)',
-    fontFamily: FONT,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
   } as React.CSSProperties,
 
   // Hero CTAs
@@ -477,14 +447,10 @@ export default function GolfPage() {
         <div style={S.wrap}>
 
           {/* ── Navbar */}
-          <div style={S.nav}>
-            <Link href="/" style={S.navBack}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </Link>
-            <div style={S.navTitle}>
-              {/* Ícono bandera de golf */}
+          <TopNav
+            backHref="/"
+            title="Golf"
+            icon={
               <div style={{ width: 30, height: 30, background: 'var(--accent)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
                   <line x1="6" y1="3" x2="6" y2="21" stroke="#ffffff" strokeWidth="2" strokeLinecap="round"/>
@@ -493,10 +459,8 @@ export default function GolfPage() {
                   <line x1="4" y1="21" x2="20" y2="21" stroke="#AACBC4" strokeWidth="1.5"/>
                 </svg>
               </div>
-              Golf
-            </div>
-            <div style={{ marginLeft: 'auto' }}><ThemeToggle /></div>
-          </div>
+            }
+          />
 
           {/* ── Hero */}
           <div style={{

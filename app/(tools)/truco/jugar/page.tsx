@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 const MAX = 30
@@ -313,18 +313,15 @@ function TrucoJugar() {
 
   return (
     <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT }}>
-      <nav style={{ padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--border)' }}>
-        <button onClick={() => router.push('/truco')} style={{ background: 'none', border: 'none', color: 'var(--text-soft)', cursor: 'pointer', padding: 4, display: 'flex' }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M19 12H5M12 5l-7 7 7 7" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-        </button>
-        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>🃏 Truco</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ThemeToggle size={17} />
+      <TopNav
+        backHref="/truco"
+        title="🃏 Truco"
+        actions={
           <button onClick={() => undo()} disabled={!history.length || !!winner} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, color: history.length && !winner ? 'var(--text)' : 'var(--text-faint)', cursor: history.length && !winner ? 'pointer' : 'default', fontSize: 12, fontFamily: FONT, padding: '5px 10px' }}>
             ↩
           </button>
-        </div>
-      </nav>
+        }
+      />
 
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 16px' }}>
         {/* Two columns */}

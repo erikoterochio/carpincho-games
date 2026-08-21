@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 
@@ -9,17 +9,7 @@ export default function GeneralaPage() {
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap'); * { box-sizing: border-box; margin: 0; padding: 0; }`}</style>
       <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: FONT, color: 'var(--text)', display: 'flex', flexDirection: 'column' }}>
 
-        <nav style={{ background: 'var(--bg)', borderBottom: '1px solid var(--border)', padding: '12px 0' }}>
-          <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 9, textDecoration: 'none' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M19 12H5M12 5l-7 7 7 7" stroke="var(--text-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span style={{ fontSize: 13, color: 'var(--text-soft)', fontFamily: FONT }}>Inicio</span>
-            </Link>
-            <ThemeToggle />
-          </div>
-        </nav>
+        <TopNav backHref="/" title="Generala" />
 
         <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
           <div style={{ maxWidth: 480, width: '100%', margin: '0 auto' }}>

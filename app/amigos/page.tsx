@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ── Inline style constants ─────────────────────────────────────────
 const S = {
@@ -152,16 +152,11 @@ export default function AmigosPage() {
       <div style={S.page}>
 
         {/* Navbar */}
-        <nav style={S.nav}>
-          <div style={S.navTitle}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text)" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="var(--text)" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="var(--text)" strokeWidth="2"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text)" strokeWidth="2"/></svg>
-            Amigos
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ThemeToggle size={17} />
-            <button style={S.backBtn} onClick={() => router.push('/')}>← Inicio</button>
-          </div>
-        </nav>
+        <TopNav
+          backHref="/"
+          title="Amigos"
+          icon={<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="var(--text)" strokeWidth="2"/><circle cx="9" cy="7" r="4" stroke="var(--text)" strokeWidth="2"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="var(--text)" strokeWidth="2"/><path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="var(--text)" strokeWidth="2"/></svg>}
+        />
 
         <div style={S.content}>
 

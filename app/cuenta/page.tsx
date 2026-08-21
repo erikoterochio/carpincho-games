@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const BTN_PRIMARY: React.CSSProperties = {
   width: '100%', padding: '12px', background: '#04447b', color: '#ffffff',
@@ -188,19 +188,16 @@ export default function CuentaPage() {
       <div style={{ background: 'var(--bg)', minHeight: '100vh', fontFamily: "'Ubuntu', sans-serif", paddingBottom: '40px' }}>
 
         {/* Navbar */}
-        <nav style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+        <TopNav
+          backHref="/"
+          title="Mi cuenta"
+          icon={
             <div style={{ width: '28px', height: '28px', background: 'var(--accent)', borderRadius: '7px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <svg width="16" height="16" viewBox="0 0 32 32" fill="none"><rect x="4" y="10" width="24" height="16" rx="3" stroke="#fff" strokeWidth="2.2"/><path d="M4 15h24" stroke="#fff" strokeWidth="2.2"/><circle cx="10" cy="22" r="2" fill="#fff"/><circle cx="16" cy="22" r="2" fill="#fff"/><circle cx="22" cy="22" r="2" fill="#fff"/><path d="M11 10V8a5 5 0 0 1 10 0v2" stroke="#fff" strokeWidth="2.2" strokeLinecap="round"/></svg>
             </div>
-            <span style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)' }}>Mi cuenta</span>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <ThemeToggle size={17} />
-            <button style={NAV_BTN} onClick={() => router.push('/amigos')}>Amigos</button>
-            <button style={NAV_BTN} onClick={() => router.push('/')}>← Inicio</button>
-          </div>
-        </nav>
+          }
+          actions={<button style={NAV_BTN} onClick={() => router.push('/amigos')}>Amigos</button>}
+        />
 
         <div style={{ maxWidth: '480px', margin: '0 auto', padding: '20px 18px' }}>
 

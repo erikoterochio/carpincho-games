@@ -1,10 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -168,21 +167,17 @@ export default function CanchasPage() {
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, background: C.bg, zIndex: 10 }}>
-            <Link href="/golf" style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </Link>
-            <span style={{ fontSize: 16, fontWeight: 700, color: C.text, flex: 1 }}>Canchas</span>
-            {userId && (
+          <TopNav
+            backHref="/golf"
+            title="Canchas"
+            sticky
+            actions={userId && (
               <button onClick={() => setShowCreate(!showCreate)}
                 style={{ padding: '7px 14px', background: showCreate ? 'var(--surface-2)' : C.primary, border: `1px solid ${showCreate ? C.border : 'transparent'}`, borderRadius: 9, fontFamily: FONT, fontSize: 13, fontWeight: 700, color: showCreate ? C.muted : '#ffffff', cursor: 'pointer' }}>
                 {showCreate ? 'Cancelar' : '+ Nueva'}
               </button>
             )}
-            <ThemeToggle />
-          </div>
+          />
 
           <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14 }}>
 

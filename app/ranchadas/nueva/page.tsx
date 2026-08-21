@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import PlayerPicker, { type PickedPlayer } from '@/components/PlayerPicker'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 const FONT = "'Ubuntu', sans-serif"
 const C = {
@@ -84,18 +84,15 @@ export default function NuevaRanchadaPage() {
       <div style={{ background: C.bg, minHeight: '100vh', fontFamily: FONT }}>
 
         {/* Nav */}
-        <nav style={{ background: C.bg, borderBottom: `1px solid ${C.border}`, padding: '12px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 480, margin: '0 auto' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <TopNav
+          onBack={() => router.back()}
+          title="Nueva ranchada"
+          icon={
             <div style={{ width: 30, height: 30, background: C.primary, borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: 16 }}>🏠</span>
             </div>
-            <span style={{ fontSize: 15, fontWeight: 700, color: C.text }}>Nueva ranchada</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ThemeToggle size={17} />
-            <button onClick={() => router.back()} style={{ padding: '6px 12px', background: 'transparent', color: C.muted, border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12, cursor: 'pointer', fontFamily: FONT }}>← Volver</button>
-          </div>
-        </nav>
+          }
+        />
 
         <div style={{ maxWidth: 480, margin: '0 auto', padding: '20px 18px' }}>
 

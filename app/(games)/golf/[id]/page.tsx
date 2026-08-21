@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import ThemeToggle from '@/components/ThemeToggle'
+import TopNav from '@/components/TopNav'
 
 // ─────────────────────────────────────────────
 // TIPOS
@@ -563,49 +563,51 @@ export default function TournamentPage() {
         <div style={{ maxWidth: 480, margin: '0 auto' }}>
 
           {/* Navbar */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: `1px solid ${C.border}`, position: 'sticky', top: 0, background: C.bg, zIndex: 10 }}>
-            <Link href="/golf" style={{ color: C.muted, display: 'flex', alignItems: 'center' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M15 18l-6-6 6-6" stroke={C.muted} strokeWidth="2" strokeLinecap="round"/>
-              </svg>
-            </Link>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {tournament.num_rounds > 1 ? `${tournament.name} · Fecha #${round?.round_number ?? '—'}` : tournament.name}
-              </div>
-              {round?.date && (
-                <div style={{ fontSize: 11, color: C.muted }}>
-                  {new Date(round.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
+          <TopNav
+            backHref="/golf"
+            sticky
+            title={
+              <div style={{ overflow: 'hidden' }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: C.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {tournament.num_rounds > 1 ? `${tournament.name} · Fecha #${round?.round_number ?? '—'}` : tournament.name}
                 </div>
-              )}
-            </div>
-            {isActive && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
-                <div style={{ width: 6, height: 6, borderRadius: 3, background: '#15803d', animation: 'pulse 2s infinite' }} />
-                <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d' }}>EN VIVO</span>
+                {round?.date && (
+                  <div style={{ fontSize: 11, color: C.muted, fontWeight: 400 }}>
+                    {new Date(round.date + 'T12:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </div>
+                )}
               </div>
-            )}
-            <ThemeToggle />
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setShowMenu(v => !v)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: '4px 6px', display: 'flex', alignItems: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                  <circle cx="12" cy="5"  r="1.5" fill={C.muted}/>
-                  <circle cx="12" cy="12" r="1.5" fill={C.muted}/>
-                  <circle cx="12" cy="19" r="1.5" fill={C.muted}/>
-                </svg>
-              </button>
-              {showMenu && (
-                <div style={{ position: 'absolute', right: 0, top: '100%', background: 'var(--surface)', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
-                  onClick={() => setShowMenu(false)}>
-                  <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Anotar" />
-                  <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
-                  <MenuItem href={`/golf/canchas`}               icon="⛳" label="Ver canchas" />
-                  {isActive && <MenuItem href={`/golf/${id}/cerrar-ronda`} icon="🏁" label="Cerrar ronda" danger />}
+            }
+            actions={
+              <>
+                {isActive && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#dcfce7', border: '1px solid #86efac', borderRadius: 20, padding: '3px 9px', flexShrink: 0 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: 3, background: '#15803d', animation: 'pulse 2s infinite' }} />
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#15803d' }}>EN VIVO</span>
+                  </div>
+                )}
+                <div style={{ position: 'relative' }}>
+                  <button onClick={() => setShowMenu(v => !v)}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.muted, padding: '4px 6px', display: 'flex', alignItems: 'center' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <circle cx="12" cy="5"  r="1.5" fill={C.muted}/>
+                      <circle cx="12" cy="12" r="1.5" fill={C.muted}/>
+                      <circle cx="12" cy="19" r="1.5" fill={C.muted}/>
+                    </svg>
+                  </button>
+                  {showMenu && (
+                    <div style={{ position: 'absolute', right: 0, top: '100%', background: 'var(--surface)', border: `1px solid ${C.border}`, borderRadius: 12, padding: '6px', zIndex: 20, minWidth: 180, boxShadow: '0 8px 24px rgba(0,0,0,0.1)' }}
+                      onClick={() => setShowMenu(false)}>
+                      <MenuItem href={`/golf/${id}/scorear`}         icon="✏️" label="Anotar" />
+                      <MenuItem href={`/golf/${id}/concursos`}       icon="🏌️" label="Concursos" />
+                      <MenuItem href={`/golf/canchas`}               icon="⛳" label="Ver canchas" />
+                      {isActive && <MenuItem href={`/golf/${id}/cerrar-ronda`} icon="🏁" label="Cerrar ronda" danger />}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </>
+            }
+          />
 
           {/* Info torneo */}
           <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.border}` }}>
