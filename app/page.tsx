@@ -29,11 +29,16 @@ export default async function HomePage() {
   const initials = user?.email ? user.email.substring(0, 2).toUpperCase() : null
 
   let ranchadaCount = 0
+  let gamesPlayed = 0
+  let gamesWon = 0
   if (user) {
-    const { count } = await supabase
-      .from('ranchadas')
-      .select('id', { count: 'exact', head: true })
+    const [{ count }, { data: sessionPlayers }] = await Promise.all([
+      supabase.from('ranchadas').select('id', { count: 'exact', head: true }),
+      supabase.from('game_session_players').select('is_winner').eq('user_id', user.id),
+    ])
     ranchadaCount = count ?? 0
+    gamesPlayed = sessionPlayers?.length ?? 0
+    gamesWon = sessionPlayers?.filter(p => p.is_winner).length ?? 0
   }
 
   return (
@@ -116,7 +121,28 @@ export default async function HomePage() {
                 <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Ver todas →</span>
               </div>
             </Link>
-          ) : (
+          ) : null}
+
+          {/* Tarjeta de estadísticas */}
+          {user && (
+            <Link href="/dashboard" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+                <div style={{ width: '34px', height: '34px', background: 'var(--surface-2)', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 3v18h18" stroke="var(--text)" strokeWidth="1.8" strokeLinecap="round"/><path d="M8 17V10M13 17V6M18 17v-4" stroke="var(--text)" strokeWidth="1.8" strokeLinecap="round"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-soft)', marginBottom: '2px' }}>Tus estadísticas</div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                    <span style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', lineHeight: 1 }}>{gamesWon}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-soft)' }}>victoria{gamesWon !== 1 ? 's' : ''} en {gamesPlayed} partida{gamesPlayed !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 600 }}>Ver más →</span>
+              </div>
+            </Link>
+          )}
+
+          {!user && (
             <Link href="/login" style={{ textDecoration: 'none', display: 'block', marginBottom: '14px' }}>
               <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
                 <div style={{ width: '34px', height: '34px', background: 'var(--surface-2)', borderRadius: '9px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
